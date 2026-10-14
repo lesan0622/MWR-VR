@@ -28,7 +28,7 @@ namespace game
 		bool isAlternate, char* outputBuffer, int bufferLen)> CG_GetWeaponDisplayName{0x140192B80 /* H2 0x1403B9210 */};
 	WEAK symbol<int(int localClientNum)> CG_GetGameTime{0x0 /* TODO(mwr) H2 0x14037F580 */};
 
-	WEAK symbol<playerState_s*(int localClientNum)> CG_GetPredictedPlayerState{0x0 /* TODO(mwr) H2 0x14037F720 */};
+	WEAK symbol<playerState_s*(int localClientNum)> CG_GetPredictedPlayerState{0x14015B650 /* H2 0x14037F720; returns &cg.predictedPlayerState (0x1420E67A0) */};
 
 	WEAK symbol<void(ScreenPlacement* place, float x, float y, float w, float h, int horzAlign, int vertAlign, 
 		float t0, float s0, float t1, float s1, float* color, Material* material)> CL_DrawStretchPic{0x0 /* TODO(mwr) H2 0x1403C9570 */};
@@ -255,13 +255,13 @@ namespace game
 
 	// Variables
 
-	WEAK symbol<cg_s> cgs{0x0 /* TODO(mwr) H2 0x141B96B20 */};
+	WEAK symbol<cg_s> cgs{0x1420C9A20 /* H2 0x141B96B20; cg base; refdefViewAngles at +0x77680 */};
 
 	WEAK symbol<cmd_function_s*> cmd_functions{0x14B490038 /* H2 0x14AD17BB8 */};
 	WEAK symbol<CmdArgs> cmd_args{0x14B48FEE0 /* H2 0x14AD17A60 */};
 	WEAK symbol<const char*> command_whitelist{0x14115ADF0 /* H2 0x140BF84E0 */};
 
-	WEAK symbol<HWND> hWnd{0x0 /* TODO(mwr) H2 0x14CCF81C0 */};
+	WEAK symbol<HWND> hWnd{0x14D64D4A0 /* H2 0x14CCF81C0; main window (class H1) created at 0x140464854 */};
 
 	WEAK symbol<const char*> g_assetNames{0x140991BA0 /* H2 0x140BEF280 */};
 
@@ -286,7 +286,7 @@ namespace game
 	WEAK symbol<DWORD> threadIds{0x14B896210 /* H2 0x14B11DC80 */};
 
 	WEAK symbol<GfxDrawMethod_s> gfxDrawMethod{0x14F7530B0 /* H2 0x14EDF9E00 */};
-	WEAK symbol<refdef_t> refdef{0x0 /* TODO(mwr) H2 0x141BC2500 */};
+	WEAK symbol<refdef_t> refdef{0x1420F4EB0 /* H2 0x141BC2500; cg+0x2B490 */};
 	WEAK symbol<materialCommands_t> tess{0x0 /* TODO(mwr) H2 0x151854A30 */};
 	WEAK symbol<void> gfxCmdBufSourceState{0x0 /* TODO(mwr) H2 0x151B65EA0 */};
 

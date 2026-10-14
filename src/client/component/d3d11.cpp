@@ -2668,11 +2668,11 @@ namespace d3d11
 				"d3d11 debug message severity level");
 			d3d11_debug_legacy = dvars::register_bool("d3d11_debugLegacyMode", false, game::DVAR_FLAG_SAVED, "use legacy d3d11 debug messages mode (dbgview)");
 
-			create_pixel_shader_hook.create(0x140758A80, create_pixel_shader_stub);
-			create_vertex_shader_hook.create(0x140758B30, create_vertex_shader_stub);
-			create_domain_shader_hook.create(0x140758960, create_domain_shader_stub);
-			create_hull_shader_hook.create(0x1407589F0, create_hull_shader_stub);
-			create_compute_shader_hook.create(0x140758830, create_compute_shader_stub);
+			create_pixel_shader_hook.create(0x14056DB40, create_pixel_shader_stub);
+			create_vertex_shader_hook.create(0x14056DBF0, create_vertex_shader_stub);
+			create_domain_shader_hook.create(0x14056DA20, create_domain_shader_stub);
+			create_hull_shader_hook.create(0x14056DAB0, create_hull_shader_stub);
+			create_compute_shader_hook.create(0x14056D8F0, create_compute_shader_stub);
 #endif
 		}
 

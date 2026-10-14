@@ -15,10 +15,13 @@ namespace vr::engine_scene_resolution
 {
 	namespace
 	{
-		constexpr std::uintptr_t calculate_scene = 0x14074F670;
-		constexpr std::uintptr_t check_video_changes = 0x1403D3C10;
-		constexpr std::uintptr_t request_soft_resize = 0x1403D6B50;
-		constexpr std::uintptr_t video_config_address = 0x14EEE0CF0;
+		constexpr std::uintptr_t calculate_scene = 0x140564930;
+		constexpr std::uintptr_t check_video_changes = 0x1401ACD50;
+		// MWR: sets the target-only restart flag 0x14D64D4FC consumed by
+		// check_video_changes (0x1401B05F0 -> 0x140564560), not the full restart.
+		constexpr std::uintptr_t request_soft_resize = 0x1401AFB50;
+		constexpr std::uintptr_t video_config_address = 0x14F839720;
+		constexpr std::uintptr_t store_video_config = 0x1405655A0;
 		std::atomic<phase> state{phase::awaiting_runtime};
 		std::atomic_uint64_t requested{};
 		std::mutex status_mutex;
@@ -136,9 +139,9 @@ namespace vr::engine_scene_resolution
 	void install()
 	{
 		if (!target_identity::get().compatibility_probe_passed)
-			throw std::runtime_error("native scene resolution requires the verified H2 image");
+			throw std::runtime_error("native scene resolution requires the verified MWR image");
 		// All three natural calculation callers, plus the main-loop update call.
-		const std::array<std::uintptr_t, 4> sites{0x14074C998, 0x14074DA24, 0x14074F928, 0x1405A3B02};
+		const std::array<std::uintptr_t, 4> sites{0x140562CB4, 0x140563748, 0x140564BE8, 0x1403855D4};
 		const std::array<std::uintptr_t, 4> targets{calculate_scene, calculate_scene, calculate_scene, check_video_changes};
 		const std::array<void*, 4> replacements{reinterpret_cast<void*>(calculate_scene_stub),
 			reinterpret_cast<void*>(calculate_scene_stub), reinterpret_cast<void*>(calculate_scene_stub),
@@ -155,8 +158,8 @@ namespace vr::engine_scene_resolution
 				throw std::runtime_error("native scene resolution hook outside rel32 range");
 		}
 		require_bytes(calculate_scene, std::array<std::uint8_t, 6>{0x40,0x53,0x48,0x83,0xEC,0x30});
-		require_bytes(request_soft_resize, std::array<std::uint8_t, 11>{0xC7,0x05,0xCA,0x16,0x92,0x0C,0x01,0,0,0,0xC3});
-		require_bytes(0x1407502D0, std::array<std::uint8_t, 13>{0x48,0x83,0xEC,0x28,0x8B,0x41,0x28,0x89,0x05,0x13,0x0A,0x79,0x0E});
+		require_bytes(request_soft_resize, std::array<std::uint8_t, 11>{0xC7,0x05,0xA2,0xD9,0x49,0x0D,0x01,0,0,0,0xC3});
+		require_bytes(store_video_config, std::array<std::uint8_t, 13>{0x48,0x83,0xEC,0x28,0x8B,0x41,0x28,0x89,0x05,0x73,0x41,0x2D,0x0F});
 		for (std::size_t index{}; index < sites.size(); ++index)
 			utils::hook::call(sites[index], replacements[index]);
 		const std::lock_guard lock(status_mutex);

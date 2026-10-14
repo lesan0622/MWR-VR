@@ -1766,7 +1766,7 @@ namespace vr::engine_stereo_gpu_census
 		}
 
 		constexpr std::uintptr_t h2_dynamic_fx_global_data_pointer =
-			0x150F91188ull;
+			0x15182A680ull;
 		constexpr std::size_t h2_dynamic_fx_mesh_bytes = 0x38;
 		static_assert(h2_dynamic_fx_mesh_bytes ==
 			dynamic_fx_arena_raw_qword_count * sizeof(std::uint64_t));

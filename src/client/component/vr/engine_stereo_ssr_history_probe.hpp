@@ -9,10 +9,10 @@ namespace vr::engine_stereo_ssr_history_probe
 	inline constexpr std::size_t record_size = 0x8090;
 	inline constexpr std::size_t current_view_projection_offset = 0x80;
 	inline constexpr std::size_t current_origin_offset = 0x100;
-	inline constexpr std::size_t history_view_projection_offset = 0x2D40;
-	inline constexpr std::size_t history_origin_offset = 0x2DC0;
-	inline constexpr std::size_t previous_view_projection_constant_offset = 0xF90;
-	inline constexpr std::size_t previous_eye_position_constant_offset = 0xFD0;
+	inline constexpr std::size_t history_view_projection_offset = 0x2A90;
+	inline constexpr std::size_t history_origin_offset = 0x2B10;
+	inline constexpr std::size_t previous_view_projection_constant_offset = 0xDC0;
+	inline constexpr std::size_t previous_eye_position_constant_offset = 0xE00;
 
 	enum class capture_state : std::uint8_t
 	{

@@ -796,6 +796,8 @@ namespace game
 		// angles at +0x98 and stores the result at +0x108.
 		vec3_t delta_angles;
 		char __pad3[100];
+		// MWR: viewangles +0x10C and viewHeightCurrent +0x11C (H2 +0x108/+0x118).
+		char __pad_mwr_view[4];
 		vec3_t viewangles;
 		char __pad_view_height_target[4];
 		float viewHeightCurrent;
@@ -807,13 +809,15 @@ namespace game
 	static_assert(offsetof(playerState_s, pm_flags) == 0x54);
 	static_assert(offsetof(playerState_s, e_flags) == 0x58);
 	static_assert(offsetof(playerState_s, origin) == 128);
-	static_assert(offsetof(playerState_s, viewHeightCurrent) == 280);
+	static_assert(offsetof(playerState_s, viewHeightCurrent) == 0x11C);
 	static_assert(offsetof(playerState_s, delta_angles) == 0x98);
-	static_assert(offsetof(playerState_s, viewangles) == 0x108);
+	static_assert(offsetof(playerState_s, viewangles) == 0x10C);
 
+	// MWR SP cg_s (0x1420C9A20): predictedPlayerState +0x1CD80, time +0x1CD6C,
+	// refdef +0x2B490, refdefViewAngles +0x77680.
 	struct cg_s
 	{
-		char __pad0[507228];
+		char __pad0[0x77680];
 		float refdefViewAngles[3];
 	};
 

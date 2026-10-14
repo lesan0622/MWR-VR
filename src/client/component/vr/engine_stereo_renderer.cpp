@@ -59,77 +59,77 @@ namespace vr::engine_stereo_renderer
 		static_assert(offsetof(game::MaterialTechnique, passArray) == 0x10);
 		static_assert(sizeof(game::MaterialPass) == 0x48);
 		static_assert(sizeof(game::GfxStateBits) == 0x28);
-		constexpr std::uintptr_t reserve_scene_record_call_site = 0x1403CA20E;
-		constexpr std::uintptr_t reserve_scene_record_function = 0x140779E00;
-		constexpr std::uintptr_t scene_owner_record_index = 0x141C2DB34;
-		constexpr std::uintptr_t scene_owner_argument = 0x141BB3C1C;
-		constexpr std::uintptr_t render_scene_call_site = 0x1403CA23E;
-		constexpr std::uintptr_t render_scene_function = 0x14077B820;
-		constexpr std::uintptr_t allocate_view_slot_call_site = 0x14077B8EB;
-		constexpr std::uintptr_t allocate_view_slot_function = 0x14076D5D0;
-		constexpr std::uintptr_t initialize_view_slot_call_site = 0x14077B8F9;
-		constexpr std::uintptr_t initialize_view_slot_function = 0x14077E340;
-		constexpr std::uintptr_t finalize_view_slot_function = 0x14077F550;
-		constexpr std::uintptr_t generate_draw_surfs_call_site = 0x14077BC83;
-		constexpr std::uintptr_t generate_draw_surfs_function = 0x140778E60;
-		constexpr std::uintptr_t fx_camera_call_site = 0x14045B98E;
-		constexpr std::uintptr_t fx_camera_function = 0x140463310;
-		constexpr std::uintptr_t frontend_data_pointer = 0x150F91188;
-		constexpr std::uintptr_t frontend_global_selector = 0x150F911A0;
-		constexpr std::uintptr_t global_scene_record_count = 0x14EEE0BD0;
-		constexpr std::uintptr_t backend_post_bind_call_site = 0x1407A8469;
-		constexpr std::uintptr_t backend_post_bind_function = 0x1407A7320;
-		constexpr std::uintptr_t backend_target_prepare_function = 0x1407A7DA0;
-		constexpr std::uintptr_t backend_dynamic_upload_call_site = 0x1407A8032;
-		constexpr std::uintptr_t backend_dynamic_upload_function = 0x1407A8A80;
+		constexpr std::uintptr_t reserve_scene_record_call_site = 0x1401A335E;
+		constexpr std::uintptr_t reserve_scene_record_function = 0x14058D480;
+		constexpr std::uintptr_t scene_owner_record_index = 0x14215ABCC;
+		constexpr std::uintptr_t scene_owner_argument = 0x1420E678C;
+		constexpr std::uintptr_t render_scene_call_site = 0x1401A338E;
+		constexpr std::uintptr_t render_scene_function = 0x14058ECF0;
+		constexpr std::uintptr_t allocate_view_slot_call_site = 0x14058EDB8;
+		constexpr std::uintptr_t allocate_view_slot_function = 0x140581DD0;
+		constexpr std::uintptr_t initialize_view_slot_call_site = 0x14058EDC6;
+		constexpr std::uintptr_t initialize_view_slot_function = 0x140591000;
+		constexpr std::uintptr_t finalize_view_slot_function = 0x140592120;
+		constexpr std::uintptr_t generate_draw_surfs_call_site = 0x14058F145;
+		constexpr std::uintptr_t generate_draw_surfs_function = 0x14058C670;
+		constexpr std::uintptr_t fx_camera_call_site = 0x1402388AE;
+		constexpr std::uintptr_t fx_camera_function = 0x14023F4E0;
+		constexpr std::uintptr_t frontend_data_pointer = 0x15182A680;
+		constexpr std::uintptr_t frontend_global_selector = 0x15182A69C;
+		constexpr std::uintptr_t global_scene_record_count = 0x14F79D5C8;
+		constexpr std::uintptr_t backend_post_bind_call_site = 0x1405B9FF9;
+		constexpr std::uintptr_t backend_post_bind_function = 0x1405B8EE0;
+		constexpr std::uintptr_t backend_target_prepare_function = 0x1405B9950;
+		constexpr std::uintptr_t backend_dynamic_upload_call_site = 0x1405B9BCC;
+		constexpr std::uintptr_t backend_dynamic_upload_function = 0x1405BA5F0;
 		constexpr std::array<std::uint8_t, 5> backend_dynamic_upload_bytes{
-			0xE8, 0x49, 0x0A, 0x00, 0x00};
-		constexpr std::uintptr_t backend_frontend_data_pointer = 0x151A7F3B0;
-		constexpr std::uintptr_t backend_record_call_site = 0x1407A84A1;
-		constexpr std::uintptr_t backend_record_function = 0x1407A6BE0;
-		constexpr std::uintptr_t backend_view_bind_call_site = 0x1407A83D7;
-		constexpr std::uintptr_t backend_view_bind_function = 0x14079F6F0;
-		constexpr std::uintptr_t backend_record_classifier_call_site = 0x1407A83E6;
-		constexpr std::uintptr_t backend_record_classifier_function = 0x1407B0740;
+			0xE8, 0x1F, 0x0A, 0x00, 0x00};
+		constexpr std::uintptr_t backend_frontend_data_pointer = 0x152309D78;
+		constexpr std::uintptr_t backend_record_call_site = 0x1405BA031;
+		constexpr std::uintptr_t backend_record_function = 0x1405B8900;
+		constexpr std::uintptr_t backend_view_bind_call_site = 0x1405B9F77;
+		constexpr std::uintptr_t backend_view_bind_function = 0x1405B1770;
+		constexpr std::uintptr_t backend_record_classifier_call_site = 0x1405B9F86;
+		constexpr std::uintptr_t backend_record_classifier_function = 0x1405C1A20;
 		// The historical "classifier" is actually H2's final PostFX owner.
-		constexpr std::uintptr_t postfx_destination_call_site = 0x1407B0329;
-		constexpr std::uintptr_t postfx_destination_function = 0x1407B09A0;
+		constexpr std::uintptr_t postfx_destination_call_site = 0x1405C166F;
+		constexpr std::uintptr_t postfx_destination_function = 0x1405C1C80;
 		constexpr std::array<std::uint8_t, 5> postfx_destination_bytes{
-			0xE8, 0x72, 0x06, 0x00, 0x00};
-		constexpr std::uintptr_t backend_view_copy_call_site = 0x14078A3FF;
-		constexpr std::uintptr_t backend_view_copy_function = 0x14078B5D0;
-		constexpr std::uintptr_t backend_view_setup_function = 0x14078A340;
-		constexpr std::uintptr_t backend_geometry_view_setup_call_site = 0x14078727E;
+			0xE8, 0x0C, 0x06, 0x00, 0x00};
+		constexpr std::uintptr_t backend_view_copy_call_site = 0x14059CA3F;
+		constexpr std::uintptr_t backend_view_copy_function = 0x14059DB60;
+		constexpr std::uintptr_t backend_view_setup_function = 0x14059C980;
+		constexpr std::uintptr_t backend_geometry_view_setup_call_site = 0x14059991E;
 		constexpr std::array<std::uint8_t, 5> backend_geometry_view_setup_bytes{
-			0xE8, 0xBD, 0x30, 0x00, 0x00};
+			0xE8, 0x5D, 0x30, 0x00, 0x00};
 		constexpr std::array<std::uint8_t, 15> backend_view_setup_prologue{
 			0x48, 0x89, 0x5C, 0x24, 0x08, 0x48, 0x89, 0x74, 0x24, 0x10,
 			0x57, 0x48, 0x83, 0xEC, 0x30};
 		bool backend_view_setup_stack_verified{};
-		constexpr std::uintptr_t backend_depth_hack_projection_function = 0x140786D30;
-		constexpr std::uintptr_t backend_target_select_function = 0x1407892C0;
-		constexpr std::uintptr_t backend_command_dispatch_call_site = 0x1407A6D05;
-		constexpr std::uintptr_t backend_command_dispatch_function = 0x14079EAE0;
-		constexpr std::uintptr_t h2_query_publish_call_site = 0x1407A1555;
-		constexpr std::uintptr_t h2_query_publish_function = 0x14074BB90;
-		constexpr std::uintptr_t h2_query_publish_generation = 0x14EEE0D38;
-		constexpr std::uintptr_t h2_query_gate_completed_generation = 0x14EE43A04;
-		constexpr std::uintptr_t h2_query_gate_published_generation = 0x14EEE0D2C;
-		constexpr std::uintptr_t h2_query_result_observation_site = 0x1407507E3;
-		constexpr std::uintptr_t h2_query_result_original_global = 0x140C019DC;
-		constexpr std::uintptr_t frontend_record_arena_pointer_offset = 0x540FA0;
-		constexpr std::uintptr_t owner_view_globals = 0x141EB3970;
-		constexpr std::uintptr_t scene_view_globals = 0x14EEE02F4;
-		constexpr std::uintptr_t camera_primary_globals = 0x14EEE0890;
-		constexpr std::uintptr_t camera_secondary_globals = 0x14EEE08B8;
-		constexpr std::uintptr_t per_client_view_output = 0x151427A80;
+		constexpr std::uintptr_t backend_depth_hack_projection_function = 0x1405993C0;
+		constexpr std::uintptr_t backend_target_select_function = 0x14059B910;
+		constexpr std::uintptr_t backend_command_dispatch_call_site = 0x1405B8A25;
+		constexpr std::uintptr_t backend_command_dispatch_function = 0x1405B0B60;
+		constexpr std::uintptr_t h2_query_publish_call_site = 0x1405B3605;
+		constexpr std::uintptr_t h2_query_publish_function = 0x140561030;
+		constexpr std::uintptr_t h2_query_publish_generation = 0x14F83976C;
+		constexpr std::uintptr_t h2_query_gate_completed_generation = 0x14F83975C;
+		constexpr std::uintptr_t h2_query_gate_published_generation = 0x14F839768;
+		constexpr std::uintptr_t h2_query_result_observation_site = 0x1405658F3;
+		constexpr std::uintptr_t h2_query_result_original_global = 0x141163BAC;
+		constexpr std::uintptr_t frontend_record_arena_pointer_offset = 0x540D88;
+		constexpr std::uintptr_t owner_view_globals = 0x14239F520;
+		constexpr std::uintptr_t scene_view_globals = 0x14F79CD84;
+		constexpr std::uintptr_t camera_primary_globals = 0x14F79D2A0;
+		constexpr std::uintptr_t camera_secondary_globals = 0x14F79D2C8;
+		constexpr std::uintptr_t per_client_view_output = 0x151896F20;
 		constexpr std::size_t owner_view_globals_size = 0x18;
 		constexpr std::size_t scene_view_globals_size = 0x18;
 		constexpr std::size_t camera_globals_size = 0x28;
 		constexpr std::size_t view_slot_size = engine_view_probe::frontend_slot_stride;
 		static_assert(engine_stereo_view::h2_scene_record_size ==
 			engine_view_probe::frontend_record_stride);
-		constexpr std::size_t extended_scene_descriptor_size = 0x501C8;
+		constexpr std::size_t extended_scene_descriptor_size = 0x4C070;
 		constexpr std::uint64_t extended_scene_descriptor_sample_limit = 256;
 		constexpr std::size_t scene_view_input_size = 0x60;
 		constexpr std::int32_t observed_local_client_capacity = 2;
@@ -1204,7 +1204,7 @@ namespace vr::engine_stereo_renderer
 				reinterpret_cast<void*>(record), frontend.frontend);
 			// Publish immutable VIEW inputs before H2's generator can enqueue any
 			// scene consumer. The record payload is still being built: never copy it
-			// here. 0x14077F526 sets its world type to 4; the backend independently
+			// here. MWR's record setup sets record+0x1CE0 (world type) to 4; the backend independently
 			// validates that type, exact camera and native CPU completion before use.
 			eye_composition::register_scene(transaction.stereo_views, record);
 			transaction.stereo_published = engine_stereo_binding::publish({
@@ -2587,21 +2587,21 @@ namespace vr::engine_stereo_renderer
 			if (!backend_hooks.prepared)
 				return depth_hack_projection && target_select && target_prepare;
 			constexpr std::array<std::uint8_t, 5> post_bind_bytes{
-				0xE8, 0xB2, 0xEE, 0xFF, 0xFF};
+			0xE8, 0xE2, 0xEE, 0xFF, 0xFF};
 			constexpr std::array<std::uint8_t, 5> backend_record_bytes{
-				0xE8, 0x3A, 0xE7, 0xFF, 0xFF};
+			0xE8, 0xCA, 0xE8, 0xFF, 0xFF};
 			constexpr std::array<std::uint8_t, 5> backend_view_bind_bytes{
-				0xE8, 0x14, 0x73, 0xFF, 0xFF};
+			0xE8, 0xF4, 0x77, 0xFF, 0xFF};
 			constexpr std::array<std::uint8_t, 5> backend_record_classifier_bytes{
-				0xE8, 0x55, 0x83, 0x00, 0x00};
+			0xE8, 0x95, 0x7A, 0x00, 0x00};
 			constexpr std::array<std::uint8_t, 5> backend_view_copy_bytes{
-				0xE8, 0xCC, 0x11, 0x00, 0x00};
+			0xE8, 0x1C, 0x11, 0x00, 0x00};
 			constexpr std::array<std::uint8_t, 5> command_dispatch_bytes{
-				0xE8, 0xD6, 0x7D, 0xFF, 0xFF};
+			0xE8, 0x36, 0x81, 0xFF, 0xFF};
 			constexpr std::array<std::uint8_t, 5> query_publish_bytes{
-				0xE8, 0x36, 0xA6, 0xFA, 0xFF};
+			0xE8, 0x26, 0xDA, 0xFA, 0xFF};
 			constexpr std::array<std::uint8_t, 6> query_result_bytes{
-				0x8B, 0x0D, 0xF3, 0x11, 0x4B, 0x00};
+			0x8B, 0x0D, 0xB3, 0xE2, 0xBF, 0x00};
 
 			// Restore producers before consumers. No runtime unpatch path calls this;
 			// it is exclusively startup rollback while renderer work is quiescent.
@@ -2672,8 +2672,7 @@ namespace vr::engine_stereo_renderer
 		bool install_backend_observation_hooks()
 		{
 			constexpr std::array<std::uint8_t, 17> depth_hack_projection_prologue{
-				0x48, 0x89, 0x5C, 0x24, 0x08, 0x57, 0x48, 0x83,
-				0xEC, 0x20, 0x0F, 0x10, 0x81, 0x30, 0x2C, 0x00, 0x00};
+			0x48, 0x89, 0x5C, 0x24, 0x08, 0x57, 0x48, 0x83, 0xEC, 0x20, 0x0F, 0x10, 0x81, 0x50, 0x2B, 0x00, 0x00};
 			constexpr std::array<std::uint8_t, 16> target_prepare_prologue{
 				0x48, 0x89, 0x5C, 0x24, 0x10, 0x48, 0x89, 0x6C,
 				0x24, 0x18, 0x48, 0x89, 0x74, 0x24, 0x20, 0x57};
@@ -2681,21 +2680,21 @@ namespace vr::engine_stereo_renderer
 				0x48, 0x89, 0x5C, 0x24, 0x18, 0x56, 0x48, 0x83,
 				0xEC, 0x30, 0x48, 0x8B, 0x41, 0x08, 0x48, 0x8B};
 			constexpr std::array<std::uint8_t, 5> post_bind_bytes{
-				0xE8, 0xB2, 0xEE, 0xFF, 0xFF};
+			0xE8, 0xE2, 0xEE, 0xFF, 0xFF};
 			constexpr std::array<std::uint8_t, 5> backend_record_bytes{
-				0xE8, 0x3A, 0xE7, 0xFF, 0xFF};
+			0xE8, 0xCA, 0xE8, 0xFF, 0xFF};
 			constexpr std::array<std::uint8_t, 5> backend_view_bind_bytes{
-				0xE8, 0x14, 0x73, 0xFF, 0xFF};
+			0xE8, 0xF4, 0x77, 0xFF, 0xFF};
 			constexpr std::array<std::uint8_t, 5> backend_record_classifier_bytes{
-				0xE8, 0x55, 0x83, 0x00, 0x00};
+			0xE8, 0x95, 0x7A, 0x00, 0x00};
 			constexpr std::array<std::uint8_t, 5> backend_view_copy_bytes{
-				0xE8, 0xCC, 0x11, 0x00, 0x00};
+			0xE8, 0x1C, 0x11, 0x00, 0x00};
 			constexpr std::array<std::uint8_t, 5> command_dispatch_bytes{
-				0xE8, 0xD6, 0x7D, 0xFF, 0xFF};
+			0xE8, 0x36, 0x81, 0xFF, 0xFF};
 			constexpr std::array<std::uint8_t, 5> query_publish_bytes{
-				0xE8, 0x36, 0xA6, 0xFA, 0xFF};
+			0xE8, 0x26, 0xDA, 0xFA, 0xFF};
 			constexpr std::array<std::uint8_t, 6> query_result_bytes{
-				0x8B, 0x0D, 0xF3, 0x11, 0x4B, 0x00};
+			0x8B, 0x0D, 0xB3, 0xE2, 0xBF, 0x00};
 
 			// Optional diagnostic ABI: a mismatch disables only parent-PC capture.
 			// The existing view-copy hook keeps its independent instruction checks.
@@ -2943,17 +2942,17 @@ namespace vr::engine_stereo_renderer
 			// H2 starts the renderer pipeline. Replacing a five-byte rel32 call is not
 			// atomic, so this routine must never be reused as a runtime reload/toggle.
 			constexpr std::array<std::uint8_t, 5> reserve_scene_record_bytes{
-				0xE8, 0xED, 0xFB, 0x3A, 0x00};
+			0xE8, 0x1D, 0xA1, 0x3E, 0x00};
 			constexpr std::array<std::uint8_t, 5> render_scene_bytes{
-				0xE8, 0xDD, 0x15, 0x3B, 0x00};
+			0xE8, 0x5D, 0xB9, 0x3E, 0x00};
 			constexpr std::array<std::uint8_t, 5> allocate_view_slot_bytes{
-				0xE8, 0xE0, 0x1C, 0xFF, 0xFF};
+			0xE8, 0x13, 0x30, 0xFF, 0xFF};
 			constexpr std::array<std::uint8_t, 5> initialize_view_slot_bytes{
-				0xE8, 0x42, 0x2A, 0x00, 0x00};
+			0xE8, 0x35, 0x22, 0x00, 0x00};
 			constexpr std::array<std::uint8_t, 5> generate_draw_surfs_bytes{
-				0xE8, 0xD8, 0xD1, 0xFF, 0xFF};
+			0xE8, 0x26, 0xD5, 0xFF, 0xFF};
 			constexpr std::array<std::uint8_t, 5> fx_camera_bytes{
-				0xE8, 0x7D, 0x79, 0x00, 0x00};
+			0xE8, 0x2D, 0x6C, 0x00, 0x00};
 			constexpr std::array<std::uint8_t, 5> finalize_view_slot_bytes{
 				0x48, 0x89, 0x5C, 0x24, 0x10};
 			constexpr std::array<std::uint8_t, 5> mask{0xFF, 0xFF, 0xFF, 0xFF, 0xFF};

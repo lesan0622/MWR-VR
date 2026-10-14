@@ -10,10 +10,10 @@ namespace vr::engine_scene_job_capture
 {
 	namespace
 	{
-		constexpr std::uintptr_t wait_function = 0x140793DE0;
-		constexpr std::uintptr_t producer_function = 0x14077FB10;
-		constexpr std::uintptr_t backend_frontend = 0x151A7F3B0;
-		constexpr std::uintptr_t producer_frontend = 0x150F91188;
+		constexpr std::uintptr_t wait_function = 0x1405A6190;
+		constexpr std::uintptr_t producer_function = 0; // MWR: not rebound
+		constexpr std::uintptr_t backend_frontend = 0x152309D78;
+		constexpr std::uintptr_t producer_frontend = 0x15182A680;
 		using wait_fn = std::uintptr_t(*)(void*, std::uint32_t);
 		using producer_fn = std::uintptr_t(*)(void*, void*, void*, void*, void*);
 
@@ -58,7 +58,7 @@ namespace vr::engine_scene_job_capture
 			reinterpret_cast<std::uintptr_t>(record), static_cast<std::uint64_t>(point), frontend};
 		if (frontend)
 		{
-			const auto* flags = reinterpret_cast<const std::uint8_t*>(frontend + 0x541BE8);
+			const auto* flags = reinterpret_cast<const std::uint8_t*>(frontend + 0x541988);
 			value.b = region_capture::read<std::uint32_t>(flags) |
 				(std::uint64_t{region_capture::read<std::uint32_t>(flags + 4)} << 32);
 			value.c = region_capture::read<std::uint32_t>(flags + 8) |
@@ -66,7 +66,7 @@ namespace vr::engine_scene_job_capture
 		}
 		if (record)
 		{
-			const auto* header = static_cast<const std::uint8_t*>(record) + 0x2FC8 + 24 * 0x130 + 0x100;
+			const auto* header = static_cast<const std::uint8_t*>(record) + 0x2D18 + 24 * 0x130 + 0x100;
 			value.d = region_capture::read<std::uint32_t>(header);
 			value.e = region_capture::read<std::uint64_t>(header + 8);
 		}
@@ -78,7 +78,15 @@ namespace vr::engine_scene_job_capture
 	{
 		if (!debug_options::enabled(debug_options::probe::perf)) return;
 		if (!target_identity::get().compatibility_probe_passed)
-			throw std::runtime_error("scene job capture requires the verified H2 image");
+			throw std::runtime_error("scene job capture requires the verified MWR image");
+		// MWR: the surface-wait and producer call sites are not rebound yet; the
+		// perf probe keeps its CPU-only checkpoints without patching native code.
+		if constexpr (producer_function == 0)
+		{
+			console::warn("[VR] scene job capture boundaries are not available on MWR
+");
+			return;
+		}
 		const std::array<std::uintptr_t, 4> sites{0x1407A7E14, 0x1407A8D05, 0x1407A7FEC, 0x140778CF2};
 		const std::array<std::uintptr_t, 4> targets{wait_function, wait_function, wait_function, producer_function};
 		const std::array<void*, 4> replacements{

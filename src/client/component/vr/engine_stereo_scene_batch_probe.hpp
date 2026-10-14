@@ -6,7 +6,7 @@
 
 namespace vr::engine_stereo_scene_batch_probe
 {
-	inline constexpr std::size_t backend_data_offset = 0x2BE8;
+	inline constexpr std::size_t backend_data_offset = 0x2B00;
 	inline constexpr std::size_t descriptor_array_offset = 0x541C08;
 	inline constexpr std::size_t descriptor_count_offset = 0x542588;
 	inline constexpr std::size_t descriptor_size = 0x130;

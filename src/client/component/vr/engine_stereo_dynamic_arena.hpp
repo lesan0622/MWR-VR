@@ -7,12 +7,12 @@
 namespace vr::engine_stereo_dynamic_arena
 {
 	inline constexpr std::size_t mesh_count = 8;
-	inline constexpr std::uintptr_t backend_data_pointer_offset = 0x2BE8ull;
-	inline constexpr std::uintptr_t code_trans_offset = 0x5409C0ull;
+	inline constexpr std::uintptr_t backend_data_pointer_offset = 0x2B00ull;
+	inline constexpr std::uintptr_t code_trans_offset = 0x5407C0ull;
 	inline constexpr std::uintptr_t mesh_stride = 0x58ull;
-	inline constexpr std::uintptr_t glass_offset = 0x540B78ull;
-	inline constexpr std::uintptr_t mark_offset = 0x540BD0ull;
-	inline constexpr std::uintptr_t spark_offset = 0x540C28ull;
+	inline constexpr std::uintptr_t glass_offset = 0x540978ull;
+	inline constexpr std::uintptr_t mark_offset = 0x5409D0ull;
+	inline constexpr std::uintptr_t spark_offset = 0x540A28ull;
 	inline constexpr std::uintptr_t index_count_offset = 0x04ull;
 	inline constexpr std::uintptr_t index_buffer_pointer_offset = 0x08ull;
 	inline constexpr std::uintptr_t index_base_pointer_offset = 0x18ull;

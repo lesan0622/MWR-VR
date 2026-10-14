@@ -38,11 +38,13 @@ namespace vr::engine_stereo_owner_pass
 	namespace
 	{
 		constexpr std::uint32_t maximum_query_polls = 240;
-		constexpr std::uintptr_t h2_gpu_context_mutex_handle = 0x140C05740;
+		constexpr std::uintptr_t h2_gpu_context_mutex_handle = 0x141167910;
 		constexpr DWORD h2_gpu_context_mutex_timeout_ms = 100;
 		constexpr std::uint64_t fnv_offset = 14695981039346656037ull;
 		constexpr std::uint64_t fnv_prime = 1099511628211ull;
-		constexpr std::uintptr_t h2_material_buffer_copy_caller = 0x1403591BD;
+		// MWR: the material-buffer copy caller is not rebound; the left-eye
+		// material reuse diagnostic never matches.
+		constexpr std::uintptr_t h2_material_buffer_copy_caller = 0;
 		constexpr std::uint32_t h2_material_buffer_bytes = 1088;
 
 		struct gpu_resources
@@ -1434,8 +1436,8 @@ namespace vr::engine_stereo_owner_pass
 		std::uint32_t index{};
 		std::uintptr_t arena{};
 		const auto* const bytes = static_cast<const std::uint8_t*>(frontend);
-		std::memcpy(&index, bytes + 0x540f90, sizeof(index));
-		std::memcpy(&arena, bytes + 0x540fa0, sizeof(arena));
+		std::memcpy(&index, bytes + 0x540D78, sizeof(index));
+		std::memcpy(&arena, bytes + 0x540D88, sizeof(arena));
 		if (index != active->claim.record_index || arena > active->natural_record ||
 			active->natural_record - arena != std::uintptr_t(index) * engine_stereo_view::h2_scene_record_size)
 			return false;

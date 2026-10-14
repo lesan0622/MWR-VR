@@ -12,16 +12,16 @@ namespace vr::engine_view_probe
 	// H2 h2_sp64_bnet_ship.exe 2026-08-21 renderer layout observed at the
 	// fingerprint-gated R_RenderScene implementation. These values describe CPU
 	// memory only; this probe never creates, queries, or submits a GPU resource.
-	inline constexpr std::uintptr_t frontend_slot_base_offset = 0x540400;
-	inline constexpr std::uintptr_t frontend_slot_count_offset = 0x540ED4;
-	inline constexpr std::uintptr_t frontend_current_record_index_offset = 0x540F90;
-	inline constexpr std::uintptr_t frontend_record_count_offset = 0x540F94;
+	inline constexpr std::uintptr_t frontend_slot_base_offset = 0x540200;
+	inline constexpr std::uintptr_t frontend_slot_count_offset = 0x540CCC;
+	inline constexpr std::uintptr_t frontend_current_record_index_offset = 0x540D78;
+	inline constexpr std::uintptr_t frontend_record_count_offset = 0x540D7C;
 	inline constexpr std::uintptr_t frontend_slot_stride = 0x170;
-	inline constexpr std::uintptr_t frontend_record_stride = 0x8090;
+	inline constexpr std::uintptr_t frontend_record_stride = 0x7B80;
 	// Runtime disassembly shows a 0x20240-byte arena and a backend loop bounded by
 	// frontend_record_count_offset: 0x20240 / 0x8090 == 4 records.
 	inline constexpr std::uint32_t frontend_record_capacity = 4;
-	inline constexpr std::uintptr_t scratch_draw_type_offset = 0x524;
+	inline constexpr std::uintptr_t scratch_draw_type_offset = 0x3E4;
 
 	inline constexpr std::size_t trace_capacity = 16 * 1024;
 	inline constexpr std::uint32_t invalid_slot_index =

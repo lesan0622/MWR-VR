@@ -20,7 +20,7 @@ namespace vr::engine_scene_resolution
 			size.width <= 16384 && size.height <= 16384;
 	}
 
-	// H2 0x14074F670 calculates these fields; 0x1407502D0 stores them in
+	// MWR 0x140564930 calculates these fields; 0x1405655A0 stores them in
 	// vidConfig. Scene and display are distinct domains, not interchangeable.
 	struct window_parameters
 	{
@@ -55,7 +55,7 @@ namespace vr::engine_scene_resolution
 
 	struct video_config
 	{
-		extent scene;                      // 0x14EEE0CF0
+		extent scene;                      // MWR 0x14F839720
 		extent scene_base;
 		extent display;
 		std::uint32_t flags;

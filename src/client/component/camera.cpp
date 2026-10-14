@@ -1,12 +1,4 @@
 #include <std_include.hpp>
-#include "vr/gameplay/notebook_runtime.hpp"
-#include "vr/gameplay/campaign/scripted_sequences.hpp"
-#include "vr/gameplay/scripted_camera_reference.hpp"
-#include "vr/gameplay/fixed_sniper.hpp"
-#include "vr/gameplay/mounted_turret.hpp"
-#include "vr/gameplay/weapon_laser.hpp"
-#include "vr/gameplay/javelin_screen.hpp"
-#include "vr/gameplay/ladder_runtime.hpp"
 #include "loader/component_loader.hpp"
 
 #include "game/game.hpp"
@@ -65,7 +57,8 @@ namespace camera
 
 		void paused_free_move()
 		{
-			if ((*cg_paused)->current.integer != 2)
+			// MWR: cg_paused has not been rebound; free-move stays disabled.
+			if (cg_paused == nullptr || (*cg_paused)->current.integer != 2)
 			{
 				return;
 			}
@@ -176,50 +169,36 @@ namespace camera
 			camera_origin[2] = game::refdef->org[2];
 		}
 
-		void set_viewpos_now_stub(void* a1)
+		// MWR: there is no rebound equivalent of H2's set_viewpos_now call
+		// (0x1403ACB2D). Hook CG_DrawActiveFrame's CG_CalcViewValues call
+		// (0x140186B9E -> 0x140189AB0) instead: the native view is final when it
+		// returns and every later consumer (FX camera publication at 0x140238840,
+		// scene owner 0x1401A32F0) reads the HMD-applied refdef. The H2 campaign
+		// sequence, fixed sniper, mounted, ladder, notebook, javelin and laser
+		// camera adapters are MW2-specific and are not invoked here.
+		constexpr std::uintptr_t calc_view_values_call_site = 0x140186B9E;
+		constexpr std::uintptr_t calc_view_values = 0x140189AB0;
+		constexpr std::uintptr_t camera_lod_helper = 0x140593AA0;
+		constexpr std::uintptr_t camera_primary_globals = 0x14F79D2A0;
+
+		void set_viewpos_now_stub(const int local_client_num)
 		{
 			const auto caller = reinterpret_cast<std::uintptr_t>(_ReturnAddress());
+			auto* const a1 = reinterpret_cast<void*>(static_cast<std::uintptr_t>(local_client_num));
 			vr::engine_stereo_renderer::observe_camera_state(
 				vr::engine_stereo_renderer::camera_observation_source::set_viewpos_now,
 				vr::engine_stereo_renderer::camera_observation_stage::enter,
 				a1, nullptr, 0.0f, caller);
+			utils::hook::invoke<void>(calc_view_values, local_client_num);
 			paused_free_move();
-			const auto* const ps = game::CG_GetPredictedPlayerState(0);
-			const auto sequence=vr::gameplay::sequences::for_player(ps);
-			const auto sniper=vr::gameplay::fixed_sniper::current(ps);
-			const auto mounted=vr::gameplay::mounted::prepare_camera(game::refdef->org,game::refdef->axis);
-			const auto remote=vr::gameplay::equipment::special::notebook::camera_epoch();
-			const auto camera_request=vr::gameplay::sequences::camera_request_for(sequence,sniper.epoch,mounted.request,remote);
-			const auto rotation=sniper.epoch?vr::game_view::scripted_rotation_reference{}:vr::gameplay::sequences::camera_reference::sample(sequence);
-			int camera_command_time=ps?ps->commandTime:0;
-			if(remote)
-			{
-				// Native remote-camera evaluation at 0x1403B0485 reads the latest
-				// usercmd, not predicted playerState.commandTime. Match that exact
-				// command when removing HMD rotation already sent to the missile.
-				game::usercmd_s latest{};
-				if(game::CL_GetUserCmd(0,game::CL_GetCurrentCmdNumber(0),&latest) && (latest.buttons&0x100000))
-					camera_command_time=latest.serverTime;
-			}
-			if(ps && !mounted.request.epoch && !sniper.epoch)
-				vr::gameplay::ladders::apply_camera_origin(game::refdef->org,ps->viewHeightCurrent,sequence.linked_entity,game::CG_GetGameTime(0));
+			const auto* const ps = game::CG_GetPredictedPlayerState(local_client_num);
 			if (ps && vr::head_pose_bridge::apply_camera(game::refdef->org, game::refdef->axis,
-				camera_command_time, mounted.request.epoch ? mounted.angles.data() : game::cgs->refdefViewAngles,
-				camera_request,&rotation))
+				ps->commandTime, game::cgs->refdefViewAngles))
 			{
 				camera_origin[0] = game::refdef->org[0];
 				camera_origin[1] = game::refdef->org[1];
 				camera_origin[2] = game::refdef->org[2];
 			}
-			// Keep tracking/hand space HMD-owned; only the scene/HUD camera changes.
-			vr::gameplay::weapons::javelin_screen::apply_camera(game::refdef->org,game::refdef->axis,
-				!camera_request.policy.owns_rotation(),&game::refdef->fovX);
-			vr::engine_stereo_renderer::observe_camera_state(
-				vr::engine_stereo_renderer::camera_observation_source::set_viewpos_now,
-				vr::engine_stereo_renderer::camera_observation_stage::after_mod,
-				a1, nullptr, 0.0f, caller);
-			utils::hook::invoke<void>(0x1403B07C0, a1);
-			vr::gameplay::weapon_laser::prepare_mounted();
 			vr::engine_stereo_renderer::observe_camera_state(
 				vr::engine_stereo_renderer::camera_observation_source::set_viewpos_now,
 				vr::engine_stereo_renderer::camera_observation_stage::leave,
@@ -239,9 +218,9 @@ namespace camera
 				vr::engine_stereo_renderer::camera_observation_stage::after_original,
 				a1, a2, a3, caller);
 
-			if ((*cg_paused)->current.integer == 2 || vr::head_pose_bridge::camera_was_applied())
+			if (is_free_move_enabled() || vr::head_pose_bridge::camera_was_applied())
 			{
-				const auto lod_origin = reinterpret_cast<float*>(0x14EEE0890);
+				const auto lod_origin = reinterpret_cast<float*>(camera_primary_globals);
 				lod_origin[0] = game::refdef->org[0];
 				lod_origin[1] = game::refdef->org[1];
 				lod_origin[2] = game::refdef->org[2];
@@ -255,17 +234,17 @@ namespace camera
 
 	void enable_free_move()
 	{
-		(*cg_paused)->current.integer = 2;
+		if (cg_paused && *cg_paused) (*cg_paused)->current.integer = 2;
 	}
 
 	void disable_free_move()
 	{
-		(*cg_paused)->current.integer = 0;
+		if (cg_paused && *cg_paused) (*cg_paused)->current.integer = 0;
 	}
 
 	bool is_free_move_enabled()
 	{
-		return *cg_paused && (*cg_paused)->current.integer == 2;
+		return cg_paused && *cg_paused && (*cg_paused)->current.integer == 2;
 	}
 
 	void set_camera_position(const float x, const float y, const float z)
@@ -344,10 +323,8 @@ namespace camera
 			cl_free_move_scale = dvars::register_float("cl_freemoveScale", 1.f, 0.0001f, 100.f,
 				game::DVAR_FLAG_SAVED, "Scale how fast you move in cl_freemove mode");
 
-			cg_paused = reinterpret_cast<game::dvar_t**>(0x141E39FC0);
-
-			utils::hook::call(0x1403ACB2D, set_viewpos_now_stub);
-			sub_140781090_hook.create(0x140781090, sub_140781090_stub);
+			utils::hook::call(calc_view_values_call_site, set_viewpos_now_stub);
+			sub_140781090_hook.create(camera_lod_helper, sub_140781090_stub);
 		}
 	};
 }

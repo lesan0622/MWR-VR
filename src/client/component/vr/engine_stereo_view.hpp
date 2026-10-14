@@ -10,18 +10,18 @@
 namespace vr::engine_stereo_view
 {
 	inline constexpr std::size_t h2_view_slot_size = 0x170;
-	inline constexpr std::size_t h2_scene_record_size = 0x8090;
-	inline constexpr std::size_t h2_frontend_rebase_view_offset = 0x2CC0;
+	inline constexpr std::size_t h2_scene_record_size = 0x7B80;
+	inline constexpr std::size_t h2_frontend_rebase_view_offset = 0x2A10;
 	inline constexpr std::size_t h2_view_origin_offset = 0x100;
 	// GfxViewInfo +0x188 parameters: +0x08 CURRENT skinned placement.
 	// +0x14 (record +0x19C) belongs to PREV_FRAME_WORLD, not WORLD_MATRIX0.
 	inline constexpr std::size_t h2_current_model_placement_origin_offset = 0x190;
 	inline constexpr std::size_t h2_current_view_projection_offset = 0x80;
-	inline constexpr std::size_t h2_temporal_history_view_projection_offset = 0x2D40;
-	inline constexpr std::size_t h2_previous_view_projection_constant_offset = 0xF90;
-	inline constexpr std::size_t h2_previous_eye_position_constant_offset = 0xFD0;
+	inline constexpr std::size_t h2_temporal_history_view_projection_offset = 0x2A90;
+	inline constexpr std::size_t h2_previous_view_projection_constant_offset = 0xDC0;
+	inline constexpr std::size_t h2_previous_eye_position_constant_offset = 0xE00;
 	// record input (0x580) + CONST_SRC_CODE_INV_SCENE_PROJECTION (207) * 16.
-	inline constexpr std::size_t h2_inverse_scene_projection_constant_offset = 0x1270;
+	inline constexpr std::size_t h2_inverse_scene_projection_constant_offset = 0x10A0;
 	inline constexpr std::size_t h2_relative_eye_offset_offset =
 		h2_frontend_rebase_view_offset + h2_view_origin_offset;
 
@@ -133,25 +133,27 @@ namespace vr::engine_stereo_view
 		contract_mismatch,
 	};
 
-	inline constexpr std::size_t h2_backend_primary_source_pointer_offset = 0x3238;
-	inline constexpr std::size_t h2_backend_rebase_source_pointer_offset = 0x3240;
-	inline constexpr std::size_t h2_backend_primary_origin_offset = 0x2D60;
-	inline constexpr std::size_t h2_backend_relative_eye_offset = 0x2D70;
-	inline constexpr std::size_t h2_backend_xmodel_placement_cache_offset = 0x3270;
+	inline constexpr std::size_t h2_backend_primary_source_pointer_offset = 0x3138;
+	inline constexpr std::size_t h2_backend_rebase_source_pointer_offset = 0x3140;
+	inline constexpr std::size_t h2_backend_primary_origin_offset = 0x2C80;
+	inline constexpr std::size_t h2_backend_relative_eye_offset = 0x2C90;
+	inline constexpr std::size_t h2_backend_xmodel_placement_cache_offset = 0x3170;
 	inline constexpr std::size_t h2_backend_projection_cache_offset = 0x0100;
-	inline constexpr std::size_t h2_backend_eye_projection_offset = 0x2C30;
-	inline constexpr std::size_t h2_backend_depth_hack_near_offset = 0x2D3C;
-	inline constexpr std::size_t h2_backend_projection_cache_version_offset = 0x3160;
-	inline constexpr std::size_t h2_backend_projection_input_version_offset = 0x31EA;
-	inline constexpr std::size_t h2_backend_depth_hack_flags_offset = 0x3340;
-	inline constexpr std::size_t h2_draw_list_descriptor_base = 0x2FC8;
+	inline constexpr std::size_t h2_backend_eye_projection_offset = 0x2B50;
+	inline constexpr std::size_t h2_backend_depth_hack_near_offset = 0x2C5C;
+	inline constexpr std::size_t h2_backend_projection_cache_version_offset = 0x3064;
+	inline constexpr std::size_t h2_backend_projection_input_version_offset = 0x30EE;
+	inline constexpr std::size_t h2_backend_depth_hack_flags_offset = 0x3240;
+	inline constexpr std::size_t h2_draw_list_descriptor_base = 0x2D18;
 	inline constexpr std::size_t h2_draw_list_descriptor_size = 0x130;
 	inline constexpr std::size_t h2_draw_list_active_type_offset = 0x100;
 	inline constexpr std::size_t h2_draw_list_origin_offset = 0x110;
-	inline constexpr std::size_t h2_draw_list_descriptor_count = 68;
-	inline constexpr std::array<std::size_t, 27> h2_camera_model_list_indices{
+	inline constexpr std::size_t h2_draw_list_descriptor_count = 66;
+	// MWR draw lists (names at 0x140801260): 0..23 are camera lists (opaque ..
+	// post resolve lit), 24..26 sun shadow maps, 27 emissive, 28.. shadows.
+	inline constexpr std::array<std::size_t, 25> h2_camera_model_list_indices{
 		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
-		18, 19, 20, 21, 22, 23, 24, 25, 29,
+		18, 19, 20, 21, 22, 23, 27,
 	};
 
 	struct camera_model_origin_update

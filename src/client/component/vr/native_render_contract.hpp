@@ -7,16 +7,16 @@ namespace vr::native_render_contract
 {
 	// These offsets belong to the fingerprint-gated H2 renderer build.  Every
 	// consumer must retain the executable and owner-thread admission contract.
-	inline constexpr std::uintptr_t record_command_stream_offset = 0x570;
-	inline constexpr std::uintptr_t record_frontend_offset = 0x1F68;
-	inline constexpr std::uintptr_t record_type_offset = 0x1F70;
-	inline constexpr std::uintptr_t record_target_0_offset = 0x2C90;
-	inline constexpr std::uintptr_t record_target_1_offset = 0x2C94;
-	inline constexpr std::uintptr_t record_target_2_offset = 0x2C98;
-	inline constexpr std::uintptr_t record_target_selector_offset = 0x2C9C;
+	inline constexpr std::uintptr_t record_command_stream_offset = 0x3C8;
+	inline constexpr std::uintptr_t record_frontend_offset = 0x1CD0;
+	inline constexpr std::uintptr_t record_type_offset = 0x1CE0;
+	inline constexpr std::uintptr_t record_target_0_offset = 0x29E0;
+	inline constexpr std::uintptr_t record_target_1_offset = 0x29E4;
+	inline constexpr std::uintptr_t record_target_2_offset = 0x29E8;
+	inline constexpr std::uintptr_t record_target_selector_offset = 0x29EC;
 	inline constexpr std::uint32_t expected_world_record_type = 4;
 	inline constexpr std::uint32_t frontend_record_capacity = 4;
-	inline constexpr std::uintptr_t target_registry_base = 0x150FD1700;
+	inline constexpr std::uintptr_t target_registry_base = 0x151868300;
 	inline constexpr std::uintptr_t target_registry_stride = 0x40;
 	inline constexpr std::uint32_t target_registry_capacity = 304;
 	inline constexpr std::size_t target_registry_size =

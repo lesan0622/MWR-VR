@@ -8,8 +8,8 @@
 
 namespace vr::engine_stereo_backend_view
 {
-	inline constexpr std::size_t source_pointer_offset = 0x3238;
-	inline constexpr std::size_t copied_view_offset = 0x2BF0;
+	inline constexpr std::size_t source_pointer_offset = 0x3138;
+	inline constexpr std::size_t copied_view_offset = 0x2B10;
 
 	enum class gate_state : std::uint8_t
 	{
