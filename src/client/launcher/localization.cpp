@@ -9,7 +9,7 @@ namespace launcher_localization
 	namespace
 	{
 		using nlohmann::json;
-		constexpr auto preferences_path = "players2/h2-mod/launcher.json";
+		constexpr auto preferences_path = "players2/overlord-mwr/launcher.json";
 		std::string system_locale()
 		{
 			wchar_t names[4096]{};

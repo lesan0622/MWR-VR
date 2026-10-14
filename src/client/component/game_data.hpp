@@ -5,10 +5,11 @@
 
 namespace game_data
 {
-	inline constexpr std::uintmax_t supported_binary_size = 0xE1E0C8;
+	// MWR Steam build h1_sp64_ship.exe (20213128 bytes).
+	inline constexpr std::uintmax_t supported_binary_size = 0x1346D88;
 	inline std::string get_game_binary_path()
 	{
-		return std::ifstream("MW2CR.exe").good() ? "MW2CR.exe" : "h2_sp64_bnet_ship.exe";
+		return "h1_sp64_ship.exe";
 	}
 
 	// Match the loader's supported binary without loading the game or allocating

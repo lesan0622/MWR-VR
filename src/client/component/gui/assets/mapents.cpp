@@ -151,7 +151,7 @@ namespace gui::asset_list::mapents
 				parse_thread.join();
 			}
 
-			utils::io::remove_directory("h2-mod/tmp");
+			utils::io::remove_directory("overlord-mwr/tmp");
 		}
 	};
 }

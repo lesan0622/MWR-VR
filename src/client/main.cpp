@@ -30,6 +30,23 @@ namespace
 
 	BOOL WINAPI system_parameters_info_a(const UINT uiAction, const UINT uiParam, const PVOID pvParam, const UINT fWinIni)
 	{
+		// MWR: the first SystemParametersInfoA call happens after Arxan has
+		// decrypted .text (h1-mod's unpack point).
+		try
+		{
+			component_loader::post_unpack();
+		}
+		catch (const std::exception& e)
+		{
+			MessageBoxA(nullptr, e.what(), "ERROR", MB_ICONERROR);
+			exit_hook(1);
+		}
+		catch (...)
+		{
+			MessageBoxA(nullptr, "Unknown exception during component post_unpack", "ERROR", MB_ICONERROR);
+			exit_hook(1);
+		}
+
 		return SystemParametersInfoA(uiAction, uiParam, pvParam, fWinIni);
 	}
 
@@ -44,24 +61,6 @@ namespace
 		if (proc_name == "ExitProcess")
 		{
 			return reinterpret_cast<FARPROC>(exit_hook);
-		}
-
-		if (proc_name == "InitializeCriticalSectionEx")
-		{
-			try
-			{
-				component_loader::post_unpack();
-			}
-			catch (const std::exception& e)
-			{
-				MessageBoxA(nullptr, e.what(), "ERROR", MB_ICONERROR);
-				exit_hook(1);
-			}
-			catch (...)
-			{
-				MessageBoxA(nullptr, "Unknown exception during component post_unpack", "ERROR", MB_ICONERROR);
-				exit_hook(1);
-			}
 		}
 
 		return GetProcAddress(hModule, lpProcName);
@@ -97,12 +96,14 @@ namespace
 
 	void get_aslr_patched_binary(std::string* binary, std::string* data)
 	{
-		const auto patched_binary = (utils::properties::get_appdata_path() / "bin/h2_sp64_bnet_ship.exe"s).generic_string();
+		const auto patched_binary = (utils::properties::get_appdata_path() / "bin/h1_sp64_ship.exe"s).generic_string();
 
 		try
 		{
 			apply_aslr_patch(data);
-			if (!utils::io::file_exists(patched_binary) && !utils::io::write_file(patched_binary, *data, false))
+			std::string cached_data{};
+			if ((!utils::io::read_file(patched_binary, &cached_data) || cached_data != *data)
+				&& !utils::io::write_file(patched_binary, *data, false))
 			{
 				throw std::runtime_error("Could not write file");
 			}
@@ -125,6 +126,13 @@ namespace
 
 		loader.set_import_resolver([self](const std::string& library, const std::string& function) -> void*
 		{
+			// MWR imports steam_api64; resolve it to the exported emulation
+			// (h1-mod). Arxan needs one genuine import.
+			if (library == "steam_api64.dll" && function != "SteamAPI_GetSteamInstallPath")
+			{
+				return self.get_proc<FARPROC>(function);
+			}
+
 			if (function == "ExitProcess")
 			{
 				return exit_hook;
@@ -147,7 +155,7 @@ namespace
 		if (!utils::io::read_file(binary, &data))
 		{
 			throw std::runtime_error(utils::string::va(
-				"Failed to read game binary (%s)!\nPlease copy overlord.exe into your Call of Duty: Modern Warfare 2 Campaign Remastered installation folder and run it from there.",
+				"Failed to read game binary (%s)!\nPlease copy overlord.exe into your Call of Duty: Modern Warfare Remastered installation folder and run it from there.",
 				binary.data()));
 		}
 
@@ -164,15 +172,17 @@ namespace
 
 	void remove_crash_file()
 	{
-		utils::io::remove_file("__h2Exe");
+		utils::io::remove_file("__h1Exe");
 	}
 
 	void verify_version()
 	{
+		// On-disk (still encrypted) .text dword of the supported Steam
+		// h1_sp64_ship.exe, sha256 3d23e869...b41f9190.
 		const auto value = *reinterpret_cast<DWORD*>(0x140123456);
-		if (value != 0xE465E151)
+		if (value != 0xD0BC8AA6)
 		{
-			throw std::runtime_error("Unsupported Call of Duty: Modern Warfare 2 Campaign Remastered version");
+			throw std::runtime_error("Unsupported Call of Duty: Modern Warfare Remastered version");
 		}
 
 		target_identity::mark_compatibility_probe_passed();

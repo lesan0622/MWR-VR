@@ -121,7 +121,7 @@ namespace scheduler
 			{
 				vr::engine_stereo_renderer::end_frame_state_transition();
 			});
-			reinterpret_cast<void(*)()>(0x1403E1640)();
+			reinterpret_cast<void(*)()>(0x1401BCE80)();
 		}
 
 		void frontend_handoff_stub()
@@ -131,7 +131,7 @@ namespace scheduler
 			{
 				vr::engine_stereo_renderer::end_frontend_handoff();
 			});
-			reinterpret_cast<void(*)()>(0x14076DFA0)();
+			reinterpret_cast<void(*)()>(0x1405827B0)();
 		}
 
 		void r_end_frame_stub()
@@ -272,13 +272,13 @@ namespace scheduler
 			// Recovered top-level order at 0x1403D8D0A is frame-state transition,
 			// command cleanup, then frontend handoff. Keep all three as passive
 			// ownership observations; none of these hooks may synthesize a scene.
-			utils::hook::call(0x1403D8D0A,
+			utils::hook::call(0x1401B1DAA,
 				scheduler::frame_state_transition_stub);
-			r_end_frame_hook.create(0x14076D7B0, scheduler::r_end_frame_stub);
-			utils::hook::call(0x1403D8D14, scheduler::frontend_handoff_stub);
-			g_run_frame_hook.create(0x1404CB030, scheduler::server_frame_stub);
-			main_frame_hook.create(0x140417FA0, scheduler::main_frame_stub);
-			hks_frame_hook.create(0x140327880, scheduler::hks_frame_stub);
+			r_end_frame_hook.create(0x140581FB0, scheduler::r_end_frame_stub);
+			utils::hook::call(0x1401B1DB4, scheduler::frontend_handoff_stub);
+			g_run_frame_hook.create(0x1402992E0, scheduler::server_frame_stub);
+			main_frame_hook.create(0x1401B1DF0, scheduler::main_frame_stub);
+			hks_frame_hook.create(0x1401028D0, scheduler::hks_frame_stub);
 		}
 
 		void pre_destroy() override

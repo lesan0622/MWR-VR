@@ -333,7 +333,7 @@ namespace vr::native_hud_capture
 			gpu.staging.Reset();
 			scheduler::once([pixels = std::move(pixels), width, height] {
 				const auto done = gsl::finally([] { diagnostic_busy.store(false); });
-				const auto path = "h2-mod/vr/hud-capture-" + std::to_string(GetTickCount64()) + ".tga";
+				const auto path = "overlord-mwr/vr/hud-capture-" + std::to_string(GetTickCount64()) + ".tga";
 				if (utils::io::write_file(path, pixels))
 					console::info("[VR HUD capture] saved %s (%ux%u); blur pass NOT included\n",
 						path.c_str(), width, height);

@@ -206,12 +206,9 @@ prebuildcommands {"pushd %{_MAIN_SCRIPT_DIR}", "tools\\premake5 generate-buildin
 local function copy_client_resources(destination)
 	postbuildcommands {
 		'{COPYDIR} "%{wks.location}/../data/vr_input" "' .. path.join(destination, "vr_input") .. '"',
-		'{COPYDIR} "%{wks.location}/../data/ui_scripts/vr_gameplay" "' .. path.join(destination, "h2-mod/ui_scripts/vr_gameplay") .. '"',
-		'{COPYDIR} "%{wks.location}/../data/cdata/scripts/killfeed" "' .. path.join(destination, "h2-mod/scripts/killfeed") .. '"',
-		'{MKDIR} "' .. path.join(destination, "h2-mod/scripts") .. '"',
-		'{COPYFILE} "%{wks.location}/../data/cdata/scripts/killfeed_ducking.gsc" "' .. path.join(destination, "h2-mod/scripts/killfeed_ducking.gsc") .. '"',
-		'{MKDIR} "' .. path.join(destination, "h2-mod/zone") .. '"',
-			'{COPYFILE} "%{wks.location}/../data/zone/h2_vr_sounds.ff" "' .. path.join(destination, "h2-mod/zone/h2_vr_sounds.ff") .. '"',
+		-- MWR port: H2 GSC scripts and the H2 VR sound zone do not load on
+		-- h1_sp64_ship.exe; only the LUI gameplay scripts are staged.
+		'{COPYDIR} "%{wks.location}/../data/ui_scripts/vr_gameplay" "' .. path.join(destination, "overlord-mwr/ui_scripts/vr_gameplay") .. '"',
 		'{MKDIR} "' .. path.join(destination, "steamvr") .. '"',
 		'{COPYFILE} "%{wks.location}/../assets/steamvr/cover.png" "' .. path.join(destination, "steamvr/cover.png") .. '"',
 		'{COPYFILE} "%{wks.location}/../assets/steamvr/cover-small.png" "' .. path.join(destination, "steamvr/cover-small.png") .. '"',

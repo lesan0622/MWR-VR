@@ -51,7 +51,9 @@ namespace game_data
 
 	std::string get_config_file_path()
 	{
-		return H2_MOD_PLAYERS_FOLDER "/config.cfg";
+		// MWR keeps its profile directly in players2 until the profile folder
+		// redirect is rebound for h1_sp64_ship.exe.
+		return PLAYERS_FOLDER "config.cfg";
 	}
 
 	std::string get_config_source_path()

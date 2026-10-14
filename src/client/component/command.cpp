@@ -178,7 +178,7 @@ namespace command
 	public:
 		void post_unpack() override
 		{
-			utils::hook::jump(0x1405A74F0, dvar_command_stub, true);
+			utils::hook::jump(0x1403A7C80, dvar_command_stub, true);
 
 			scheduler::once([]
 			{
@@ -191,16 +191,9 @@ namespace command
 			{
 				const auto map = params.get(1);
 
-				const auto exists = utils::hook::invoke<bool>(0x140412B50, map, 0);
-
-				if (!exists)
-				{
-					console::error("map '%s' not found\n", map);
-					return;
-				}
-
-				// SV_SpawnServer
-				utils::hook::invoke<void>(0x1406B3AA0, map, 0, 0, 0, 0);
+				// MWR: the H2 map-exists/SV_SpawnServer entry points are not rebound;
+				// route through the native map command instead.
+				execute(utils::string::va("map %s", map), false);
 			});
 
 			add("listassetpool", [](const params& params)

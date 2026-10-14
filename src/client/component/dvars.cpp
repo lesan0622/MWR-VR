@@ -447,18 +447,17 @@ namespace dvars
 
 		void post_unpack() override
 		{
-			dvar_register_bool_hook.create(0x140617BB0, &dvar_register_bool);
-			dvar_register_float_hook.create(0x140617F80, &dvar_register_float);
-			dvar_register_int_hook.create(0x140618090, &dvar_register_int);
-			dvar_register_string_hook.create(0x140618170, &dvar_register_string);
-			dvar_register_vector2_hook.create(0x140618250, &dvar_register_vector2);
-			dvar_register_vector3_hook.create(0x140618390, &dvar_register_vector3);
+			dvar_register_bool_hook.create(0x140419220, &dvar_register_bool);
+			dvar_register_float_hook.create(0x1404195F0, &dvar_register_float);
+			dvar_register_int_hook.create(0x140419700, &dvar_register_int);
+			dvar_register_string_hook.create(0x1404197E0, &dvar_register_string);
+			dvar_register_vector2_hook.create(0x1404198C0, &dvar_register_vector2);
+			dvar_register_vector3_hook.create(0x140419A00, &dvar_register_vector3);
 
-			dvar_set_bool_hook.create(0x14061A310, &dvar_set_bool);
-			dvar_set_float_hook.create(0x14061A750, &dvar_set_float);
-			dvar_set_int_hook.create(0x14061A9D0, &dvar_set_int);
-			dvar_set_string_hook.create(0x14061ABE0, &dvar_set_string);
-			dvar_set_from_string_hook.create(0x14061A910, &dvar_set_from_string);
+			// MWR has no two-argument Dvar_Set* entry points: its setters take a
+			// DvarSetSource (0x14041BC70 float, 0x14041BEF0 int, 0x14041C100
+			// string, 0x14041BE20 from-string). Nothing uses dvars::disable, so
+			// the H2 setter hooks are not installed.
 		}
 	};
 }

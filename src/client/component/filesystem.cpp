@@ -33,7 +33,7 @@ namespace filesystem
 
 			filesystem::register_path(utils::properties::get_appdata_path() / CLIENT_DATA_FOLDER);
 			filesystem::register_path(L".");
-			filesystem::register_path(L"h2-mod");
+			filesystem::register_path(L"overlord-mwr");
 
 			const auto mod_path = utils::flags::get_flag("mod");
 			if (mod_path.has_value())
@@ -41,7 +41,7 @@ namespace filesystem
 				mods::set_mod(mod_path.value());
 			}
 
-			utils::hook::invoke<void>(0x14060BF50, name);
+			utils::hook::invoke<void>(0x14040D890, name);
 		}
 
 		std::vector<std::filesystem::path> get_paths(const std::filesystem::path& path)
@@ -236,7 +236,7 @@ namespace filesystem
 		static std::vector<std::filesystem::path> allowed_directories =
 		{
 			{std::filesystem::weakly_canonical("mods")},
-			{std::filesystem::weakly_canonical("h2-mod")},
+			{std::filesystem::weakly_canonical("overlord-mwr")},
 			{std::filesystem::weakly_canonical("players2/default")},
 		};
 
@@ -269,8 +269,10 @@ namespace filesystem
 	public:
 		void post_unpack() override
 		{
-			utils::hook::call(0x14060B052, fs_startup_stub);
-			utils::hook::jump(0x140624050, sys_default_install_path_stub);
+			utils::hook::call(0x14040C992, fs_startup_stub);
+			utils::hook::jump(0x14042CE00, sys_default_install_path_stub);
+			// fs_game flags (h1-mod)
+			utils::hook::set<uint32_t>(0x14040D2A5, 0);
 		}
 	};
 }

@@ -1,5 +1,6 @@
 #include <std_include.hpp>
 #include "component_loader.hpp"
+#include "mwr_port.hpp"
 
 #include <condition_variable>
 
@@ -27,6 +28,11 @@ namespace
 
 void component_loader::register_component(std::unique_ptr<component_interface>&& component_)
 {
+	if (!mwr_port::is_enabled(typeid(*component_).name()))
+	{
+		return;
+	}
+
 	get_components().push_back(std::move(component_));
 }
 

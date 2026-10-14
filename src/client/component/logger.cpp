@@ -164,17 +164,10 @@ namespace logger
 	public:
 		void post_unpack() override
 		{
-			utils::hook::jump(0x14032C620, print_warning, true);
-			utils::hook::jump(0x14032C630, print_warning, true);
-
-			utils::hook::jump(0x14032AEF0, lui_print, true);
-			com_error_hook.create(0x1405A2D80, com_error_stub);
-
-			utils::hook::jump(0x14013A98C, print);
-
-			utils::hook::call(0x140791A01, r_warn_once_per_frame_vsnprintf_stub);
-
-			bnet_print_hook.create(0x1402736D0, bnet_print_stub);
+			// MWR: LUI print (h1-mod logger, 0x1400E6E30) and Com_Error. The H2
+			// warning/bnet/renderer-warning sites have no rebound MWR equivalent.
+			utils::hook::jump(0x1400E6E30, lui_print, true);
+			com_error_hook.create(game::Com_Error, com_error_stub);
 
 			logger_dev = dvars::register_bool("logger_dev", false, game::DVAR_FLAG_SAVED, "Print dev stuff");
 		}
