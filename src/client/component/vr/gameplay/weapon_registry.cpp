@@ -1,4 +1,5 @@
 #include "weapon_registry.hpp"
+#include "weapons/derived_profiles.hpp"
 #include "weapon_profiles.hpp"
 #include "weapon_profile_binding.hpp"
 #include "weapon_reload_profiles.hpp"
@@ -149,6 +150,8 @@ namespace vr::gameplay::weapons
 								candidate.value->receiver == receiver.name) return match;
 						return {nullptr, "assembly selector returned an unregistered variant"};
 					}
+				// MWR: no authored recipe; use a profile derived from the native idle pose.
+				if (const auto* value = derived::find(models)) return {value, "derived from native idle pose"};
 				return {};
 			}
 		return {};

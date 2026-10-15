@@ -27,20 +27,22 @@ namespace vr::gameplay::native_animation
 		static_assert(offsetof(anim_info, weight) == 0x44);
 		static_assert(offsetof(anim_info, time) == 0x28);
 	} // namespace
+	// MWR: XAnimInfo getter 0x14046C120 (pool 0x14D64D570, stride 0x50; H2
+	// 0x14065A080) and the currentTime read 0x1404701D8 (pool+0x28; H2 0x14065E158).
 	bool initialize()
 	{
-		constexpr std::uint8_t bytes[]{0x48, 0x63, 0xc1, 0x48, 0x8d, 0x0d, 0x06, 0xe6, 0x69, 0x0c, 0x48,
+		constexpr std::uint8_t bytes[]{0x48, 0x63, 0xc1, 0x48, 0x8d, 0x0d, 0x46, 0x14, 0x1e, 0x0d, 0x48,
 									   0x8d, 0x04, 0x80, 0x48, 0xc1, 0xe0, 0x04, 0x48, 0x03, 0xc1, 0xc3};
 		std::array<std::uint8_t, sizeof(bytes)> mask{};
 		mask.fill(0xff);
 		verified = static_cast<bool>(utils::hook_validation::verify_masked_bytes(
-			reinterpret_cast<void*>(0x14065A080), {bytes, mask.data(), sizeof(bytes)}));
+			reinterpret_cast<void*>(0x14046C120), {bytes, mask.data(), sizeof(bytes)}));
 		// Scr_GetAnimTime (method 0x8159) -> 0x14065E130: the returned
 		// scalar is XAnimInfo[leaf].currentTime, pool base + 0x28, stride 80.
-		constexpr std::uint8_t time_bytes[]{0x48,0x8d,0x05,0x59,0xa5,0x69,0x0c,0xf3,0x0f,0x10,0x04,0xc8};
+		constexpr std::uint8_t time_bytes[]{0x48,0x8d,0x05,0xb9,0xd3,0x1d,0x0d,0xf3,0x0f,0x10,0x04,0xc8};
 		std::array<std::uint8_t,sizeof(time_bytes)> time_mask{};time_mask.fill(255);
 		time_verified=static_cast<bool>(utils::hook_validation::verify_masked_bytes(
-			reinterpret_cast<void*>(0x14065E158),{time_bytes,time_mask.data(),sizeof(time_bytes)}));
+			reinterpret_cast<void*>(0x1404701D8),{time_bytes,time_mask.data(),sizeof(time_bytes)}));
 		return verified;
 	}
 	snapshot sample(const void* tree) noexcept
@@ -65,7 +67,7 @@ namespace vr::gameplay::native_animation
 				std::find(visited.begin(), visited.begin() + seen, id) != visited.begin() + seen)
 				return {};
 			visited[seen++] = id;
-			const auto* info = utils::hook::invoke<const anim_info*>(0x14065A080, static_cast<int>(id));
+			const auto* info = utils::hook::invoke<const anim_info*>(0x14046C120, static_cast<int>(id));
 			if (!info || !std::isfinite(info->weight))
 				return {};
 			if (queued + 2 > pending.size())

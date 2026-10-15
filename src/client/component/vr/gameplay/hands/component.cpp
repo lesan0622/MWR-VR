@@ -1,5 +1,6 @@
 #include <std_include.hpp>
 #include "status.hpp"
+#include "../weapons/derived_profiles.hpp"
 #include "../../h2/entrypoints.hpp"
 #include "component/vr/gameplay/hands/rig_builder.hpp"
 #include "component/vr/gameplay/weapon_pose_library.hpp"
@@ -991,6 +992,22 @@ namespace vr::gameplay::hands
 				probe.native_wrist[hand] = object->matrices[layout.arms[hand].wrist].position;
 				probe.native_shoulder[hand] = object->matrices[layout.arms[hand].shoulder].position;
 				probe.native_elbow[hand] = object->matrices[layout.arms[hand].elbow].position;
+			}
+			// MWR: without an authored recipe, derive one from this native (pre-IK)
+			// skeleton once the hands are at rest on the gun (the native idle pose).
+			if (!empty && !independent && !solver().binding.active_profile)
+			{
+				std::array<model_definition, 32> derived_models{};
+				std::array<bone_definition, 256> derived_bones{};
+				if (describe(*object, derived_models, derived_bones) &&
+				    weapons::derived::observe({derived_models.data(), object->model_count},
+				                              layout,
+				                              {derived_bones.data(), object->bone_count},
+				                              {object->matrices, size_t(layout.count)}))
+				{
+					solver().binding_cache.invalidate();
+					console::info("[VR hands] derived native idle grip profile for %s\n", probe.weapon_name.data());
+				}
 			}
 			std::array<bool, 2> limited{};
 			if (empty)
@@ -2070,7 +2087,7 @@ namespace vr::gameplay::hands
 
 		void print_status()
 		{
-			const auto formatted = format_status();
+			const auto formatted = format_status() + weapons::derived::status();
 			console::info("%s", formatted.c_str());
 			if (!utils::io::write_file_atomic("minidumps/overlord-hands-latest.txt", formatted))
 				console::warn("[VR hands] Could not persist hand status snapshot\n");
