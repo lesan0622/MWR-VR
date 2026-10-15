@@ -1,6 +1,7 @@
 #include <std_include.hpp>
 #include "status.hpp"
 #include "../weapons/derived_profiles.hpp"
+#include "../weapon_capture.hpp"
 #include "../../h2/entrypoints.hpp"
 #include "component/vr/gameplay/hands/rig_builder.hpp"
 #include "component/vr/gameplay/weapon_pose_library.hpp"
@@ -992,6 +993,16 @@ namespace vr::gameplay::hands
 				probe.native_wrist[hand] = object->matrices[layout.arms[hand].wrist].position;
 				probe.native_shoulder[hand] = object->matrices[layout.arms[hand].shoulder].position;
 				probe.native_elbow[hand] = object->matrices[layout.arms[hand].elbow].position;
+			}
+			// MWR: read-only native capture for recipe authoring (vr_capture_*).
+			if (!empty && !independent && weapon_capture::wants())
+			{
+				std::array<model_definition, 32> capture_models{};
+				std::array<bone_definition, 256> capture_bones{};
+				if (describe(*object, capture_models, capture_bones))
+					weapon_capture::observe(object->tree, owner.weapon, {capture_models.data(), object->model_count},
+					                        layout, {capture_bones.data(), object->bone_count},
+					                        {object->matrices, size_t(layout.count)});
 			}
 			// MWR: without an authored recipe, derive one from this native (pre-IK)
 			// skeleton once the hands are at rest on the gun (the native idle pose).

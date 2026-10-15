@@ -40,6 +40,7 @@ namespace mwr_port
 		// "vr::gameplay::mwr_weapon_pose" (simplified rigid viewmodel) is replaced by the original hands solver.
 		"vr::gameplay::hands",
 		"vr::gameplay::weapons",
+		"vr::gameplay::weapon_capture",
 	};
 
 	// typeid names look like "class vr::gameplay::foo::component".
