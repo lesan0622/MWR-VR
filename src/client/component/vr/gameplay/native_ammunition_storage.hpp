@@ -10,7 +10,7 @@ namespace vr::gameplay::weapons::native_ammunition::storage
 	// H2 sparse stores: an absent identity reads as zero (BG_GetAmmoInClip),
 	// not an invalid weapon. Identity padding is never compared. Writes require
 	// the caller's owning server scope and already validated inventory token.
-	inline constexpr std::size_t extent=0x4a4+15*24;
+	inline constexpr std::size_t extent=0x470+15*24; // MWR clip cells +0x470, reserve +0x3BC (H2 0x4a4/0x3f0)
 	struct cell { std::size_t at{}, vacant{}; int count{}; bool valid{}; };
 	struct view { cell clip{}, reserve{}; bool valid() const noexcept { return clip.valid && reserve.valid; } };
 	template<class T> T read(std::span<const std::byte> bytes,std::size_t at) noexcept
@@ -24,7 +24,7 @@ namespace vr::gameplay::weapons::native_ammunition::storage
 		int matches{};
 		for (std::size_t i=0;i<15;++i)
 		{
-			const auto at=clip ? 0x4a4+i*24 : 0x3f0+i*12;
+			const auto at=clip ? 0x470+i*24 : 0x3bc+i*12;
 			const auto identity=read<std::uint64_t>(bytes,at)&mask;
 			if (identity==key) { ++matches; out.at=at; out.count=read<int>(bytes,at+8); }
 			else if (!identity && !out.vacant) out.vacant=at;
@@ -50,7 +50,7 @@ namespace vr::gameplay::weapons::native_ammunition::storage
 			{
 				for(size_t i=0;i<15;++i)
 				{
-					const auto at=0x3f0+i*12;
+					const auto at=0x3bc+i*12;
 					if(!(read<std::uint64_t>(bytes,at)&0xffffffffffffull) && (!n || cells[0].at!=at)){target.at=at;break;}
 				}
 				if(!target.at)return false;

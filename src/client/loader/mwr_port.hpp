@@ -41,6 +41,8 @@ namespace mwr_port
 		"vr::gameplay::hands",
 		"vr::gameplay::weapons",
 		"vr::gameplay::weapon_capture",
+		"vr::gameplay::weapons::reload_boundary",
+		"vr::gameplay::weapons::viewmodel_visibility::visibility_component",
 	};
 
 	// typeid names look like "class vr::gameplay::foo::component".

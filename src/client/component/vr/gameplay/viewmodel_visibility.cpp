@@ -17,9 +17,16 @@ namespace vr::gameplay::weapons::viewmodel_visibility
 {
 	namespace
 	{
-		constexpr std::uintptr_t hidden_site=0x14071F434, hidden_target=0x140658AB0;
-		constexpr std::uintptr_t rigid_site=0x14071F7C1, rigid_target=0x14071E680;
-		constexpr std::uintptr_t skin_site=0x14071F879, skin_target=0x14071E020;
+		// MWR R_AddDObjSurfaces 0x140536330: DObj hide-bit getter call (getter
+		// 0x14046ABB0 is byte-identical to H2 0x140658AB0), rigid surfaces
+		// 0x140535820 and skinned surfaces 0x1405351E0 (H2 sites 0x14071F434/
+		// 0x14071F7C1/0x14071F879, same spacing).
+		constexpr std::uintptr_t hidden_site=0x1405365CF, hidden_target=0x14046ABB0;
+		constexpr std::uintptr_t rigid_site=0x140536959, rigid_target=0x140535820;
+		constexpr std::uintptr_t skin_site=0x140536A11, skin_target=0x1405351E0;
+		// TODO(mwr): rigid/skinned surface subsets copy XSurface metadata and build
+		// index buffers; enable them after the H1 XSurface layout is verified.
+		constexpr bool surface_subsets_verified = false;
 		std::atomic_bool alive{true}, hidden_ready{}, rigid_ready{}, skin_ready{};
 		thread_local const void* skin_owner{};
 		std::atomic_uint64_t filtered{}, rejected{};
@@ -301,7 +308,7 @@ namespace vr::gameplay::weapons::viewmodel_visibility
 			{ utils::hook::call(hidden_site,hidden_stub); hidden_ready=true; }
 			constexpr std::uint8_t prologue[]{0x4c,0x8b,0xdc,0x53,0x55,0x41,0x57,0x48,0x81,0xec,0x90,0x01,0x00,0x00};
 			std::array<std::uint8_t,sizeof(prologue)> rigid_mask{}; rigid_mask.fill(0xff);
-			if (verify_call(rigid_site,rigid_target) &&
+			if (surface_subsets_verified && verify_call(rigid_site,rigid_target) &&
 				utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(rigid_target),{prologue,rigid_mask.data(),rigid_mask.size()}))
 			{ utils::hook::call(rigid_site,rigid_stub); rigid_ready=true; }
 			// The existing SkinSceneDObj boundary provides the scoped object. This
@@ -309,7 +316,7 @@ namespace vr::gameplay::weapons::viewmodel_visibility
 			// Independent held objects require these arm subsets in every build.
 			// Omitting the hook prevents prepare_hands(), bringing back the native
 			// foreground depth, equip transitions and scope-ADS model visibility.
-			if (verify_call(skin_site,skin_target) && !utils::hook::is_relatively_far(
+			if (surface_subsets_verified && verify_call(skin_site,skin_target) && !utils::hook::is_relatively_far(
 				reinterpret_cast<void*>(skin_site),reinterpret_cast<void*>(skin_stub)))
 			{ utils::hook::call(skin_site,skin_stub); skin_ready=true; }
 		}

@@ -22,10 +22,10 @@ namespace vr::gameplay::weapons::native_ammunition
 		static_assert(offsetof(game::WeaponDef,noPartialReload)==reload_layout::no_partial_offset);
 		static_assert(offsetof(game::WeaponDef,segmentedReload)==reload_layout::segmented_offset);
 		bool verified{};
-		constexpr std::uintptr_t clip_key_address = 0x14069D250;
-		constexpr std::uintptr_t ammo_key_address = 0x14069D0B0;
-		constexpr std::uintptr_t predicted_ps = 0x141BB3C30;
-		constexpr std::uintptr_t weapon_definitions = 0x14CE01580;
+		constexpr std::uintptr_t clip_key_address = 0x1404AE450; // MWR (H2 0x14069D250)
+		constexpr std::uintptr_t ammo_key_address = 0x1404AE2B0; // MWR (H2 0x14069D0B0)
+		constexpr std::uintptr_t predicted_ps = 0x1420E67A0; // MWR cg predicted playerState (H2 0x141BB3C30)
+		constexpr std::uintptr_t weapon_definitions = 0x14D750C40; // MWR (H2 0x14CE01580)
 		bool carried_verified{}, reload_verified{};
 		bool has_ammunition(std::uint32_t weapon) noexcept
 		{
@@ -60,9 +60,9 @@ namespace vr::gameplay::weapons::native_ammunition
 			if (!token || (token & ~0x1ffu)) return false;
 			int matches{};
 			for (std::size_t i=0;i<15;++i)
-				if (read<std::uint32_t>(ps,0x2f8+i*4)==token)
+				if (read<std::uint32_t>(ps,0x2cc+i*4)==token)
 				{
-					if (read<std::uint8_t>(ps,0x334+i*8+1)) return false;
+					if (read<std::uint8_t>(ps,0x308+i*8+1)) return false;
 					++matches;
 				}
 			return matches==1;
@@ -81,7 +81,7 @@ namespace vr::gameplay::weapons::native_ammunition
 				if (!shape) return false;
 				const auto name = read<const char*>(definition, 0);
 				if (reinterpret_cast<std::uintptr_t>(name) < 0x10000) return false;
-				out.animation = read<int>(ps, 0x2b0) & ~0x800;
+				out.animation = read<int>(ps, 0x294) & ~0x800;
 				out.base_capacity = shape->capacity;copied_shape=*shape;
 				if (!game::weapon_defs[token]) return false;
 				out.bolt_action=game::weapon_defs[token]->boltAction;
@@ -103,11 +103,14 @@ namespace vr::gameplay::weapons::native_ammunition
 			const auto cells=storage::observe({static_cast<const std::byte*>(ps),storage::extent},clip_key,ammo_key);
 			out.loaded=cells.clip.count; out.reserve=cells.reserve.count;
 			out.weapon = token;
-			out.weapon_state = read<int>(ps, 0x2c0);
-			out.weapon_time = read<int>(ps, 0x2b4);
+			out.weapon_state = read<int>(ps, 0x2a4);
+			out.weapon_time = read<int>(ps, 0x298);
 			return out.valid = cells.valid();
 		}
 	} // namespace
+	// MWR playerState weapon block: list +0x2CC, per-weapon +0x308 (8 bytes),
+	// per-hand state stride 0x1C at anim +0x294/time +0x298/state +0x2A4, weapon
+	// +0x38C, flags +0x390, reserve cells +0x3BC, clip cells +0x470 (H2 -0x2C/-0x1C/-0x30/-0x34).
 	bool initialize()
 	{
 		// Separate key types: clip identity compares uint32 + byte; reserve also
@@ -115,20 +118,20 @@ namespace vr::gameplay::weapons::native_ammunition
 		constexpr std::uint8_t clip[]{0x89, 0x4c, 0x24, 0x08, 0x53, 0x48, 0x83, 0xec, 0x20};
 		constexpr std::uint8_t ammo[]{0x48, 0x89, 0x5c, 0x24, 0x10, 0x89, 0x4c,
 									  0x24, 0x08, 0x57, 0x48, 0x83, 0xec, 0x20};
-		constexpr std::uint8_t clip_array[]{0x48, 0x8d, 0x8b, 0xa4, 0x04, 0x00, 0x00};
-		constexpr std::uint8_t reserve_array[]{0x48, 0x8d, 0x8f, 0xf0, 0x03, 0x00, 0x00};
-		constexpr std::uint8_t prediction[]{0x48, 0x8d, 0x0d, 0x22, 0x3b, 0x85, 0x01};
+		constexpr std::uint8_t clip_array[]{0x48, 0x8d, 0x8b, 0x70, 0x04, 0x00, 0x00};
+		constexpr std::uint8_t reserve_array[]{0x48, 0x8d, 0x8f, 0xbc, 0x03, 0x00, 0x00};
+		constexpr std::uint8_t prediction[]{0x48, 0x8d, 0x0d, 0xb6, 0xc3, 0xfd, 0x01};
 		verified = verify(clip_key_address, clip) && verify(ammo_key_address, ammo) &&
-				   verify(0x140691BBB, clip_array) && verify(0x140696555, reserve_array) &&
-				   verify(0x140360107, prediction);
-		constexpr std::uint8_t table[]{0x4c,0x8d,0x35,0x29,0x0d,0x76,0x0c};
+				   verify(0x140498646, clip_array) && verify(0x1404A47C6, reserve_array) &&
+				   verify(0x14010A3E3, prediction);
+		constexpr std::uint8_t table[]{0x4c,0x8d,0x35,0xe8,0xa1,0x2a,0x0d};
 		constexpr std::uint8_t dual[]{0x0f,0xb6,0x41,0x01};
-		constexpr std::uint8_t no_partial[]{0x41,0xb8,0x95,0x0e,0x00,0x00};
-		constexpr std::uint8_t segmented[]{0x41,0xb8,0x96,0x0e,0x00,0x00};
-		constexpr std::uint8_t add[]{0x41,0xb8,0x34,0x0b,0x00,0x00};
-		carried_verified = verified && verify(0x1406A6DC6, dual);
-		reload_verified = carried_verified && verify(0x1406A0850, table) &&
-			verify(0x1406A6BE4, no_partial) && verify(0x1406A7E94, segmented) && verify(0x1406A76F4, add);
+		constexpr std::uint8_t no_partial[]{0x41,0xb8,0xb5,0x0d,0x00,0x00};
+		constexpr std::uint8_t segmented[]{0x41,0xb8,0xb6,0x0d,0x00,0x00};
+		constexpr std::uint8_t add[]{0x41,0xb8,0x64,0x0a,0x00,0x00};
+		carried_verified = verified && verify(0x1404B7E56, dual);
+		reload_verified = carried_verified && verify(0x1404A6A51, table) &&
+			verify(0x1404B7CC4, no_partial) && verify(0x1404B8EE4, segmented) && verify(0x1404B8774, add);
 		return verified;
 	}
 	int local_role(const void* ps) noexcept
@@ -208,7 +211,7 @@ namespace vr::gameplay::weapons::native_ammunition
 		const auto value=projection::read_native_boundary(clips,{static_cast<const std::byte*>(ps),storage::extent},id,ck,rk);
 		if(!value)return out;
 		out.valid=true;out.weapon=weapon;out.instance_generation=id.generation;out.loaded=value->loaded;out.reserve=value->reserve;
-		out.weapon_state=read<int>(ps,0x2c0);out.weapon_time=read<int>(ps,0x2b4);return out;
+		out.weapon_state=read<int>(ps,0x2a4);out.weapon_time=read<int>(ps,0x298);return out;
 	}
 	bool commit_carried(const snapshot& expected, int loaded, int reserve) noexcept
 	{
@@ -315,7 +318,7 @@ namespace vr::gameplay::weapons::native_ammunition
 		for (const auto& e:clips.entries()) if (live(&e) && e.id) ++count;
 		for (unsigned i=0;i<15;++i)
 		{
-			const auto token=read<std::uint32_t>(ps,0x2f8+i*4);if (!token) continue;
+			const auto token=read<std::uint32_t>(ps,0x2cc+i*4);if (!token) continue;
 			if (token==weapon) return true;
 			if (!live(clips.find(clips.projected(token)))) ++count;
 		}
@@ -394,9 +397,9 @@ namespace vr::gameplay::weapons::native_ammunition
 		unsigned matches{};
 		for (unsigned i=0;i<15;++i)
 		{
-			const auto other=read<std::uint32_t>(ps,0x2f8+i*4);if (!other) continue;
+			const auto other=read<std::uint32_t>(ps,0x2cc+i*4);if (!other) continue;
 			if(!has_ammunition(other))continue;
-			if(other==weapon){if(++matches>1 || read<std::uint8_t>(ps,0x335+i*8))return false;continue;}
+			if(other==weapon){if(++matches>1 || read<std::uint8_t>(ps,0x309+i*8))return false;continue;}
 			if ((utils::hook::invoke<std::uint64_t>(clip_key_address,other,false)&0xffffffffffull)==key) return false;
 		}
 		return true;
@@ -406,8 +409,8 @@ namespace vr::gameplay::weapons::native_ammunition
 		snapshot out;
 		if (!verified || local_role(ps) < 0)
 			return out;
-		out.weapon = read<std::uint32_t>(ps, 0x3bc);
-		if (!(out.weapon & 0x1ff) || ((read<std::uint32_t>(ps, 0x3c0) & 0x4000) &&
+		out.weapon = read<std::uint32_t>(ps, 0x38c);
+		if (!(out.weapon & 0x1ff) || ((read<std::uint32_t>(ps, 0x390) & 0x4000) &&
 			!(heartbeat::enabled() && heartbeat::equivalent_mode(out.weapon))))
 			return out;
 		if (carry::active())
