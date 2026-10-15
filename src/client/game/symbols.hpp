@@ -197,7 +197,7 @@ namespace game
 		float materialTime, __int64 a7, __int64 a8)> R_AddDObjToScene{0x0 /* TODO(mwr) H2 0x140775C40 */};
 	WEAK symbol<HANDLE(unsigned __int64* outUserData, void* dest, unsigned __int64 bytes)> R_Cinematic_SysIO_BinkRead{0x0 /* TODO(mwr) H2 0x1407191B0 */};
 	WEAK symbol<void(XModel* model, game::GfxScaledPlacement* placement, unsigned int renderFlags,
-		unsigned __int16* cachedLightingHandle, float* colorLit, float* colorUnlit, float* colorEmissive)> R_FilterXModelIntoScene{0x0 /* TODO(mwr) H2 0x1407249D0 */};
+		unsigned __int16* cachedLightingHandle, float* colorLit, float* colorUnlit, float* colorEmissive)> R_FilterXModelIntoScene{0x14053BAB0 /* H2 0x1407249D0;  */};
 
 	WEAK symbol<void()> RB_SetIdentity{0x0 /* TODO(mwr) H2 0x1407A0590 */};
 	WEAK symbol<void(Material* material, 

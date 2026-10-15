@@ -446,7 +446,7 @@ namespace scene_models
 		// motion or source skeleton pointers can be consumed by the rigid route.
 		auto& m=out->model;
 		m.name=out->lod.name; m.numBones=m.numRootBones=1; m.numsurfs=static_cast<unsigned char>(out->count); m.numLods=1;
-		m.scale=model.scale; m.unk_float=model.unk_float; m.boneNames=&out->name; m.baseMat=&out->identity;
+		m.scale=model.scale; m.boneNames=&out->name; m.baseMat=&out->identity;
 		m.boneInfo=&out->bone_info; m.materialHandles=out->materials.data(); m.quantization=model.quantization;
 		m.radius=std::sqrt(radius_squared); m.bounds=bounds;
 		out->bone_info.bounds=bounds; out->bone_info.radiusSquared=radius_squared;

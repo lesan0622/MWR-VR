@@ -52,7 +52,7 @@ namespace scene_models
 		thread_local culling_scope culling{};
 		float filter_radius(game::XModel* model)
 		{
-			const auto radius = reinterpret_cast<float(*)(game::XModel*)>(0x14066E0C0)(model);
+			const auto radius = reinterpret_cast<float(*)(game::XModel*)>(0x1404800E0)(model);
 			const auto padded=radius + (model == culling.model ? culling.padding : 0.f);
 			return std::isfinite(padded) ? padded : radius;
 		}
@@ -67,11 +67,12 @@ namespace scene_models
 			}
 			prepare_hook.invoke<void>(command);
 		}
+		// MWR 0x1405713A0 takes 10 arguments; H2's trailing colour pointer is absent.
 		using build_fn = int(*)(void*, game::XModel*, void*, const game::GfxPlacement*, float,
-			const game::GfxPlacement*, float, bool, int, unsigned char, void*);
+			const game::GfxPlacement*, float, bool, int, int);
 		int build(void* output, game::XModel* model, void* object, const game::GfxPlacement* current,
 			float scale, const game::GfxPlacement* previous, float previous_scale, bool motion,
-			int lod, unsigned char material_lod, void* colors)
+			int lod, int material_lod)
 		{
 			game::GfxPlacement placed{}, history{};
 			const auto observe=build_observations.load(std::memory_order_acquire);
@@ -107,8 +108,8 @@ namespace scene_models
 			}
 			// Native copies quaternion and fixed-point position into the surface
 			// payload, including optional motion history; it retains neither pointer.
-			return finish(reinterpret_cast<build_fn>(0x14075C580)(output,model,object,current,scale,
-				previous,previous_scale,motion,lod,material_lod,colors));
+			return finish(reinterpret_cast<build_fn>(0x1405713A0)(output,model,object,current,scale,
+				previous,previous_scale,motion,lod,material_lod));
 		}
 		utils::startup_callbacks<callback> callbacks;
 		std::atomic_bool installed{};
@@ -196,30 +197,31 @@ namespace scene_models
 			model_index_hook.create(mapping_boundary,bridge);
 			// Existing GUI model-preview boundary, centralized so gameplay and
 			// tooling do not stack detours or depend on each other's state.
-			constexpr std::uint8_t bytes[]{0x41,0x54,0x41,0x55,0x41,0x56,0x41,0x57,0x48,0x8d,0x6c,0x24,0xf8};
+			// MWR R_GenerateSortedDrawSurfs 0x14058C670 (H2 0x140778E60), +5 after its first push.
+			constexpr std::uint8_t bytes[]{0x41,0x54,0x41,0x56,0x41,0x57,0x48,0x8d,0x6c,0x24,0xe9};
 			std::array<std::uint8_t, sizeof(bytes)> mask{}; mask.fill(0xff);
-			if (!utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(0x140778E65), {bytes,mask.data(),mask.size()}))
+			if (!utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(0x14058C675), {bytes,mask.data(),mask.size()}))
 				throw std::runtime_error("native scene model submission contract rejected");
 			constexpr std::uint8_t prepare_bytes[]{0x48,0x89,0x5c,0x24,0x10,0x48,0x89,0x74,0x24,0x18};
 			std::array<std::uint8_t,sizeof(prepare_bytes)> prepare_mask{}; prepare_mask.fill(0xff);
-			constexpr std::uint8_t build_call[]{0xe8,0x77,0x89,0x03,0x00};
+			constexpr std::uint8_t build_call[]{0xe8,0x40,0x66,0x03,0x00};
 			constexpr std::uint8_t call_mask[]{0xff,0xff,0xff,0xff,0xff};
 			// Live R_FilterXModelIntoScene scales this radius and adds it to the
 			// plane distance in its frustum admission loop. Do not patch the shared
 			// getter or mutate XModel data retained by other queued submissions.
-			constexpr std::uint8_t radius_call[]{0xe8,0x65,0x96,0xf4,0xff};
-			if (!utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(0x140723380),
+			constexpr std::uint8_t radius_call[]{0xe8,0xa6,0x45,0xf4,0xff};
+			if (!utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(0x14053A4E0),
 				{prepare_bytes,prepare_mask.data(),prepare_mask.size()}) ||
-				!utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(0x140723C04),
+				!utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(0x14053AD5B),
 				{build_call,call_mask,5}) ||
-				!utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(0x140724A56),{radius_call,call_mask,5}) ||
-				!utils::hook_validation::validate_executable_target(reinterpret_cast<void*>(0x14066E0C0)) ||
-				!utils::hook_validation::validate_executable_target(reinterpret_cast<void*>(0x14075C580)))
+				!utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(0x14053BB35),{radius_call,call_mask,5}) ||
+				!utils::hook_validation::validate_executable_target(reinterpret_cast<void*>(0x1404800E0)) ||
+				!utils::hook_validation::validate_executable_target(reinterpret_cast<void*>(0x1405713A0)))
 				throw std::runtime_error("native rigid-surface preparation contract rejected");
-			generate_hook.create(0x140778E60, generate);
-			prepare_hook.create(0x140723380,prepare);
-			utils::hook::call(0x140723C04,build);
-			utils::hook::call(0x140724A56,filter_radius);
+			generate_hook.create(0x14058C670, generate);
+			prepare_hook.create(0x14053A4E0,prepare);
+			utils::hook::call(0x14053AD5B,build);
+			utils::hook::call(0x14053BB35,filter_radius);
 			installed = true;
 		}
 		void pre_destroy() override { installed = false; }

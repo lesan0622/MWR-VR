@@ -6,8 +6,8 @@
 
 namespace game::xmodel_index_contract
 {
-	inline constexpr std::size_t pool_header=8, pool_stride=696;
-	inline constexpr std::uintptr_t getter=0x140413D90, mapping_boundary=getter+7;
+	inline constexpr std::size_t pool_header=8, pool_stride=680; // MWR XModel 0x2A8 (H2 696)
+	inline constexpr std::uintptr_t getter=0x1401F1F50, mapping_boundary=getter+7; // MWR (H2 0x140413D90)
 	// movss xmm0,[r8+rcx*4+disp32] / movss [r8+rcx*4+disp32],xmm0.
 	// Byte 5 is the SIB, NOT the displacement. Patching at +5 corrupts both the
 	// address calculation and the high displacement byte (off-frustum path).

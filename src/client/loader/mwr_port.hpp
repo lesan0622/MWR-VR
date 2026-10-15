@@ -41,6 +41,7 @@ namespace mwr_port
 		"vr::gameplay::hands",
 		"vr::gameplay::weapons",
 		"vr::gameplay::weapon_capture",
+		"scene_models",
 		"vr::gameplay::weapons::reload_boundary",
 		"vr::gameplay::weapons::viewmodel_visibility::visibility_component",
 	};

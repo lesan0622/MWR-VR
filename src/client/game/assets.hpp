@@ -3115,19 +3115,19 @@ namespace game
 		char __pad0[32];
 	}; static_assert(sizeof(ReactiveMotionModelPart) == 32);
 
+	// MWR (H1) layout from h1-mod; verified by XModel offsets in MWR code.
 	struct XModelLodInfo
 	{
-		float dist; // 0
-		unsigned short numsurfs; // 4
-		unsigned short surfIndex; // 6
-		XModelSurfs* modelSurfs; // 8
-		int partBits[8]; // 16 20 24 28 32 36 40 44
-		XSurface* surfs; // 48
-		ReactiveMotionModelPart* reactiveMotionParts; // 56 (sizeof struct = 32) (reactiveMotionParts?)
-		char __pad0[5]; // 64 (something must be here)
-		char numReactiveMotionParts; // 69 (numReactiveMotionParts?)
-		char __pad1[2]; // 70 (padding?)
-	}; static_assert(sizeof(XModelLodInfo) == 72);
+		float dist;
+		unsigned short numsurfs;
+		unsigned short surfIndex;
+		XModelSurfs* modelSurfs;
+		int partBits[8];
+		XSurface* surfs;
+		int unk;
+		char flags;
+		char pad[3];
+	}; static_assert(sizeof(XModelLodInfo) == 64);
 
 	struct XModelAngle
 	{
@@ -3208,18 +3208,19 @@ namespace game
 		XMODEL_FLAG_COMPOSITE = 0x400,
 	};
 
+	// MWR (H1) XModel from h1-mod: MWR code reads flags +0x204, contents +0x210,
+	// radius +0x220, baseMat +0x60, compositeModels +0x298; pool stride 0x2A8 (0x1401F037A).
 	struct XModel
 	{
 		const char* name; // 0
 		unsigned char numBones; // 8
 		unsigned char numRootBones; // 9
 		unsigned char numsurfs; // 10
-		unsigned char lodRampType; // 11
-		unsigned char numBonePhysics; // 12
-		unsigned char numCompositeModels; // 13
+		unsigned char numReactiveMotionParts; // 11
+		unsigned char lodRampType; // 12
+		unsigned char numBonePhysics; // 13
 		char __pad0[2]; // 14-16
-		float unk_float; // 16
-		float scale;
+		float scale; // 16
 		unsigned int noScalePartBits[8]; // 20
 		scr_string_t* boneNames; // 56
 		unsigned char* parentList; // 64
@@ -3227,40 +3228,48 @@ namespace game
 		XModelTagPos* tagPositions; // 80
 		unsigned char* partClassification; // 88
 		DObjAnimMat* baseMat; // 96
-		ReactiveMotionModelTweaks* reactiveMotionTweaks; // 104
-		Material** materialHandles; // 112
-		XModelLodInfo lodInfo[6]; // 120
-		char numLods; // 552
-		char collLod; // 553
-		char __pad1[2]; // 554-556
-		short flags; // 556
-		short numCollSurfs; // 558
-		XModelCollSurf_s* collSurfs; // 560
-		XBoneInfo* boneInfo; // 568
-		int contents;
-		float radius;
-		Bounds bounds;
-		unsigned short* invHighMipRadius; // 608
-		MdaoVolume* mdaoVolumes; // 616
-		unsigned short mdaoVolumeCount; // 624
-		unsigned short targetCount; // 626
-		unsigned short numberOfWeights; // 628
-		unsigned short numberOfWeightMaps; // 630
-		scr_string_t* weightNames; // 632
-		BlendShapeWeightMap* blendShapeWeightMap; // 640
-		PhysPreset* physPreset; // 648
-		PhysCollmap* physCollmap; // 656
-		float quantization;
-		int memUsage;
-		SkeletonScript* skeletonScript; // 672
-		XModel** compositeModels; // 680
-		XPhysBoneInfo* bonePhysics; // 688
-	};  static_assert(sizeof(XModel) == 0x2B8);
+		ReactiveMotionModelPart* reactiveMotionParts; // 104
+		ReactiveMotionModelTweaks* reactiveMotionTweaks; // 112
+		Material** materialHandles; // 120
+		XModelLodInfo lodInfo[6]; // 128
+		char numLods; // 512
+		char collLod; // 513
+		unsigned char numCompositeModels; // 514
+		unsigned char reactiveMotionLOD; // 515
+		unsigned short flags; // 516
+		unsigned short numCollSurfs; // 518
+		XModelCollSurf_s* collSurfs; // 520
+		int contents; // 528
+		XBoneInfo* boneInfo; // 536
+		float radius; // 544
+		Bounds bounds; // 548
+		unsigned short* invHighMipRadius; // 576
+		int memUsage; // 584
+		bool bad; // 588
+		char pad; // 589
+		unsigned short blendShapeCount; // 590
+		unsigned short numberOfBlendShapeWeights; // 592
+		unsigned short numberOfBlendShapeWeightMaps; // 594
+		char __pad2[4]; // 596-600
+		scr_string_t* blendShapeWeightNames; // 600
+		BlendShapeWeightMap* blendShapeWeightMaps; // 608
+		PhysPreset* physPreset; // 616
+		PhysCollmap* physCollmap; // 624
+		unsigned short mdaoVolumeCount; // 632
+		short u3; // 634
+		float quantization; // 636
+		MdaoVolume* mdaoVolumes; // 640
+		int u4; // 648
+		int u5; // 652
+		SkeletonScript* skeletonScript; // 656
+		XModel** compositeModels; // 664
+		XPhysBoneInfo* bonePhysics; // 672
+	}; static_assert(sizeof(XModel) == 0x2A8);
 
-	assert_offsetof(XModel, noScalePartBits, 24);
+	assert_offsetof(XModel, noScalePartBits, 20);
 	assert_offsetof(XModel, boneNames, 56);
-	assert_offsetof(XModel, bonePhysics, 688);
-	assert_offsetof(XModel, lodInfo, 120);
+	assert_offsetof(XModel, bonePhysics, 672);
+	assert_offsetof(XModel, lodInfo, 128);
 
 	enum activeReticleType_t : std::int32_t
 	{
