@@ -24,9 +24,9 @@ namespace vr::gameplay::weapons::viewmodel_visibility
 		constexpr std::uintptr_t hidden_site=0x1405365CF, hidden_target=0x14046ABB0;
 		constexpr std::uintptr_t rigid_site=0x140536959, rigid_target=0x140535820;
 		constexpr std::uintptr_t skin_site=0x140536A11, skin_target=0x1405351E0;
-		// TODO(mwr): rigid/skinned surface subsets copy XSurface metadata and build
-		// index buffers; enable them after the H1 XSurface layout is verified.
-		constexpr bool surface_subsets_verified = false;
+		// XSurface (0x108) matches H1 except vertexLightingIndex placement; the
+		// rigid builder reads packet surface +0x28 and bone base +0x10 as in H2.
+		constexpr bool surface_subsets_verified = true;
 		std::atomic_bool alive{true}, hidden_ready{}, rigid_ready{}, skin_ready{};
 		thread_local const void* skin_owner{};
 		std::atomic_uint64_t filtered{}, rejected{};

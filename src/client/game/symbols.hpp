@@ -26,7 +26,7 @@ namespace game
 	WEAK symbol<void(int localClientNum, const char* message)> CG_GameMessageBold{0x14015B110 /* H2 0x14037F1B0 */};
 	WEAK symbol<char*(const Weapon weapon, 
 		bool isAlternate, char* outputBuffer, int bufferLen)> CG_GetWeaponDisplayName{0x140192B80 /* H2 0x1403B9210 */};
-	WEAK symbol<int(int localClientNum)> CG_GetGameTime{0x0 /* TODO(mwr) H2 0x14037F580 */};
+	WEAK symbol<int(int localClientNum)> CG_GetGameTime{0x1405CFF30 /* H2 0x14037F580;  */};
 
 	WEAK symbol<playerState_s*(int localClientNum)> CG_GetPredictedPlayerState{0x14015B650 /* H2 0x14037F720; returns &cg.predictedPlayerState (0x1420E67A0) */};
 

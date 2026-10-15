@@ -16,7 +16,9 @@ namespace scene_surface_storage
 	// See docs/scene-surface-storage.md before profiling, refactoring or rollback.
 	inline constexpr std::size_t index_unit=8;
 	inline constexpr std::size_t capacity=(std::size_t{1}<<16)*index_unit;
-	inline constexpr std::size_t hidden_bytes=8;
+	// MWR skin packets (0x1405351E0): hidden 4 bytes, rigid bones*32+56,
+	// skinned 56 (H2: 8 / bones*32+64 / 56).
+	inline constexpr std::size_t hidden_bytes=4;
 	inline constexpr std::size_t skinned_bytes=56;
 	inline constexpr std::size_t brush_prefix_bytes=32;
 	inline constexpr std::size_t brush_surface_bytes=24;
@@ -57,6 +59,6 @@ namespace scene_surface_storage
 		if(tag>=0) return skinned_bytes;
 		const auto bones=-3-std::int64_t{tag};
 		if(bones<1 || bones>255) return {};
-		return static_cast<std::size_t>(bones+2)*32;
+		return static_cast<std::size_t>(bones)*32+56;
 	}
 }

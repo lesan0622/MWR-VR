@@ -2,6 +2,7 @@
 #include "weapon_capture.hpp"
 #include "native_animation_query.hpp"
 #include "hands/pose_math.hpp"
+#include "native_scripted_control.hpp"
 #include "component/command.hpp"
 #include "component/console.hpp"
 #include "game/game.hpp"
@@ -138,7 +139,10 @@ namespace vr::gameplay::weapon_capture
 		void flush_recording()
 		{
 			if (record_weapon.empty() || !record_frames) return;
-			const auto file = std::format("{}/record_{:03}.jsonl", directory(record_weapon), ++record_index);
+			const auto dir = directory(record_weapon);
+			std::string file;
+			do file = std::format("{}/record_{:03}.jsonl", dir, ++record_index);
+			while (utils::io::file_exists(file)); // Never overwrite an earlier capture.
 			utils::io::write_file(file, record_header + record_body);
 			console::info("[VR capture] wrote %llu frames to %s\n", record_frames, file.c_str());
 		}
@@ -199,6 +203,32 @@ namespace vr::gameplay::weapon_capture
 				const std::lock_guard lock(mutex);
 				snapshot_requested = true;
 				console::info("[VR capture] assembly snapshot requested (next solved viewmodel frame)\n");
+			});
+			// MWR port diagnostic: compare the server and predicted player states
+			// used by scripted-control admission (weapon flags, entity flags, life).
+			command::add("vr_capture_ps", []
+			{
+				const auto dump = [](const char* label, const void* ps)
+				{
+					if (!ps) { console::info("[VR capture] %s ps=null\n", label); return; }
+					const auto* b = static_cast<const std::uint8_t*>(ps);
+					std::uint32_t flags{}, eflags{}, weapon{};
+					int health{};
+					std::memcpy(&flags, b + 0x390, 4);
+					std::memcpy(&eflags, b + 0x58, 4);
+					std::memcpy(&weapon, b + 0x38c, 4);
+					std::memcpy(&health, b + 0x1dc, 4);
+					console::info("[VR capture] %s ps=%p pm_type=%u weapflags=0x%08X eflags=0x%08X weapon=%u health=%d\n",
+						label, ps, b[2], flags, eflags, weapon, health);
+				};
+				dump("server", game::g_entities[0].client);
+				bool dead{};
+				const void* server = game::g_entities[0].client;
+				console::info("[VR capture] server contract=%d life=%d dead=%d allowed=%d owns_body=%d owns_arms=%d airport=%d\n",
+					scripted_control::native_contract(), player_life::read(server, dead), dead,
+					scripted_control::allowed(server), sequences::owns_body(server), sequences::owns_arms(server),
+					sequences::airport::opening::active());
+				dump("predicted", game::CL_IsCgameInitialized() ? game::CG_GetPredictedPlayerState(0) : nullptr);
 			});
 			command::add("vr_capture_record", [](const command::params& params)
 			{

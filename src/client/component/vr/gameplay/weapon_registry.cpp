@@ -13,6 +13,7 @@
 #include "weapons/javelin/profile.hpp"
 #include "weapons/m9/profile.hpp"
 #include "weapons/m4/profile.hpp"
+#include "weapons/g36c/profile.hpp"
 #include "weapons/m16/profile.hpp"
 #include "weapons/m14ebr/profile.hpp"
 #include "weapons/dragunov/profile.hpp"
@@ -107,6 +108,8 @@ namespace vr::gameplay::weapons
 		register_profiles(model1887::select, model1887::base),
 		register_profiles(striker::select, striker::base, striker::woodland),
 		register_profiles(nullptr, magnum44::base),
+		// MWR draft recipes generated from in-game captures (port/gen_recipe.py).
+		register_profiles(nullptr, g36c::base),
 		register_profiles(ranger::select,ranger::base),
 		register_profiles(m79::select,m79::base));
 		static_assert(catalog.size() <= registration_capacity);

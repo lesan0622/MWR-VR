@@ -43,6 +43,11 @@ namespace mwr_port
 		"vr::gameplay::weapon_capture",
 		"scene_models",
 		"vr::gameplay::weapons::reload_boundary",
+		"vr::gameplay::weapons::physical_reload",
+		"vr::gameplay::interaction_coordinator",
+		"vr::gameplay::reload_items",
+		"vr::gameplay::falling_item_presentation",
+		"vr::gameplay::hand_interaction",
 		"vr::gameplay::weapons::viewmodel_visibility::visibility_component",
 	};
 
