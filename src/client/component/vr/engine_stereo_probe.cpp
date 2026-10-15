@@ -129,11 +129,12 @@ namespace vr::engine_stereo_probe
 	void configure_target(const target_descriptor& descriptor) noexcept
 	{
 		constexpr std::string_view expected_original_hash =
-			"9D554376FBE78248A423F6B776634453142FAFA1218645CD64B2499967512AAE";
+			"3D23E86930668244D43A026552D5E1298A7C8CC63B82A54A7AD857E7B41F9190";
 		constexpr std::string_view expected_loaded_hash =
-			"58CB70D63E05DC239997420C3ED91F04D3D324AF0BDF8A9623F1012164E0ED9D";
-		constexpr std::uint32_t expected_timestamp = 0x6023ED08;
-		constexpr std::uint32_t expected_image_size = 0x11E6BC00;
+			"5D84171157EA64566196332E65962F2BB298023F34EEFDA8005AC01B2F4D3498";
+		// MWR Steam h1_sp64_ship.exe (original) and its ASLR-disabled copy (loaded).
+		constexpr std::uint32_t expected_timestamp = 0x5D374DBA;
+		constexpr std::uint32_t expected_image_size = 0x12654800;
 
 		const bool fingerprint_matches = hash_equals(descriptor.original_sha256, expected_original_hash) &&
 			hash_equals(descriptor.loaded_sha256, expected_loaded_hash) &&

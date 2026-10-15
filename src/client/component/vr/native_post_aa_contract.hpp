@@ -14,15 +14,18 @@ namespace vr::native_post_aa
 		none, fxaa, smaa, smaa_t2x, filmic_smaa, filmic_smaa_t2x, fxaa_internal,
 	};
 
-	inline constexpr std::size_t mode_offset = 0x20A4;
+	// MWR record +0x1E14 (H2 +0x20A4); see 0x140072BF0.
+	inline constexpr std::size_t mode_offset = 0x1E14;
 	inline constexpr std::uint32_t display_input_target = 13;
 	inline constexpr std::uint32_t filmic_scratch_target = 12;
 	inline constexpr std::uint32_t smaa_edge_target = 14, smaa_blend_target = 15;
 	inline constexpr std::array<std::uint32_t, 6> history_targets{16, 17, 18, 19, 20, 21};
 
+	// MWR: only the history-free paths are rebound (none, FXAA, SMAA 1x).
+	// Temporal SMAA needs the H1 history ring readers (0x14F79CBB4) first.
 	[[nodiscard]] constexpr bool supported(const mode value) noexcept
 	{
-		return value <= mode::fxaa_internal;
+		return value <= mode::smaa;
 	}
 	[[nodiscard]] constexpr bool temporal(const mode value) noexcept
 	{

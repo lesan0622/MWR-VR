@@ -9,7 +9,7 @@
 namespace vr::engine_stereo_backend_target
 {
 	inline constexpr std::size_t context_state_pointer_offset = 0x08;
-	inline constexpr std::size_t current_target_offset = 0x20D4;
+	inline constexpr std::size_t current_target_offset = 0x205C; // MWR cmdBufState (H2 0x20D4)
 	inline constexpr std::size_t target_entry_size = 0x40;
 	inline constexpr std::uint32_t target_capacity = 304;
 	inline constexpr std::size_t maximum_route_events = 256;

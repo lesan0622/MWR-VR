@@ -25,6 +25,11 @@ namespace mwr_port
 		"dvars",
 		"logger",
 		"filesystem",
+		// Phase 2: VR runtime, native stereo and head tracking
+		"d3d11",
+		"camera",
+		"vr",
+		"vr::engine_stereo_renderer",
 	};
 
 	// typeid names look like "class vr::gameplay::foo::component".

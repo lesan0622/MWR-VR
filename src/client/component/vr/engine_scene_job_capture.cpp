@@ -83,8 +83,7 @@ namespace vr::engine_scene_job_capture
 		// perf probe keeps its CPU-only checkpoints without patching native code.
 		if constexpr (producer_function == 0)
 		{
-			console::warn("[VR] scene job capture boundaries are not available on MWR
-");
+			console::warn("[VR] scene job capture boundaries are not available on MWR\n");
 			return;
 		}
 		const std::array<std::uintptr_t, 4> sites{0x1407A7E14, 0x1407A8D05, 0x1407A7FEC, 0x140778CF2};

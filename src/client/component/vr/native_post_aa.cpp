@@ -17,9 +17,9 @@ namespace vr::native_post_aa
 {
 	namespace
 	{
-		constexpr std::uintptr_t dispatch_address = 0x140296EB0;
-		constexpr std::uintptr_t frame_address = 0x14EEE0C9C;
-		constexpr std::uintptr_t progress_address = 0x14EEE0CA0;
+		constexpr std::uintptr_t dispatch_address = 0x140072BF0;
+		constexpr std::uintptr_t frame_address = 0x14F79CBB4; // MWR AA history frame
+		constexpr std::uintptr_t progress_address = 0x14F79CBB8;
 		constexpr std::uintptr_t temporal_frame_read = 0x1402970DF, filmic_frame_read = 0x14029737B;
 		constexpr std::uint8_t temporal_frame_bytes[]{0x8B,0x0D,0xB7,0x9B,0xC4,0x0E};
 		constexpr std::uint8_t filmic_frame_bytes[]{0x8B,0x05,0x1B,0x99,0xC4,0x0E};
@@ -84,14 +84,9 @@ namespace vr::native_post_aa
 			{
 				// Exact supported H2 AA dispatcher, history ring readers/writers,
 				// and the final Filmic filter branch. No unverified renderer entry.
-				constexpr std::uint8_t dispatch[]{0x48,0x83,0xEC,0x38,0x0F,0xB7,0x81,0xA4,0x20,0,0};
-				constexpr std::uint8_t frame[]{0x8B,0x0D,0xB7,0x9B,0xC4,0x0E};
-				constexpr std::uint8_t previous[]{0x2B,0x05,0x9E,0x9B,0xC4,0x0E};
-				constexpr std::uint8_t count[]{0x8B,0x3D,0x97,0x9B,0xC4,0x0E};
-				constexpr std::uint8_t filmic_frame[]{0x8B,0x05,0x1B,0x99,0xC4,0x0E};
-				return matches(dispatch_address, dispatch) && matches(0x1402970DF, frame) &&
-					matches(0x1402970FC, previous) && matches(0x140297107, count) &&
-					matches(0x14029737B, filmic_frame);
+				// MWR: dispatcher only; the temporal ring readers are not rebound.
+				constexpr std::uint8_t dispatch[]{0x48,0x83,0xEC,0x38,0x0F,0xB7,0x81,0x14,0x1E,0,0};
+				return matches(dispatch_address, dispatch);
 			}();
 			return valid;
 		}
@@ -206,7 +201,7 @@ namespace vr::native_post_aa
 		destination = route.destination;
 		if (selected == mode::none) return true;
 		if (!native_contract()) return fail("native_contract");
-		if (!frame_reads_installed.load(std::memory_order_acquire)) return fail("frame_reader_hooks");
+		if (temporal(selected) && !frame_reads_installed.load(std::memory_order_acquire)) return fail("frame_reader_hooks");
 		const auto output = target_texture(route.destination);
 		if (!output) return fail("display_target_missing", route.destination);
 		D3D11_TEXTURE2D_DESC desc{};
@@ -296,7 +291,11 @@ namespace vr::native_post_aa
 				}
 				seeds.fetch_add(1, std::memory_order_relaxed);
 			}
-			auto* progress = reinterpret_cast<native_progress*>(progress_address);
+			// MWR: only temporal modes own the native history ring; the
+			// history-free paths never touch it (temporal is not rebound yet).
+			native_progress unused_progress{};
+			auto* progress = temporal(selected) ?
+				reinterpret_cast<native_progress*>(progress_address) : &unused_progress;
 			const auto natural_progress = *progress;
 			const auto restore_progress = gsl::finally([&] { *progress = natural_progress; });
 			*progress = next.progress;
@@ -308,8 +307,8 @@ namespace vr::native_post_aa
 			// to the VR display target. The HDR scene is never an AA destination.
 			const auto draw = [&]
 			{
-				auto* source_state = *reinterpret_cast<void* const*>(0x1409B2EB0);
-				utils::hook::invoke<void>(0x140789AA0, source_state, static_cast<std::byte*>(record) + 0x170);
+				auto* source_state = *reinterpret_cast<void* const*>(0x140801FB0);
+				utils::hook::invoke<void>(0x14059C0E0, source_state, static_cast<std::byte*>(record) + 0x170);
 				return utils::hook::invoke<bool>(dispatch_address, record,
 					display_input_target, filmic_scratch_target, route.destination);
 			};

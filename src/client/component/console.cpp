@@ -1,4 +1,5 @@
 #include <std_include.hpp>
+#include <share.h>
 #include "console.hpp"
 #include "console_format.hpp"
 #include "console_output_queue.hpp"
@@ -150,12 +151,27 @@ namespace console
 			if(output_event)SetEvent(output_event);
 			return static_cast<int>(std::min(message.size(),std::size_t(INT_MAX)));
 		}
+		// MWR port: mirror console output to a file so headless test runs can be
+		// inspected without the in-game console. Only the output thread writes it.
+		void write_log_file(const std::string& text)
+		{
+			static FILE* file = []
+			{
+				CreateDirectoryA("overlord-mwr", nullptr);
+				return _fsopen("overlord-mwr/console.log", "w", _SH_DENYNO);
+			}();
+			if (!file) return;
+			std::fwrite(text.data(), 1, text.size(), file);
+			std::fflush(file);
+		}
+
 		void drain_output()
 		{
 			auto batch=output_queue.take();
 			for(const auto& message:batch.messages)
 			{
 				if(output_stopping.load())return;
+				write_log_file(message.text);
 				write_message(message.type,message.text);
 				if(message.repetitions>1)write_message(message.type,std::format("[console] previous message repeated {} times\n",message.repetitions-1));
 			}

@@ -862,6 +862,24 @@ namespace vr
 			// tracking; users who save vr_enable=0 retain an automatic non-VR startup.
 			scheduler::once(request_reinitialize, scheduler::pipeline::main);
 
+			// MWR port test aid: headless runs (mock runtime) refresh the status
+			// report periodically instead of requiring the in-game console.
+			if (GetEnvironmentVariableA("OVERLORD_MWR_STATUS_INTERVAL", nullptr, 0) != 0)
+			{
+				scheduler::loop([]
+				{
+					(void)diagnostics::write_status_snapshot(vr_enable && vr_enable->current.enabled);
+				}, scheduler::pipeline::async, 10s);
+			}
+			if (char autoexec[256]{}; GetEnvironmentVariableA("OVERLORD_MWR_AUTOEXEC", autoexec, sizeof(autoexec)) != 0)
+			{
+				const std::string commands{autoexec};
+				scheduler::on_game_initialized([commands]
+				{
+					command::execute(commands, false);
+				}, scheduler::pipeline::main, 3s);
+			}
+
 			stall_watchdog_stop.store(false, std::memory_order_release);
 			stall_watchdog = std::thread(monitor_scene_hook_stall);
 		}

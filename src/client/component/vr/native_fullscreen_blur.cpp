@@ -58,6 +58,9 @@ namespace vr::native_fullscreen_blur
 	bool apply(void* record,native_display_contract::route route) noexcept
 	{
 		if(presentation_options::blur_disabled()){++skipped;reason="disabled by VR comfort setting";return true;}
+		// MWR: the H2 Gaussian blur chain (0x1407B0550/0x1407B0E60) is not rebound;
+		// eyes are presented without the native fullscreen blur.
+		if constexpr (true){++skipped;reason="native blur not ported to MWR";return true;}
 		const auto reject=[](const char* why){++failures;reason=why;return false;};
 		if(!record || !route || !contract())return reject("native blur contract rejected");
 		float radius{};std::memcpy(&radius,static_cast<const std::byte*>(record)+0x234,sizeof(radius));

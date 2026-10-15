@@ -113,7 +113,7 @@ namespace vr::controllers
 		static_assert(offsetof(game::usercmd_s, rightmove) == 29);
 		static_assert(offsetof(game::playerState_s, commandTime) == 0x4c);
 		static_assert(offsetof(game::playerState_s, delta_angles) == 0x98);
-		static_assert(offsetof(game::playerState_s, viewangles) == 0x108);
+		static_assert(offsetof(game::playerState_s, viewangles) == 0x10C);
 		static_assert(offsetof(game::usercmd_s, angles) == 8);
 		static_assert(offsetof(game::usercmd_s,remoteControlAngles)==0x3e);
 		std::array<float,2> remote_rates()noexcept
