@@ -3824,6 +3824,112 @@ namespace game
 		bool isAlternate;
 	};
 
+	enum ammoCounterClipType_t : std::int32_t
+	{
+		AMMO_COUNTER_CLIP_NONE = 0x0,
+		AMMO_COUNTER_CLIP_MAGAZINE = 0x1,
+		AMMO_COUNTER_CLIP_SHORTMAGAZINE = 0x2,
+		AMMO_COUNTER_CLIP_SHOTGUN = 0x3,
+		AMMO_COUNTER_CLIP_ROCKET = 0x4,
+		AMMO_COUNTER_CLIP_BELTFED = 0x5,
+		AMMO_COUNTER_CLIP_ALTWEAPON = 0x6,
+		AMMO_COUNTER_CLIP_COUNT = 0x7,
+	};
+
+	struct StateTimersMWR
+	{
+		int fireDelay; // 1640 * x
+		int meleeDelay; // 1644 * x
+		int meleeChargeDelay; // 1648 * x
+		int detonateDelay; // 1652 * x
+		int fireTime; // 1656 * x
+		int rechamberTime; // 1660 * x
+		int rechamberTimeOneHanded; // 1664 * x
+		int rechamberBoltTime; // 1668 * x
+		int holdFireTime; // 1672 * x
+		int grenadePrimeReadyToThrowTime; // 1676 * x
+		int detonateTime; // 1680 * x
+		int meleeTime; // 1684 * x
+		int meleeChargeTime; // 1688 * x
+		int reloadTime; // 1692 * x
+		int reloadShowRocketTime; // 1696 * x
+		int reloadEmptyTime; // 1700 * x
+		int reloadAddTime; // 1704 * x
+		int reloadEmptyAddTime; // 1708 * x
+		int reloadStartTime; // 1712 * x
+		int reloadStartAddTime; // 1716 * x
+		int reloadEndTime; // 1720 * x
+		int reloadTimeDualWield; // 1724 * x
+		int reloadAddTimeDualWield; // 1728 * x
+		int reloadEmptyDualMag; // 1732 * x
+		int reloadEmptyAddTimeDualMag; // 1736 * x
+		int speedReloadTime; // 1740 * x // (unused)
+		int speedReloadAddTime; // 1744 * x // (unused)
+		int dropTime; // 1748 * x
+		int raiseTime; // 1752 * x
+		int altDropTime; // 1756 * x
+		int altRaiseTime; // 1760 * x
+		int quickDropTime; // 1764 * x
+		int quickRaiseTime; // 1768 * x
+		int firstRaiseTime; // 1772 * x
+		int breachRaiseTime; // 1776 * x
+		int emptyRaiseTime; // 1780 * x
+		int emptyDropTime; // 1784 * x
+		int sprintInTime; // 1788 * x
+		int sprintLoopTime; // 1792 * x
+		int sprintOutTime; // 1796 * x
+		int stunnedTimeBegin; // 1800 * x
+		int stunnedTimeLoop; // 1804 * x
+		int stunnedTimeEnd; // 1808 * x
+		int nightVisionWearTime; // 1812 * x
+		int nightVisionWearTimeFadeOutEnd; // 1816 * x
+		int nightVisionWearTimePowerUp; // 1820 * x
+		int nightVisionRemoveTime; // 1824 * x
+		int nightVisionRemoveTimePowerDown; // 1828 * x
+		int nightVisionRemoveTimeFadeInStart; // 1832 * x
+		int aiFuseTime; // 1836 * x
+		int fuseTime; // 1840 * x
+		int missileTime; // 1844 * x
+		int primeTime; // 1848 * x
+		bool bHoldFullPrime; // 1852 * x
+		int blastFrontTime; // 1856 * x
+		int blastRightTime; // 1860 * x
+		int blastBackTime; // 1864 * x
+		int blastLeftTime; // 1868 * x
+		int slideInTime; // 1872 * x (unused)
+		int slideLoopTime; // 1876 * x (unused)
+		int slideOutTime; // 1880 * x (unused)
+		int highJumpInTime; // 1884 * x (unused)
+		int highJumpDropInTime; // 1888 * x (unused)
+		int highJumpDropLoopTime; // 1892 * x (unused)
+		int highJumpDropLandTime; // 1896 * x (unused)
+		int dodgeTime; // 1900 * x (unused)
+		int landDipTime; // 1904 * x (unused)
+		int hybridSightInTime; // 1908 * x (unused)
+		int hybridSightOutTime; // 1912 * x (unused)
+		int offhandSwitchTime; // 1916 * x
+		int heatCooldownInTime; // 1920 * x
+		int heatCooldownOutTime; // 1924 * x
+		int heatCooldownOutReadyTime; // 1928 * x
+		int overheatOutTime; // 1932 * x
+		int overheatOutReadyTime; // 1936 * x
+	}; static_assert(sizeof(StateTimersMWR) == 300);
+
+	struct ADSOverlayMWR
+	{
+		Material* shader;
+		Material* shaderLowRes;
+		Material* shaderEMP;
+		Material* shaderEMPLowRes;
+		weapOverlayReticle_t reticle;
+		float width;
+		float height;
+		float widthSplitscreen;
+		float heightSplitscreen;
+	}; static_assert(sizeof(ADSOverlayMWR) == 0x38);
+
+	// MWR (H1) WeaponDef from h1-mod database.hpp; verified against MWR code
+	// (0x14018DA50 reads dualWieldViewModelOffset +0x9F0, markableViewmodel +0xDB1).
 	struct WeaponDef
 	{
 		union
@@ -3832,9 +3938,7 @@ namespace game
 			const char* name;
 		};
 		const char* szDisplayName; // 8
-		const char* szOverlayName; // 16
-		const char* szAttachmentName;
-		const char* szAltWeaponName;
+		const char* szAltWeaponName; // 16
 		XModel** gunModel; // 24 (2 xmodels)
 		XModel* handModel; // 32
 		XModel* persistentArmXModel; // 40
@@ -3858,7 +3962,7 @@ namespace game
 		FxEffectDef** notetrackFXMapValues; // 184 (16 effects)
 		scr_string_t* notetrackFXMapTagValues; // 192 (16 xstrings)
 		scr_string_t* notetrackHideTagKeys; // 200 (16 xstrings)
-		bool* notetrackHideTagValues; // 208 (16 chars)
+		bool* notetrackHideTagValues; // 208 (16 booleans)
 		scr_string_t* notetrackHideTagTagValues; // 216 (16 xstrings)
 		const char* szAdsrBaseSetting; // 224
 		FxEffectDef* viewFlashEffect; // 232
@@ -3873,96 +3977,80 @@ namespace game
 		FxEffectDef* signatureViewBodyFlashADSEffect; // 304
 		FxEffectDef* meleeHitEffect; // 312
 		FxEffectDef* meleeMissEffect; // 320
-		snd_alias_list_t* pickupSound; // 1
-		snd_alias_list_t* pickupSoundPlayer; // 2
-		snd_alias_list_t* ammoPickupSound; // 3
-		snd_alias_list_t* ammoPickupSoundPlayer; // 4
-		snd_alias_list_t* projectileSound; // 5
-		snd_alias_list_t* pullbackSound; // 6
-		snd_alias_list_t* pullbackSoundPlayer; // 7
-		snd_alias_list_t* pullbackSoundQuick; // 8
-		snd_alias_list_t* pullbackSoundQuickPlayer; // 9
-		snd_alias_list_t* fireSound;  // 10
-		snd_alias_list_t* fireSoundPlayer;  // 11
-		snd_alias_list_t* fireSoundPlayerLeft;  // 12
-		snd_alias_list_t* fireSoundPlayerRight;  // 13
-		snd_alias_list_t* sound14;  // 14
-		snd_alias_list_t* sound15;  // 15
-		snd_alias_list_t* sound16;  // 16
-		snd_alias_list_t* sound17;  // 17
-		snd_alias_list_t* sound18;  // 18
-		snd_alias_list_t* fireLoopSound;  // 19
-		snd_alias_list_t* fireLoopSoundPlayer;  // 20
-		snd_alias_list_t* sound21;  // 21
-		snd_alias_list_t* sound22;  // 22
-		snd_alias_list_t* sound23;  // 23
-		snd_alias_list_t* sound24;  // 24
-		snd_alias_list_t* sound25;  // 25
-		snd_alias_list_t* sound26;  // 26
-		snd_alias_list_t* fireStopSound;  // 27
-		snd_alias_list_t* fireStopSoundPlayer;  // 28
-		snd_alias_list_t* sound29;  // 29
-		snd_alias_list_t* sound30;  // 30
-		snd_alias_list_t* sound31;  // 31
-		snd_alias_list_t* sound32;  // 32
-		snd_alias_list_t* sound33;  // 33
-		snd_alias_list_t* fireFirstSound;  // 34
-		snd_alias_list_t* fireFirstSoundPlayer;  // 35
-		snd_alias_list_t* fireSound2;  // 36
-		snd_alias_list_t* fireSoundPlayer2;  // 37
-		snd_alias_list_t* fireSpecialSound;  // 38
-		snd_alias_list_t* fireSpecialSoundPlayer;  // 39
-		snd_alias_list_t* emptyFireSound;  // 40
-		snd_alias_list_t* emptyFireSoundPlayer;  // 41
-		snd_alias_list_t* emptyFireSoundPlayerLeft;  // 42
-		snd_alias_list_t* emptyFireSoundPlayerRight;  // 43
-		snd_alias_list_t* emptyFireSoundReleasePlayer;  // 44
-		snd_alias_list_t* emptyFireSoundReleasePlayerLeft;  // 45
-		snd_alias_list_t* emptyFireSoundReleasePlayerRight;  // 46
-		snd_alias_list_t* sound47;  // 47
-		snd_alias_list_t* meleeSwipeSound;  // 48
-		snd_alias_list_t* meleeSwipeSoundPlayer;  // 49
-		snd_alias_list_t* meleeHitSound;  // 50
-		snd_alias_list_t* meleeHitSoundPlayer;  // 51
-		snd_alias_list_t* meleeMissSound;  // 52
-		snd_alias_list_t* meleeMissSoundPlayer;  // 53
-		snd_alias_list_t* sound54;  // 54
-		snd_alias_list_t* sound55;  // 55
-		snd_alias_list_t* sound56;  // 56
-		snd_alias_list_t* sound57;  // 57
-		snd_alias_list_t* sound58;  // 58
-		snd_alias_list_t* sound59;  // 59
-		snd_alias_list_t* sound60;  // 60
-		snd_alias_list_t* sound61;  // 61
-		snd_alias_list_t* sound62;  // 62
-		snd_alias_list_t* sound63;  // 63
-		snd_alias_list_t* sound64;  // 64
-		snd_alias_list_t* sound65;  // 65
-		snd_alias_list_t* nightVisionWearSound;  // 66
-		snd_alias_list_t* nightVisionWearSoundPlayer;  // 67
-		snd_alias_list_t* nightVisionRemoveSound;  // 68
-		snd_alias_list_t* nightVisionRemoveSoundPlayer;  // 69
-		snd_alias_list_t* raiseSound;  // 70
-		snd_alias_list_t* raiseSoundPlayer;  // 71
-		snd_alias_list_t* raiseSoundPlayerLeft;  // 72
-		snd_alias_list_t* raiseSoundPlayerRight;  // 73
-		snd_alias_list_t* sound74;  // 74
-		snd_alias_list_t* quickRaiseSoundPlayer;  // 75
-		snd_alias_list_t* quickRaiseSoundPlayerLeft;  // 76
-		snd_alias_list_t* quickRaiseSoundPlayerRight;  // 77
-		snd_alias_list_t* raiseSound2;  // 78
-		snd_alias_list_t* sound79;  // 79
-		snd_alias_list_t* sound80;  // 80
-		snd_alias_list_t* sound81;  // 81
-		snd_alias_list_t* putawaySound;  // 82
-		snd_alias_list_t* putawaySoundPlayer;  // 83
-		snd_alias_list_t* putawaySoundPlayerLeft;  // 84
-		snd_alias_list_t* putawaySoundPlayerRight;  // 85
-		snd_alias_list_t* sound86;  // 86
-		snd_alias_list_t* sound87;  // 87
-		snd_alias_list_t* adsEnterSoundPlayer;  // 88
-		snd_alias_list_t* adsLeaveSoundPlayer;  // 89
-		snd_alias_list_t* adsCrosshairEnemySound;  // 90
+		snd_alias_list_t* pickupSound; // 328 (74 sounds)
+		snd_alias_list_t* pickupSoundPlayer; // 336
+		snd_alias_list_t* ammoPickupSound; // 344
+		snd_alias_list_t* ammoPickupSoundPlayer; // 352
+		snd_alias_list_t* projectileSound; // 360
+		snd_alias_list_t* pullbackSound; // 368
+		snd_alias_list_t* pullbackSoundPlayer; // 376
+		snd_alias_list_t* pullbackSoundQuick; // 384
+		snd_alias_list_t* pullbackSoundQuickPlayer; // 392
+		snd_alias_list_t* fireSound; // 400
+		snd_alias_list_t* fireSoundPlayer; // 408
+		snd_alias_list_t* fireSoundPlayerAkimbo; // 416
+		snd_alias_list_t* fireMedSound; // 424
+		snd_alias_list_t* fireMedSoundPlayer; // 432
+		snd_alias_list_t* fireHighSound; // 440
+		snd_alias_list_t* fireHighSoundPlayer; // 448
+		snd_alias_list_t* fireLoopSound; // 456
+		snd_alias_list_t* fireLoopSoundPlayer; // 464
+		snd_alias_list_t* fireMedLoopSound; // 472
+		snd_alias_list_t* fireMedLoopSoundPlayer; // 480
+		snd_alias_list_t* fireHighLoopSound; // 488
+		snd_alias_list_t* fireHighLoopSoundPlayer; // 496
+		snd_alias_list_t* fireLoopEndPointSound; // 504
+		snd_alias_list_t* fireLoopEndPointSoundPlayer; // 512
+		snd_alias_list_t* fireStopSound; // 520
+		snd_alias_list_t* fireStopSoundPlayer; // 528
+		snd_alias_list_t* fireMedStopSound; // 536
+		snd_alias_list_t* fireMedStopSoundPlayer; // 544
+		snd_alias_list_t* fireHighStopSound; // 552
+		snd_alias_list_t* fireHighStopSoundPlayer; // 560
+		snd_alias_list_t* fireLastSound; // 568
+		snd_alias_list_t* fireLastSoundPlayer; // 576
+		snd_alias_list_t* fireFirstSound; // 584
+		snd_alias_list_t* fireFirstSoundPlayer; // 592
+		snd_alias_list_t* fireCustomSound; // 600
+		snd_alias_list_t* fireCustomSoundPlayer; // 608
+		snd_alias_list_t* emptyFireSound; // 616
+		snd_alias_list_t* emptyFireSoundPlayer; // 624
+		snd_alias_list_t* adsRequiredFireSoundPlayer; // 632
+		snd_alias_list_t* meleeSwipeSound; // 640
+		snd_alias_list_t* meleeSwipeSoundPlayer; // 648
+		snd_alias_list_t* meleeHitSound; // 656
+		snd_alias_list_t* meleeHitSoundPlayer; // 664
+		snd_alias_list_t* meleeMissSound; // 672
+		snd_alias_list_t* meleeMissSoundPlayer; // 680
+		snd_alias_list_t* rechamberSound; // 688
+		snd_alias_list_t* rechamberSoundPlayer; // 696
+		snd_alias_list_t* reloadSound; // 704
+		snd_alias_list_t* reloadSoundPlayer; // 712
+		snd_alias_list_t* reloadEmptySound; // 720
+		snd_alias_list_t* reloadEmptySoundPlayer; // 728
+		snd_alias_list_t* reloadStartSound; // 736
+		snd_alias_list_t* reloadStartSoundPlayer; // 744
+		snd_alias_list_t* reloadEndSound; // 752
+		snd_alias_list_t* reloadEndSoundPlayer; // 760
+		snd_alias_list_t* detonateSound; // 768
+		snd_alias_list_t* detonateSoundPlayer; // 776
+		snd_alias_list_t* nightVisionWearSound; // 784
+		snd_alias_list_t* nightVisionWearSoundPlayer; // 792
+		snd_alias_list_t* nightVisionRemoveSound; // 800
+		snd_alias_list_t* nightVisionRemoveSoundPlayer; // 808
+		snd_alias_list_t* raiseSound; // 816
+		snd_alias_list_t* raiseSoundPlayer; // 824
+		snd_alias_list_t* firstRaiseSound; // 832
+		snd_alias_list_t* firstRaiseSoundPlayer; // 840
+		snd_alias_list_t* altSwitchSound; // 848
+		snd_alias_list_t* altSwitchSoundPlayer; // 856
+		snd_alias_list_t* putawaySound; // 864
+		snd_alias_list_t* putawaySoundPlayer; // 872
+		snd_alias_list_t* scanSound; // 880
+		snd_alias_list_t* changeVariableZoomSound; // 888
+		snd_alias_list_t* adsUpSound; // 896
+		snd_alias_list_t* adsDownSound; // 904
+		snd_alias_list_t* adsCrosshairEnemySound; // 912
 		snd_alias_list_t** bounceSound; // 920 (53 sounds)
 		snd_alias_list_t** rollingSound; // 928 (53 sounds)
 		FxEffectDef* viewShellEjectEffect; // 936
@@ -4046,8 +4134,6 @@ namespace game
 		float proneOfs[3]; // 1500 1504 1508
 		float proneMove[3]; // 1512 1516 1520
 		float proneRot[3]; // 1524 1528 1532
-		float unkVec1[3];
-		float unkVec2[3];
 		float posMoveRate; // 1536
 		float posProneMoveRate; // 1540
 		float standMoveMinSpeed; // 1544
@@ -4058,7 +4144,7 @@ namespace game
 		weaponIconRatioType_t hudIconRatio; // 1564
 		weaponIconRatioType_t pickupIconRatio; // 1568
 		weaponIconRatioType_t ammoCounterIconRatio; // 1572
-		int ammoCounterClip; // 1576
+		ammoCounterClipType_t ammoCounterClip; // 1576
 		int startAmmo; // 1580
 		ammoindex_t iAmmoIndex; // 1584 (runtime variable)
 		clipindex_t iClipIndex; // 1592 (runtime variable)
@@ -4072,8 +4158,8 @@ namespace game
 		int playerDamage; // 1628
 		int meleeDamage; // 1632
 		int damageType; // 1636
-		StateTimers stateTimers; // 1640
-		StateTimers akimboStateTimers; // 1940
+		StateTimersMWR stateTimers; // 1640
+		StateTimersMWR akimboStateTimers; // 1940
 		float autoAimRange; // 2240
 		float aimAssistRange; // 2244
 		float aimAssistRangeAds; // 2248
@@ -4088,7 +4174,7 @@ namespace game
 		float adsSceneBlurStrength; // 2284 (1401FC630)
 		float adsSceneBlurPhysicalScale; // 2288 (1400CF870)
 		float pad3; // 2292 X
-		ADSOverlay overlay; // 2296
+		ADSOverlayMWR overlay; // 2296
 		WeapOverlayInteface_t overlayInterface; // 2352
 		float adsBobFactor; // 2356
 		float adsViewBobMult; // 2360
@@ -4154,7 +4240,7 @@ namespace game
 		float stationaryZoomLerpOutTime; // 2600
 		float adsDofStart; // 2604
 		float adsDofEnd; // 2608
-		float xU_020; // 2612 X
+		float pad1; // 2612 X
 		Material* killIcon; // 2616
 		Material* dpadIcon; // 2624
 		Material* hudProximityWarningIcon; // 2632
@@ -4183,7 +4269,7 @@ namespace game
 		float projLifetime; // 2728
 		float timeToAccelerate; // 2732
 		float projectileCurvature; // 2736
-		float xU_021; // 2740 X
+		float pad2; // 2740 X
 		const char* projectileName; // 2744
 		XModel* projectileModel; // 2752
 		FxEffectDef* projExplosionEffect; // 2760
@@ -4256,12 +4342,11 @@ namespace game
 		vec2_t* accuracyGraphKnots[2]; // 3088
 		vec2_t* originalAccuracyGraphKnots[2]; // 3104
 		short accuracyGraphKnotCount[2]; // 3120
-		short originalAccuracyGraphKnotCount[2]; // 3120
+		short originalAccuracyGraphKnotCount[2]; // 3124 (IW layout; h1-mod omits it but its offsets need it)
 		float leftArc; // 3128
 		float rightArc; // 3132
 		float topArc; // 3136
 		float bottomArc; // 3140
-		char __pad[16];
 		float accuracy; // 3144
 		float aiSpread; // 3148
 		float playerSpread; // 3152
@@ -4365,7 +4450,7 @@ namespace game
 		bool canHoldBreath; // 3490
 		bool meleeOnly; // 3491
 		bool quickMelee; // 3492 (0x14009FDC0)(1401F2BC0)
-		bool bU_086; // 3493 X bool oldWeaponBot;?
+		bool bU_086; // 3493 UNUSED
 		bool canVariableZoom; // 3494
 		bool rechamberWhileAds; // 3495
 		bool bulletExplosiveDamage; // 3496
@@ -4419,9 +4504,8 @@ namespace game
 		bool dualMagReloadSupported; // 3544
 		bool reloadStopsAlt; // 3545 X
 		bool useScopeDrift; // 3546 X
-		bool alwaysShatterGlassOnImpact; // 
-		bool bU_093; //
-		bool oldWeapon; // 3773 !!
+		bool alwaysShatterGlassOnImpact; // 3547
+		bool oldWeapon; // 3548
 		bool raiseToHold; // 3549 (BulletRicochet)(PM_Weapon_OffHandPrepare)
 		bool notifyOnPlayerImpact; // 3550 (BG_WeaponFireRecoil)(Missile_Impact)
 		bool decreasingKick; // 3551 X
@@ -4434,65 +4518,28 @@ namespace game
 		bool projKillTrailEffectOnDeath; // 3558 (CG_Missile)
 		bool projKillBeaconEffectOnDeath; // 3559 (CG_Missile)
 		bool reticleDetonateHide; // 3560 X
-		bool cloaked; //
-		bool adsHideWeapon; //
-		bool adsHideHands; // 
-		bool bU_108; // 
-		bool adsSceneBlur; // 
-		bool usesSniperScope; // 
+		bool cloaked; // 3561 (BG_IsWeaponCloaked)
+		bool adsHideWeapon; // 3562 (0x1401fa7aa)
+		bool adsHideHands; // 3563 (0x1401fa78a)
+		bool bU_108; // 3564 USED
+		bool adsSceneBlur; // 3565 (BG_GetADSSceneBlur)
+		bool usesSniperScope; // 3566 (BG_UsingSniperScope)
 		bool hasTransientModels; // 3567 (140499130) (14049CE70) (14049B890) (14049B680)
 		bool signatureAmmoAlternate; // 3568 X
 		bool useScriptCallbackForHit; // 3569 X
 		bool useBulletTagSystem; // 3570 (1400C77D0)
 		bool hideBulletTags; // 3571 (1400C77D0)
-		float adsDofPhysicalFstop; // 
-		float adsDofPhysicalFocusDistance; // 
-		float autosimSpeedScale; //
+		float adsDofPhysicalFstop; // 3572 (BG_ADSDOFPhysicalFStop)
+		float adsDofPhysicalFocusDistance; // 3576 (BG_ADSDOFPhysicalFocusDistance)
+		float autosimSpeedScale; // 3580 (BG_GetAutosimSpeedScalar)
 		float reactiveMotionRadiusScale; // 3584 (BG_GetExplosionReactiveMotionParams)
 		float reactiveMotionFrequencyScale;
 		float reactiveMotionAmplitudeScale;
 		float reactiveMotionFalloff;
 		float reactiveMotionLifetime;
 		float fU_3604[3]; // 3604
-	}; static_assert(sizeof(WeaponDef) == 0xF08);
-
-	static_assert(offsetof(WeaponDef, accuracy) == 3368);
-	static_assert(offsetof(WeaponDef, viewFlashEffect) == 248);
-	static_assert(offsetof(WeaponDef, usesSniperScope) == 3791);
-	static_assert(offsetof(WeaponDef, adsHideWeapon) == 3787);
-	static_assert(offsetof(WeaponDef, adsHideHands) == 3788);
-	static_assert(offsetof(WeaponDef, oldWeapon) == 3773);
-	static_assert(offsetof(WeaponDef, gunModel) == 0x28);
-	static_assert(offsetof(WeaponDef, handModel) == 0x30);
-	static_assert(offsetof(WeaponDef, lobWorldModelName) == 0x48);
-	static_assert(offsetof(WeaponDef, szXAnimsLeftHanded) == 88);
-	static_assert(offsetof(WeaponDef, hideTags) == 0x60);
-	static_assert(offsetof(WeaponDef, attachments) == 104);
-	static_assert(offsetof(WeaponDef, numReloadStateTimerOverrides) == 1480);
-	static_assert(offsetof(WeaponDef, viewFlashADSEffect) == 272);
-	static_assert(offsetof(WeaponDef, viewBodyFlashADSEffect) == 280);
-	static_assert(offsetof(WeaponDef, reticleCenter) == 1120);
-	static_assert(offsetof(WeaponDef, reticleSide) == 1128);
-	static_assert(offsetof(WeaponDef, projTrailEffect) == 3040);
-	static_assert(offsetof(WeaponDef, projBeaconEffect) == 3048);
-	static_assert(offsetof(WeaponDef, projIgnitionEffect) == 3080);
-	static_assert(offsetof(WeaponDef, projIgnitionSound) == 3088);
-	static_assert(offsetof(WeaponDef, accuracyGraphName) == 3280);
-	static_assert(offsetof(WeaponDef, accuracyGraphKnots) == 3296);
-	static_assert(offsetof(WeaponDef, originalAccuracyGraphKnots) == 3312);
-	static_assert(offsetof(WeaponDef, accuracyGraphName[1]) == 3288);
-	static_assert(offsetof(WeaponDef, accuracyGraphKnots[1]) == 3304);
-	static_assert(offsetof(WeaponDef, originalAccuracyGraphKnots[1]) == 3320);
-	static_assert(offsetof(WeaponDef, szScript) == 3448);
-	static_assert(offsetof(WeaponDef, stowTag) == 3688);
-
-	static_assert(offsetof(WeaponDef, iAmmoIndex) == 1752);
-	static_assert(offsetof(WeaponDef, standMoveMinSpeed) == 1712);
-	static_assert(offsetof(WeaponDef, weapType) == 1484);
-	static_assert(offsetof(WeaponDef, altWeapon) == 1472);
-	static_assert(offsetof(WeaponDef, iClipIndex) == 1760);
-	static_assert(offsetof(WeaponDef, burstFireCooldown) == 1520);
-	static_assert(offsetof(WeaponDef, greebleType) == 1524);
+		// size: 3616
+	}; static_assert(sizeof(WeaponDef) == 0xE20);
 
 	struct cplane_s
 	{

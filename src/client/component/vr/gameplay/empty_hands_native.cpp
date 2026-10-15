@@ -65,7 +65,7 @@ namespace vr::gameplay::hands::empty_native
 		std::atomic_uint64_t suppressed_firearms{};
 		bool firearm_object(const void* candidate_object)
 		{
-			static_assert(offsetof(game::WeaponDef,weapType)==0x5cc && offsetof(game::WeaponDef,weapClass)==0x5d0 && offsetof(game::WeaponDef,inventoryType)==0x5e0);
+			static_assert(offsetof(game::WeaponDef, weapType) == 0x53c && offsetof(game::WeaponDef, weapClass) == 0x540 && offsetof(game::WeaponDef, inventoryType) == 0x550);
 			if(!candidate_object)return false;
 			unsigned char count{};const game::XModel* const* native_models{};
 			const auto* bytes=static_cast<const std::byte*>(candidate_object);
@@ -236,7 +236,7 @@ namespace vr::gameplay::hands::empty_native
 		}
 		bool bind_visibility(weapon_resource& value,const game::WeaponDef& definition)
 		{
-			static_assert(offsetof(game::WeaponDef,hideTags)==0x60);
+			static_assert(offsetof(game::WeaponDef, hideTags) == 0x50);
 			std::array<std::uint32_t,32> tags{};
 			if (definition.hideTags && !utils::native_memory::read_bytes(tags.data(),definition.hideTags,sizeof(tags))) return false;
 			const auto count=std::to_integer<unsigned>(value.object.bytes[0xf]);

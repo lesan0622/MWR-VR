@@ -477,7 +477,7 @@ namespace vr::gameplay::weapons::javelin_screen
 		camera_state next;
 		const auto* definition =
 		    value.owner.weapon && value.owner.weapon < 512 ? game::weapon_defs[value.owner.weapon] : nullptr;
-		static_assert(offsetof(game::WeaponDef, adsZoomFov) == 0x9a8);
+		static_assert(offsetof(game::WeaponDef, adsZoomFov) == 0x8e0);
 		const float half_y = definition ? optical_half_y(definition->adsZoomFov) : 0;
 		if (allowed && origin && axis && tan_half && half_y > 0 && value.control.open &&
 		    muzzle.profile_id == "javelin" &&

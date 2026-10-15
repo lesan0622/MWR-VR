@@ -123,8 +123,8 @@ namespace vr::gameplay::equipment::chest_items
 	{
 		void post_unpack() override
 		{
-			static_assert(offsetof(game::WeaponDef,worldModel)==0x470);
-			static_assert(offsetof(game::WeaponDef,inventoryType)==0x5e0);
+			static_assert(offsetof(game::WeaponDef, worldModel) == 0x3e0);
+			static_assert(offsetof(game::WeaponDef, inventoryType) == 0x550);
 			constexpr std::uint8_t primary[]{0x8b,0x9e,0xb4,0x03,0,0},secondary[]{0x8b,0x9e,0xb8,0x03,0,0};
 			constexpr std::uint8_t mask[]{255,255,255,255,255,255};
 			verified=bool(utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(0x140697a88),{primary,mask,sizeof(primary)})) &&

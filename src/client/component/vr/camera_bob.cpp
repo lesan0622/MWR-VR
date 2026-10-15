@@ -53,7 +53,7 @@ namespace vr::camera_bob
 		void post_unpack()override
 		{
 			static_assert(offsetof(game::dvar_t,current)==0x10);
-			static_assert(offsetof(game::WeaponDef,bobViewVerticalFactor)==0xae4 && offsetof(game::WeaponDef,bobViewHorizontalFactor)==0xae8);
+			static_assert(offsetof(game::WeaponDef, bobViewVerticalFactor) == 0xa14 && offsetof(game::WeaponDef, bobViewHorizontalFactor) == 0xa18);
 			enabled=dvars::register_bool(settings::camera_bob,true,game::DVAR_FLAG_SAVED,"Enable native movement camera bob in VR, including empty hands and body knife");
 			bool calls_verified = true;
 			constexpr std::array<std::uint8_t, 5> exact{255,255,255,255,255};

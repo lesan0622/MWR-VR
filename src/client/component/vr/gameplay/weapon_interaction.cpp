@@ -225,11 +225,11 @@ namespace vr::gameplay::weapons
 	namespace recoil
 	{
 		// Layout witnesses for the fields read by the native recoil adapter.
-		static_assert(offsetof(game::WeaponDef, weapClass) == 1488);
-		static_assert(offsetof(game::WeaponDef, hipGunKickPitchMin) == 3196);
-		static_assert(offsetof(game::WeaponDef, hipGunKickPitchMax) == 3200);
-		static_assert(offsetof(game::WeaponDef, hipViewKickPitchMin) == 3232);
-		static_assert(offsetof(game::WeaponDef, hipViewKickPitchMax) == 3236);
+		static_assert(offsetof(game::WeaponDef, weapClass) == 0x540);
+		static_assert(offsetof(game::WeaponDef, hipGunKickPitchMin) == 0xbac);
+		static_assert(offsetof(game::WeaponDef, hipGunKickPitchMax) == 0xbb0);
+		static_assert(offsetof(game::WeaponDef, hipViewKickPitchMin) == 0xbd0);
+		static_assert(offsetof(game::WeaponDef, hipViewKickPitchMax) == 0xbd4);
 		void confirmed_shot(const hold& owner, std::uint64_t reference, clock::time_point at,
 			controller_input::posture actual) noexcept
 		{

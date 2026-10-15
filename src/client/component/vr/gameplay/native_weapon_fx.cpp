@@ -68,9 +68,9 @@ namespace vr::gameplay::weapons::native_weapon_fx
 	bool initialize() noexcept
 	{
 		if(ready)return true;
-		static_assert(offsetof(game::WeaponDef,viewFlashEffect)==0xf8);
-		static_assert(offsetof(game::WeaponDef,viewShellEjectEffect)==0x438);
-		static_assert(offsetof(game::WeaponDef,viewLastShotEjectEffect)==0x448);
+		static_assert(offsetof(game::WeaponDef, viewFlashEffect) == 0xe8);
+		static_assert(offsetof(game::WeaponDef, viewShellEjectEffect) == 0x3a8);
+		static_assert(offsetof(game::WeaponDef, viewLastShotEjectEffect) == 0x3b8);
 		const std::array<std::uint8_t,9> query{0x89,0x4c,0x24,0x08,0x53,0x48,0x83,0xec,0x20};
 		ready=verify(flash_query,query) && verify(brass_query,query) && verify(last_brass_query,query) &&
 			verify(flash_query+0x38,std::array<std::uint8_t,6>{0x41,0xb8,0xf8,0,0,0}) &&

@@ -395,7 +395,7 @@ namespace vr::gameplay::hands
 
 		bool matches_weapon_model(const object_layout& object, const rig& layout, std::uint32_t weapon)
 		{
-			static_assert(offsetof(game::WeaponDef, gunModel) == 0x28);
+			static_assert(offsetof(game::WeaponDef, gunModel) == 0x18);
 			if (!weapon || weapon >= 512)
 				return false;
 			const auto* definition = game::weapon_defs[weapon];

@@ -8,8 +8,8 @@ namespace vr::gameplay::weapons::native_ammunition::reload_layout
 {
 	// H2 WeaponDef. The adjacent flags have different meanings: partial reload
 	// permission does not identify a segmented (individual-round) feed.
-	inline constexpr size_t capacity_offset=0x6f0, add_offset=0xb34;
-	inline constexpr size_t no_partial_offset=0xe95, segmented_offset=0xe96;
+	inline constexpr size_t capacity_offset=0x648, add_offset=0xa64;
+	inline constexpr size_t no_partial_offset=0xdb5, segmented_offset=0xdb6;
 	inline constexpr size_t extent=segmented_offset+1;
 	struct shape { int capacity{},add{};bool no_partial{},segmented{}; };
 	inline std::optional<shape> decode(std::span<const std::byte> bytes) noexcept
