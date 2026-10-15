@@ -89,7 +89,7 @@ namespace vr::narrative_ui
 	inline bool text_command(const void* data, std::size_t size, bool owned_narrative = false) noexcept
 	{
 		// Only the fixed 60-byte prefix is read; UTF-8 content remains native.
-		if (!data || size < 233 || size > 65535) return false;
+		if (!data || size <= native_hud_quad::text_payload_offset || size > 65535) return false;
 		const auto* bytes = static_cast<const std::uint8_t*>(data);
 		std::uint32_t flags{};
 		std::memcpy(&flags, bytes + 56, sizeof(flags));

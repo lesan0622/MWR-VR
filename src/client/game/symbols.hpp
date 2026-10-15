@@ -203,7 +203,7 @@ namespace game
 	WEAK symbol<void(Material* material, 
 		MaterialTechniqueType tech)> RB_SetTessTechnique{0x0 /* TODO(mwr) H2 0x1407B2B90 */};
 	WEAK symbol<void()> RB_TessOverflow{0x0 /* TODO(mwr) H2 0x1407B2C00 */};
-	WEAK symbol<void()> RB_EndTessSurface{0x0 /* TODO(mwr) H2 0x1407B2B70 */};
+	WEAK symbol<void()> RB_EndTessSurface{0x1405C3D00 /* H2 0x1407B2B70; xor ecx,ecx; jmp 0x1405C3C30 */};
 	WEAK symbol<void(void*)> R_Set3D{0x0 /* TODO(mwr) H2 0x14078B5D0 */};
 
 	WEAK symbol<ScreenPlacement*()> ScrPlace_GetViewPlacement{0x1401BCED0 /* H2 0x1403E16A0 */};

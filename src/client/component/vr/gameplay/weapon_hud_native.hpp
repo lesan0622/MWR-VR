@@ -44,7 +44,7 @@ namespace vr::gameplay::weapon_hud::native
 	}
 	inline bool mirror_text(std::span<std::byte> bytes,float axis_sum,float measured_width) noexcept
 	{
-		if(bytes.size()<233 || native_hud_quad::field<std::uint8_t>(bytes.data(),2)!=20 ||
+		if(bytes.size()<=native_hud_quad::text_payload_offset || native_hud_quad::field<std::uint8_t>(bytes.data(),2)!=20 ||
 			(native_hud_quad::field<std::uint32_t>(bytes.data(),56)&0x4000))return false;
 		const float x=native_hud_quad::field<float>(bytes.data(),4),scale=native_hud_quad::field<float>(bytes.data(),28);
 		const float mirrored=axis_sum-x-measured_width*scale;

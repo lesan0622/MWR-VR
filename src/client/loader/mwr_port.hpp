@@ -30,6 +30,12 @@ namespace mwr_port
 		"camera",
 		"vr",
 		"vr::engine_stereo_renderer",
+		// Phase 3: VR menu panels and native HUD capture
+		"input",
+		"vr::native_menu",
+		"vr::native_hud_capture",
+		"vr::menu_backdrop",
+		"vr::native_waypoints",
 	};
 
 	// typeid names look like "class vr::gameplay::foo::component".

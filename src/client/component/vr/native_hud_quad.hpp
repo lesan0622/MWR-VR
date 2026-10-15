@@ -7,6 +7,9 @@
 
 namespace vr::native_hud_quad
 {
+	// Text command (opcode 20): UTF-8 payload offset. MWR handler 0x1405AFE50
+	// passes cmd+0xE4 to the glyph builder (H2 used cmd+0xE8).
+	inline constexpr std::size_t text_payload_offset = 0xE4;
 	// H2 backend formats: StretchPic (10), rotated XYWH (12), XY (16),
 	// and LUI XYUV (17). Sizes include the four-byte command header.
 	template<class T> inline T field(const void* data, unsigned offset) noexcept

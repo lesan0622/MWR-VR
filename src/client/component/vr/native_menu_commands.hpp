@@ -70,7 +70,7 @@ namespace vr::native_menu
 					if(covered!=end)return result;
 					if(size>=8&&!read(at+4,header.data()+4,4))return result;
 					if(surface!=excluded_surface&&(header[3]||!(native_hud_quad::is_command(header.data(),size)||
-						(header[2]==18&&size==120)||(header[2]==20&&size>=233)||lines_2d(header.data(),size))))
+						(header[2]==18&&size==120)||(header[2]==20&&size>native_hud_quad::text_payload_offset)||lines_2d(header.data(),size))))
 					{result.rejected_command=unsigned(header[2])|(unsigned(header[3])<<8);return result;}
 					result.ranges.push_back({at,end,surface});
 				}

@@ -458,7 +458,7 @@ namespace vr::native_hud_capture
 							selected = rect.x >= result.bounds.x && rect.y >= result.bounds.y &&
 								rect.right <= result.bounds.right && rect.bottom <= result.bounds.bottom;
 					}
-					if (pass == 1 && flags == 0 && op == 20 && size >= 233 && size <= 1024)
+					if (pass == 1 && flags == 0 && op == 20 && size > native_hud_quad::text_payload_offset && size <= 1024)
 					{
 						std::array<float, 2> xy{};
 						if (!utils::native_memory::read_bytes(xy.data(), cursor + 4, sizeof(xy))) return false;
@@ -532,7 +532,7 @@ namespace vr::native_hud_capture
 				auto which=remote_hud::layer::instruments;
 				if(!field<std::uint8_t>(raw.data(),3) && !native_menu::commands::owner(menu_ranges,address,size))
 				{
-					if(op==20 && size>=233)
+					if(op==20 && size>native_hud_quad::text_payload_offset)
 					{
 						if(!utils::native_memory::read_bytes(raw.data(),cursor,60))return false;
 						selected=native_waypoints::owner(groups,address,size)==native_waypoints::text_owner::none &&
@@ -589,7 +589,7 @@ namespace vr::native_hud_capture
 				bool selected{},progress_selected{},announcement_selected{},fade_selected{},subtraction_selected{};
 				if (field<std::uint8_t>(header.data(), 3) == 0)
 				{
-					if (op == 20 && size >= 233)
+					if (op == 20 && size > native_hud_quad::text_payload_offset)
 					{
 						std::array<std::byte, 60> text{};
 						if (!utils::native_memory::read_bytes(text.data(), cursor, text.size())) return false;
@@ -690,14 +690,14 @@ namespace vr::native_hud_capture
 						!utils::native_memory::read_bytes(raw.data(),reinterpret_cast<void*>(p),size)) { valid=false; break; }
 					directional_ui::rectangle r{};
 					if (quad_command(raw.data(),size)) valid=directional_ui::quad_bounds(raw.data(),size,r);
-					else if (op==20 && size>=233)
+					else if (op==20 && size>native_hud_quad::text_payload_offset)
 					{
 						const float x=field<float>(raw.data(),4), y=field<float>(raw.data(),8);
 						const auto height=field<int>(raw.data(),24);
 						const float sx=std::abs(field<float>(raw.data(),28)), sy=std::abs(field<float>(raw.data(),32));
-						const auto length=strnlen(reinterpret_cast<const char*>(raw.data()+232),size-232);
+						const auto length=strnlen(reinterpret_cast<const char*>(raw.data()+native_hud_quad::text_payload_offset),size-native_hud_quad::text_payload_offset);
 						valid=std::isfinite(x) && std::isfinite(y) && std::isfinite(sx) && std::isfinite(sy) &&
-							height>0 && height<=256 && sx>0 && sx<=8 && sy>0 && sy<=8 && length>0 && length<size-232;
+							height>0 && height<=256 && sx>0 && sx<=8 && sy>0 && sy<=8 && length>0 && length<size-native_hud_quad::text_payload_offset;
 						// Conservative glyph overhang/shadow padding. Capture actual native
 						// font draws; byte length only bounds the crop, never rebuilds text.
 						r={x-height*sx*.5f,y-height*sy*1.5f,x+height*sx*(length+1),y+height*sy*.5f};
@@ -1020,7 +1020,7 @@ namespace vr::native_hud_capture
 			if (!selected) { hook.invoke<void>(cursor); return; }
 			if(selected->menu_index<menu_surface::surface_count)++menu_matches;
 			// Flush pending unrelated tessellation before selecting the primitive.
-			if (*reinterpret_cast<const unsigned*>(0x151A7F378)) game::RB_EndTessSurface();
+			if (*reinterpret_cast<const unsigned*>(0x152309D48)) game::RB_EndTessSurface();
 			// Shader binding is established by the native handler/flush, not here.
 			const auto* selected_command = *cursor;
 			copying_scope = selected;
@@ -1041,12 +1041,12 @@ namespace vr::native_hud_capture
 					mirrored=gameplay::weapon_hud::native::mirror_quad(bytes,axis_sum,
 						gameplay::weapon_hud::native::upright_image(material_name(scratch.data(),storage)));
 				}
-				else if(mirrored && size>=233 && field<std::uint8_t>(scratch.data(),2)==20)
+				else if(mirrored && size>native_hud_quad::text_payload_offset && field<std::uint8_t>(scratch.data(),2)==20)
 				{
-					const auto* text=reinterpret_cast<const char*>(scratch.data()+232);
-					const auto length=strnlen(text,size-232);
+					const auto* text=reinterpret_cast<const char*>(scratch.data()+native_hud_quad::text_payload_offset);
+					const auto length=strnlen(text,size-native_hud_quad::text_payload_offset);
 					auto* font=field<game::Font_s*>(scratch.data(),16);
-					mirrored=length>0 && length<size-232 && font && !(field<std::uint32_t>(scratch.data(),56)&0x4000);
+					mirrored=length>0 && length<size-native_hud_quad::text_payload_offset && font && !(field<std::uint32_t>(scratch.data(),56)&0x4000);
 					if(mirrored)mirrored=gameplay::weapon_hud::native::mirror_text(bytes,axis_sum,
 						float(game::R_TextWidth(text,int(length),font)));
 				}
@@ -1056,11 +1056,11 @@ namespace vr::native_hud_capture
 				void* transformed=scratch.data();hook.invoke<void>(&transformed);
 				*cursor=static_cast<std::byte*>(*cursor)+size;
 				// Complete all reads/draws before the private inline text expires.
-				if (*reinterpret_cast<const unsigned*>(0x151A7F378)) game::RB_EndTessSurface();
+				if (*reinterpret_cast<const unsigned*>(0x152309D48)) game::RB_EndTessSurface();
 				return;
 			}
 			else hook.invoke<void>(cursor);
-			if (*reinterpret_cast<const unsigned*>(0x151A7F378)) game::RB_EndTessSurface();
+			if (*reinterpret_cast<const unsigned*>(0x152309D48)) game::RB_EndTessSurface();
 		}
 		void quad_stub(void** cursor)
 		{
@@ -1508,56 +1508,61 @@ namespace vr::native_hud_capture
 			constexpr std::uint8_t text[]{0x48,0x8b,0xc4,0x48,0x89,0x68,0x10};
 			constexpr std::uint8_t legacy[]{0x48,0x89,0x5c,0x24,0x08,0x57,0x48,0x83,0xec,0x20};
 			constexpr std::uint8_t rotated[]{0x48,0x8b,0xc4,0x48,0x89,0x58,0x08,0x48,0x89,0x68,0x10};
-			// Native dispatch table 0x1409B1C50[10] -> StretchPic handler. It reads
+			// Native dispatch table 0x140800D80[10] -> StretchPic handler. It reads
 			// XYWH at +16..28, UV at +32..44, color at +48, then advances by size.
 			constexpr std::uint8_t stretch[]{0x40,0x53,0x48,0x83,0xec,0x60,0xc7,0x44,0x24,0x50,0x06,0,0,0};
+			// MWR: RB_EndTessSurface 0x1405C3D00 and its index-count read at 0x1405C3C9D.
 			constexpr std::uint8_t flush[]{0x33,0xc9,0xe9,0x29,0xff,0xff,0xff};
-			constexpr std::uint8_t index_count[]{0xf7,0x25,0x65,0xc8,0x2c,0x11};
+			constexpr std::uint8_t index_count[]{0xf7,0x25,0xa5,0x60,0xd4,0x11};
 			command::add("vr_hud_capture_status", [] {console::print_text(console::con_type_info,format_status());});
-			if (!verify(0x14079EAE0, dispatch) || !verify(0x14079CA50, quad) || !verify(0x14079DDC0, text) ||
-				!verify(0x1407B2B70, flush) || !verify(0x1407B2B0D, index_count))
+			// MWR render-command dispatcher 0x1405B0B60, table 0x140800D80 (same
+			// opcodes as H2): quad[17] 0x1405AEAF0, text[20] 0x1405AFE50,
+			// legacy[16] 0x1405AE8D0, rotated[12] 0x1405B3120, stretch[10]
+			// 0x1405B2BF0, compass[18] 0x1405AE480, lines[25] 0x1405ADAC0.
+			if (!verify(0x1405B0B60, dispatch) || !verify(0x1405AEAF0, quad) || !verify(0x1405AFE50, text) ||
+				!verify(0x1405C3D00, flush) || !verify(0x1405C3C9D, index_count))
 			{ console::error("[VR HUD] native UI signatures rejected\n"); return; }
-			dispatch_hook.create(0x14079EAE0, dispatch_stub);
-			quad_hook.create(0x14079CA50, quad_stub);
-			text_hook.create(0x14079DDC0, text_stub);
+			dispatch_hook.create(0x1405B0B60, dispatch_stub);
+			quad_hook.create(0x1405AEAF0, quad_stub);
+			text_hook.create(0x1405AFE50, text_stub);
 			capture_hooks_installed=true;
-			if (verify(0x14079C830,legacy) && verify(0x1407A1060,rotated))
+			if (verify(0x1405AE8D0,legacy) && verify(0x1405B3120,rotated))
 			{
-				legacy_quad_hook.create(0x14079C830,legacy_quad_stub);
-				rotated_quad_hook.create(0x1407A1060,rotated_quad_stub);
+				legacy_quad_hook.create(0x1405AE8D0,legacy_quad_stub);
+				rotated_quad_hook.create(0x1405B3120,rotated_quad_stub);
 			}
 			else console::error("[VR indicators] native legacy quad signatures rejected\n");
-			if (verify(0x1407A0B30,stretch) && *reinterpret_cast<const std::uintptr_t*>(0x1409B1CA0)==0x1407A0B30)
-				stretch_quad_hook.create(0x1407A0B30,stretch_quad_stub);
+			if (verify(0x1405B2BF0,stretch) && *reinterpret_cast<const std::uintptr_t*>(0x140800DD0)==0x1405B2BF0)
+				stretch_quad_hook.create(0x1405B2BF0,stretch_quad_stub);
 			else console::error("[VR indicators] native StretchPic signature/table rejected\n");
 			// Opcode 25 batches 2D line vertices across LUI callbacks. Capture the
 			// finalized batch through its original handler, as with text and quads.
 			constexpr std::uint8_t lines[]{0x40,0x53,0x48,0x83,0xec,0x20,0x48,0x8b,0x01};
-			if(verify(0x14079ba20,lines)&&*reinterpret_cast<const std::uintptr_t*>(0x1409b1d18)==0x14079ba20)
-				lines_hook.create(0x14079ba20,lines_stub);
+			if(verify(0x1405ADAC0,lines)&&*reinterpret_cast<const std::uintptr_t*>(0x140800E48)==0x1405ADAC0)
+				lines_hook.create(0x1405ADAC0,lines_stub);
 			else console::error("[VR menus] native line signature/table rejected\n");
 			// Fixed 120-byte XY/rotated-UV quad, used by the pause-page minimap.
 			// Its native handler builds the UVs and advances the original cursor.
 			// Do not feed it into the 104-byte ordinary-quad decoder/read buffers.
 			constexpr std::uint8_t compass[]{0x48,0x8b,0xc4,0x48,0x89,0x58,0x20,0x55,0x56,0x57,0x41,0x56,0x41,0x57};
-			if(verify(0x14079c3e0,compass)&&*reinterpret_cast<const std::uintptr_t*>(0x1409b1ce0)==0x14079c3e0)
-				compass_quad_hook.create(0x14079c3e0,compass_quad_stub);
+			if(verify(0x1405AE480,compass)&&*reinterpret_cast<const std::uintptr_t*>(0x140800E10)==0x1405AE480)
+				compass_quad_hook.create(0x1405AE480,compass_quad_stub);
 			else console::error("[VR menus] native compass quad signature/table rejected\n");
 			engine_stereo_draw_indexed::set_draw_copy_observer(copy_draw);
 			// This native loop dispatches the unfiltered global UI directly through
 			// the same table. Frontend menus never enter the per-view HUD dispatcher.
 			constexpr std::uint8_t ui_begin[]{0x48,0x89,0x84,0x24,0xa8,0,0,0};
-			constexpr std::uint8_t ui_end[]{0x8b,0x05,0x2a,0x6b,0x74,0x0e};
-			if(verify(0x14079a158,ui_begin)&&verify(0x14079a1d0,ui_end))
+			constexpr std::uint8_t ui_end[]{0x8b,0x05,0x8a,0xd4,0x28,0x0f};
+			if(verify(0x1405AC228,ui_begin)&&verify(0x1405AC2A0,ui_end))
 			{
-				const auto begin=utils::hook::assemble([](auto& a){emit_ui_dispatch_marker(a,reinterpret_cast<std::uintptr_t>(global_ui_begin),0x14079a160,true);});
-				const auto end=utils::hook::assemble([](auto& a){emit_ui_dispatch_marker(a,reinterpret_cast<std::uintptr_t>(global_ui_end),0x14079a1d6,false,0x14079a1d6+0x0e746b2a);});
-				const auto begin_relay=utils::hook::create_preserving_near_jump(0x14079a158,begin);
-				const auto end_relay=utils::hook::create_preserving_near_jump(0x14079a1d0,end);
+				const auto begin=utils::hook::assemble([](auto& a){emit_ui_dispatch_marker(a,reinterpret_cast<std::uintptr_t>(global_ui_begin),0x1405AC230,true);});
+				const auto end=utils::hook::assemble([](auto& a){emit_ui_dispatch_marker(a,reinterpret_cast<std::uintptr_t>(global_ui_end),0x1405AC2A6,false,0x14F839730);});
+				const auto begin_relay=utils::hook::create_preserving_near_jump(0x1405AC228,begin);
+				const auto end_relay=utils::hook::create_preserving_near_jump(0x1405AC2A0,end);
 				if(begin_relay&&end_relay)
 				{
-					utils::hook::jump(0x14079a158,begin_relay);utils::hook::nop(0x14079a15d,3);
-					utils::hook::jump(0x14079a1d0,end_relay);utils::hook::nop(0x14079a1d5,1);
+					utils::hook::jump(0x1405AC228,begin_relay);utils::hook::nop(0x1405AC22D,3);
+					utils::hook::jump(0x1405AC2A0,end_relay);utils::hook::nop(0x1405AC2A5,1);
 					global_ui_hooks_installed=true;
 				}
 				else console::error("[VR menus] global UI relay allocation failed; native loop preserved\n");

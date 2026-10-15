@@ -34,11 +34,7 @@ namespace input
 
 		void cl_char_event_stub(const int local_client_num, const int key)
 		{
-			if (!game_console::console_char_event(local_client_num, key))
-			{
-				return;
-			}
-
+			// MWR: the Overlord in-game console component is not ported yet.
 			if (!gui::gui_char_event(local_client_num, key))
 			{
 				return;
@@ -52,11 +48,6 @@ namespace input
 			++activity;
 			if(vr::debug_options::enabled(vr::debug_options::probe::menu_input))++key_events;
 			if(key>=0&&key<int(vr_owned.size()))vr_owned[key]=false;
-			if (!game_console::console_key_event(local_client_num, key, down))
-			{
-				return;
-			}
-
 			if (!gui::gui_key_event(local_client_num, key, down))
 			{
 				return;
@@ -73,7 +64,7 @@ namespace input
 			cl_key_event_hook.invoke<void>(local_client_num, key, down);
 		}
 
-		void lui_cod_key_event_stub(const int local_client_num, const int a2, const int key, const int down, void* a5, void* a6)
+		[[maybe_unused]] void lui_cod_key_event_stub(const int local_client_num, const int a2, const int key, const int down, void* a5, void* a6)
 		{
 			const auto state = *game::hks::lua_state;
 			if (game::LUI_BeginCachedEvent(local_client_num, down ? 3 : 4, state))
@@ -122,7 +113,8 @@ namespace input
 			if(vr_owned[key])return true;
 			// CL_KeyEvent owns this native key state. A held physical key cannot
 			// be borrowed by VR, and its later release must remain physical-owned.
-			if(*reinterpret_cast<const int*>(0x141e87684+key*12))return false;
+			// MWR playerKeys[0].keys[key].down (CL_KeyEvent 0x1401ABC20).
+			if(*reinterpret_cast<const int*>(0x142395B14+key*12))return false;
 			vr_owned[key]=true;cl_key_event_hook.invoke<void>(0,key,1);return true;
 		}
 		if(vr_owned[key]){vr_owned[key]=false;cl_key_event_hook.invoke<void>(0,key,0);}
@@ -146,21 +138,19 @@ namespace input
 	public:
 		void post_unpack() override
 		{
-			static const char* lui_cached_events[5] = 
-			{
-				"process_events",
-				"gamepad_button",
-				"transition_complete",
-				"keydown",
-				"keyup",
-			};
+			// MWR: CL_CharEvent 0x1401AB8F0, CL_KeyEvent 0x1401ABC20 (h1-mod) and
+			// the LUI mouse-move event 0x140104760. The h2-mod LUI keydown/keyup
+			// cached-event extension (0x1400F9B90) is only used by h2-mod's own Lua
+			// menus and is not installed.
+			// Allow keyboard/mouse input while the gamepad is enabled (h1-mod SP
+			// patch). VR menus deliver native key/mouse events; MWR otherwise
+			// drops them in gamepad mode (e.g. the "Press A" title lockout).
+			utils::hook::nop(0x1401AC0CE, 2);
+			utils::hook::nop(0x1401A9DDC, 6);
 
-			utils::hook::inject(0x14031EB8B, lui_cached_events);
-
-			cl_char_event_hook.create(0x1403D27B0, cl_char_event_stub);
-			cl_key_event_hook.create(0x1403D2AE0, cl_key_event_stub);
-			cl_mouse_move_hook.create(0x1403296F0, cl_mouse_move_stub);
-			lui_cod_key_event_hook.create(0x140328F50, lui_cod_key_event_stub);
+			cl_char_event_hook.create(0x1401AB8F0, cl_char_event_stub);
+			cl_key_event_hook.create(0x1401ABC20, cl_key_event_stub);
+			cl_mouse_move_hook.create(0x140104760, cl_mouse_move_stub);
 		}
 	};
 }

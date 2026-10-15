@@ -25,6 +25,8 @@ namespace vr::native_menu
 	namespace
 	{
 		using object=game::hks::HksObject;
+		// Byte returned by MWR 0x1400F6430 (H2 0x140328BD0): frontend LUI active.
+		constexpr std::uintptr_t frontend_flag=0x141F0E335;
 		using utils::native_memory::read_bytes;
 		std::mutex mutex;
 		state published;
@@ -111,18 +113,30 @@ namespace vr::native_menu
 		{
 			if(value.t!=game::hks::TUSERDATA)return 0;
 			const auto handle=read<std::array<std::uint16_t,2>>(reinterpret_cast<std::uintptr_t>(value.v.ptr)+32);
-			const auto base=read<std::uintptr_t>(0x141a783a0),generations=read<std::uintptr_t>(0x141a783a8);
-			const unsigned first=read<std::uint16_t>(0x141a783b4),capacity=read<std::uint16_t>(0x141a783b6);
-			if(!base||!generations||!capacity||capacity>16384||handle[0]<first||handle[0]-first>=capacity||
-				read<std::uint16_t>(generations+(handle[0]-first)*2)!=handle[1])return 0;
-			return base+(handle[0]-first)*0x188;
+			// MWR LUI element pools (0x1400FB550): the global pool at 0x141F97880,
+			// then the VM-owned pools referenced by 0x141F0E3E8 / 0x141F0E3F8.
+			// Each pool: base +0, generations +8, first +0x14, capacity +0x16.
+			const auto lookup=[&](std::uintptr_t pool)->std::uintptr_t
+			{
+				if(!pool)return 0;
+				const auto base=read<std::uintptr_t>(pool),generations=read<std::uintptr_t>(pool+8);
+				const unsigned first=read<std::uint16_t>(pool+0x14),capacity=read<std::uint16_t>(pool+0x16);
+				if(!base||!generations||!capacity||capacity>16384||handle[0]<first||handle[0]-first>=capacity||
+					read<std::uint16_t>(generations+(handle[0]-first)*2)!=handle[1])return 0;
+				return base+(handle[0]-first)*0x188;
+			};
+			if(const auto found=lookup(0x141F97880))return found;
+			const auto alternate=read<std::uintptr_t>(0x141F0E3E8);
+			return lookup(alternate?alternate:read<std::uintptr_t>(0x141F0E3F8));
 		}
 		bool truth(object v) noexcept {return v.t==game::hks::TBOOLEAN&&v.v.boolean;}
 		bool video_playing() noexcept
 		{
-			return menu_surface::native_video_playing(read<std::uint8_t>(0x14d36add5)!=0,
-				read<std::uint8_t>(0x14d36abc0)!=0,read<std::uint8_t>(0x14d36add4)!=0,
-				read<unsigned>(0x14d36addc),read<unsigned>(0x14d36ade0));
+			// MWR cinematic glob: name 0x14DCC3EA0, pending +0x214, started +0x215,
+			// requested +0x21C, acknowledged +0x220 (see 0x140531ED0).
+			return menu_surface::native_video_playing(read<std::uint8_t>(0x14DCC40B5)!=0,
+				read<std::uint8_t>(0x14DCC3EA0)!=0,read<std::uint8_t>(0x14DCC40B4)!=0,
+				read<unsigned>(0x14DCC40BC),read<unsigned>(0x14DCC40C0));
 		}
 		state observe()
 		{
@@ -131,7 +145,7 @@ namespace vr::native_menu
 			s.enabled=installed&&enable&&enable->current.enabled;
 			const auto current_vm=reinterpret_cast<std::uintptr_t>(*game::hks::lua_state);
 			if(!s.enabled||!current_vm){capture_needed=false;const std::lock_guard lock(mutex);published=s;output.reset();input_pointer={};return s;}
-			s.frontend=read<std::uint8_t>(0x140bebccc)!=0;
+			s.frontend=read<std::uint8_t>(frontend_flag)!=0;
 			const auto* paused=game::Dvar_FindVar("cl_paused");
 			const auto* pause_menu=game::Dvar_FindVar("lui_pausemenu");
 			if(!s.frontend&&paused&&paused->current.integer&&pause_menu&&pause_menu->current.enabled)s.scene_dim=140.f/255.f;
@@ -153,6 +167,11 @@ namespace vr::native_menu
 				std::vector<object> menus;
 				std::vector<stack::role> roles;
 				entries.reserve(h.m_arraySize);menus.reserve(h.m_arraySize);roles.reserve(h.m_arraySize);
+				std::string stack_names;
+				const auto log_stack=gsl::finally([&]{
+					static std::string last;
+					if(stack_names!=last){last=stack_names;console::info("[VR menus] stack: %s\n",stack_names.c_str());}
+				});
 				for(unsigned i=0;i<h.m_arraySize;++i)
 				{
 					const auto info=read<object>(reinterpret_cast<std::uintptr_t>(h.m_arrayPart+i));
@@ -160,6 +179,7 @@ namespace vr::native_menu
 					const auto fields=get_properties<4>(info,{"menu","name","isModal","isPopup"});
 					const auto menu=fields[0];
 					const auto name=string(fields[1]);s.briefing=name=="LuiBriefingMenu";
+					stack_names+=name+(truth(fields[3])?"(popup) ":" ");
 					s.accept_screen=name=="main_lockout"||s.briefing;
 					menus.push_back(menu);roles.push_back(stack::classify(truth(fields[3])));
 					entries.push_back({reinterpret_cast<std::uintptr_t>(info.v.ptr),element(menu),truth(fields[2]),
@@ -195,7 +215,7 @@ namespace vr::native_menu
 		struct cursor {std::uintptr_t base{},used{};};
 		cursor command_cursor() noexcept
 		{
-			const auto p=read<std::uintptr_t>(0x150f911a8);const auto c=read<cursor>(p);
+			const auto p=read<std::uintptr_t>(0x15182A6A0);const auto c=read<cursor>(p);
 			return c.base>=0x10000&&c.used<=0x400000?c:cursor{};
 		}
 		std::uint64_t fingerprint(std::uintptr_t begin,std::uintptr_t end,bool growing_lines=false) noexcept
@@ -444,10 +464,10 @@ namespace vr::native_menu
 		if(!installed||!requested)return {};
 		const auto* enabled=game::Dvar_FindVar("vr_enable");
 		if(!enabled||!enabled->current.enabled)return {};
-		// Native CG's cinematic draw at 0x140367F84 combines active playback
+		// Native CG's cinematic draw combines active playback
 		// with this dvar. It is an ownership gate, never playback evidence alone.
 		const auto* fullscreen=game::Dvar_FindVar("cg_cinematicFullscreen");
-		return {true,read<std::uint8_t>(0x140bebccc)!=0,game::CL_IsCgameInitialized(),
+		return {true,read<std::uint8_t>(frontend_flag)!=0,game::CL_IsCgameInitialized(),
 			video_playing(),fullscreen && fullscreen->current.enabled};
 	}
 	void set_requested(bool value) noexcept {requested=value;if(!value){const std::lock_guard lock(mutex);output.reset();input_pointer={};}}
@@ -524,22 +544,24 @@ namespace vr::native_menu
 	public:
 		void post_unpack() override
 		{
+			// MWR: LUI element render call 0x1400EFC6E (in 0x1400EFA70), frontend
+			// flag reader 0x1400F6430 and cached-draw entry 0x140108320.
 			constexpr std::uint8_t call[]{0xff,0xd3,0x48,0x8b,0x9c,0x24,0xd8,0,0,0};
-			constexpr std::uint8_t frontend[]{0x0f,0xb6,0x05,0xf5,0x30,0x8c,0,0xc3};
+			constexpr std::uint8_t frontend[]{0x0f,0xb6,0x05,0xfe,0x7e,0xe1,0x01,0xc3};
 			constexpr std::uint8_t cached[]{0x48,0x89,0x5c,0x24,0x08,0x57,0x48,0x83,0xec,0x20};
-			if(!verify(0x140314c51,call)||!verify(0x140328bd0,frontend)||!verify(0x14032d2c0,cached))
+			if(!verify(0x1400EFC6E,call)||!verify(0x1400F6430,frontend)||!verify(0x140108320,cached))
 			{console::error("[VR menus] native render/state signature rejected\n");return;}
 			const auto thunk=utils::hook::assemble([](utils::hook::assembler& a)
 			{
-				emit_render_bridge(a,reinterpret_cast<std::uintptr_t>(render_primitive),0x140314c5b);
+				emit_render_bridge(a,reinterpret_cast<std::uintptr_t>(render_primitive),0x1400EFC78);
 			});
-			if(!install_render_bridge(0x140314c51,thunk))
+			if(!install_render_bridge(0x1400EFC6E,thunk))
 			{console::error("[VR menus] render relay allocation failed; native instructions preserved\n");return;}
 			// LUI tries its cached draw list before calling the element renderer.
 			// A hit emits current-frame commands and skips the primitive callback;
 			// tag that emission through the same ownership path, without disabling
 			// native caching or retaining stale pixels for text/cursor/video.
-			cached_render_hook.create(0x14032d2c0,render_cached);
+			cached_render_hook.create(0x140108320,render_cached);
 			installed=true;
 			scheduler::loop([]{try{(void)observe();deliver();}catch(...){++rejected;::input::release_vr_ui_input();reset_vm();}},scheduler::lui);
 			if(debug_options::enabled(debug_options::probe::menu_input))

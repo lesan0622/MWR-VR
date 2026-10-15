@@ -37,7 +37,7 @@ namespace vr::native_waypoints
 		cursor commands() noexcept
 		{
 			const void* allocator{}; cursor out{};
-			if (utils::native_memory::read_bytes(&allocator,reinterpret_cast<void*>(0x150F911A8),sizeof(allocator)))
+			if (utils::native_memory::read_bytes(&allocator,reinterpret_cast<void*>(0x15182A6A0),sizeof(allocator)))
 				utils::native_memory::read_bytes(&out,allocator,sizeof(out));
 			if (out.base<0x10000 || out.used>0x400000) return {};
 			return out;
@@ -255,11 +255,22 @@ namespace vr::native_waypoints
 		return record(value,before,commands());
 	}
 	counters get_counters() noexcept { return {calls.load(),recorded.load(),matched.load(),rejected.load(),resets.load()}; }
+	// MWR: set once the H2 CG waypoint/script HUD boundaries are rebound.
+	bool h2_boundaries_rebound{};
 	class component final: public component_interface
 	{
 	public:
 		void post_unpack() override
 		{
+			// MWR: R_InitNextFrame 0x140582F70 is rebound so menu/HUD command
+			// ownership is invalidated per reused frontend arena. The H2 CG
+			// waypoint, death quote, cursor hint and script HUD boundaries below
+			// are not rebound yet and stay disabled.
+			constexpr std::uint8_t mwr_reset[]{0x48,0x89,0x5c,0x24,0x08,0x48,0x89,0x74,0x24,0x10};
+			if (!verify(0x140582F70,mwr_reset))
+			{ console::error("[VR indicators] native frame reset signature rejected\n"); return; }
+			reset_hook.create(0x140582F70,reset_stub);
+			if (!h2_boundaries_rebound) return;
 			constexpr std::uint8_t waypoint[]{0x40,0x55,0x53,0x57,0x48,0x8d,0xac,0x24,0x60,0xff,0xff,0xff};
 			constexpr std::uint8_t projection[]{0x48,0x89,0x5c,0x24,0x08,0x48,0x89,0x74,0x24,0x18};
 			constexpr std::uint8_t clamp[]{0x48,0x8b,0xc4,0x48,0x89,0x58,0x20,0x57};

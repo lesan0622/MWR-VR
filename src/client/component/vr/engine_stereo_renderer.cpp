@@ -75,7 +75,7 @@ namespace vr::engine_stereo_renderer
 		constexpr std::uintptr_t fx_camera_call_site = 0x1402388AE;
 		constexpr std::uintptr_t fx_camera_function = 0x14023F4E0;
 		constexpr std::uintptr_t frontend_data_pointer = 0x15182A680;
-		constexpr std::uintptr_t frontend_global_selector = 0x15182A69C;
+		constexpr std::uintptr_t frontend_global_selector = 0x15182A698; // frontend index flipped by R_InitNextFrame
 		constexpr std::uintptr_t global_scene_record_count = 0x14F79D5C8;
 		constexpr std::uintptr_t backend_post_bind_call_site = 0x1405B9FF9;
 		constexpr std::uintptr_t backend_post_bind_function = 0x1405B8EE0;
