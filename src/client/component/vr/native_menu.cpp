@@ -25,8 +25,15 @@ namespace vr::native_menu
 	namespace
 	{
 		using object=game::hks::HksObject;
-		// Byte returned by MWR 0x1400F6430 (H2 0x140328BD0): frontend LUI active.
-		constexpr std::uintptr_t frontend_flag=0x141F0E335;
+		// MWR 0x1400F6430 returns this byte, but unlike H2 0x140328BD0 it only
+		// means "LUI started" (set by LUI startup 0x1400F5C30, cleared by
+		// shutdown 0x1400FB370): MWR keeps LUI alive in-game for the HUD.
+		// The frontend is therefore LUI running without an initialized cgame.
+		constexpr std::uintptr_t lui_started_flag=0x141F0E335;
+		bool frontend_active() noexcept
+		{
+			return *reinterpret_cast<const volatile std::uint8_t*>(lui_started_flag)!=0 && !game::CL_IsCgameInitialized();
+		}
 		using utils::native_memory::read_bytes;
 		std::mutex mutex;
 		state published;
@@ -145,7 +152,7 @@ namespace vr::native_menu
 			s.enabled=installed&&enable&&enable->current.enabled;
 			const auto current_vm=reinterpret_cast<std::uintptr_t>(*game::hks::lua_state);
 			if(!s.enabled||!current_vm){capture_needed=false;const std::lock_guard lock(mutex);published=s;output.reset();input_pointer={};return s;}
-			s.frontend=read<std::uint8_t>(frontend_flag)!=0;
+			s.frontend=frontend_active();
 			const auto* paused=game::Dvar_FindVar("cl_paused");
 			const auto* pause_menu=game::Dvar_FindVar("lui_pausemenu");
 			if(!s.frontend&&paused&&paused->current.integer&&pause_menu&&pause_menu->current.enabled)s.scene_dim=140.f/255.f;
@@ -467,7 +474,7 @@ namespace vr::native_menu
 		// Native CG's cinematic draw combines active playback
 		// with this dvar. It is an ownership gate, never playback evidence alone.
 		const auto* fullscreen=game::Dvar_FindVar("cg_cinematicFullscreen");
-		return {true,read<std::uint8_t>(frontend_flag)!=0,game::CL_IsCgameInitialized(),
+		return {true,frontend_active(),game::CL_IsCgameInitialized(),
 			video_playing(),fullscreen && fullscreen->current.enabled};
 	}
 	void set_requested(bool value) noexcept {requested=value;if(!value){const std::lock_guard lock(mutex);output.reset();input_pointer={};}}

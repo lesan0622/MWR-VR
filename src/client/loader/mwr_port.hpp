@@ -36,6 +36,7 @@ namespace mwr_port
 		"vr::native_hud_capture",
 		"vr::menu_backdrop",
 		"vr::native_waypoints",
+		"vr::controllers",
 	};
 
 	// typeid names look like "class vr::gameplay::foo::component".
