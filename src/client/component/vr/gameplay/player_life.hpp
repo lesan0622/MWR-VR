@@ -3,7 +3,7 @@
 
 namespace vr::gameplay::player_life
 {
-	// H2's server selects 5/6 for dead/free or dead/linked, then promotes
+	// MWR 0x140288121 (H2 0x1404AD7A1) selects 5/6 for dead/free or dead/linked; H2 promotes
 	// free death to 7 for the authored death animation (0x1404AD7A1..D803).
 	inline bool dead(std::uint8_t movement_type,int health) noexcept
 	{

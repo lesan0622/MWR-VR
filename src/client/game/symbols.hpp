@@ -109,7 +109,7 @@ namespace game
 	WEAK symbol<void(void* ps, const Weapon weapon, int hadWeapon)> G_InitializeAmmo{0x14029D9E0 /* H2 0x1404C4110 */};
 	WEAK symbol<void(int localClientNum, const Weapon weapon)> G_SelectWeapon{0x1402F2EA0 /* H2 0x14051C0D0 */};
 	WEAK symbol<void(trace_t* results, const float* start, const float* end, 
-		const Bounds* bounds, int passEntityNum, int contentmask)> G_TraceCapsule{0x0 /* TODO(mwr) H2 0x1404CBFE0 */};
+		const Bounds* bounds, int passEntityNum, int contentmask)> G_TraceCapsule{0x1402A5640 /* H2 0x1404CBFE0;  */};
 	WEAK symbol<void(int* hitNum, const float* start, const float* end, 
 		int passEntityNum, int passEntityNum1, int contentmask)> G_SightTrace{0x0 /* TODO(mwr) H2 0x1404CBCA0 */};
 
@@ -331,7 +331,7 @@ namespace game
 	WEAK symbol<int> volmod_index{0x0 /* TODO(mwr) H2 0x151BADFD8 */};
 	WEAK symbol<int> music_dsp_bus_index{0x0 /* TODO(mwr) H2 0x151B9AA40 */};
 
-	WEAK symbol<WeaponDef*> weapon_defs{0x0 /* TODO(mwr) H2 0x14CE01580 */};
+	WEAK symbol<WeaponDef*> weapon_defs{0x14D750C40 /* H2 0x14CE01580;  */};
 
 	namespace hks
 	{

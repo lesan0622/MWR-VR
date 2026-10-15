@@ -60,10 +60,20 @@ namespace vr::gameplay::hands
 {
 	namespace
 	{
-		constexpr std::uintptr_t calc_skeleton_address = 0x140657D80;
-		constexpr std::uintptr_t client_object_address = vr::h2::sp::client_entity_dobj.address();
-		constexpr int primary_viewmodel_handle = 4000;
+		// MWR DObjCalcSkel (H2 0x140657D80); same prologue and DObj layout
+		// (models 0xF/0xD8, calculated 0x80, matrices 0xA8, timestamp 0xB0).
+		constexpr std::uintptr_t calc_skeleton_address = 0x140469E80;
+		// MWR CG keeps its right/left viewmodel DObjs at 0x14215B4B0 (stride
+		// 0x428); H2 resolved client DObj handles 4000/4001 instead.
+		constexpr std::uintptr_t viewmodel_objects = 0x14215B4B0, viewmodel_stride = 0x428;
+		// MWR cg refdef pointer (CG_DrawActiveFrame stores &refdef); +0x58 is the
+		// scene view offset that DObj matrices are relative to (0x14014D720).
+		constexpr std::uintptr_t render_view_pointer = 0x1420C9A18;
 		using object_layout = native_object;
+		object_layout* viewmodel_object(int index) noexcept
+		{
+			return *reinterpret_cast<object_layout* const*>(viewmodel_objects + index * viewmodel_stride);
+		}
 		utils::hook::detour calc_skeleton_hook;
 		game::dvar_t* enabled{};
 		game::dvar_t* shoulder_half_width{};
@@ -469,7 +479,7 @@ namespace vr::gameplay::hands
 			if (!profile || !solver().binding.pose_library_data.valid ||
 			    !viewmodel_visibility::ready(profile->viewmodel.visibility))
 				return false;
-			const auto* render_view = *reinterpret_cast<const std::byte* const*>(0x141E39D30);
+			const auto* render_view = *reinterpret_cast<const std::byte* const*>(render_view_pointer);
 			if (!render_view)
 				return false;
 			vec offset{};
@@ -651,7 +661,7 @@ namespace vr::gameplay::hands
 			if (in_hook || !alive.load(std::memory_order_relaxed) || !object || !requested ||
 			    (!empty && !independent &&
 			     object !=
-			         utils::hook::invoke<object_layout*>(client_object_address, primary_viewmodel_handle, 0)))
+			         viewmodel_object(0)))
 			{
 				original();
 				return;
@@ -810,7 +820,7 @@ namespace vr::gameplay::hands
 			// Conservative single-held boundary: a second native viewmodel may be
 			// dual wield or a special prop. Do not drive just one half as success.
 			if (!empty && !independent &&
-			    utils::hook::invoke<object_layout*>(client_object_address, primary_viewmodel_handle + 1, 0))
+			    viewmodel_object(1))
 			{
 				reason = "secondary viewmodel present; dedicated handling required";
 				++skipped;
@@ -870,7 +880,7 @@ namespace vr::gameplay::hands
 			if (!empty && !independent && weapons::carry::active() &&
 			    owner.weapon != vr::h2::sp::weapon_selection_request.read())
 				selection_transition = true;
-			const auto* render_view = *reinterpret_cast<const std::byte* const*>(0x141E39D30);
+			const auto* render_view = *reinterpret_cast<const std::byte* const*>(render_view_pointer);
 			if (!render_view)
 			{
 				reason = "render view unavailable";
@@ -2138,16 +2148,14 @@ namespace vr::gameplay::hands
 			                               0xff};
 			std::array<std::uint8_t, sizeof(bytes)> mask{};
 			mask.fill(0xff);
-			constexpr std::uint8_t lookup_bytes[]{0x48, 0x63, 0xc1, 0x48, 0x8d, 0x0d, 0xa6, 0xc2, 0xb6, 0x0a,
-			                                      0x0f, 0xbf, 0x0c, 0x41, 0x85, 0xc9, 0x74, 0x13, 0x48, 0x8d,
-			                                      0x04, 0xc9, 0x48, 0xc1, 0xe0, 0x06, 0x48, 0x8d, 0x0d, 0xff,
-			                                      0x71, 0x88, 0x0a, 0x48, 0x03, 0xc1, 0xc3, 0x33, 0xc0, 0xc3};
+			// MWR DObj layout witness: the skeleton matrix getter 0x14046ACF0 reads +0xA8.
+			constexpr std::uint8_t lookup_bytes[]{0x48, 0x8b, 0x81, 0xa8, 0x00, 0x00, 0x00, 0xc3};
 			std::array<std::uint8_t, sizeof(lookup_bytes)> lookup_mask{};
 			lookup_mask.fill(0xff);
 			if (!utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(calc_skeleton_address),
 			                                                 {bytes, mask.data(), sizeof(bytes)}) ||
 			    !utils::hook_validation::verify_masked_bytes(
-			        reinterpret_cast<void*>(client_object_address),
+			        reinterpret_cast<void*>(0x14046ACF0),
 			        {lookup_bytes, lookup_mask.data(), sizeof(lookup_bytes)}))
 			{
 				reason = "skeleton hook signature mismatch";

@@ -20,8 +20,8 @@ namespace vr::gameplay::weapons::native_ballistics
 	static_assert(offsetof(parameters, alternate) == 0x44);
 	static_assert(offsetof(parameters, definition) == 0x48);
 	static_assert(sizeof(parameters) == 0x50);
-	inline constexpr std::uintptr_t bullet_address = 0x1404AA300;
-	inline constexpr std::uintptr_t ads_spread_address = 0x1406A1670;
+	inline constexpr std::uintptr_t bullet_address = 0x140284C40; // MWR Bullet_Fire (H2 0x1404AA300)
+	inline constexpr std::uintptr_t ads_spread_address = 0x1404B2830; // MWR ADS spread query (H2 0x1406A1670)
 
 	enum class outcome { unavailable, invalid_context, invalid_geometry, unsupported_weapon,
 		empty, obstruction, ammunition_changed, emitted, mechanical_changed, context_changed };

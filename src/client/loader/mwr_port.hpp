@@ -37,7 +37,9 @@ namespace mwr_port
 		"vr::menu_backdrop",
 		"vr::native_waypoints",
 		"vr::controllers",
-		"vr::gameplay::mwr_weapon_pose",
+		// "vr::gameplay::mwr_weapon_pose" (simplified rigid viewmodel) is replaced by the original hands solver.
+		"vr::gameplay::hands",
+		"vr::gameplay::weapons",
 	};
 
 	// typeid names look like "class vr::gameplay::foo::component".

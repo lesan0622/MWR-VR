@@ -43,8 +43,8 @@ namespace vr::gameplay::weapons
 		std::atomic<std::uint64_t> applied{}, rejected{}, obstructed{};
 		std::atomic<std::uint64_t> spread_applied{}, spread_rejected{};
 		std::atomic<const char*> reason{"waiting for shot"};
-		constexpr std::uintptr_t fire_address = 0x140518A40;
-		constexpr std::uintptr_t parameter_address = 0x140518880;
+		constexpr std::uintptr_t fire_address = 0x1402EF8F0; // MWR FireWeapon (H2 0x140518A40)
+		constexpr std::uintptr_t parameter_address = 0x1402EF730; // MWR weapon fire parameters (H2 0x140518880)
 		constexpr auto bullet_address = native_ballistics::bullet_address;
 		constexpr auto ads_spread_address = native_ballistics::ads_spread_address;
 		using native_parameters = native_ballistics::parameters;
@@ -361,60 +361,64 @@ namespace vr::gameplay::weapons
 			static const char* recoil_modes[]{"all", "long", "off", nullptr};
 			recoil_penalty = dvars::register_enum(settings::recoil_penalty, recoil_modes, 1, game::DVAR_FLAG_SAVED,
 				"Single-hand recoil penalty: all weapons, long weapons, or off");
-			constexpr std::uint8_t identity[]{0x48, 0x8d, 0x05, 0xc8, 0xa2, 0xab, 0x01, 0x48,
+			constexpr std::uint8_t identity[]{0x48, 0x8d, 0x05, 0xe8, 0x1c, 0x38, 0x02, 0x48,
 											  0x03, 0xf8, 0x8b, 0x47, 0x28, 0x89, 0x42, 0x14};
-			identity_verified = verify(0x1403D0331, identity);
-			constexpr std::uint8_t event_call[]{0xe8, 0x4e, 0xb8, 0x06, 0x00};
+			identity_verified = verify(0x1401A94A1, identity); // MWR FinishMove (H2 0x1403D0331)
+			constexpr std::uint8_t event_call[]{0xe8, 0x9e, 0x7d, 0x06, 0x00};
 			constexpr std::uint8_t parameter_call[]{0xe8, 0xea, 0xfc, 0xff, 0xff};
 			constexpr std::uint8_t parameter_entry[]{0x48, 0x89, 0x5c, 0x24, 0x20, 0x55, 0x56, 0x57,
 													 0x41, 0x56, 0x41, 0x57, 0x48, 0x83, 0xec, 0x70};
 			constexpr std::uint8_t type_entry[]{0x40, 0x53, 0x48, 0x83, 0xec, 0x50, 0x48,
-												0x8b, 0x05, 0x13, 0xff, 0x56, 0x00};
+												0x8b, 0x05, 0x53, 0x14, 0xcc, 0x00};
 			constexpr std::uint8_t attack[]{0x83, 0x4a, 0x04, 0x01};
 			constexpr std::uint8_t trace_entry[]{0x40, 0x53, 0x55, 0x56, 0x57, 0x48, 0x83, 0xec, 0x78};
 			constexpr std::uint8_t trace_mask[]{0xc7, 0x44, 0x24, 0x20, 0x31, 0xe8, 0x80, 0x02};
-			if (!identity_verified || !verify(0x1404AD1ED, event_call) ||
-				!verify(0x140518B91, parameter_call) || !verify(parameter_address, parameter_entry) ||
-				!verify(vr::h2::sp::weapon_type.address(), type_entry) || !verify(0x1403CEDFC, attack) ||
-				!verify(0x1404CBFE0, trace_entry) || !verify(0x1404AC57B, trace_mask))
+			if (!identity_verified || !verify(0x140287B4D, event_call) ||
+				!verify(0x1402EFA41, parameter_call) || !verify(parameter_address, parameter_entry) ||
+				!verify(vr::h2::sp::weapon_type.address(), type_entry) || !verify(0x1401A7F6C, attack) ||
+				!verify(0x1402A5640, trace_entry) || !verify(0x140286EFB, trace_mask))
 			{
 				reason = "native shot hook signature mismatch";
 				console::error("[VR fire] Native signatures rejected; controller fire is unavailable\n");
 				return;
 			}
-			utils::hook::call(0x140518B91, parameters_stub);
-			utils::hook::call(0x1404AD1ED, fire_stub);
+			utils::hook::call(0x1402EFA41, parameters_stub);
+			utils::hook::call(0x140287B4D, fire_stub);
 			hooks_installed = true;
 			// The same parameter builder precedes BOTH projectile branches. Retain
 			// PM_Weapon's ADS, delay, lock-on and ammo gates, then let G_FireWeapon
 			// supply the native attacker, target, fuse and projectile ownership.
 			constexpr std::uint8_t projectile_dispatch[]{0x83,0xf8,0x03,0x0f,0x85,0x29,0x01,0x00,0x00};
-			constexpr std::uint8_t grenade_call[]{0xe8,0x85,0x40,0x00,0x00};
-			constexpr std::uint8_t missile_call[]{0xe8,0xd5,0x47,0x00,0x00};
+			constexpr std::uint8_t grenade_call[]{0xe8,0xa5,0x3f,0x00,0x00};
+			constexpr std::uint8_t missile_call[]{0xe8,0xc5,0x46,0x00,0x00};
 			constexpr std::uint8_t lock_gate[]{0x80,0xbd,0x77,0x0e,0x00,0x00,0x00,0x74,0x1b,
 				0xf6,0x83,0x0c,0x06,0x00,0x00,0x02};
 			constexpr std::uint8_t ads_gate[]{0xe8,0x87,0xd1,0x00,0x00,0x41,0x3b,0xc6};
-			projectile_verified=verify(0x140518C6E,projectile_dispatch) && verify(0x140518CB6,grenade_call) &&
-				verify(0x140518D96,missile_call) && verify(0x1406993FD,lock_gate) && verify(0x140694444,ads_gate);
+			// MWR FireWeapon dispatch 0x1402EFB1E, grenade 0x1402EFB66, missile
+			// 0x1402EFC46. TODO(mwr): PM_Weapon lock-on/ADS gates (H2 0x1406993FD,
+			// 0x140694444) are not rebound, so launcher input stays disabled.
+			(void)lock_gate;(void)ads_gate;
+			projectile_verified=false && verify(0x1402EFB1E,projectile_dispatch) && verify(0x1402EFB66,grenade_call) &&
+				verify(0x1402EFC46,missile_call);
 			if (!projectile_verified) console::error("[VR fire] Native projectile signatures rejected; launcher input unavailable\n");
 
 			// Verify the six-argument bullet ABI and the original ADS query.
 			// A mismatch disables this policy without breaking controller aiming.
-			constexpr std::uint8_t bullet_call[]{0xe8, 0xcd, 0x16, 0xf9, 0xff};
+			constexpr std::uint8_t bullet_call[]{0xe8, 0x5d, 0x51, 0xf9, 0xff};
 			constexpr std::uint8_t bullet_arguments[]{0x4c, 0x8d, 0x44, 0x24, 0x60,
 				0xf3, 0x0f, 0x11, 0x44, 0x24, 0x28, 0x4c, 0x8b, 0xce, 0x0f, 0x28, 0xce,
 				0x44, 0x89, 0x7c, 0x24, 0x20, 0x48, 0x8b, 0xce};
 			constexpr std::uint8_t bullet_entry[]{0x48, 0x83, 0xec, 0x48, 0xf3, 0x0f, 0x10,
 				0x44, 0x24, 0x78, 0x8b, 0x44, 0x24, 0x70, 0xf3, 0x0f, 0x11, 0x44, 0x24, 0x30,
 				0xc6, 0x44, 0x24, 0x28, 0x00, 0x89, 0x44, 0x24, 0x20, 0xe8, 0x3e, 0x0a, 0x00, 0x00};
-			constexpr std::uint8_t ads_spread_call[]{0xe8, 0xb2, 0x8a, 0x18, 0x00};
+			constexpr std::uint8_t ads_spread_call[]{0xe8, 0xc2, 0x2d, 0x1c, 0x00};
 			constexpr std::uint8_t ads_spread_entry[]{0x48, 0x83, 0xec, 0x28, 0x45, 0x0f, 0xb6,
-				0xc8, 0x8b, 0xc2, 0x4c, 0x8d, 0x05, 0xff, 0xfe, 0x75, 0x0c};
-			if (verify(0x140518C2E, bullet_call) && verify(0x140518C15, bullet_arguments) &&
-				verify(bullet_address, bullet_entry) && verify(0x140518BB9, ads_spread_call) &&
+				0xc8, 0x8b, 0xc2, 0x4c, 0x8d, 0x05, 0xff, 0xe3, 0x29, 0x0d};
+			if (verify(0x1402EFADE, bullet_call) && verify(0x1402EFAC5, bullet_arguments) &&
+				verify(bullet_address, bullet_entry) && verify(0x1402EFA69, ads_spread_call) &&
 				verify(ads_spread_address, ads_spread_entry))
 			{
-				utils::hook::call(0x140518C2E, bullets_stub);
+				utils::hook::call(0x1402EFADE, bullets_stub);
 				spread_hook_installed = true;
 			}
 			else
