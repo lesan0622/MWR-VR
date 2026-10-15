@@ -249,6 +249,10 @@ namespace command
 				printf("======== End command dump =========\n");
 			});
 
+			// MWR: these h2-mod cheats use H2 entity layouts and the GSC scripting
+			// context, which are not ported. Keep the native MWR commands instead.
+			if constexpr (false)
+			{
 			add("god", []()
 			{
 				if (!game::SV_Loaded())
@@ -562,6 +566,7 @@ namespace command
 			
 				printf("============================================================\n");
 			});
+			}
 		}
 	};
 }

@@ -37,6 +37,7 @@ namespace mwr_port
 		"vr::menu_backdrop",
 		"vr::native_waypoints",
 		"vr::controllers",
+		"vr::gameplay::mwr_weapon_pose",
 	};
 
 	// typeid names look like "class vr::gameplay::foo::component".

@@ -9,6 +9,7 @@
 #include "controller_buttons.hpp"
 #include "controller_locomotion.hpp"
 #include "controller_stance.hpp"
+#include "mwr_weapon_pose.hpp"
 #include "game/dvars.hpp"
 #include "game/game.hpp"
 #include "loader/component_loader.hpp"
@@ -67,6 +68,8 @@ namespace vr::controllers
 		std::atomic<std::uint64_t> jump_count{};
 		std::atomic<std::uint64_t> jump_notify_count{};
 		std::atomic<std::uint64_t> view_count{};
+		std::atomic<std::uint64_t> attack_count{}, reload_count{};
+		constexpr int attack_button = 0x1, use_reload_button = 0x20; // MWR CL_CmdButtons 0x1401A7F30.
 		bool hooks_installed{};
 
 		static_assert(sizeof(game::usercmd_s) == 64);
@@ -175,6 +178,18 @@ namespace vr::controllers
 				utils::hook::invoke<void>(notify_command_address, building_client, jump_binding, 0);
 				++jump_notify_count;
 			}
+			// Right trigger fires, right B reloads (+usereload). Native weapon
+			// state, ammunition and fire rate keep authority over the request.
+			if (gameplay && input.trigger[1].active && input.trigger[1].down)
+			{
+				cmd->buttons |= attack_button;
+				++attack_count;
+			}
+			if (gameplay && input.secondary[1].active && input.secondary[1].down)
+			{
+				cmd->buttons |= use_reload_button;
+				++reload_count;
+			}
 			if (button_mask & controller_input::sprint_button) ++sprint_count;
 			if (button_mask & controller_input::jump_button) ++jump_count;
 			apply_locomotion(cmd, input, gameplay, now);
@@ -239,6 +254,8 @@ namespace vr::controllers
 				"sprint_commands=%llu jump_commands=%llu jump_notifies=%llu\n",
 				input.sprint.active, input.sprint.presses, input.jump.active, input.jump.presses,
 				sprint_count.load(), jump_count.load(), jump_notify_count.load());
+			console::info("[VR input] attack_commands=%llu reload_commands=%llu weapon_hand=%d\n",
+				attack_count.load(), reload_count.load(), gameplay::mwr_weapon_pose::active());
 			const auto* ps = game::CL_IsCgameInitialized() ? game::CG_GetPredictedPlayerState(0) : nullptr;
 			console::info("[VR input] stance_verified=%d requests=%llu requested=%d actual=%d\n",
 				stance_verified, stance_count.load(), stance_verified && ps ? *reinterpret_cast<const int*>(native_stance_address) : -1,
