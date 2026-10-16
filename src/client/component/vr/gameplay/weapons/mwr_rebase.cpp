@@ -114,6 +114,12 @@ namespace vr::gameplay::weapons::mwr_rebase
 		p.rigid_magazine_source = t.magazine_from_receiver ? receiver : nullptr;
 		// World clip magazines take their counted rounds from this receiver.
 		p.round_source = t.magazine_from_receiver ? nullptr : receiver;
+		// A chamber cartridge is cut from the receiver magazine source; without one
+		// (MWR world clip magazines) the MW2 chamber presentation cannot bind.
+		if (!p.rigid_magazine_source)
+			p.chamber_round = nullptr;
+		if (t.receiver_parented_bullets)
+			p.receiver_parented_bullets = true;
 		if (t.magazine_from_receiver)
 			p.magazine_model = receiver;
 		// MW2 counted-fill recipes do not match MWR meshes (topology hash differs

@@ -33,6 +33,7 @@ namespace vr::gameplay::weapons::mwr_rebase
 		bool drop_bullet_parents{}; // e.g. Desert Eagle j_bullet01 under tag_bullets.
 		bool drop_belt_bridge{};    // e.g. RPD optic rail bridge (MW2 j_rail, MWR tag_rail).
 		bool keep_handle_catch{};   // HK lock-open notch (MP5K recipe on MWR MP5/G3).
+		bool receiver_parented_bullets{}; // Round stand-in parented to j_gun (MWR Skorpion has no round bone).
 		int magazine_capacity{};     // Native capacity when it differs from the source recipe.
 		std::span<const std::string_view> additional_bullet_bones{};
 		// Support-hand magazine grasp measured from the MWR reload animation
