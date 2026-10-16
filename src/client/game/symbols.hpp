@@ -6,9 +6,11 @@ namespace game
 {
 	// Functions
 	
-	WEAK symbol<void(const float* angles, float(*axis)[3])> AnglesToAxis{0x0 /* TODO(mwr) H2 0x140613090 */};
-	WEAK symbol<void(const float (*axis)[3], float* angles)> AxisToAngles{0x0 /* TODO(mwr) H2 0x14060D410 */};
-	WEAK symbol<void(const float* angles, float* forward, float* right, float* up)> AngleVectors{0x0 /* TODO(mwr) H2 0x140612ED0 */};
+	// MWR inlines AnglesToAxis; this adapter builds it from AngleVectors (0x1404144F0).
+	void mwr_angles_to_axis(const float* angles, float (*axis)[3]);
+	WEAK symbol<void(const float* angles, float(*axis)[3])> AnglesToAxis{reinterpret_cast<size_t>(&mwr_angles_to_axis) /* H2 0x140613090 */};
+	WEAK symbol<void(const float (*axis)[3], float* angles)> AxisToAngles{0x14040ED40 /* H2 0x14060D410;  */};
+	WEAK symbol<void(const float* angles, float* forward, float* right, float* up)> AngleVectors{0x1404144F0 /* H2 0x140612ED0;  */};
 	
 	WEAK symbol<void(int type, VariableUnion u)> AddRefToValue{0x1403C1F50 /* H2 0x1405C0EB0 */};
 	WEAK symbol<void(unsigned int id)> AddRefToObject{0x1403C1F40 /* H2 0x1405C0EA0 */};

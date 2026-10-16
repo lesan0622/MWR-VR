@@ -11,8 +11,8 @@ inline constexpr hands::anchor magazine_rest={{5.63605500f, 0.09536700f, 2.07341
 inline constexpr hands::anchor rigid_in_magazine={{0, 0, 0}, {0, 0, 0, 1}}; // world clip model at tag_clip (unfitted)
 inline constexpr hands::anchor magazine_in_wrist={{4.57676006f, -0.78914369f, 6.32661795f}, {0.08914522f, 0.18521826f, 0.05163031f, 0.97728278f}};
 inline constexpr hands::vec magazine_top={0.f, 0.f, 0.8f}; // tag_clip-local (unfitted)
-// Receiver mouth 0.5 in below the seated tag_clip along the captured insertion rail.
-inline constexpr hands::anchor magazine_well={{5.37355982f, 0.42312702f, 1.80199246f}, {0.37317290f, 0.29886527f, -0.00000000f, 0.87830606f}};
+// Receiver mouth: original AR (M4/M16) convention -- straight rail below the seated tip, 2.37 in under tag_clip.
+inline constexpr hands::anchor magazine_well={{5.63605500f, 0.09536700f, -0.29658600f}, {0.00000000f, 0.00000000f, 0.00000000f, 1.00000000f}};
 inline constexpr std::array<joint_pose, 18> magazine_fingers{{
 	{"j_index_le_0", {0.74332317f, -0.13967623f, 0.12623596f, 0.64189228f}},
 	{"j_mid_le_0", {0.73361735f, -0.15620490f, 0.12697456f, 0.64906322f}},

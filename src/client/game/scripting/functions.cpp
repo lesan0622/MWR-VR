@@ -13,6 +13,8 @@ namespace scripting
 		int find_function_index(const std::string& name, const bool prefer_global)
 		{
 			const auto target = utils::string::to_lower(name);
+			// MWR port: the H2 GSC context is never created; report unknown.
+			if (!gsc::gsc_ctx) return -1;
 			auto const& first = gsc::gsc_ctx->func_map();
 			auto const& second = gsc::gsc_ctx->meth_map();
 
@@ -59,19 +61,19 @@ namespace scripting
 
 		results.push_back(utils::string::va("_ID%i", id));
 		results.push_back(utils::string::va("_id_%04X", id));
-		results.push_back(gsc::gsc_ctx->token_name(id));
+		if (gsc::gsc_ctx) results.push_back(gsc::gsc_ctx->token_name(id));
 
 		return results;
 	}
 
 	std::string find_token_single(unsigned int id)
 	{
-		return gsc::gsc_ctx->token_name(id);
+		return gsc::gsc_ctx ? gsc::gsc_ctx->token_name(id) : utils::string::va("_ID%i", id);
 	}
 
 	unsigned int find_token_id(const std::string& name)
 	{
-		const auto id = gsc::gsc_ctx->token_id(name);
+		const auto id = gsc::gsc_ctx ? gsc::gsc_ctx->token_id(name) : 0u;
 		if (id)
 		{
 			return id;

@@ -158,25 +158,26 @@ namespace vr::gameplay::weapons::native_closed_bolt
 					scheduler::pipeline::async);
 			});
 			constexpr std::uint8_t admission[]{0x48,0x89,0x5c,0x24,0x10,0x48,0x89,0x6c,0x24,0x18,0x48,0x89,0x74,0x24,0x20};
-			constexpr std::uint8_t refill[]{0x89,0x54,0x24,0x10,0x53,0x55,0x56,0x57,0x41,0x55,0x41,0x56,0x48,0x83,0xec,0x28};
+			// MWR: admission 0x1404A7DC0, refill 0x1404AF380, reload-start anim select 0x1404A60A3/0x1404A60E9.
+			constexpr std::uint8_t refill[]{0x40,0x53,0x55,0x57,0x41,0x55,0x41,0x56,0x48,0x83,0xec,0x30};
 			constexpr std::uint8_t capacity_entry[]{0x48,0x89,0x5c,0x24,0x08,0x48,0x89,0x74,0x24,0x18,0x89,0x54,0x24,0x10};
-			constexpr std::uint8_t admission_call[]{0xe8,0xba,0xd4,0x00,0x00};
-			constexpr std::uint8_t refill_call[]{0xe8,0x17,0x58,0x00,0x00};
+			constexpr std::uint8_t admission_call[]{0xe8,0x6a,0xd0,0x00,0x00};
+			constexpr std::uint8_t refill_call[]{0xe8,0xeb,0x5a,0x00,0x00};
 			constexpr std::uint8_t tactical[]{0x83,0xc8,0x14};
 			constexpr std::uint8_t empty[]{0x83,0xc8,0x15};
 			if (!native_ammunition::initialize() || !native_ammunition::reload_layout_ready() ||
-				!verify(0x1406964D0, admission) ||
-				!verify(0x14069E1B0, refill) || !verify(native_capacity, capacity_entry) ||
-				!verify(0x1406965A1, admission_call) || !verify(0x14069E244, refill_call) ||
-				!verify(0x140694856, tactical) || !verify(0x1406947C3, empty))
+				!verify(0x1404A7DC0, admission) ||
+				!verify(0x1404AF380, refill) || !verify(native_capacity, capacity_entry) ||
+				!verify(0x1404A7E91, admission_call) || !verify(0x1404AF410, refill_call) ||
+				!verify(0x1404A60E9, tactical) || !verify(0x1404A60A3, empty))
 			{
 				console::error("[VR chamber] native contract rejected; original reload retained\n");
 				return;
 			}
-			admission_hook.create(0x1406964D0, admission_stub);
-			refill_hook.create(0x14069E1B0, refill_stub);
-			utils::hook::call(0x1406965A1, capacity_stub);
-			utils::hook::call(0x14069E244, capacity_stub);
+			admission_hook.create(0x1404A7DC0, admission_stub);
+			refill_hook.create(0x1404AF380, refill_stub);
+			utils::hook::call(0x1404A7E91, capacity_stub);
+			utils::hook::call(0x1404AF410, capacity_stub);
 			installed = true;
 			manual_feed::set_boundary_ready(2);
 			if (!debug_options::enabled(debug_options::probe::weapon_events)) return;

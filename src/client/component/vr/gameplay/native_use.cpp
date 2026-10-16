@@ -20,7 +20,8 @@ namespace vr::gameplay::interaction::native
 {
 	namespace
 	{
-		constexpr std::uintptr_t get_list=0x140526670, update_hint=0x140527620, player_use=0x140527380;
+		// MWR Player_GetUseList 0x1402FCEA0, UpdateCursorHints 0x1402FDD80, Player_Use 0x1402FDAD0.
+		constexpr std::uintptr_t get_list=0x1402FCEA0, update_hint=0x1402FDD80, player_use=0x1402FDAD0;
 		struct entry {game::gentity_s* entity{};float score{};std::uint32_t flags{};};
 		static_assert(sizeof(entry)==16);
 		utils::hook::detour list_hook,use_hook;
@@ -54,23 +55,23 @@ namespace vr::gameplay::interaction::native
 		void eye_stub(const void* ps,float* out)
 		{
 			if (querying) std::copy(querying->origin.begin(),querying->origin.end(),out);
-			else utils::hook::invoke<void>(0x1404B12E0,ps,out);
+			else utils::hook::invoke<void>(0x14028B9C0,ps,out);
 		}
 		void direction_stub(int client,const void* ps,float* forward,float* right,float* up)
 		{
-			if (!querying) {utils::hook::invoke<void>(0x140680AE0,client,ps,forward,right,up);return;}
+			if (!querying) {utils::hook::invoke<void>(0x140492600,client,ps,forward,right,up);return;}
 			// This callsite requests forward only; preserve the ordinary native API
 			// if a future executable asks for the other axes as well.
-			if (right || up) utils::hook::invoke<void>(0x140680AE0,client,ps,forward,right,up);
+			if (right || up) utils::hook::invoke<void>(0x140492600,client,ps,forward,right,up);
 			std::copy(querying->forward.begin(),querying->forward.end(),forward);
 		}
 		int area_stub(const game::Bounds* bounds,unsigned short* output,int capacity,int contents)
 		{
-			if (!querying) return utils::hook::invoke<int>(0x140598590,bounds,output,capacity,contents);
+			if (!querying) return utils::hook::invoke<int>(0x140374970,bounds,output,capacity,contents);
 			game::Bounds expanded{};
 			std::copy(querying->head.begin(),querying->head.end(),expanded.midPoint);
 			std::fill_n(expanded.halfSize,3,(querying->distance_meters+model_origin_margin_m)*querying->units);
-			const int count=utils::hook::invoke<int>(0x140598590,&expanded,output,capacity,contents);
+			const int count=utils::hook::invoke<int>(0x140374970,&expanded,output,capacity,contents);
 			breach_count=0;
 			if(count>=0 && count<=capacity)for(int i=0;i<count && breach_count<breach_candidates.size();++i)
 				if(output[i]>0 && output[i]<4000 && breach_trigger(&game::g_entities[output[i]]))breach_candidates[breach_count++]=output[i];
@@ -87,10 +88,10 @@ namespace vr::gameplay::interaction::native
 		int pickup_admission_stub(game::gentity_s* item,const void* ps,int automatic,int dual)
 		{
 			// GetUseList subtracts rejected same-definition weapons from its return
-			// count (0x140526EC7..0x140526F8E). A Touch_Item-only override is too late.
+			// count (0x1402FD6DD..0x140526F8E). A Touch_Item-only override is too late.
 			if (querying && item && weapons::native_carry::duplicate_pickup_admitted(
 				weapons::native_carry::entity_key(number(item)),ps,automatic,dual,weapons::carry::pickup_context::hand_query)) return 1;
-			return utils::hook::invoke<int>(0x14067EA40,item,ps,automatic,dual);
+			return utils::hook::invoke<int>(0x1404907B0,item,ps,automatic,dual);
 		}
 		void* range_stub()
 		{
@@ -99,7 +100,7 @@ namespace vr::gameplay::interaction::native
 			// range during a hand query; retain native lengths, scoring and script
 			// orientation/volume tests. No shared dvar or player pose is modified.
 			return utils::hook::assemble([](utils::hook::assembler& a) {
-				emit_range_bridge(a,0x140282800,reinterpret_cast<std::uintptr_t>(effective_range));
+				emit_range_bridge(a,0x14005E090,reinterpret_cast<std::uintptr_t>(effective_range));
 			});
 		}
 		int list_stub(game::gentity_s* player,entry* output,int previous)
@@ -139,13 +140,13 @@ namespace vr::gameplay::interaction::native
 		}
 		int pickup_sight_stub(const float* from,const float* to,const game::Bounds* bounds,int pass,int target_entity,int contents)
 		{
-			const auto original=utils::hook::invoke<int>(0x1404CC070,from,to,bounds,pass,target_entity,contents);
+			const auto original=utils::hook::invoke<int>(0x1402A56D0,from,to,bounds,pass,target_entity,contents);
 			if(original || !querying || contents!=0x11 || target_entity<=0 || target_entity>=4000 || surface_trace_budget<2)return original;
 			const auto item=weapons::native_carry::pickup_item(weapons::native_carry::entity_key(target_entity));
 			if(!item.weapon)return original; // Native script models/use triggers retain their original point.
 			const auto volume=weapon_volume(&game::g_entities[target_entity],weapons::native_carry::geometry(item.weapon));
 			const auto proposal=exposed_surface(*querying,{target_entity,item.key.generation},item.weapon,volume,
-				[&](const vec& eye,const vec& point){return utils::hook::invoke<int>(0x1404CC070,eye.data(),point.data(),bounds,pass,target_entity,contents)!=0;});
+				[&](const vec& eye,const vec& point){return utils::hook::invoke<int>(0x1402A56D0,eye.data(),point.data(),bounds,pass,target_entity,contents)!=0;});
 			return proposal ? 1 : original;
 		}
 		bool script_model_volume(const game::gentity_s* entity,oriented_volume& volume,vec& trace_point)
@@ -162,9 +163,9 @@ namespace vr::gameplay::interaction::native
 			if (!std::all_of(angles.begin(),angles.end(),[](float x){return std::isfinite(x) && std::abs(x)<1e7f;})) return true;
 			float axis[3][3]{};game::AnglesToAxis(angles.data(),axis);std::memcpy(volume.axis.data(),axis,sizeof(axis));
 			game::Bounds bounds{};
-			utils::hook::invoke<void>(0x140654B20,object,&bounds);
+			utils::hook::invoke<void>(0x140466BF0,object,&bounds);
 			std::copy_n(bounds.midPoint,3,volume.center.begin());std::copy_n(bounds.halfSize,3,volume.half.begin());
-			vec local{};utils::hook::invoke<void>(0x140588250,object,local.data());
+			vec local{};utils::hook::invoke<void>(0x140363E50,object,local.data());
 			trace_point=volume.world(local);volume.valid=true;return true;
 		}
 		bool script_visible(const vec& from,const vec& to,const game::gentity_s* entity)
@@ -174,10 +175,10 @@ namespace vr::gameplay::interaction::native
 			// of its player state (the native pass-entity argument),
 			// target entity number and contents 0x11. The general weapon capsule
 			// mask also hits surfaces that native scripted use deliberately ignores.
-			const auto* ps=utils::hook::invoke<const void*>(0x140517DF0,&game::g_entities[0]);
+			const auto* ps=utils::hook::invoke<const void*>(0x1402EEB80,&game::g_entities[0]);
 			if (!ps) return false;
 			const game::Bounds point{};
-			return utils::hook::invoke<int>(0x1404CC070,from.data(),to.data(),&point,
+			return utils::hook::invoke<int>(0x1402A56D0,from.data(),to.data(),&point,
 				int(read<std::int8_t>(ps,0)),read<std::uint16_t>(entity,0x8c),0x11)!=0;
 		}
 		void use_stub(game::gentity_s* player)
@@ -202,14 +203,14 @@ namespace vr::gameplay::interaction::native
 				// A cancelled VR hold may reach the server before its final usercmd.
 				// Clear its native entity handle and force an empty hint until that
 				// release arrives, rather than using the old head-ray target.
-				const auto handle=read<std::uint16_t>(client,0xea08);
+				const auto handle=read<std::uint16_t>(client,0xe828);
 				if (handle && (!*forced || handle!=forced->key.entity+1))
-					utils::hook::invoke<void>(0x1404ACCE0,client+0xea08,nullptr);
-				controlling=holding || (read<std::uint32_t>(client,0xe90c)&0x8);
+					utils::hook::invoke<void>(0x140287660,client+0xe828,nullptr);
+				controlling=holding || (read<std::uint32_t>(client,0xe744)&0x8);
 				utils::hook::invoke<void>(update_hint,player);
-				if (read<std::uint16_t>(client,0xea08) &&
-					(!*forced || read<std::uint16_t>(client,0x24)!=forced->key.entity || !read<std::uint8_t>(client,0xa)))
-					utils::hook::invoke<void>(0x1404ACCE0,client+0xea08,nullptr);
+				if (read<std::uint16_t>(client,0xe828) &&
+					(!*forced || read<std::uint16_t>(client,0x24)!=forced->key.entity || !read<std::uint32_t>(client,0x40)))
+					utils::hook::invoke<void>(0x140287660,client+0xe828,nullptr);
 				use_hook.invoke<void>(player);
 				return;
 			}
@@ -229,22 +230,22 @@ namespace vr::gameplay::interaction::native
 	bool initialize()
 	{
 		if (installed) return true;
-		constexpr std::uint8_t list[]{0x40,0x55,0x53,0x48,0x8d,0xac,0x24,0xc8,0xdf,0xff,0xff};
+		constexpr std::uint8_t list[]{0x48,0x89,0x5c,0x24,0x18,0x55,0x56,0x57,0x41,0x54,0x41};
 		constexpr std::uint8_t use[]{0x48,0x89,0x5c,0x24,0x08,0x48,0x89,0x6c,0x24,0x10};
-		constexpr std::uint8_t hint[]{0x40,0x53,0x55,0x56,0x57,0x41,0x56,0xb8,0x40,0xfa,0,0};
-		constexpr std::uint8_t range_compare[]{0x0f,0x28,0xf8,0x0f,0x2f,0xfe,0x0f,0x87,0x9f,0x01,0,0};
+		constexpr std::uint8_t hint[]{0x40,0x53,0x55,0x56,0x57,0x41,0x56,0xb8,0x40,0xfa,0x00,0x00};
+		constexpr std::uint8_t range_compare[]{0x44,0x0f,0x28,0xc0,0x44,0x0f,0x2f,0xc6,0x0f,0x87,0x61,0x01,0x00,0x00};
 		constexpr std::uint8_t handle[]{0x48,0x89,0x5c,0x24,0x08,0x48,0x89,0x74,0x24,0x10,0x57};
 		constexpr std::uint8_t model_bounds[]{0x4c,0x8b,0xdc,0x55,0x57,0x41,0x55,0x41,0x56,0x41,0x57};
 		constexpr std::uint8_t script_trace[]{0x48,0x83,0xec,0x58,0x33,0xc0,0x89,0x44,0x24,0x40};
 		if (!weapons::native_carry::initialize() || !verify(get_list,list) || !verify(player_use,use) || !verify(update_hint,hint) ||
-			!verify(0x140526D52,range_compare) || !verify(0x1404ACCE0,handle) || !call_matches(0x140526772,0x1404B12E0) ||
-			!call_matches(0x140526789,0x140680AE0) || !call_matches(0x140526806,0x140598590) ||
-			!call_matches(0x140526D4D,0x140282800) || !call_matches(0x1405272A9,0x14061A750) ||
-			!call_matches(0x140526EC7,0x14067EA40) ||
-			!call_matches(0x140526762,0x140517DF0) ||
-			!call_matches(0x1405270D8,vr::h2::sp::server_entity_dobj.address()) || !call_matches(0x1405270ED,0x140588250) ||
-			!call_matches(0x140588294,0x140654B20) || !call_matches(0x1405271D5,0x1404CC070) ||
-			!verify(0x140654B20,model_bounds) || !verify(0x1404CC070,script_trace))
+			!verify(0x1402FD5A6,range_compare) || !verify(0x140287660,handle) || !call_matches(0x1402FCF75,0x14028B9C0) ||
+			!call_matches(0x1402FCF8C,0x140492600) || !call_matches(0x1402FD00F,0x140374970) ||
+			!call_matches(0x1402FD5A1,0x14005E090) || 
+			!call_matches(0x1402FD6DD,0x1404907B0) ||
+			!call_matches(0x1402FCF65,0x1402EEB80) ||
+			!call_matches(0x1402FD92A,vr::h2::sp::server_entity_dobj.address()) || !call_matches(0x1402FD93F,0x140363E50) ||
+			!call_matches(0x140363E94,0x140466BF0) || !call_matches(0x1402FDA27,0x1402A56D0) ||
+			!verify(0x140466BF0,model_bounds) || !verify(0x1402A56D0,script_trace))
 		{reason="native use signatures rejected";return false;}
 		auto* bridge=range_stub();
 		if (!bridge) {reason="native range bridge allocation failed";return false;}
@@ -255,13 +256,13 @@ namespace vr::gameplay::interaction::native
 		auto* relay=utils::hook::create_far_jump<0x140000000>(bridge);
 		struct call_patch {std::uintptr_t site;void* target;};
 		const std::array calls{
-			call_patch{0x140526772,reinterpret_cast<void*>(eye_stub)},
-			call_patch{0x140526789,reinterpret_cast<void*>(direction_stub)},
-			call_patch{0x140526806,reinterpret_cast<void*>(area_stub)},
-			call_patch{0x140526D4D,relay},
-			call_patch{0x1405272A9,reinterpret_cast<void*>(empty_hint_progress_stub)},
-			call_patch{0x140526EC7,reinterpret_cast<void*>(pickup_admission_stub)},
-			call_patch{0x1405271D5,reinterpret_cast<void*>(pickup_sight_stub)}};
+			call_patch{0x1402FCF75,reinterpret_cast<void*>(eye_stub)},
+			call_patch{0x1402FCF8C,reinterpret_cast<void*>(direction_stub)},
+			call_patch{0x1402FD00F,reinterpret_cast<void*>(area_stub)},
+			call_patch{0x1402FD5A1,relay},
+			call_patch{0x1402FD6DD,reinterpret_cast<void*>(pickup_admission_stub)},
+			call_patch{0x1402FD4C3,reinterpret_cast<void*>(pickup_admission_stub)},
+			call_patch{0x1402FDA27,reinterpret_cast<void*>(pickup_sight_stub)}};
 		// Preflight every branch before installing any part of this adapter.
 		for (const auto& patch:calls)
 			if (!patch.target || utils::hook::is_relatively_far(reinterpret_cast<void*>(patch.site),patch.target))
@@ -272,7 +273,7 @@ namespace vr::gameplay::interaction::native
 		// on gentity+0xb5. Failure only disables richer text, never native use.
 		constexpr std::uint8_t hint_write[]{0x88,0x83,0xb5,0,0,0};
 		constexpr std::uint8_t hint_read[]{0x44,0x0f,0xb6,0xaf,0xb5,0,0,0};
-		hint_identity_ready=verify(0x1404EBB1C,hint_write) && verify(0x14052794A,hint_read);
+		(void)hint_write;(void)hint_read;hint_identity_ready=false; // TODO(mwr): optional hint text identity
 		installed=true;reason="native hand use contracts ready";return true;
 	}
 	bool ready() noexcept {return installed;}
@@ -290,7 +291,7 @@ namespace vr::gameplay::interaction::native
 	{
 		if (!installed || querying || !valid(aim) || !scheduler::is_executing(scheduler::pipeline::server)) return {};
 		const auto* player=&game::g_entities[0];const auto* client=read<const std::byte*>(player,0x118);
-		if (!client || read<int>(player,0x184)<=0 || (read<unsigned>(client,0xe908)&8)) return {};
+		if (!client || read<int>(player,0x184)<=0 || (read<unsigned>(client,0xe740)&8)) return {};
 		querying=&aim;const auto leave=gsl::finally([]{querying=nullptr;});
 		surface_trace_budget=64;
 		const auto proxies=scripted_use::sample(aim);

@@ -2069,7 +2069,11 @@ namespace vr::gameplay::hands
 				     << " state=" << probe.grip_reason << " animation_query=" << animation_query_ready
 				     << " support=" << static_cast<int>(probe.owner.support)
 				     << " distance_m=" << probe.grip.distance_meters << " blend=" << probe.grip.blend
-				     << " equip_suppressed=" << probe.equip_suppressed << '\n';
+				     << " equip_suppressed=" << probe.equip_suppressed
+				     << " mechanical=" << solver().binding.mechanical_parts.valid << '/'
+				     << solver().binding.mechanical_parts.magazine << '/' << solver().binding.mechanical_parts.slide
+				     << '/' << solver().binding.mechanical_parts.bullets
+				     << " reject_line=" << weapons::physical_reload::bind_reject_line << '\n';
 				for (int hand = 0; hand < 2; ++hand)
 				{
 					text << (hand == 0 ? "left" : "right") << " target/native/solved (view-offset-relative):";

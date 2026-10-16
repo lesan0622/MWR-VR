@@ -755,7 +755,9 @@ namespace vr::gameplay::weapons::physical_reload
 							<< " magazine_candidate=" << static_cast<unsigned>(i.view.examined.magazine_pose)
 							<< " attached_magazine_candidate=" << static_cast<unsigned>(i.view.examined.attached_magazine_pose)
 							<< " magazine_pose_count=" << i.view.definition->magazine_grasps.size()
-							<< " seated_hand=" << i.view.magazine_seated << " pulling_magazine=" << i.view.magazine_grabbed << '\n';
+							<< " seated_hand=" << i.view.magazine_seated << " pulling_magazine=" << i.view.magazine_grabbed
+							<< " tip_in_well=" << i.view.examined.magazine_top_in_well[0] << ',' << i.view.examined.magazine_top_in_well[1]
+							<< ',' << i.view.examined.magazine_top_in_well[2] << " alignment=" << i.view.examined.insertion_alignment << '\n';
 						out << "knife_magazine_capable=" << bool(i.view.definition->knife_magazine_in_wrist)
 							<< " knife_magazine_grasp=" << (i.view.magazine_leased() && i.view.knife_magazine_grasp)
 							<< " knife_slide_capable=" << !i.view.definition->knife_slide_grips.empty()

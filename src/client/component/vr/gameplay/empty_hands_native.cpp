@@ -28,12 +28,12 @@ namespace vr::gameplay::hands::empty_native
 {
 	namespace
 	{
-		constexpr std::uintptr_t add_view_weapon = 0x1403B49A0;
-		constexpr std::uintptr_t create_object = 0x140653180, free_object = 0x1406539D0;
-		constexpr std::uintptr_t calc_pose = 0x14038C9E0, submit_viewmodel = 0x140776E10;
-		constexpr std::uintptr_t lock_object = 0x140659010, unlock_object = 0x1406596C0;
-		constexpr std::uintptr_t config_string = 0x1403C9D60;
-		constexpr std::uintptr_t predicted_state = 0x141BB3C30;
+		constexpr std::uintptr_t add_view_weapon = 0x14018E1C0; // MWR CG_AddViewWeapon (H2 0x1403B49A0)
+		constexpr std::uintptr_t create_object = 0x140465230, free_object = 0x140465AF0; // MWR DObjCreate/DObjFree
+		constexpr std::uintptr_t calc_pose = 0x140167B60, submit_viewmodel = 0x14058A9A0; // MWR (H2 0x14038C9E0/0x140776E10)
+		constexpr std::uintptr_t lock_object = 0x14046B0E0, unlock_object = 0x14046B790; // MWR DObj lock/unlock
+		constexpr std::uintptr_t config_string = 0x1401A2F10; // MWR CL configstring getter (H2 0x1403C9D60)
+		constexpr std::uintptr_t predicted_state = 0x1420E67A0; // MWR cg predicted playerState
 		// The native primary viewmodel's scene identity, used only while it is
 		// absent. This is not a client DObj handle or inventory slot allocation.
 		constexpr unsigned scene_entity = 3999;
@@ -80,7 +80,7 @@ namespace vr::gameplay::hands::empty_native
 				std::array<int,6> shape{};game::XModel* const* gun_models{};const game::XModel* root{};
 				// Not every packed weapon index is populated. Validate every read
 				// when scanning beyond the currently selected/inventory definitions.
-				if(!definition || !utils::native_memory::read_bytes(shape.data(),reinterpret_cast<const std::byte*>(definition)+0x5cc,sizeof(shape)))continue;
+				if(!definition || !utils::native_memory::read_bytes(shape.data(),reinterpret_cast<const std::byte*>(definition)+offsetof(game::WeaponDef,weapType),sizeof(shape)))continue;
 				std::array<char,32> device_name{};const char* native_name{};
 				if(utils::native_memory::read_bytes(&native_name,definition,sizeof(native_name)))
 					(void)utils::native_memory::read_bytes(device_name.data(),native_name,device_name.size()-1);
@@ -187,7 +187,7 @@ namespace vr::gameplay::hands::empty_native
 			// the hand-model configstring index, independent of the selected gun.
 			const auto index=*reinterpret_cast<const std::uint16_t*>(predicted_state+0x3e);
 			if (!index || index>=2048) return nullptr;
-			const auto* name=utils::hook::invoke<const char*>(config_string,index+0xa81);
+			const auto* name=utils::hook::invoke<const char*>(config_string,index+0xa80);
 			if (!name || !*name || strnlen_s(name,256)==256) return nullptr;
 			auto* model=game::DB_FindXAssetHeader(game::ASSET_TYPE_XMODEL,name,0).model;
 			return model && model->name && std::string_view(model->name)==name ? model : nullptr;
@@ -349,7 +349,7 @@ namespace vr::gameplay::hands::empty_native
             if(player_life::dead(game::CG_GetPredictedPlayerState(0)))return false;
             if ((std::to_integer<unsigned>(ps[2])>=2 && std::to_integer<unsigned>(ps[2])<=3) ||
                 (!climbing && (((*reinterpret_cast<const std::uint32_t*>(ps+0x58)&0x103000) && !vehicles::presentation_allowed()) ||
-                (!weapons::carry::active() && ((*reinterpret_cast<const std::uint32_t*>(ps+0x3bc)&0x1ff) ||
+                (!weapons::carry::active() && ((*reinterpret_cast<const std::uint32_t*>(ps+0x38c)&0x1ff) ||
                     vr::h2::sp::weapon_selection_request.read())) ||
                 (weapons::current_hold().weapon && !vehicles::presentation_allowed())))) return false;
 			const auto input=controller_input::latest();
@@ -454,14 +454,14 @@ namespace vr::gameplay::hands::empty_native
 	{
 		void post_unpack() override
 		{
-			if (!check(0x1403D5A19,std::array<std::uint8_t,8>{0xc7,0x44,0x24,0x2c,0xc0,0x0f,0,0}) ||
+			if (!check(0x1401AEA69,std::array<std::uint8_t,8>{0xc7,0x44,0x24,0x2c,0xc0,0x0f,0,0}) ||
 				!check(add_view_weapon,std::array<std::uint8_t,8>{0x40,0x55,0x53,0x56,0x41,0x54,0x41,0x56}) ||
 				!check(create_object,std::array<std::uint8_t,9>{0x40,0x53,0x55,0x56,0x57,0x41,0x54,0x41,0x55}) ||
 				!check(free_object,std::array<std::uint8_t,9>{0x40,0x53,0x48,0x83,0xec,0x20,0x48,0x8b,0xd9}) ||
-				!check(config_string,std::array<std::uint8_t,10>{0x48,0x63,0xc1,0x48,0x8d,0x0d,0x3a,0xfc,0xc6,0x01}) ||
+				!check(config_string,std::array<std::uint8_t,10>{0x48,0x63,0xc1,0x48,0x8d,0x0d,0x3a,0x26,0x38,0x02}) ||
 				!check(submit_viewmodel,std::array<std::uint8_t,10>{0x48,0x89,0x5c,0x24,0x08,0x48,0x89,0x6c,0x24,0x10}) ||
 				!check(lock_object,std::array<std::uint8_t,10>{0x48,0x89,0x5c,0x24,0x08,0x57,0x48,0x83,0xec,0x20}) ||
-				!check(unlock_object,std::array<std::uint8_t,8>{0xc7,0x41,0x18,0,0,0,0,0xc3}) ||
+				!check(unlock_object,std::array<std::uint8_t,8>{0xc7,0x41,0x18,0x00,0x00,0x00,0x00,0xc3}) ||
 				!check(calc_pose,std::array<std::uint8_t,10>{0x48,0x89,0x5c,0x24,0x08,0x48,0x89,0x74,0x24,0x10}))
 			{ reason="native empty-hand contract rejected"; console::error("[VR hands] %s\n",reason.load()); return; }
 			fastfiles::on_pre_unload([]{firearm_models={};firearm_cursor=0;release();});

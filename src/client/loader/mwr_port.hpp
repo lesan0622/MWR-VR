@@ -44,10 +44,16 @@ namespace mwr_port
 		"scene_models",
 		"vr::gameplay::weapons::reload_boundary",
 		"vr::gameplay::weapons::physical_reload",
+		"vr::gameplay::weapons::physical_reload::presentation_component",
+		"vr::gameplay::weapons::native_closed_bolt",
 		"vr::gameplay::interaction_coordinator",
 		"vr::gameplay::reload_items",
 		"vr::gameplay::falling_item_presentation",
 		"vr::gameplay::hand_interaction",
+		"vr::gameplay::weapons::carry",
+		"vr::gameplay::hands::empty_native",
+		"vr::gameplay::interaction",
+		"vr::controller_calibration",
 		"vr::gameplay::weapons::viewmodel_visibility::visibility_component",
 	};
 

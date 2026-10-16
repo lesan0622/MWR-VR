@@ -29,6 +29,7 @@ namespace vr::gameplay::weapons::physical_reload
 		int guide_catch{-1};    // Cosmetic only; missing geometry cannot disable mechanics.
 		int guide_detail{-1};
 	};
+	inline int bind_reject_line{}; // MWR port diagnostic: last bind_parts rejection.
 	inline part_rig bind_parts(const hands::rig& r,
 	                           std::span<const hands::bone_definition> bones,
 	                           const reload_profile& definition) noexcept
@@ -36,31 +37,31 @@ namespace vr::gameplay::weapons::physical_reload
 		part_rig out;
 		if (r.count <= 0 || r.count > 256 || r.gun < 0 || r.gun >= r.count ||
 		    bones.size() != static_cast<size_t>(r.count) || !valid_partition_profile(definition))
-			return out;
+			return (bind_reject_line=__LINE__, out);
 		for (int i = 0; i < r.count; ++i)
 			if (r.weapon_bones[i])
 			{
 				if (bones[i].name == definition.magazine_bone)
 				{
 					if (out.magazine >= 0)
-						return {};
+						return (bind_reject_line=__LINE__, part_rig{});
 					out.magazine = i;
 				}
 				if (bones[i].name == definition.slide_bone)
 				{
 					if (out.slide >= 0)
-						return {};
+						return (bind_reject_line=__LINE__, part_rig{});
 					out.slide = i;
 				}
 				if (bones[i].name == definition.bullets_bone)
 				{
 					if (out.bullets >= 0)
-						return {};
+						return (bind_reject_line=__LINE__, part_rig{});
 					out.bullets = i;
 				}
 			}
 		if (definition.bullet_parents.size() > 8)
-			return {};
+			return (bind_reject_line=__LINE__, part_rig{});
 		const auto find = [&](std::string_view name)
 		{
 			int found = -1;
@@ -79,10 +80,10 @@ namespace vr::gameplay::weapons::physical_reload
 			const int bone = find(contract.bone), parent = find(contract.parent);
 			if (definition.receiver_parented_bullets || bone < 0 || parent < 0 || bone == out.magazine ||
 			    parent >= bone || r.parent[bone] != parent || !hands::descendant(bone, out.magazine, r))
-				return {};
+				return (bind_reject_line=__LINE__, part_rig{});
 			for (size_t j = 0; j < i; ++j)
 				if (definition.bullet_parents[j].bone == contract.bone)
-					return {};
+					return (bind_reject_line=__LINE__, part_rig{});
 		}
 		const auto expected_parent = [&](std::string_view name, int fallback)
 		{
@@ -106,12 +107,12 @@ namespace vr::gameplay::weapons::physical_reload
 			if (out.partition_root < 0 ||
 			    (definition.bolt_partition->motion.bone == "j_gun" ? out.partition_root != r.gun
 			                                                       : out.partition_root != out.slide))
-				return {};
+				return (bind_reject_line=__LINE__, part_rig{});
 		}
 		if (definition.handle_child_of_bolt &&
 		    (!definition.bolt || definition.concealed_bolt || definition.handle_fold ||
 		     definition.handle_catch || definition.interaction.manual_bolt))
-			return {};
+			return (bind_reject_line=__LINE__, part_rig{});
 		const int slide_parent = definition.handle_child_of_bolt ? find(definition.bolt->bone) : r.gun;
 		out.valid = out.magazine >= 0 && out.slide >= 0 && out.bullets >= 0 && slide_parent >= 0 &&
 		            out.magazine != out.slide && out.magazine != out.bullets && out.slide != out.bullets &&
@@ -121,24 +122,24 @@ namespace vr::gameplay::weapons::physical_reload
 		                                definition.receiver_parented_bullets ? r.gun : out.magazine);
 		if (!out.valid || definition.additional_bullet_bones.size() > 8 ||
 		    (definition.interaction.manual_magazine && !definition.magazine_contacts))
-			return {};
+			return (bind_reject_line=__LINE__, part_rig{});
 		if (definition.interaction.manual_magazine && definition.interaction.manual_magazine->spare_strike)
 		{
 			const auto regions = definition.magazine_contacts->strike_regions;
 			if (regions.empty() || regions.size() > physical_reload::max_contact_boxes)
-				return {};
+				return (bind_reject_line=__LINE__, part_rig{});
 			for (const auto& region : regions)
 				if (!valid(region))
-					return {};
+					return (bind_reject_line=__LINE__, part_rig{});
 		}
 		if (definition.chamber_round)
 		{
 			if (!definition.rigid_magazine_source || !definition.additional_bullet_bones.empty() ||
 			    definition.feeding_path || definition.interaction.manual_bolt)
-				return {};
+				return (bind_reject_line=__LINE__, part_rig{});
 			if (!finite_part_vec(definition.chamber_round->position) ||
 			    !finite_part_quat(definition.chamber_round->rotation))
-				return {};
+				return (bind_reject_line=__LINE__, part_rig{});
 		}
 		if (definition.interaction.manual_bolt)
 		{
@@ -148,21 +149,21 @@ namespace vr::gameplay::weapons::physical_reload
 			    definition.ammunition.feed != mechanics::feed_type::manual_bolt || out.ejection < 0 ||
 			    !out.port.valid || definition.bolt || definition.handle_catch || definition.handle_fold ||
 			    !definition.feeding_path)
-				return {};
+				return (bind_reject_line=__LINE__, part_rig{});
 			for (const auto& pose : *definition.feeding_path)
 			{
 				for (float x : pose.position)
 					if (!std::isfinite(x) || std::abs(x) > 10000)
-						return {};
+						return (bind_reject_line=__LINE__, part_rig{});
 				float norm{};
 				for (float x : pose.rotation)
 				{
 					if (!std::isfinite(x))
-						return {};
+						return (bind_reject_line=__LINE__, part_rig{});
 					norm += x * x;
 				}
 				if (std::abs(norm - 1) > .001f)
-					return {};
+					return (bind_reject_line=__LINE__, part_rig{});
 			}
 		}
 		if (const auto* fold = definition.handle_fold)
@@ -171,20 +172,20 @@ namespace vr::gameplay::weapons::physical_reload
 			    (definition.interaction.motion != action_motion::charging_handle &&
 			     !(definition.interaction.motion == action_motion::reciprocating_slide &&
 			       !fold->end_bone.empty())))
-				return {};
+				return (bind_reject_line=__LINE__, part_rig{});
 			if (!fold->end_bone.empty())
 			{
 				out.fold_end = find(fold->end_bone);
 				if (out.fold_end < 0 || r.parent[out.fold_end] != out.slide || out.fold_end == out.magazine ||
 				    out.fold_end == out.bullets)
-					return {};
+					return (bind_reject_line=__LINE__, part_rig{});
 				const auto local = compose_reload(
 				    inverse_reload({bones[out.slide].bind.position, bones[out.slide].bind.rotation}),
 				    {bones[out.fold_end].bind.position, bones[out.fold_end].bind.rotation});
 				if (hands::length(hands::sub(local.position, fold->pivot.position)) > .01f ||
 				    std::abs(hands::multiply(hands::conjugate(local.rotation), fold->pivot.rotation)[3]) <
 				        .999f)
-					return {};
+					return (bind_reject_line=__LINE__, part_rig{});
 			}
 		}
 		// Counted detachable magazines may coexist with permanent body parts,
@@ -192,26 +193,26 @@ namespace vr::gameplay::weapons::physical_reload
 		// Native mutually exclusive contents and articulated belts keep their own policy.
 		if (definition.magazine_fill() &&
 		    (definition.interaction.belt || !definition.magazine_round_variants.empty()))
-			return {};
+			return (bind_reject_line=__LINE__, part_rig{});
 		if (definition.ammunition.manual_catch != bool(definition.handle_catch) ||
 		    bool(definition.interaction.manual_catch) != bool(definition.handle_catch) ||
 		    (definition.handle_catch && (!valid_catch(*definition.handle_catch) || definition.handle_fold ||
 		                                 !valid(*definition.interaction.manual_catch))))
-			return {};
+			return (bind_reject_line=__LINE__, part_rig{});
 		// Open-bolt admission needs its independent internal-bolt presentation;
 		// a hand-operated handle at rest is not evidence of an open chamber.
 		if (definition.ammunition.feed == mechanics::feed_type::open_bolt &&
 		    ((!definition.concealed_bolt && (!definition.bolt || definition.bolt->locked_m <= 0)) ||
 		     definition.interaction.motion != action_motion::charging_handle))
-			return {};
+			return (bind_reject_line=__LINE__, part_rig{});
 		if (definition.concealed_bolt &&
 		    (definition.bolt || definition.ammunition.feed != mechanics::feed_type::open_bolt))
-			return {};
+			return (bind_reject_line=__LINE__, part_rig{});
 		if (definition.ammunition.belt_fed != bool(definition.interaction.belt))
-			return {};
+			return (bind_reject_line=__LINE__, part_rig{});
 		if (definition.ammunition.belt_bridge !=
 		    bool(definition.interaction.belt && definition.interaction.belt->bridge))
-			return {};
+			return (bind_reject_line=__LINE__, part_rig{});
 		if (const auto* p = definition.interaction.belt)
 		{
 			out.cover = find(p->cover_bone);
@@ -220,16 +221,16 @@ namespace vr::gameplay::weapons::physical_reload
 			    !std::isfinite(p->cover_angle) || p->cover_angle <= 0 || p->cover_angle > 3.141593f ||
 			    !finite_part_vec(p->cover_axis) ||
 			    std::abs(hands::dot(p->cover_axis, p->cover_axis) - 1) > .001f)
-				return {};
+				return (bind_reject_line=__LINE__, part_rig{});
 			int parent = out.magazine;
 			for (const auto& link : p->links)
 			{
 				const int b = find(link.bone);
 				if (b < 0 || r.parent[b] != parent || (out.belt_link_count == 0 && b != out.bullets))
-					return {};
+					return (bind_reject_line=__LINE__, part_rig{});
 				for (const auto& pose : {link.loose, link.seated})
 					if (!finite_part_vec(pose.position) || !finite_part_quat(pose.rotation))
-						return {};
+						return (bind_reject_line=__LINE__, part_rig{});
 				out.belt_links[out.belt_link_count++] = b;
 				parent = b;
 			}
@@ -242,10 +243,10 @@ namespace vr::gameplay::weapons::physical_reload
 				    b.angle <= 0 || b.angle > 3.141593f || !finite_part_vec(b.axis) ||
 				    std::abs(hands::dot(b.axis, b.axis) - 1) > .001f || !finite_part_vec(b.rest.position) ||
 				    !finite_part_quat(b.rest.rotation))
-					return {};
+					return (bind_reject_line=__LINE__, part_rig{});
 			}
 			if (p->details.size() > out.belt_details.size())
-				return {};
+				return (bind_reject_line=__LINE__, part_rig{});
 			for (size_t i = 0; i < p->details.size(); ++i)
 			{
 				const auto& d = p->details[i];
@@ -253,35 +254,35 @@ namespace vr::gameplay::weapons::physical_reload
 				if (b < 0 || r.parent[b] != r.gun || b == out.bridge || b == out.cover || b == out.magazine ||
 				    b == out.slide || (definition.bolt && d.bone == definition.bolt->bone) ||
 				    (d.bridge && !p->bridge))
-					return {};
+					return (bind_reject_line=__LINE__, part_rig{});
 				for (size_t n = 0; n < i; ++n)
 					if (out.belt_details[n] == b)
-						return {};
+						return (bind_reject_line=__LINE__, part_rig{});
 				for (auto pose : {d.rest, d.open})
 					if (!finite_part_vec(pose.position) || !finite_part_quat(pose.rotation))
-						return {};
+						return (bind_reject_line=__LINE__, part_rig{});
 				out.belt_details[i] = b;
 			}
 		}
 		if (definition.receiver_parented_bullets)
 		{
 			if (!definition.additional_bullet_bones.empty())
-				return {};
+				return (bind_reject_line=__LINE__, part_rig{});
 			for (const auto index : {out.magazine, out.bullets})
 			{
 				const auto& bind = bones[index].bind;
 				float norm{};
 				for (float x : bind.position)
 					if (!std::isfinite(x) || std::abs(x) > 10000)
-						return {};
+						return (bind_reject_line=__LINE__, part_rig{});
 				for (float x : bind.rotation)
 				{
 					if (!std::isfinite(x))
-						return {};
+						return (bind_reject_line=__LINE__, part_rig{});
 					norm += x * x;
 				}
 				if (std::abs(norm - 1) > .01f)
-					return {};
+					return (bind_reject_line=__LINE__, part_rig{});
 			}
 			const auto& mag = bones[out.magazine].bind;
 			const auto& round = bones[out.bullets].bind;
@@ -300,65 +301,65 @@ namespace vr::gameplay::weapons::physical_reload
 			const auto name = definition.additional_bullet_bones[n];
 			for (size_t prior = 0; prior < n; ++prior)
 				if (definition.additional_bullet_bones[prior] == name)
-					return {};
+					return (bind_reject_line=__LINE__, part_rig{});
 			int found = -1;
 			for (int i = 0; i < r.count; ++i)
 				if (r.weapon_bones[i] && bones[i].name == name)
 				{
 					if (found >= 0)
-						return {};
+						return (bind_reject_line=__LINE__, part_rig{});
 					found = i;
 				}
 			if (found < 0 || found == out.bullets || r.parent[found] != expected_parent(name, out.magazine) ||
 			    (definition.bullet_parents.empty() &&
 			     (out.bullet_mask[found / 32] & (0x80000000u >> (found % 32)))))
-				return {};
+				return (bind_reject_line=__LINE__, part_rig{});
 			add_bullet(found);
 		}
 		if (definition.bolt)
 		{
 			if (definition.interaction.motion != action_motion::charging_handle ||
 			    !valid_bolt(*definition.bolt, definition.interaction.slide_stroke))
-				return {};
+				return (bind_reject_line=__LINE__, part_rig{});
 			for (int i = 0; i < r.count; ++i)
 				if (r.weapon_bones[i] && bones[i].name == definition.bolt->bone)
 				{
 					if (out.bolt >= 0)
-						return {};
+						return (bind_reject_line=__LINE__, part_rig{});
 					out.bolt = i;
 				}
 			if (out.bolt < 0 || out.bolt == out.magazine || out.bolt == out.slide ||
 			    r.parent[out.bolt] != r.gun ||
 			    (out.bullet_mask[out.bolt / 32] & (0x80000000u >> (out.bolt % 32))))
-				return {};
+				return (bind_reject_line=__LINE__, part_rig{});
 		}
 		if (!definition.magazine_body_bones.empty())
 		{
 			if (!definition.rigid_magazine_source || !definition.magazine_mesh())
-				return {};
+				return (bind_reject_line=__LINE__, part_rig{});
 			for (auto name : definition.magazine_body_bones)
 			{
 				const int bone = find(name);
 				if (bone < 0 || r.parent[bone] != out.magazine || bone == out.slide || bone == out.bolt ||
 				    (out.bullet_mask[bone / 32] & (0x80000000u >> (bone % 32))))
-					return {};
+					return (bind_reject_line=__LINE__, part_rig{});
 			}
 		}
 		if (!definition.magazine_round_variants.empty())
 		{
 			if (!definition.rigid_magazine_source || !definition.magazine_mesh())
-				return {};
+				return (bind_reject_line=__LINE__, part_rig{});
 			for (auto name : definition.magazine_round_variants)
 			{
 				const int bone = find(name);
 				if (bone < 0 || r.parent[bone] != out.magazine ||
 				    (out.bullet_mask[bone / 32] & (0x80000000u >> (bone % 32))))
-					return {};
+					return (bind_reject_line=__LINE__, part_rig{});
 				out.magazine_variants[out.magazine_variant_count++] = bone;
 			}
 		}
 		if (definition.animation_only_magazines.size() > 4)
-			return {};
+			return (bind_reject_line=__LINE__, part_rig{});
 		for (auto name : definition.animation_only_magazines)
 		{
 			int root = -1;
@@ -366,18 +367,18 @@ namespace vr::gameplay::weapons::physical_reload
 				if (r.weapon_bones[i] && bones[i].name == name)
 				{
 					if (root >= 0)
-						return {};
+						return (bind_reject_line=__LINE__, part_rig{});
 					root = i;
 				}
 			if (name.empty() || root < 0 || r.parent[root] != r.gun)
-				return {};
+				return (bind_reject_line=__LINE__, part_rig{});
 			for (int i = 0; i < r.count; ++i)
 				if (hands::descendant(i, root, r))
 				{
 					const auto bit = 0x80000000u >> (i % 32);
 					if (!r.weapon_bones[i] || i == out.magazine || i == out.slide || i == out.bolt ||
 					    ((out.bullet_mask[i / 32] | out.animation_only_magazines[i / 32]) & bit))
-						return {};
+						return (bind_reject_line=__LINE__, part_rig{});
 					out.animation_only_magazines[i / 32] |= bit;
 				}
 		}
@@ -387,7 +388,7 @@ namespace vr::gameplay::weapons::physical_reload
 			out.slap_hand = hands::bind_contacts(r, bones, 0);
 			out.right_slap_hand = hands::bind_contacts(r, bones, 1);
 			if (!out.slap_hand.valid || !out.right_slap_hand.valid)
-				return {};
+				return (bind_reject_line=__LINE__, part_rig{});
 		}
 		return out;
 	}

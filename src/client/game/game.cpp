@@ -3,6 +3,13 @@
 
 namespace game
 {
+	void mwr_angles_to_axis(const float* angles, float (*axis)[3])
+	{
+		float right[3]{};
+		AngleVectors(angles, axis[0], right, axis[2]);
+		for (int i = 0; i < 3; ++i) axis[1][i] = -right[i];
+	}
+
 	namespace environment
 	{
 		launcher::mode mode = launcher::mode::none;

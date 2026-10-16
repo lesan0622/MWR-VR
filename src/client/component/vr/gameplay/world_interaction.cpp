@@ -45,10 +45,10 @@ namespace vr::gameplay::interaction
 			std::array<std::uint8_t,sizeof(expected)> mask{};mask.fill(0xff);
 			// Binding identities are verified in addition to the existing jump
 			// adapter's validated reliable-queue entry/callsite.
-			const auto* table=reinterpret_cast<const char* const*>(0x140BF84E0);
+			const auto* table=reinterpret_cast<const char* const*>(0x14115ADF0) /* MWR command whitelist (H2 0x140BF84E0) */;
 			return table[73] && table[74] && std::string_view(table[73])=="+activate" &&
 				std::string_view(table[74])=="-activate" &&
-				bool(utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(0x1403D3A90),{expected,mask.data(),sizeof(expected)}));
+				bool(utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(0x1401ACBD0),{expected,mask.data(),sizeof(expected)}));
 		}
 		bool can_notify()
 		{
@@ -57,7 +57,7 @@ namespace vr::gameplay::interaction
 			// until the queue can accept it rather than losing a script notification.
 			const auto* paused=game::Dvar_FindVar("cl_paused");
 			return ready && game::SV_Loaded() && paused && !paused->current.integer &&
-				!utils::hook::invoke<bool>(0x1406B0120) && !utils::hook::invoke<int>(0x1404C8700);
+				!utils::hook::invoke<bool>(0x1404C0FC0) && !utils::hook::invoke<int>(0x1402A1F20);
 		}
 		target query_target(int hand,const ray& aim,target_key held,const controller_input::frame& input)
 		{
@@ -187,12 +187,12 @@ namespace vr::gameplay::interaction
 		const bool queue_ready=can_notify();
 		const auto edge=notifications.consume(current.serial,down,valid && queue_ready);
 		const auto release=[&] {
-			if (queue_ready) {utils::hook::invoke<void>(0x1403D3A90,0,74,0);++release_notifies;pending_release=false;}
+			if (queue_ready) {utils::hook::invoke<void>(0x1401ACBD0,0,74,0);++release_notifies;pending_release=false;}
 			else pending_release=true;
 		};
 		if (pending_release && queue_ready) release();
 		if (edge.release_before) release();
-		if (edge.press) {utils::hook::invoke<void>(0x1403D3A90,0,73,0);++press_notifies;}
+		if (edge.press) {utils::hook::invoke<void>(0x1401ACBD0,0,73,0);++press_notifies;}
 		if (edge.release_after) release();
 		const bool use=valid && current.native_button && (edge.down || edge.press);
 		native::set_command_lease(current.use,use,current.hover.reference);

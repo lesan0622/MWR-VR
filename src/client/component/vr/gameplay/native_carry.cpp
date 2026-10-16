@@ -85,12 +85,12 @@ namespace vr::gameplay::weapons::native_carry
 			// Only the admitted VR pickup bypasses the TWO-primary-weapon replacement
 			// branch. G_GivePlayerWeapon inside native pickup still owns the array bound.
 			if (acquiring.weapon && ps==game::g_entities[0].client) return false;
-			return utils::hook::invoke<bool>(0x1406A6EC0,ps);
+			return utils::hook::invoke<bool>(0x1404B7F50,ps);
 		}
 		bool owns(const void* ps,std::uint32_t token) noexcept
 		{
 			if (!ps || !token) return false;
-			for (std::size_t i=0;i<15;++i) if (read<std::uint32_t>(ps,0x2f8+i*4)==token) return true;
+			for (std::size_t i=0;i<15;++i) if (read<std::uint32_t>(ps,0x2cc+i*4)==token) return true;
 			return false;
 		}
 		carry::world_ammo_payload item_ammo(const game::gentity_s* item)noexcept
@@ -113,13 +113,13 @@ namespace vr::gameplay::weapons::native_carry
 				// The authored pair's model binding survives the ammo-flag change.
 				// Rebind this retained entity through the same SetModel/DObjUpdate/
 				// hide-parts path as native single-weapon spawn (0x1404C5BA2..C24).
-				utils::hook::invoke<void>(0x140518280,item,splitting->single_model->name);
-				utils::hook::invoke<void>(0x1405166B0,item,1);
+				utils::hook::invoke<void>(0x1402EF000,item,splitting->single_model->name);
+				utils::hook::invoke<void>(0x1402ED4C0,item,1);
 				if(auto* object=vr::h2::sp::server_entity_dobj(item))
-					utils::hook::invoke<void>(0x1406A8FA0,object,splitting->item.weapon,0);
+					utils::hook::invoke<void>(0x1404B9FF0,object,splitting->item.weapon,0);
 				splitting->retained=true;return;
 			}
-			utils::hook::invoke<void>(0x140517890,item);
+			utils::hook::invoke<void>(0x1402EE620,item);
 		}
 		bool server() noexcept
 		{return installed && scheduler::is_executing(scheduler::pipeline::server) && game::CL_IsCgameInitialized() && game::g_entities[0].client;}
@@ -169,16 +169,16 @@ namespace vr::gameplay::weapons::native_carry
 			// Only Drop_Weapon's exact call site is projected. Script takeweapon
 			// still removes the definition and invalidates every physical copy.
 			if (releasing.weapon==token && ps==game::g_entities[0].client && native_ammunition::instances().count(token)>1) return;
-			utils::hook::invoke<void>(0x14051C280,ps,token);
+			utils::hook::invoke<void>(0x1402F3050,ps,token);
 		}
 		int pickup_admission_stub(game::gentity_s* item,const void* ps,int automatic,int dual)
 		{
 			// The native manual gate rejects an already-owned definition with equal
-			// akimbo metadata (0x140683678..698), even with an empty projected clip.
+			// akimbo metadata (0x1404953D1..698), even with an empty projected clip.
 			// Retain its script restrictions; override only our admitted world copy.
 			if (item && acquiring.weapon==read<std::uint32_t>(item,0x80) && acquiring.key==entity_key(number(item)) &&
 				duplicate_pickup_admitted(acquiring.key,ps,automatic,dual,carry::pickup_context::grip_transfer)) return 1;
-			return utils::hook::invoke<int>(0x14067EA40,item,ps,automatic,dual);
+			return utils::hook::invoke<int>(0x1404907B0,item,ps,automatic,dual);
 		}
 		bool blocked_touch(game::gentity_s* item,game::gentity_s* actor)
 		{
@@ -263,8 +263,8 @@ namespace vr::gameplay::weapons::native_carry
 		game::XModel* model(std::uint32_t token)
 		{
 			int variation{};
-			utils::hook::invoke<void>(0x1406A8100,game::weapon_defs[token&511],token,&variation);
-			return utils::hook::invoke<game::XModel*>(0x1406A5510,token,false,variation);
+			utils::hook::invoke<void>(0x1404B9150,game::weapon_defs[token&511],token,&variation);
+			return utils::hook::invoke<game::XModel*>(0x1404B68E0,token,false,variation);
 		}
 	}
 	bool initialize()
@@ -272,54 +272,54 @@ namespace vr::gameplay::weapons::native_carry
 		if (installed) return true;
 		constexpr std::uint8_t drop_entry[]{0x48,0x89,0x74,0x24,0x20,0x89,0x54,0x24,0x10,0x57,0x48,0x83,0xec,0x20};
 		constexpr std::uint8_t free_entry[]{0x48,0x89,0x5c,0x24,0x08,0x48,0x89,0x6c,0x24,0x10,0x48,0x89,0x74,0x24,0x18,0x57};
-		constexpr std::uint8_t pickup_entry[]{0x45,0x85,0xc0,0x74,0x15,0x48,0x8b,0x82,0x18,0x01,0x00,0x00};
-		constexpr std::uint8_t scavenge_entry[]{0x48,0x8b,0xc4,0x4c,0x89,0x48,0x20,0x41,0x54,0x48,0x83,0xec,0x60};
-		constexpr std::uint8_t full_call[]{0xe8,0x4e,0x06,0x1e,0x00};
+		constexpr std::uint8_t pickup_entry[]{0x48,0x89,0x6c,0x24,0x18,0x48,0x89,0x74,0x24,0x20,0x57,0x48};
+		constexpr std::uint8_t scavenge_entry[]{0x44,0x89,0x44,0x24,0x18,0x53,0x55,0x41,0x54,0x41,0x56,0x41,0x57};
+		constexpr std::uint8_t full_call[]{0xe8,0x3e,0x7f,0x21,0x00};
 		constexpr std::uint8_t select_entry[]{0x89,0x54,0x24,0x10,0x53,0x48,0x83,0xec,0x20};
 		constexpr std::uint8_t physics_entry[]{0x40,0x53,0x55,0x56,0x57,0x41,0x56,0x41,0x57,0x48,0x81,0xec,0x88,0x00,0x00,0x00};
 		constexpr std::uint8_t trace_entry[]{0x40,0x53,0x55,0x56,0x57,0x48,0x83,0xec,0x78};
 		constexpr std::uint8_t origin_entry[]{0x48,0x89,0x5c,0x24,0x08,0x57,0x48,0x83,0xec,0x20,0x8b,0x02,0x48,0x8b,0xda,0x89,0x41,0x1c};
 		constexpr std::uint8_t angles_entry[]{0x48,0x89,0x5c,0x24,0x08,0x57,0x48,0x83,0xec,0x20,0x8b,0x02,0x48,0x8b,0xda,0x89,0x41,0x40};
-		constexpr std::uint8_t model_entry[]{0x48,0x83,0xec,0x28,0x45,0x8b,0xc8,0x41,0xb8,0x70,0x04,0x00,0x00};
+		constexpr std::uint8_t model_entry[]{0x48,0x83,0xec,0x28,0x45,0x8b,0xc8,0x41,0xb8,0xe0,0x03,0x00,0x00};
 		constexpr std::uint8_t hide_entry[]{0x48,0x89,0x5c,0x24,0x08,0x48,0x89,0x6c,0x24,0x18,0x48,0x89,0x74,0x24,0x20};
-		constexpr std::uint8_t variation_entry[]{0x48,0x8b,0x81,0x70,0x04,0x00,0x00,0xc1,0xea,0x09,0x83,0xe2,0x01};
-		constexpr std::uint8_t class_entry[]{0x48,0x83,0xec,0x28,0x41,0xb8,0xe0,0x05,0x00,0x00};
+		constexpr std::uint8_t variation_entry[]{0x48,0x8b,0x81,0xe0,0x03,0x00,0x00,0xc1,0xea,0x09,0x83,0xe2,0x01};
+		constexpr std::uint8_t class_entry[]{0x48,0x83,0xec,0x28,0x41,0xb8,0x50,0x05,0x00,0x00};
 		constexpr std::uint8_t link_entry[]{0x48,0x89,0x5c,0x24,0x20,0x56,0x48,0x83,0xec,0x40};
 		constexpr std::uint8_t take_entry[]{0x89,0x54,0x24,0x10,0x53,0x48,0x83,0xec,0x20,0x48,0x8b,0xd9};
-		constexpr std::uint8_t give_entry[]{0x89,0x54,0x24,0x10,0x53,0x56,0x57,0x41,0x54,0x41,0x55,0x48,0x83,0xec,0x30};
-		constexpr std::uint8_t take_call[]{0xe8,0xa2,0x8d,0x05,0x00};
+		constexpr std::uint8_t give_entry[]{0x89,0x54,0x24,0x10,0x56,0x57,0x41,0x55,0x41,0x57,0x48,0x83,0xec,0x38,0x45};
+		constexpr std::uint8_t take_call[]{0xe8,0xb5,0x62,0x05,0x00};
 		constexpr std::uint8_t existing_give[]{0xb8,0x01,0x00,0x00,0x00};
-		constexpr std::uint8_t manual_pickup[]{0xe8,0xc0,0x0f,0x00,0x00};
+		constexpr std::uint8_t manual_pickup[]{0xe8,0xbe,0x14,0x00,0x00};
 		constexpr std::uint8_t secondary_entry[]{0x40,0x53,0x48,0x83,0xec,0x20,0x8b,0xc1};
-		constexpr std::uint8_t admission_call[]{0xe8,0x61,0x8b,0x1b,0x00};
-		constexpr std::uint8_t script_gate[]{0xf7,0x83,0xc0,0x03,0x00,0x00,0x00,0x80,0x00,0x00};
-		constexpr std::uint8_t pickup_free_call[]{0xe8,0xa2,0x18,0x05,0x00};
+		constexpr std::uint8_t admission_call[]{0xe8,0xa2,0x10,0x1f,0x00};
+		constexpr std::uint8_t script_gate[]{0xf7,0x83,0x90,0x03,0x00,0x00,0x00,0x80,0x00,0x00};
+		constexpr std::uint8_t pickup_free_call[]{0xe8,0xa0,0xee,0x04,0x00};
 		constexpr std::uint8_t dual_payload_loop[]{0x41,0xf6,0x87,0xa0,0x01,0x00,0x00,0x01,0x74,0x0b};
 		constexpr std::uint8_t set_model_entry[]{0x40,0x53,0x48,0x83,0xec,0x20,0x80,0x3a,0x00,0x48,0x8b,0xd9};
 		constexpr std::uint8_t dobj_update_call[]{0xe8,0x34,0x01,0x00,0x00};
-		constexpr std::uint8_t entity_dobj_entry[]{0x48,0x8d,0x05,0xc9,0x6e,0xd3,0x04,0x48,0x2b,0xc8};
-		if (!native_ammunition::initialize() || !verify(0x1404C33F0,drop_entry) || !verify(0x140517890,free_entry) ||
-			!verify(0x1404C6010,pickup_entry) || !verify(0x1404C71B0,scavenge_entry) || !verify(0x1404C686D,full_call) || !verify(0x14051C0D0,select_entry) ||
-			!verify(0x1404C3AE0,physics_entry) || !verify(0x1404CBFE0,trace_entry) ||
-			!verify(0x1405182C0,origin_entry) || !verify(0x140518180,angles_entry) || !verify(0x1406A5510,model_entry) || !verify(0x1406A8FA0,hide_entry) ||
-			!verify(0x1406A8100,variation_entry) || !verify(vr::h2::sp::weapon_inventory_type.address(),class_entry) || !verify(0x1406B6830,link_entry) ||
-			!verify(0x1406A8E90,take_entry) || !verify(0x14051B660,give_entry) || !verify(0x1404C34D9,take_call) ||
-			!verify(0x14051B78F,existing_give) || !verify(0x1404C5FAB,manual_pickup) || !verify(vr::h2::sp::weapon_dual_wield_flag.address(),secondary_entry) ||
-			!verify(0x1404C5EDA,admission_call) || !verify(0x140683678,script_gate) ||
-			!verify(0x1404C5FE9,pickup_free_call) || !verify(0x1404C6697,dual_payload_loop) ||
-			!verify(0x140518280,set_model_entry) || !verify(0x1405166D7,dobj_update_call) || !verify(vr::h2::sp::server_entity_dobj.address(),entity_dobj_entry)) return false;
-		free_hook.create(0x140517890,free_stub);
-		world_model_hook.create(0x1406A5510,world_model_stub);
-		hide_parts_hook.create(0x1406A8FA0,hide_parts_stub);
-		pickup_hook.create(0x1404C6010,pickup_stub);
-		scavenge_hook.create(0x1404C71B0,scavenge_stub);
-		utils::hook::call(0x1404C686D,full_stub);
-		take_hook.create(0x1406A8E90,take_stub);
-		drop_hook.create(0x1404C33F0,drop_stub);
-		give_hook.create(0x14051B660,give_stub);
-		utils::hook::call(0x1404C34D9,drop_take_stub);
-		utils::hook::call(0x1404C5EDA,pickup_admission_stub);
-		utils::hook::call(0x1404C5FE9,pickup_free_stub);
+		constexpr std::uint8_t entity_dobj_entry[]{0x48,0x8d,0x05,0x69,0xfe,0x33,0x05,0x48,0x2b,0xc8};
+		if (!native_ammunition::initialize() || !verify(0x14029CCB0,drop_entry) || !verify(0x1402EE620,free_entry) ||
+			!verify(0x14029F6A0,pickup_entry) || !verify(0x1402A05A0,scavenge_entry) || !verify(0x1402A000D,full_call) || !verify(0x1402F2EF0,select_entry) ||
+			!verify(0x14029D3B0,physics_entry) || !verify(0x1402A5640,trace_entry) ||
+			!verify(0x1402EF040,origin_entry) || !verify(0x1402EEF00,angles_entry) || !verify(0x1404B68E0,model_entry) || !verify(0x1404B9FF0,hide_entry) ||
+			!verify(0x1404B9150,variation_entry) || !verify(vr::h2::sp::weapon_inventory_type.address(),class_entry) || !verify(0x1404C7700,link_entry) ||
+			!verify(0x1404B9EE0,take_entry) || !verify(0x1402F24F0,give_entry) || !verify(0x14029CD96,take_call) ||
+			!verify(0x1402F25DC,existing_give) || !verify(0x14029F73D,manual_pickup) || !verify(vr::h2::sp::weapon_dual_wield_flag.address(),secondary_entry) ||
+			!verify(0x14029F709,admission_call) || !verify(0x1404953D1,script_gate) ||
+			!verify(0x14029F77B,pickup_free_call) || !verify(0x14029FE37,dual_payload_loop) ||
+			!verify(0x1402EF000,set_model_entry) || !verify(0x1402ED4E7,dobj_update_call) || !verify(vr::h2::sp::server_entity_dobj.address(),entity_dobj_entry)) return false;
+		free_hook.create(0x1402EE620,free_stub);
+		world_model_hook.create(0x1404B68E0,world_model_stub);
+		hide_parts_hook.create(0x1404B9FF0,hide_parts_stub);
+		pickup_hook.create(0x14029F6A0,pickup_stub);
+		scavenge_hook.create(0x1402A05A0,scavenge_stub);
+		utils::hook::call(0x1402A000D,full_stub);
+		take_hook.create(0x1404B9EE0,take_stub);
+		drop_hook.create(0x14029CCB0,drop_stub);
+		give_hook.create(0x1402F24F0,give_stub);
+		utils::hook::call(0x14029CD96,drop_take_stub);
+		utils::hook::call(0x14029F709,pickup_admission_stub);
+		utils::hook::call(0x14029F77B,pickup_free_stub);
 		scripting::on_shutdown([](bool,bool after){if (!after) native_ammunition::invalidate_timeline();});
 		scripting::on_level_start([]{native_ammunition::invalidate_timeline();});
 		installed=true;reason="native carry contracts ready";return true;
@@ -348,9 +348,9 @@ namespace vr::gameplay::weapons::native_carry
 		const auto mission_equipment=sequences::oilrig::current_equipment();
 		for (std::size_t i=0;i<15;++i)
 		{
-			const auto token=read<std::uint32_t>(out.player,0x2f8+i*4);
+			const auto token=read<std::uint32_t>(out.player,0x2cc+i*4);
 			if (!eligible(token)) continue;
-			if (read<std::uint8_t>(out.player,0x334+i*8+1)) {reason="native akimbo inventory requires separate handling";return out;}
+			if (read<std::uint8_t>(out.player,0x308+i*8+1)) {reason="native akimbo inventory requires separate handling";return out;}
 			const auto* n=name(token);const auto size=strnlen_s(n,128);
 			if (!size || size>=128) return out;
 			if(cheats::body_weapon({n,size}))continue;
@@ -375,21 +375,27 @@ namespace vr::gameplay::weapons::native_carry
 		// Grip transfers on the same gun are not new equipment requests. Do not
 		// restart its native action or interrupt its mechanical state.
 		if (vr::h2::sp::weapon_selection_request.read()==token &&
-			(read<std::uint32_t>(game::g_entities[0].client,0x3bc)&511)==token) return true;
+			(read<std::uint32_t>(game::g_entities[0].client,0x38c)&511)==token) return true;
 		const auto* native_name=name(token);const auto length=native_name ? strnlen_s(native_name,128) : 0;
 		if (!length || length>=128) return false;
-		try
-		{
-			// The selected native method owns weapon-state resets,
-			// selection and notifications. Keep its isolated VM call on the server;
-			// do not reproduce its private timer/flag writes in the carry arbiter.
-			const scripting::entity actor(game::scr_entref_t{0,0});
-			const auto result=actor.call("switchtoweaponimmediate",{std::string(native_name,length)});
-			const bool accepted=result.is<int>() && result.as<int>()!=0;
-			reason=accepted ? "native carry selection requested" : "native carry selection rejected";
-			return accepted;
-		}
-		catch (const std::exception&) {reason="native carry selection failed";return false;}
+		// MWR port: the script VM is not available, so mirror the immediate
+		// branch of MWR's switchtoweapon method body (0x140294880, immediate=1,
+		// no notify) after its name lookup: owned-slot check, weapon-state reset,
+		// G_SelectWeapon and the per-slot "alt_" mode byte.
+		auto* ps=reinterpret_cast<std::uint8_t*>(game::g_entities[0].client);
+		int slot=-1;
+		for (int i=0;i<15;++i) if (read<std::uint32_t>(ps,0x2cc+i*4)==token) {slot=i;break;}
+		if (slot<0) {reason="native carry selection rejected";return false;}
+		auto flags=read<std::uint32_t>(ps,0x390);
+		flags=(flags|0x8000000u)&~0x2000000u;
+		std::memcpy(ps+0x390,&flags,4);
+		const std::uint32_t state[3]{0,0x2c,0};
+		std::memcpy(ps+0x600,state,sizeof(state));
+		game::Weapon weapon{};weapon.data=token;
+		game::G_SelectWeapon(0,weapon);
+		ps[0x308+slot*8+2]=std::string_view(native_name,length).starts_with("alt_") ? 1 : 0;
+		reason="native carry selection requested";
+		return true;
 	}
 	game::XModel* world_model(std::uint32_t token) noexcept
 	{
@@ -450,7 +456,7 @@ namespace vr::gameplay::weapons::native_carry
 		const auto restore=gsl::finally([&]{releasing={};if (previous) native_ammunition::project(previous);});
 		// Same spawn/ammunition/removal path as PlayerCmd_DropItem. Place before
 		// physics creation, so no actor ever spawns at the old flat-screen muzzle.
-		auto* entity=utils::hook::invoke<game::gentity_s*>(0x1404C33F0,&game::g_entities[0],value.id.weapon);
+		auto* entity=utils::hook::invoke<game::gentity_s*>(0x14029CCB0,&game::g_entities[0],value.id.weapon);
 		if (!same_world()) {reason="world changed during native drop";return false;}
 		const auto index=number(entity);
 		if (index<=0) {reason="native drop did not return an entity";return false;}
@@ -465,20 +471,20 @@ namespace vr::gameplay::weapons::native_carry
 		constexpr float degrees=57.2957795131f;
 		const hands::vec angles{std::atan2(-forward[2],std::hypot(forward[0],forward[1]))*degrees,
 			std::atan2(forward[1],forward[0])*degrees,std::atan2(left[2],up[2])*degrees};
-		utils::hook::invoke<void>(0x1405182C0,entity,gun.position.data());
-		utils::hook::invoke<void>(0x140518180,entity,angles.data());
+		utils::hook::invoke<void>(0x1402EF040,entity,gun.position.data());
+		utils::hook::invoke<void>(0x1402EEF00,entity,angles.data());
 		const std::array<hands::vec,3> axis{forward,left,up};
-		utils::hook::invoke<void>(0x1404C3AE0,entity,gun.position.data(),axis.data(),velocity.data());
+		utils::hook::invoke<void>(0x14029D3B0,entity,gun.position.data(),axis.data(),velocity.data());
 		if (!read<void*>(entity,0x140) && read<int>(entity,0x10)==7)
 			std::memcpy(reinterpret_cast<std::byte*>(entity)+0x28,velocity.data(),sizeof(velocity));
-		utils::hook::invoke<void>(0x1406B6830,entity);
+		utils::hook::invoke<void>(0x1404C7700,entity);
 		if (!same_world()) {reason="world changed during drop placement";return false;}
 		saved.key={index,generations[index].load()};*storage=saved;result=saved.key;
 		drop_presentation::begin(saved.key,geometry(value.id.weapon),gun);
 		const bool removed=(duplicate || !owns(game::g_entities[0].client,value.id.weapon)) && native_ammunition::retire(value.id);
 		if (duplicate && !removed)
 		{
-			utils::hook::invoke<void>(0x140517890,entity);*storage={};
+			utils::hook::invoke<void>(0x1402EE620,entity);*storage={};
 			reason="duplicate drop retirement rejected; world spawn cancelled";return false;
 		}
 		const bool preserved=ammunitionless || read<int>(entity,0x194)==before.loaded;
@@ -498,7 +504,7 @@ namespace vr::gameplay::weapons::native_carry
 		if(split && (!single_model || !single_model->name || !*single_model->name)) {reason="akimbo single world model unavailable";return false;}
 		const bool duplicate=owns(game::g_entities[0].client,item.weapon);
 		if (duplicate && !duplicate_supported(item.weapon)) {reason="duplicate weapon feed unsupported";return false;}
-		unsigned count{};for (std::size_t i=0;i<15;++i) if (read<std::uint32_t>(game::g_entities[0].client,0x2f8+i*4)) ++count;
+		unsigned count{};for (std::size_t i=0;i<15;++i) if (read<std::uint32_t>(game::g_entities[0].client,0x2cc+i*4)) ++count;
 		if (!duplicate && count>=15) {reason="native owned array full";return false;}
 		record saved;
 		for (const auto& r:dropped) if (r.id.weapon==item.weapon && r.key==item.key) {saved=r;break;}
@@ -522,7 +528,7 @@ namespace vr::gameplay::weapons::native_carry
 			std::memcpy(reinterpret_cast<std::byte*>(&game::g_entities[item.key.entity])+0x1a0,&split->pickup.flags,4);
 			splitting=&split_state;
 		}
-		utils::hook::invoke<void>(0x1404C6010,&game::g_entities[item.key.entity],&game::g_entities[0],0);
+		utils::hook::invoke<void>(0x14029F6A0,&game::g_entities[item.key.entity],&game::g_entities[0],0);
 		const bool accepted=(!live(item.key,item.weapon) || split_state.retained) && owns(game::g_entities[0].client,item.weapon);
 		if (!native_ammunition::finish_pickup(transfer,accepted)) {reason="native pickup rejected or script ownership changed";return false;}
 		recovered=transfer.id;
@@ -582,9 +588,9 @@ namespace vr::gameplay::weapons::native_carry
 	{
 		if (!server() || !carry::active() || !ps || ps!=game::g_entities[0].client) return false;
 		const auto item=pickup_item(key);
-		if(item.weapon && carry::admit_akimbo_split(context,(read<unsigned>(&game::g_entities[key.entity],0x1a0)&1)!=0,automatic,dual,read<std::uint32_t>(ps,0x3c0)))return true;
+		if(item.weapon && carry::admit_akimbo_split(context,(read<unsigned>(&game::g_entities[key.entity],0x1a0)&1)!=0,automatic,dual,read<std::uint32_t>(ps,0x390)))return true;
 		return carry::admit_duplicate_pickup(context,item.weapon!=0,
-			item.weapon && owns(ps,item.weapon),automatic,dual,read<std::uint32_t>(ps,0x3c0));
+			item.weapon && owns(ps,item.weapon),automatic,dual,read<std::uint32_t>(ps,0x390));
 	}
 	std::optional<bool> give_duplicate(std::uint32_t token,bool dual)
 	{

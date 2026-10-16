@@ -34,6 +34,15 @@ namespace vr::gameplay::weapons
 				if (parent >= 0) return {};
 				parent=i;
 			}
+		// MWR nests attachments (reticle_* hangs off the optic's
+		// tag_reticle_attach). Accept a unique parent in an earlier weapon model.
+		if (parent < 0 && model.begin > receiver.begin+receiver.count)
+			for (int i=receiver.begin+receiver.count;i<model.begin;++i)
+				if (bones[i].name == policy.receiver_parent && rig.weapon_bones[i])
+				{
+					if (parent >= 0) return {};
+					parent=i;
+				}
 		if (parent < 0 || parent == rig.gun || !rig.weapon_bones[parent] ||
 			rig.parent[model.begin] != parent) return {};
 		int muzzle=-1;

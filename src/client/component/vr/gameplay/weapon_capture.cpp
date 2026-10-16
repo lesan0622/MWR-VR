@@ -3,6 +3,8 @@
 #include "native_animation_query.hpp"
 #include "hands/pose_math.hpp"
 #include "native_scripted_control.hpp"
+#include "native_carry.hpp"
+#include "weapon_carry_runtime.hpp"
 #include "component/command.hpp"
 #include "component/console.hpp"
 #include "game/game.hpp"
@@ -228,6 +230,7 @@ namespace vr::gameplay::weapon_capture
 					scripted_control::native_contract(), player_life::read(server, dead), dead,
 					scripted_control::allowed(server), sequences::owns_body(server), sequences::owns_arms(server),
 					sequences::airport::opening::active());
+				console::info("[VR capture] carry native=%s active=%d\n", weapons::native_carry::status(), weapons::carry::active());
 				dump("predicted", game::CL_IsCgameInitialized() ? game::CG_GetPredictedPlayerState(0) : nullptr);
 			});
 			command::add("vr_capture_record", [](const command::params& params)
