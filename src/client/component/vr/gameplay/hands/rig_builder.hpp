@@ -4,6 +4,8 @@
 #include "../native_muzzle_contract.hpp"
 #include "../special_melee.hpp"
 #include <string_view>
+#include <format>
+#include <string>
 
 namespace vr::gameplay::hands
 {
@@ -181,7 +183,14 @@ namespace vr::gameplay::hands
 		if(reviewed && !reviewed->matches(models[result.weapon_model].count,r.parent[r.muzzle],r.gun,offset,muzzle_rotation))
 			return reject("reviewed receiver muzzle bind contract rejected");
 		if (kind!=rig_kind::shield && !reviewed && (forward[0] < 0.9961947f || !std::isfinite(offset[0]) || offset[0] <= 0.01f))
-			return reject("nonstandard muzzle axis requires dedicated adapter");
+		{
+			// MWR port: print the bind contract so a reviewed exception can be authored.
+			thread_local std::string text;
+			text=std::format("nonstandard muzzle axis requires dedicated adapter ({} bones={} parent_is_gun={} offset={:.8f},{:.8f},{:.8f} rot={:.8f},{:.8f},{:.8f},{:.8f})",
+				models[result.weapon_model].name,models[result.weapon_model].count,r.parent[r.muzzle]==r.gun,
+				offset[0],offset[1],offset[2],muzzle_rotation[0],muzzle_rotation[1],muzzle_rotation[2],muzzle_rotation[3]);
+			return reject(text.c_str());
+		}
 		for (int i = 0; i < r.count; ++i)
 		{
 			if (bones[i].name == "j_gun" && i != r.gun)

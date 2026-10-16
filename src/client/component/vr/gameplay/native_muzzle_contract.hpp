@@ -21,6 +21,8 @@ namespace vr::gameplay::hands
 	inline constexpr native_muzzle_contract reviewed_muzzles[]{
 		// H2 receiver baseMat: position in native inches; 10.30-degree upward axis.
 		{"h2_viewmodel_javelin_base",6,{{12.70210837f,0,2.93677304f},{0,-.08975494f,0,.99597156f}}},
+		// MWR receiver: same asset bind (witnessed rot 0,-.08975425,0,.99596399).
+		{"viewmodel_javelin",6,{{12.70210837f,0,2.93677304f},{0,-.08975494f,0,.99597156f}}},
 	};
 	inline const native_muzzle_contract* reviewed_muzzle(std::string_view receiver) noexcept
 	{
