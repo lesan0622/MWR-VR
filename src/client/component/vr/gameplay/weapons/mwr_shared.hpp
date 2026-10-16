@@ -11,6 +11,12 @@
 #include "m1911/profile.hpp"
 #include "usp/profile.hpp"
 #include "m9/profile.hpp"
+#include "de50/profile.hpp"
+#include "rpd/profile.hpp"
+#include "winchester1200/profile.hpp"
+#include "m1014/profile.hpp"
+#include "rpg/profile.hpp"
+#include "stinger/profile.hpp"
 #include "p90/profile.hpp"
 
 namespace vr::gameplay::weapons::mwr_shared
@@ -34,9 +40,18 @@ namespace vr::gameplay::weapons::mwr_shared
 	inline bool beretta_family(std::string_view name) noexcept { return native_weapon_family(name, "beretta"); }
 	// beretta: MWR wpn_h1_pst_m9_vm (beretta); slide j_bolt, bullets tag_bullets.
 	inline const reload_profile beretta_reload = mwr_rebase::rebase(m9::physical, {.id = "mwr_beretta", .receiver = "wpn_h1_pst_m9_vm", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullets", .magazine_model = nullptr, .magazine_bind = {{0.180226f, 0.000000f, 0.379039f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{0.424323f, 0.000000f, 3.416169f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = true, .native_family = beretta_family});
+	inline bool deserteagle_family(std::string_view name) noexcept { return native_weapon_family(name, "deserteagle"); }
+	// deserteagle: MWR wpn_h1_pst_de50_vm (deserteagle); slide j_bolt, bullets tag_bullets.
+	inline const reload_profile deserteagle_reload = mwr_rebase::rebase(de50::physical, {.id = "mwr_deserteagle", .receiver = "wpn_h1_pst_de50_vm", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullets", .magazine_model = nullptr, .magazine_bind = {{0.200863f, 0.000000f, 0.240622f}, {0.0000000f, 0.1268025f, 0.0000000f, 0.9919280f}}, .slide_bind = {{0.565419f, 0.000000f, 3.347321f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = true, .drop_bullet_parents = true, .native_family = deserteagle_family});
+	// rpd: MWR viewmodel_rpd_sp (rpd); slide j_bolthandle, bullets j_bullet1.
+	inline const reload_profile rpd_reload = mwr_rebase::rebase(rpd::physical, {.id = "mwr_rpd", .receiver = "viewmodel_rpd_sp", .magazine_bone = "tag_clip", .slide_bone = "j_bolthandle", .bullets_bone = "j_bullet1", .magazine_model = nullptr, .magazine_bind = {{6.833340f, -0.019182f, -1.603666f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{5.155989f, -1.061368f, 2.540080f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = true, .drop_belt_bridge = true});
+	// winchester1200: MWR viewmodel_winchester1200 (winchester1200); original mechanics kept.
+	// m1014: MWR viewmodel_benelli_m4 (m1014); original mechanics kept.
+	// rpg: MWR viewmodel_rpg7 (rpg); original mechanics kept.
+	// stinger: MWR viewmodel_stinger (stinger); original mechanics kept.
 	// p90: MWR viewmodel_p90 (p90); slide j_bolt, bullets tag_bullet_single.
 	inline const reload_profile p90_reload = mwr_rebase::rebase(p90::physical, {.id = "mwr_p90", .receiver = "viewmodel_p90", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullet_single", .magazine_model = nullptr, .magazine_bind = {{5.896818f, 0.000000f, 3.248346f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{5.118773f, 0.984914f, 2.598390f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = true});
-	inline const std::array<profile, 10> profiles{{
+	inline const std::array<profile, 16> profiles{{
 		mwr_rebase::adopt(m16::bare, "mwr_m16", "viewmodel_m16", &m16_reload, false),
 		mwr_rebase::adopt(m4::foregrip, "mwr_m4", "viewmodel_m4a1_sp", &m4_reload, false),
 		mwr_rebase::adopt(ak47::assemblies[0], "mwr_ak47", "viewmodel_ak47", &ak47_reload, false),
@@ -46,6 +61,12 @@ namespace vr::gameplay::weapons::mwr_shared
 		mwr_rebase::adopt(m1911::base, "mwr_colt45", "wpn_h1_pst_m1911_vm", &colt45_reload, true),
 		mwr_rebase::adopt(usp::base, "mwr_usp", "wpn_h1_pst_usp45_vm", &usp_reload, true),
 		mwr_rebase::adopt(m9::base, "mwr_beretta", "wpn_h1_pst_m9_vm", &beretta_reload, true),
+		mwr_rebase::adopt(de50::base, "mwr_deserteagle", "wpn_h1_pst_de50_vm", &deserteagle_reload, true),
+		mwr_rebase::adopt(rpd::base, "mwr_rpd", "viewmodel_rpd_sp", &rpd_reload, true),
+		mwr_rebase::adopt(winchester1200::base, "mwr_winchester1200", "viewmodel_winchester1200", winchester1200::base.reload, true),
+		mwr_rebase::adopt(m1014::assemblies[0], "mwr_m1014", "viewmodel_benelli_m4", m1014::assemblies[0].reload, true),
+		mwr_rebase::adopt(rpg::base, "mwr_rpg", "viewmodel_rpg7", rpg::base.reload, true),
+		mwr_rebase::adopt(stinger::base, "mwr_stinger", "viewmodel_stinger", stinger::base.reload, true),
 		mwr_rebase::adopt(p90::assemblies[0], "mwr_p90", "viewmodel_p90", &p90_reload, true),
 	}};
 	inline profile_match select(std::span<const hands::model_definition> models,

@@ -29,6 +29,9 @@ namespace vr::gameplay::weapons::mwr_rebase
 		bool keep_mechanism{};
 		// No MWR world clip model: cut the magazine from the receiver mesh.
 		bool magazine_from_receiver{};
+		// Keep-mode exceptions where the MWR receiver lacks an MW2 bone.
+		bool drop_bullet_parents{}; // e.g. Desert Eagle j_bullet01 under tag_bullets.
+		bool drop_belt_bridge{};    // e.g. RPD optic rail bridge (MW2 j_rail, MWR tag_rail).
 		std::span<const std::string_view> additional_bullet_bones{};
 		bool (*native_family)(std::string_view) noexcept {};
 		const char* (*sound_key)(mechanics::effect) noexcept {}; // Optional override.

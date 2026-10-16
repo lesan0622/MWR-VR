@@ -3,6 +3,7 @@
 #include "../part_grip_pose.hpp"
 #include "../charging_handle_bolt.hpp"
 #include "../hands/pose_solver.hpp"
+#include "../belt_profile.hpp"
 
 namespace vr::gameplay::weapons::mwr_rebase
 {
@@ -128,6 +129,19 @@ namespace vr::gameplay::weapons::mwr_rebase
 		}
 		else if (t.additional_bullet_bones.empty())
 			p.additional_bullet_bones = source.additional_bullet_bones;
+		if (t.drop_bullet_parents)
+		{
+			p.bullet_parents = {};
+			p.additional_bullet_bones = t.additional_bullet_bones; // The parented rounds are the extras.
+		}
+		if (t.drop_belt_bridge && p.interaction.belt)
+		{
+			auto* belt = keep<belt_feed::profile>(*p.interaction.belt);
+			belt->bridge = nullptr;
+			belt->details = {}; // Details may reference the bridge.
+			p.interaction.belt = belt;
+			p.ammunition.belt_bridge = false;
+		}
 
 		// Sound keys are notetrack lookups resolved in the live WeaponDef map
 		// (missing keys stay silent); MWR keeps the COD4 names MW2 inherited.
@@ -168,9 +182,13 @@ namespace vr::gameplay::weapons::mwr_rebase
 			const int parent = rig.parent[root];
 			if (parent < receiver.begin || parent >= root || !rig.weapon_bones[parent])
 				return {nullptr, "MWR attachment is not parented to the weapon"};
+			// Attachments may have several roots (e.g. RPD bipod legs on receiver tags).
 			for (int i = root; i < root + model.count && i < rig.count; ++i)
-				if (!hands::descendant(i, root, rig))
+			{
+				const int p = rig.parent[i];
+				if (p < receiver.begin || p >= i || !rig.weapon_bones[p])
 					return {nullptr, "MWR attachment has a detached bone"};
+			}
 		}
 		return {&selected, "MWR shared recipe matched", {}, -1};
 	}
