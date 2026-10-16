@@ -133,6 +133,9 @@ namespace vr::gameplay::weapons
 		sound_reference rear_sound{}, close_sound{}, removal_sound{};
 		std::string_view
 		    action_detail_bone{}; // Audited visible child of the operated action (latch/handle tip).
+		// MWR: receiver whose top-round bone (bullets_bone) supplies the counted
+		// rounds drawn on separate world clip magazines (which carry no rounds).
+		const char* round_source{};
 		const magazine_fill_recipe* magazine_fill() const noexcept
 		{
 			if (!rigid_magazine_source)

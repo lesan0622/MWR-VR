@@ -83,7 +83,9 @@ namespace vr::gameplay::weapons::physical_reload
 		std::array<dropped,8> drops{};
 		// R_FilterXModelIntoScene copies placement but RETAINS this pointer in
 		// sceneModel+0x68. Lighting handles must outlive all queued render work.
-		std::array<unsigned short,15+8+30+15+15> lighting_handles{}; // Held, drops, partition, inserted, live chamber.
+		constexpr size_t round_lighting_base = 15+8+30+15+15;
+		// Held, drops, partition, inserted, live chamber; then MWR counted rounds per index.
+		std::array<unsigned short,round_lighting_base*2> lighting_handles{};
 		struct event_cursor { std::uint64_t instance{}, sequence{}; };
 		instance_cache<event_cursor,512> event_cursors;
 		template<class T> bool read(const void* source, size_t offset, T& output) noexcept
@@ -99,6 +101,7 @@ namespace vr::gameplay::weapons::physical_reload
 			const auto base=reinterpret_cast<std::uintptr_t>(lighting_handles.data());
 			if (!alive.load() || !scene_models::native_entry::lighting(entry,lighting) || lighting<base || lighting>=base+sizeof(lighting_handles) || (lighting-base)%sizeof(unsigned short)) return result::unchanged;
 			const auto index=(lighting-base)/sizeof(unsigned short);
+			if(index>=round_lighting_base)return result::unchanged; // MWR counted rounds follow their magazine submit.
 			if(index>=15 && index<23)return result::unchanged;
 			// MWR port: without the render-time skeleton record, keep the solve-time
 			// placement instead of omitting the held/inserted part.
@@ -175,12 +178,24 @@ namespace vr::gameplay::weapons::physical_reload
 				const ::vr::gameplay::motion::flight* falling=nullptr,std::uint64_t reference=0,weapon_identity origin={}) {
 				const auto asset = cartridge ? magazine_assets::cartridge(definition) : magazine_assets::get(definition,rounds);
 				if (!asset.model) return;
+				// MWR: world clip magazines carry no rounds; add the counted receiver rounds.
+				const auto counted = cartridge ? magazine_assets::asset{} : magazine_assets::rounds(definition,rounds);
 				if(falling)
 				{
 					falling_item_presentation::motion motion;motion.path=*falling;motion.local=asset.in_magazine;
 					motion.origin=origin;motion.rail_profile=definition;
 					falling_item_presentation::submit(asset.model,motion,reference,.25f*units);
+					if(counted.model){motion.local=counted.in_magazine;falling_item_presentation::submit(counted.model,motion,reference,.25f*units);}
 					return;
+				}
+				if(counted.model && index<round_lighting_base)
+				{
+					const auto round_world=compose(world,counted.in_magazine);
+					game::GfxScaledPlacement placement{};
+					std::copy(round_world.position.begin(),round_world.position.end(),placement.base.origin);
+					std::copy(round_world.rotation.begin(),round_world.rotation.end(),placement.base.quat);
+					placement.scale=1;float color[4]{1,1,1,1};
+					scene_models::submit(counted.model,&placement,0,&lighting_handles[round_lighting_base+index],color,color,color,.25f*units);
 				}
 				world = compose(world,asset.in_magazine);
 				game::GfxScaledPlacement placement{};

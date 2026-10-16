@@ -32,6 +32,7 @@ inline const reload_profile physical = [] {
 		.native_family = native_family};
 	p.magazine_contacts = &contacts;
 	p.additional_bullet_bones = additional_bullets;
+	p.round_source = "viewmodel_g36_sp"; // Counted rounds on the world clip magazine.
 	p.interaction = physical_reload::with_box_magazine_well(p.interaction);
 	return p;
 }();

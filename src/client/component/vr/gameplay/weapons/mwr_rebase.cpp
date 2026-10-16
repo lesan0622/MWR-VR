@@ -112,6 +112,8 @@ namespace vr::gameplay::weapons::mwr_rebase
 		// Prefer the MWR world clip model: MWR receivers weight little of the
 		// magazine mesh to tag_clip, so a receiver cut can render nearly empty.
 		p.rigid_magazine_source = t.magazine_from_receiver ? receiver : nullptr;
+		// World clip magazines take their counted rounds from this receiver.
+		p.round_source = t.magazine_from_receiver ? nullptr : receiver;
 		if (t.magazine_from_receiver)
 			p.magazine_model = receiver;
 		// MW2 counted-fill recipes do not match MWR meshes (topology hash differs

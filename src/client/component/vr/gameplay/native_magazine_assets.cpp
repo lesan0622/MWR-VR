@@ -35,6 +35,21 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 		std::array<std::atomic<const char*>, reload_profiles.capacity()> reasons{};
 		std::array<clock::time_point, reload_profiles.capacity()> last_attempt{};
 
+		// MWR counted rounds: the receiver's own top round, cut at its bullets bone
+		// and anchored at tag_clip, then stacked as 1/2/3 staggered copies.
+		struct round_stack
+		{
+			scene_models::rigid_part single;
+			std::array<scene_models::rigid_part, 3> stacks;
+			std::array<asset, 3> views{};
+			game::XModel* source{};
+			game::XSurface* surfaces{};
+		};
+		std::array<std::unique_ptr<round_stack>, reload_profiles.capacity()> round_retained;
+		std::array<std::atomic<const round_stack*>, reload_profiles.capacity()> round_selected{};
+		std::array<std::atomic<const char*>, reload_profiles.capacity()> round_reasons{};
+		std::array<clock::time_point, reload_profiles.capacity()> round_attempt{};
+
 		const char* ready_status(const reload_profile& definition)
 		{
 			return definition.magazine_fill() ? "counted magazine 0/1/2/3 ready"
@@ -391,6 +406,101 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 		}
 	}
 
+	namespace
+	{
+		int find_bone(const game::XModel& model, std::string_view name)
+		{
+			if (!model.boneNames)
+				return -1;
+			for (unsigned b = 0; b < model.numBones; ++b)
+			{
+				const auto* n = game::SL_ConvertToString(model.boneNames[b]);
+				if (n && name == n)
+					return int(b);
+			}
+			return -1;
+		}
+
+		void refresh_rounds(size_t index, const reload_profile& definition)
+		{
+			if (!definition.round_source || definition.rigid_magazine_source)
+				return;
+			auto* source = find_source(definition.round_source);
+			if (!source)
+			{
+				round_selected[index] = nullptr;
+				round_reasons[index] = "round source receiver not loaded";
+				return;
+			}
+			if (const auto* current = round_selected[index].load();
+				current && current->source == source && current->surfaces == source->lodInfo[0].surfs)
+				return;
+			const auto now = clock::now();
+			if (now >= round_attempt[index] && now - round_attempt[index] < std::chrono::seconds(1))
+				return;
+			round_attempt[index] = now;
+			const int clip = find_bone(*source, definition.magazine_bone);
+			const int bullet = find_bone(*source, definition.bullets_bone);
+			if (clip < 0 || bullet < 0)
+			{
+				round_reasons[index] = "receiver magazine/round bones missing";
+				return;
+			}
+			auto stack = std::make_unique<round_stack>();
+			const std::array<unsigned, 1> bones{unsigned(bullet)};
+			if (!stack->single.create(source, unsigned(bullet), bones))
+			{
+				round_reasons[index] = stack->single.status();
+				return;
+			}
+			// Double-stack stagger in receiver bind space (gun-local inches): each
+			// lower round alternates sides and drops one cartridge pitch.
+			constexpr float side = .18f, pitch = .33f;
+			std::array<scene_models::runtime_model, 3> identities{};
+			for (size_t n = 0; n < 3; ++n)
+			{
+				std::array<scene_models::rigid_part::instance, 3> instances{};
+				for (size_t r = 0; r <= n; ++r)
+					instances[r] = {&stack->single, {0.f, (r % 2) ? side : 0.f, -pitch * float(r)}};
+				if (!stack->stacks[n].create_instances(std::span(instances).first(n + 1)))
+				{
+					round_reasons[index] = stack->stacks[n].status();
+					return;
+				}
+				// Vertices stay in receiver bind space: place them relative to tag_clip.
+				game::DObjAnimMat clip_bind{};
+				if (!utils::native_memory::read_bytes(&clip_bind, source->baseMat + clip, sizeof(clip_bind)))
+				{
+					round_reasons[index] = "receiver tag_clip bind unreadable";
+					return;
+				}
+				const hands::anchor clip_pose{{clip_bind.trans[0], clip_bind.trans[1], clip_bind.trans[2]},
+				                              {clip_bind.quat[0], clip_bind.quat[1], clip_bind.quat[2], clip_bind.quat[3]}};
+				stack->views[n] = {stack->stacks[n].model(), inverse_reload(clip_pose)};
+				identities[n] = {stack->stacks[n].model(), stack->stacks[n].source()};
+			}
+			if (!scene_models::register_runtime_models(identities))
+			{
+				round_reasons[index] = "round identity registration rejected";
+				return;
+			}
+			stack->source = source;
+			stack->surfaces = source->lodInfo[0].surfs;
+			round_retained[index] = std::move(stack);
+			round_selected[index] = round_retained[index].get();
+			round_reasons[index] = "counted receiver rounds ready";
+		}
+	}
+
+	asset rounds(const reload_profile* definition, int count) noexcept
+	{
+		const auto index = reload_profile_index(definition);
+		if (index >= reload_profiles.size() || count <= 0)
+			return {};
+		const auto* stack = round_selected[index].load();
+		return stack ? stack->views[std::min(count, 3) - 1] : asset{};
+	}
+
 	asset get(const reload_profile* definition, int rounds) noexcept
 	{
 		const auto index = reload_profile_index(definition);
@@ -406,6 +516,14 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 	{
 		const auto index = reload_profile_index(definition);
 		const auto* reason = index < reload_profiles.size() ? reasons[index].load() : nullptr;
+		if (index < reload_profiles.size() && reload_profiles[index]->round_source)
+		{
+			// Thread-local text: status lines are formatted on the caller's thread.
+			thread_local std::string text;
+			const auto* rounds_reason = round_reasons[index].load();
+			text = std::string(reason ? reason : "not prepared") + "; rounds: " + (rounds_reason ? rounds_reason : "not prepared");
+			return text.c_str();
+		}
 		return reason ? reason : "not prepared";
 	}
 
@@ -422,6 +540,8 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 			entry = nullptr;
 		for (auto& entry : ordinary)
 			entry = nullptr;
+		for (auto& entry : round_selected)
+			entry = nullptr;
 	}
 
 	void retire_after_drain() noexcept
@@ -429,6 +549,9 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 		clear();
 		for (auto& entry : retained)
 			entry.reset();
+		for (auto& entry : round_retained)
+			entry.reset();
+		round_attempt = {};
 		for (auto& reason : reasons)
 			reason = "waiting for loaded assets after retirement";
 		last_attempt = {};
@@ -445,6 +568,9 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 			return;
 		}
 		for (size_t index = 0; index < reload_profiles.size(); ++index)
+		{
 			refresh_profile(index);
+			refresh_rounds(index, *reload_profiles[index]);
+		}
 	}
 }
