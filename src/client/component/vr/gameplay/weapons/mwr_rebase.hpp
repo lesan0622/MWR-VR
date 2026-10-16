@@ -1,4 +1,5 @@
 #pragma once
+#include "../belt_profile.hpp"
 #include "../weapon_profile.hpp"
 #include "../physical_reload_profile.hpp"
 
@@ -42,6 +43,7 @@ namespace vr::gameplay::weapons::mwr_rebase
 		std::span<const joint_pose> magazine_fingers{};
 		bool (*native_family)(std::string_view) noexcept {};
 		const char* (*sound_key)(mechanics::effect) noexcept {}; // Optional override.
+		const belt_feed::profile* belt{}; // MWR feed cover/belt poses replacing the source recipe's.
 	};
 
 	// Builds once at static initialization; storage is never released because

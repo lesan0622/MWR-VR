@@ -155,6 +155,15 @@ namespace vr::gameplay::weapons::mwr_rebase
 			p.bullet_parents = {};
 			p.additional_bullet_bones = t.additional_bullet_bones; // The parented rounds are the extras.
 		}
+		if (t.belt && p.interaction.belt)
+		{
+			// Keep the source's reach/push tuning only where the MWR profile has none.
+			auto* belt = keep<belt_feed::profile>(*t.belt);
+			belt->cover_radius = p.interaction.belt->cover_radius;
+			belt->chain_radius = p.interaction.belt->chain_radius;
+			belt->lay_radius = p.interaction.belt->lay_radius;
+			p.interaction.belt = belt;
+		}
 		if (t.drop_belt_bridge && p.interaction.belt)
 		{
 			auto* belt = keep<belt_feed::profile>(*p.interaction.belt);

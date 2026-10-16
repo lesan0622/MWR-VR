@@ -8,6 +8,8 @@
 #include "ak47/profile.hpp"
 #include "mp5/profile.hpp"
 #include "m14ebr/profile.hpp"
+#include "m240/profile.hpp"
+#include "saw/belt.hpp"
 #include "pp2000/profile.hpp"
 #include "miniuzi/profile.hpp"
 #include "dragunov/profile.hpp"
@@ -199,6 +201,32 @@ namespace vr::gameplay::weapons::mwr_shared
 	// m14: MWR wpn_h1_sni_m21_vm (m14_scoped); slide j_charging_handle, bullets tag_bullet2.
 	inline const reload_profile m14_reload = mwr_rebase::rebase(m14ebr::physical, {.id = "mwr_m14", .receiver = "wpn_h1_sni_m21_vm", .magazine_bone = "tag_clip", .slide_bone = "j_charging_handle", .bullets_bone = "tag_bullet2", .magazine_model = "weapon_m14_clip", .magazine_bind = {{6.600234f, 0.000000f, 2.769873f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{7.382946f, 0.024526f, 3.939867f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = false, .magazine_from_receiver = false, .magazine_in_wrist = &m14_magazine_in_wrist, .magazine_fingers = m14_magazine_fingers, .native_family = m14_family});
 	inline const profile m14_hand = [] {auto p = m14ebr::assemblies[0]; p.wrists = {{{{10.405339f, 1.701065f, 1.149466f}, {0.2668419f, -0.1095752f, -0.1268212f, 0.9490548f}}, {{-2.662538f, -2.404540f, 1.713356f}, {0.1487403f, -0.7244728f, 0.6717864f, -0.0414554f}}}}; return p;}(); // Wrists: m14_scoped native idle.
+	// saw magazine grasp: record_002.jsonl h1_wpn_lmg_m249saw_reload t=0.260.
+	inline constexpr hands::anchor saw_magazine_in_wrist{{4.802458f, 2.059342f, 3.602480f}, {-0.8041780f, 0.3329728f, 0.2330646f, 0.4337140f}};
+	inline constexpr std::array<joint_pose, 18> saw_magazine_fingers{{
+		{"j_index_le_0", {0.6845233f, -0.1917601f, 0.2582044f, 0.6542067f}},
+		{"j_mid_le_0", {0.6558875f, -0.2018228f, 0.2430492f, 0.6855700f}},
+		{"j_pinkypalm_le", {0.6899367f, -0.2319423f, -0.1903757f, 0.6587466f}},
+		{"j_ringpalm_le", {0.7148086f, -0.1145671f, -0.1051063f, 0.6818179f}},
+		{"j_thumb_le_0", {0.1637320f, -0.3239616f, 0.3518248f, 0.8628210f}},
+		{"j_webbing_le", {-0.6724443f, -0.0361340f, -0.1680958f, 0.7199006f}},
+		{"j_index_le_1", {0.0236573f, -0.0131481f, 0.4097475f, 0.9117974f}},
+		{"j_mid_le_1", {-0.0149704f, -0.0153258f, 0.3546555f, 0.9347516f}},
+		{"j_pinky_le_0", {-0.1017132f, 0.2268731f, 0.2695875f, 0.9303255f}},
+		{"j_ring_le_0", {-0.0594825f, 0.1478540f, 0.2685531f, 0.9499896f}},
+		{"j_thumb_le_1", {0.1125536f, 0.0742109f, -0.1382488f, 0.9811787f}},
+		{"j_index_le_2", {-0.0049799f, 0.0360118f, 0.1449576f, 0.9887698f}},
+		{"j_mid_le_2", {-0.0289511f, -0.0050966f, 0.2894019f, 0.9567562f}},
+		{"j_pinky_le_1", {0.0160403f, 0.0229257f, 0.1583365f, 0.9869887f}},
+		{"j_ring_le_1", {0.0073731f, 0.0118232f, 0.2450022f, 0.9694224f}},
+		{"j_thumb_le_2", {-0.0161431f, -0.0702067f, -0.2234060f, 0.9720598f}},
+		{"j_pinky_le_2", {-0.0336925f, -0.0001707f, 0.1293527f, 0.9910261f}},
+		{"j_ring_le_2", {-0.0007873f, -0.0030457f, 0.3108707f, 0.9504470f}}
+	}};
+	inline bool saw_family(std::string_view name) noexcept { return native_weapon_family(name, "saw"); }
+	// saw: MWR viewmodel_m249_sp (saw); slide j_handle, bullets j_bullet1.
+	inline const reload_profile saw_reload = mwr_rebase::rebase(m240::physical, {.id = "mwr_saw", .receiver = "viewmodel_m249_sp", .magazine_bone = "tag_clip", .slide_bone = "j_handle", .bullets_bone = "j_bullet1", .magazine_model = "weapon_saw_clip", .magazine_bind = {{4.845651f, 0.637032f, 0.694129f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{9.281382f, 0.000002f, 4.368941f}, {0.0000000f, 0.0000000f, 0.7071068f, 0.7071068f}}, .slide_same_part = true, .keep_mechanism = false, .magazine_from_receiver = false, .magazine_in_wrist = &saw_magazine_in_wrist, .magazine_fingers = saw_magazine_fingers, .native_family = saw_family, .sound_key = mwr_saw::sound_key, .belt = &mwr_saw::belt});
+	inline const profile saw_hand = [] {auto p = m240::base; p.wrists = {{{{9.538197f, 1.666558f, 0.069157f}, {0.1204551f, -0.0628470f, -0.1369783f, 0.9812124f}}, {{-3.485104f, -1.359253f, -0.310450f}, {-0.0486936f, -0.5978429f, 0.7985197f, -0.0507860f}}}}; return p;}(); // Wrists: saw native idle.
 	// skorpion magazine grasp: record_001.jsonl h1_wpn_smg_skorpion_reload t=0.555.
 	inline constexpr hands::anchor skorpion_magazine_in_wrist{{6.613346f, 3.135035f, 0.686989f}, {-0.4680494f, 0.6510136f, -0.0963901f, 0.5897627f}};
 	inline constexpr std::array<joint_pose, 18> skorpion_magazine_fingers{{
@@ -250,7 +278,7 @@ namespace vr::gameplay::weapons::mwr_shared
 	// stinger: MWR viewmodel_stinger (stinger); original mechanics kept.
 	// p90: MWR viewmodel_p90 (p90); slide j_bolt, bullets tag_bullet_single.
 	inline const reload_profile p90_reload = mwr_rebase::rebase(p90::physical, {.id = "mwr_p90", .receiver = "viewmodel_p90", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullet_single", .magazine_model = nullptr, .magazine_bind = {{5.896818f, 0.000000f, 3.248346f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{5.118773f, 0.984914f, 2.598390f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = true});
-	inline const std::array<profile, 22> profiles{{
+	inline const std::array<profile, 23> profiles{{
 		mwr_rebase::adopt(m16::bare, "mwr_m16", "viewmodel_m16", &m16_reload, false),
 		mwr_rebase::adopt(m4::foregrip, "mwr_m4", "viewmodel_m4a1_sp", &m4_reload, false),
 		mwr_rebase::adopt(ak47::assemblies[0], "mwr_ak47", "viewmodel_ak47", &ak47_reload, false),
@@ -258,6 +286,7 @@ namespace vr::gameplay::weapons::mwr_shared
 		mwr_rebase::adopt(mp5_hand, "mwr_mp5", "viewmodel_mp5_sp", &mp5_reload, false),
 		mwr_rebase::adopt(g3_hand, "mwr_g3", "viewmodel_g3", &g3_reload, false),
 		mwr_rebase::adopt(m14_hand, "mwr_m14", "wpn_h1_sni_m21_vm", &m14_reload, false),
+		mwr_rebase::adopt(saw_hand, "mwr_saw", "viewmodel_m249_sp", &saw_reload, false),
 		mwr_rebase::adopt(skorpion_hand, "mwr_skorpion", "viewmodel_skorpion", &skorpion_reload, false),
 		mwr_rebase::adopt(miniuzi::base, "mwr_uzi", "viewmodel_miniuzi", &uzi_reload, true),
 		mwr_rebase::adopt(miniuzi::base, "mwr_uzi", "viewmodel_mini_uzi_sp", &uzi_reload, true),
