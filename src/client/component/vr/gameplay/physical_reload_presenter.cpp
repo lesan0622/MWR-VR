@@ -100,6 +100,9 @@ namespace vr::gameplay::weapons::physical_reload
 			if (!alive.load() || !scene_models::native_entry::lighting(entry,lighting) || lighting<base || lighting>=base+sizeof(lighting_handles) || (lighting-base)%sizeof(unsigned short)) return result::unchanged;
 			const auto index=(lighting-base)/sizeof(unsigned short);
 			if(index>=15 && index<23)return result::unchanged;
+			// MWR port: without the render-time skeleton record, keep the solve-time
+			// placement instead of omitting the held/inserted part.
+			if(!weapon_render_pose::available())return result::unchanged;
 			const bool chamber=index>=68;
 			const bool inserted=index>=53 && !chamber;
 			const bool partitioning=index>=23 && index<53;const auto piece=partitioning?(index-23)%2:0;

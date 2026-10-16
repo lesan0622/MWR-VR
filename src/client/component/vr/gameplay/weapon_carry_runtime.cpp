@@ -203,6 +203,9 @@ namespace vr::gameplay::weapons::carry
 			std::uintptr_t model{};
 			std::array<float, 12> camera{};
 			weapon_render_pose::snapshot skinned;
+			// MWR port: without the render-time record keep the submitted placement.
+			if (!weapon_render_pose::available())
+				return result::unchanged;
 			if (!scene_models::native_entry::model(entry, model) ||
 			    !read(preparing.record, engine_stereo_view::h2_view_origin_offset, camera) ||
 			    !weapon_render_pose::for_record(

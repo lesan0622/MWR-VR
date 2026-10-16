@@ -99,10 +99,15 @@ namespace vr::gameplay::weapons::mwr_rebase
 		p.magazine_fills = {};
 		p.bolt_partition = nullptr;
 		const auto receiver = t.receiver.data(); // Targets name literals: NUL-terminated.
-		p.skinned_receiver = source.skinned_receiver ? receiver : nullptr;
-		p.rigid_magazine_source = t.magazine_from_receiver || source.rigid_magazine_source ? receiver : nullptr;
+		// The triangle-mask contract describes the MW2 mesh; only identical receivers keep it.
+		p.skinned_receiver = t.keep_mechanism && source.skinned_receiver ? receiver : nullptr;
+		// Prefer the MWR world clip model: MWR receivers weight little of the
+		// magazine mesh to tag_clip, so a receiver cut can render nearly empty.
+		p.rigid_magazine_source = t.magazine_from_receiver ? receiver : nullptr;
 		if (t.magazine_from_receiver)
 			p.magazine_model = receiver;
+		// MW2 counted-fill recipes do not match MWR meshes (topology hash differs
+		// even for the shared M9 receiver name); rounds come from bone subsets.
 		if (!t.keep_mechanism)
 		{
 			p.magazine_body_bones = {};

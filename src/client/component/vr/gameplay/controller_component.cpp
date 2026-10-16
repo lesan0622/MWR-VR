@@ -10,6 +10,8 @@
 #include "controller_locomotion.hpp"
 #include "controller_stance.hpp"
 #include "mwr_weapon_pose.hpp"
+#include "independent_fire_runtime.hpp"
+#include "native_scripted_control.hpp"
 #include "game/dvars.hpp"
 #include "game/game.hpp"
 #include "loader/component_loader.hpp"
@@ -156,6 +158,9 @@ namespace vr::controllers
 			const auto input = controller_input::latest_interaction();
 			const bool gameplay = gameplay_allowed(input);
 			const auto now = controller_input::clock::now();
+			// Open the carried-gun fire gate for this input frame (original
+			// controller_component): independent fire owns trigger cadence.
+			vr::gameplay::weapons::independent_fire::command(gameplay && vr::gameplay::scripted_control::predicted_allowed());
 			const auto button_state = buttons.consume(input, gameplay, now);
 			auto button_mask = button_state.held;
 			const auto* posture_ps = game::CG_GetPredictedPlayerState(0);

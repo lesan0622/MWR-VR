@@ -233,6 +233,8 @@ namespace vr::gameplay::weapon_render_pose
 		    preparations.load(),
 		    preparation_misses.load());
 	}
+	namespace { std::atomic_bool installed{}; }
+	bool available() noexcept { return installed.load() && alive.load(); }
 	bool for_record(std::uintptr_t record,
 	                const std::array<float, 12>& camera,
 	                snapshot& output,
@@ -268,6 +270,7 @@ namespace vr::gameplay::weapon_render_pose
 			for (unsigned i = 0; i < sites.size(); ++i)
 				utils::hook::call(sites[i], stubs[i]);
 			scene_registration = eye_composition::register_scene_consumer(register_render_scene);
+			installed = true;
 			console::info("[VR HUD] native skin/submission pose binding installed\n");
 		}
 		void pre_destroy() override

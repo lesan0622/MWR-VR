@@ -870,17 +870,18 @@ namespace vr
 				{
 					(void)diagnostics::write_status_snapshot(vr_enable && vr_enable->current.enabled);
 				}, scheduler::pipeline::async, 10s);
-				// Test aid: run console commands dropped into overlord_cmd.txt.
-				scheduler::loop([]
-				{
-					std::ifstream file("overlord_cmd.txt");
-					if (!file) return;
-					const std::string commands{std::istreambuf_iterator<char>(file), {}};
-					file.close();
-					std::remove("overlord_cmd.txt");
-					if (!commands.empty()) command::execute(commands, false);
-				}, scheduler::pipeline::main, 1s);
 			}
+			// MWR port dev aid (always on): run console commands dropped into
+			// overlord_cmd.txt in the game folder, so a headset session can be driven remotely.
+			scheduler::loop([]
+			{
+				std::ifstream file("overlord_cmd.txt");
+				if (!file) return;
+				const std::string commands{std::istreambuf_iterator<char>(file), {}};
+				file.close();
+				std::remove("overlord_cmd.txt");
+				if (!commands.empty()) command::execute(commands, false);
+			}, scheduler::pipeline::main, 1s);
 			if (char autoexec[256]{}; GetEnvironmentVariableA("OVERLORD_MWR_AUTOEXEC", autoexec, sizeof(autoexec)) != 0)
 			{
 				const std::string commands{autoexec};

@@ -21,7 +21,7 @@ namespace vr::gameplay::weapons::native_weapon_sound
 	namespace
 	{
 		bool verified{};
-		constexpr std::uintptr_t play_address = 0x140380430;
+		constexpr std::uintptr_t play_address = 0x14015C4A0; // MWR (H2 0x140380430)
 		struct sound_map { std::array<unsigned, 36> keys{}, values{}; short entity{}; };
 		template<class Profile> bool play_observed(std::uint32_t weapon,const Profile& profile,
 			const native_ammunition::reload_snapshot& observed,sound_reference sound,const std::array<float,3>& origin)
@@ -40,15 +40,15 @@ namespace vr::gameplay::weapons::native_weapon_sound
 		{
 			__try
 			{
-				const auto definition = reinterpret_cast<const std::byte* const*>(0x14CE01580)[weapon];
+				const auto definition = reinterpret_cast<const std::byte* const*>(0x14D750C40)[weapon]; // MWR weapon table
 				if (!definition) return false;
 				const unsigned *keys{}, *values{};
-				std::memcpy(&keys, definition + 0xa0, sizeof(keys));
-				std::memcpy(&values, definition + 0xa8, sizeof(values));
+				std::memcpy(&keys, definition + 0x90, sizeof(keys)); // MWR notetrackSoundMapKeys (H2 0xa0)
+				std::memcpy(&values, definition + 0x98, sizeof(values)); // MWR notetrackSoundMapValues (H2 0xa8)
 				if (!keys || !values) return false;
 				std::memcpy(out.keys.data(), keys, sizeof(out.keys));
 				std::memcpy(out.values.data(), values, sizeof(out.values));
-				out.entity = *reinterpret_cast<const signed char*>(0x141BB3C30);
+				out.entity = *reinterpret_cast<const signed char*>(0x1420E67A0);
 				return out.entity >= 0;
 			}
 			__except (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ||
@@ -128,18 +128,14 @@ namespace vr::gameplay::weapons::native_weapon_sound
 	}
 	bool initialize()
 	{
-		// Proven chain: weapon notetrack 3C22D0 -> key/value script IDs ->
-		// 380430(entity, origin, alias) -> 3CA0D0 alias selection -> positional SND.
-		// Do not use the reconstructed WeaponDef struct's unverified map offsets.
-		constexpr std::uint8_t entry[]{0x48,0x89,0x5c,0x24,0x08,0x48,0x89,0x74,0x24,0x10,0x57,0x48,0x83,0xec,0x40,
-			0x0f,0xbf,0xd9,0x48,0x8b,0xf2,0x8b,0xd3,0x49,0x8b,0xc8,0xe8,0x81,0x9c,0x04,0x00};
-		constexpr std::uint8_t table[]{0x4c,0x8d,0x05,0x76,0xf2,0xa3,0x0c};
-		constexpr std::uint8_t keys[]{0x48,0x8b,0x88,0xa0,0x00,0x00,0x00};
-		constexpr std::uint8_t values[]{0x48,0x8b,0x80,0xa8,0x00,0x00,0x00};
-		constexpr std::uint8_t positional[]{0xe8,0x03,0x6c,0x44,0x00};
-		constexpr std::uint8_t client_call[]{0xe8,0x35,0xe0,0xfb,0xff};
-		verified = verify(play_address, entry) && verify(0x1403C2303, table) && verify(0x1403C235A, keys) &&
-			verify(0x1403C2366, values) && verify(0x140380488, positional) && verify(0x1403C23F6, client_call);
+		// MWR chain: notetrack handler 0x14019BCA0 reads the WeaponDef map at
+		// +0x90/+0x98 and plays through 0x14015C4A0(entity, origin, alias).
+		constexpr std::uint8_t entry[]{0x48,0x89,0x5c,0x24,0x08,0x48,0x89,0x74,0x24,0x10,0x57,0x48,0x83,0xec,0x40,0x0f,0xbf,0xd9,0x48,0x8b,0xf2,0x8b,0xd3,0x49,0x8b,0xc8};
+		constexpr std::uint8_t keys[]{0x48,0x8b,0x88,0x90,0x00,0x00,0x00};
+		constexpr std::uint8_t values[]{0x48,0x8b,0x80,0x98,0x00,0x00,0x00};
+		constexpr std::uint8_t positional[]{0xe8,0xd3,0xbd,0x47,0x00};
+		verified = verify(play_address, entry) && verify(0x14019BD33, keys) && verify(0x14019BD3F, values) &&
+			verify(0x14015C4F8, positional);
 		if(verified && !native_weapon_sound_slice::initialize())
 			console::warn("[VR audio] Native slice contract rejected; segmented interaction sounds are disabled.\n");
 		return verified;
@@ -195,9 +191,9 @@ namespace vr::gameplay::weapons::native_weapon_sound
 		// asset owns the alias; copy its bounded name only for this main callback.
 		const auto* def=reinterpret_cast<const std::byte*>(game::weapon_defs[weapon]);
 		const void* list{};const char* name{};std::array<char,128> alias{};
-		if (!def || !utils::native_memory::read_bytes(&list,def+424,sizeof(list)) || !list ||
+		if (!def || !utils::native_memory::read_bytes(&list,def+offsetof(game::WeaponDef,fireSoundPlayer),sizeof(list)) || !list ||
 			!utils::native_memory::read_bytes(&name,list,sizeof(name)) || !copy_name(name,alias.data(),alias.size())) return false;
-		const short entity=*reinterpret_cast<const signed char*>(0x141BB3C30);if (entity<0) return false;
+		const short entity=*reinterpret_cast<const signed char*>(0x1420E67A0);if (entity<0) return false;
 		return utils::hook::invoke<int>(play_address,entity,origin.data(),alias.data())!=-1;
 	}
 	}
@@ -283,7 +279,7 @@ namespace vr::gameplay::weapons::native_weapon_sound
 	{
 		if (!verified || !scheduler::is_executing(scheduler::pipeline::main) || !game::CL_IsCgameInitialized()) return false;
 		for (float value:origin) if (!std::isfinite(value) || std::abs(value)>1e7f) return false;
-		const short entity=*reinterpret_cast<const signed char*>(0x141BB3C30);if (entity<0) return false;
+		const short entity=*reinterpret_cast<const signed char*>(0x1420E67A0);if (entity<0) return false;
 		// Loaded alias witness: melee_hit selects h1_weapons/melee/melee_hit01/02.
 		// H2 firearm meleeHitSound aliases instead select melee_swing01/03 and
 		// cannot supply the NPC-style blunt impact requested here. Resolve the
@@ -294,7 +290,7 @@ namespace vr::gameplay::weapons::native_weapon_sound
 	{
 		if(!verified || !scheduler::is_executing(scheduler::pipeline::main) || !game::CL_IsCgameInitialized())return false;
 		for(float value:origin)if(!std::isfinite(value) || std::abs(value)>1e7f)return false;
-		const short entity=*reinterpret_cast<const signed char*>(0x141BB3C30);if(entity<0)return false;
+		const short entity=*reinterpret_cast<const signed char*>(0x1420E67A0);if(entity<0)return false;
 		// Native alias selection owns all five supplied variants. Never retain an
 		// asset pointer across zone unloads or borrow the chest knife's sound map.
 		const auto* alias=game::DB_FindXAssetHeader(game::ASSET_TYPE_SOUND,"vr_fist_hit",0).sound;
@@ -310,7 +306,7 @@ namespace vr::gameplay::weapons::native_weapon_sound
 	{
 		if(!verified || !scheduler::is_executing(scheduler::pipeline::main) || !game::CL_IsCgameInitialized())return false;
 		for(float x:origin)if(!std::isfinite(x) || std::abs(x)>1e7f)return false;
-		const short entity=*reinterpret_cast<const signed char*>(0x141BB3C30);if(entity<0)return false;
+		const short entity=*reinterpret_cast<const signed char*>(0x1420E67A0);if(entity<0)return false;
 		const auto asset=game::DB_FindXAssetHeader(game::ASSET_TYPE_SOUND,quick_reload::start_sound_alias,0);
 		quick_alias_files copied;
 		if(!copy_quick_alias_files(asset.sound,copied) || copied.count!=quick_reload::start_sound_files.size() ||

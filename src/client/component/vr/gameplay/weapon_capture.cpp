@@ -13,6 +13,7 @@
 
 #include <utils/io.hpp>
 #include <utils/native_memory.hpp>
+#include <utils/hook.hpp>
 
 #include <format>
 #include <mutex>
@@ -196,11 +197,62 @@ namespace vr::gameplay::weapon_capture
 		++record_frames;
 	}
 
+	// MWR port diagnostic: which PM_Weapon fire gate (0x1404A73B0) rejects a shot.
+	namespace fire_probe
+	{
+		utils::hook::detour gate, blocked_a, blocked_b, has_ammo, attack, fire, can_fire, start_fire, fire_ammo;
+		std::atomic<std::uint64_t> fires, can_fire_zero, can_fire_nonzero, starts, ammo_calls;
+		std::atomic<int> last_can_fire;
+		void fire_stub(std::int64_t* pm, int a2, std::int64_t a3, int a4) { ++fires; fire.invoke<void>(pm, a2, a3, a4); }
+		int can_fire_stub(std::int64_t ps, std::int64_t* pm, std::int64_t a3, int a4)
+		{ const int r = can_fire.invoke<int>(ps, pm, a3, a4); last_can_fire = r; if (r) ++can_fire_nonzero; else ++can_fire_zero; return r; }
+		void start_stub(std::int64_t ps, int a2, std::int64_t a3, int a4) { ++starts; start_fire.invoke<void>(ps, a2, a3, a4); }
+		int ammo_stub2(std::int64_t ps, int a2, int a3, int a4) { ++ammo_calls; return fire_ammo.invoke<int>(ps, a2, a3, a4); }
+		std::atomic<std::uint64_t> gates, buttons_attack, a_nonzero, b_nonzero, ammo_zero, attack_zero, attack_nonzero;
+		std::atomic<int> last_a, last_b, last_ammo, last_attack;
+		void gate_stub(std::int64_t* pm, std::int64_t a2, int a3, int a4)
+		{
+			++gates;
+			std::uint32_t buttons{};
+			std::memcpy(&buttons, reinterpret_cast<const std::byte*>(pm) + 0xc, 4);
+			if (buttons & 1) ++buttons_attack;
+			gate.invoke<void>(pm, a2, a3, a4);
+		}
+		int a_stub(std::int64_t* pm, int a2, int a3) { const int r = blocked_a.invoke<int>(pm, a2, a3); last_a = r; if (r) ++a_nonzero; return r; }
+		int b_stub(std::int64_t* pm, std::int64_t a2, int a3, int a4) { const int r = blocked_b.invoke<int>(pm, a2, a3, a4); last_b = r; if (r) ++b_nonzero; return r; }
+		int ammo_stub(std::int64_t* pm, int a2) { const int r = has_ammo.invoke<int>(pm, a2); last_ammo = r; if (!r) ++ammo_zero; return r; }
+		int attack_stub(std::int64_t* pm, int a2, int a3, int a4, int a5)
+		{ const int r = attack.invoke<int>(pm, a2, a3, a4, a5); last_attack = r; if (r) ++attack_nonzero; else ++attack_zero; return r; }
+		void install()
+		{
+			gate.create(0x1404A73B0, gate_stub);
+			blocked_a.create(0x1404A9260, a_stub);
+			blocked_b.create(0x1404A7860, b_stub);
+			has_ammo.create(0x14048F600, ammo_stub);
+			attack.create(0x1404ACDC0, attack_stub);
+			can_fire.create(0x1404A7F20, can_fire_stub);
+			start_fire.create(0x1404AD010, start_stub);
+			fire_ammo.create(0x1404A3600, ammo_stub2);
+		}
+	}
+
 	class component final : public component_interface
 	{
 	public:
 		void post_unpack() override
 		{
+			command::add("vr_capture_fire_probe", []
+			{
+				static bool installed{};
+				if (!installed) { fire_probe::install(); installed = true; console::info("[VR fire probe] installed\n"); return; }
+				using namespace fire_probe;
+				console::info("[VR fire probe] gates=%llu attack_buttons=%llu a_nonzero=%llu(last %d) b_nonzero=%llu(last %d) "
+					"ammo_zero=%llu(last %d) attack_check zero/nonzero=%llu/%llu(last %d)\n",
+					gates.load(), buttons_attack.load(), a_nonzero.load(), last_a.load(), b_nonzero.load(), last_b.load(),
+					ammo_zero.load(), last_ammo.load(), attack_zero.load(), attack_nonzero.load(), last_attack.load());
+				console::info("[VR fire probe] fire=%llu can_fire zero/nonzero=%llu/%llu(last %d) start=%llu ammo=%llu\n",
+					fires.load(), can_fire_zero.load(), can_fire_nonzero.load(), last_can_fire.load(), starts.load(), ammo_calls.load());
+			});
 			command::add("vr_capture_weapon", []
 			{
 				const std::lock_guard lock(mutex);

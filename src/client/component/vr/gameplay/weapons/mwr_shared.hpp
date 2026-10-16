@@ -27,6 +27,10 @@ namespace vr::gameplay::weapons::mwr_shared
 	inline const reload_profile m4_reload = mwr_rebase::rebase(m4::physical, {.id = "mwr_m4", .receiver = "viewmodel_m4a1_sp", .magazine_bone = "tag_clip", .slide_bone = "j_clip_release", .bullets_bone = "tag_bullet", .magazine_model = "weapon_m4_clip", .magazine_bind = {{5.075633f, -0.008398f, 2.768400f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{-0.642612f, 0.000000f, 4.590708f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = false, .magazine_from_receiver = false});
 	// ak47: MWR viewmodel_ak47 (ak47); slide j_bolt2, bullets tag_bullet.
 	inline const reload_profile ak47_reload = mwr_rebase::rebase(ak47::physical, {.id = "mwr_ak47", .receiver = "viewmodel_ak47", .magazine_bone = "tag_clip", .slide_bone = "j_bolt2", .bullets_bone = "tag_bullet", .magazine_model = "wpn_h1_ak47_clip", .magazine_bind = {{6.324782f, 0.015012f, 1.896138f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{8.942359f, -0.281668f, 3.496124f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = false, .magazine_from_receiver = false});
+	inline bool ak74u_family(std::string_view name) noexcept { return native_weapon_family(name, "ak74u"); }
+	// ak74u: MWR viewmodel_ak74u_sp (ak74u); slide j_bolt, bullets tag_bullet.
+	inline const reload_profile ak74u_reload = mwr_rebase::rebase(ak47::physical, {.id = "mwr_ak74u", .receiver = "viewmodel_ak74u_sp", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullet", .magazine_model = "wpn_h1_ak74u_clip", .magazine_bind = {{6.031847f, 0.015012f, 2.456596f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{7.976082f, 0.000000f, 4.065385f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = false, .magazine_from_receiver = false, .native_family = ak74u_family});
+	inline const profile ak74u_hand = [] {auto p = ak47::assemblies[0]; p.wrists = {{{{9.425227f, 1.876608f, 1.128829f}, {0.3185248f, -0.1143048f, -0.1004965f, 0.9356158f}}, {{-3.034917f, -1.794933f, -0.870813f}, {-0.0571761f, -0.6260409f, 0.7651170f, -0.1392833f}}}}; return p;}(); // Wrists: ak74u native idle.
 	inline bool uzi_family(std::string_view name) noexcept { return native_weapon_family(name, "uzi"); }
 	// uzi: MWR viewmodel_miniuzi, viewmodel_mini_uzi_sp (uzi); slide j_bolt, bullets tag_bullet.
 	inline const reload_profile uzi_reload = mwr_rebase::rebase(miniuzi::physical, {.id = "mwr_uzi", .receiver = "viewmodel_miniuzi", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullet", .magazine_model = nullptr, .magazine_bind = {{0.448726f, 0.015012f, 2.847369f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{2.417881f, 0.000000f, 4.340671f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = true, .native_family = uzi_family});
@@ -51,10 +55,11 @@ namespace vr::gameplay::weapons::mwr_shared
 	// stinger: MWR viewmodel_stinger (stinger); original mechanics kept.
 	// p90: MWR viewmodel_p90 (p90); slide j_bolt, bullets tag_bullet_single.
 	inline const reload_profile p90_reload = mwr_rebase::rebase(p90::physical, {.id = "mwr_p90", .receiver = "viewmodel_p90", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullet_single", .magazine_model = nullptr, .magazine_bind = {{5.896818f, 0.000000f, 3.248346f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{5.118773f, 0.984914f, 2.598390f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = true});
-	inline const std::array<profile, 16> profiles{{
+	inline const std::array<profile, 17> profiles{{
 		mwr_rebase::adopt(m16::bare, "mwr_m16", "viewmodel_m16", &m16_reload, false),
 		mwr_rebase::adopt(m4::foregrip, "mwr_m4", "viewmodel_m4a1_sp", &m4_reload, false),
 		mwr_rebase::adopt(ak47::assemblies[0], "mwr_ak47", "viewmodel_ak47", &ak47_reload, false),
+		mwr_rebase::adopt(ak74u_hand, "mwr_ak74u", "viewmodel_ak74u_sp", &ak74u_reload, false),
 		mwr_rebase::adopt(miniuzi::base, "mwr_uzi", "viewmodel_miniuzi", &uzi_reload, true),
 		mwr_rebase::adopt(miniuzi::base, "mwr_uzi", "viewmodel_mini_uzi_sp", &uzi_reload, true),
 		mwr_rebase::adopt(dragunov::base, "mwr_dragunov", "viewmodel_dragunov_sp", &dragunov_reload, true),

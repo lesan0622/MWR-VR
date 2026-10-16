@@ -400,9 +400,11 @@ namespace vr::gameplay::reload_items
 			else if(frozen.value.state==phase::held)
 			{
 				std::array<float,12> camera{};vec origin{};hands::attachments::solved pose;const auto h=unsigned(frozen.value.holder);
-				if(h>1 || !read(preparing.record,engine_stereo_view::h2_view_origin_offset,camera) ||
-					!hands::attachments::for_record(preparing.record,camera,pose,int(h),frozen.value.pose_revision) ||
-					pose.reference!=frozen.value.reference || pose.reload_items[h]!=frozen.value.pose_revision ||
+				if(h>1)return result::omit;
+				// MWR port: without a render-time hand record keep the submitted solve-time pose.
+				if(!read(preparing.record,engine_stereo_view::h2_view_origin_offset,camera) ||
+					!hands::attachments::for_record(preparing.record,camera,pose,int(h),frozen.value.pose_revision))return result::unchanged;
+				if(pose.reference!=frozen.value.reference || pose.reload_items[h]!=frozen.value.pose_revision ||
 					!read(preparing.record,engine_stereo_view::h2_current_model_placement_origin_offset,origin))return result::omit;
 				for(float x:origin)if(!std::isfinite(x) || std::abs(x)>1e7f)return result::omit;
 				root=compose({add(pose.wrists[h].position,origin),pose.wrists[h].rotation},frozen.source.grasp.in_wrist);

@@ -15,8 +15,10 @@ namespace vr::gameplay::weapons::native_weapon_fx
 {
 	namespace
 	{
-		constexpr std::uintptr_t flash_query=0x1406A9440,brass_query=0x1406A95F0,last_brass_query=0x1406A9490;
-		constexpr std::uintptr_t play_oriented=0x140453F50;
+		// MWR: view flash/brass/last-brass queries and FX_PlayOrientedEffect (H2 0x1406A9440/95F0/9490, 0x140453F50).
+		constexpr std::uintptr_t flash_query=0x1404BA490,brass_query=0x1404BA640,last_brass_query=0x1404BA4E0;
+		constexpr std::uintptr_t play_oriented=0x1402311E0;
+		bool checkpoint_ready{};
 		std::atomic_bool ready{};
 		struct counters {std::uint64_t shots{},flashes{},shells{},no_flash{},no_brass{},extractions{};std::string flash,brass;};
 		std::array<counters,512> counts{};
@@ -30,6 +32,8 @@ namespace vr::gameplay::weapons::native_weapon_fx
 			if(!source)return nullptr;
 			const std::lock_guard lock(shell_mutex);
 			auto* effect=shell_effects.get(source);
+			// MWR port: without the FX checkpoint contract, play the native asset.
+			if(!checkpoint_ready)return source;
 			if(effect && published_shell_definitions!=shell_effects.size())
 			{
 				const auto definitions=shell_effects.checkpoint_definitions();
@@ -69,19 +73,20 @@ namespace vr::gameplay::weapons::native_weapon_fx
 	{
 		if(ready)return true;
 		static_assert(offsetof(game::WeaponDef, viewFlashEffect) == 0xe8);
+		static_assert(offsetof(game::WeaponDef, worldShellEjectEffect) == 0x3b0);
+		static_assert(offsetof(game::WeaponDef, worldLastShotEjectEffect) == 0x3c0);
 		static_assert(offsetof(game::WeaponDef, viewShellEjectEffect) == 0x3a8);
 		static_assert(offsetof(game::WeaponDef, viewLastShotEjectEffect) == 0x3b8);
 		const std::array<std::uint8_t,9> query{0x89,0x4c,0x24,0x08,0x53,0x48,0x83,0xec,0x20};
 		ready=verify(flash_query,query) && verify(brass_query,query) && verify(last_brass_query,query) &&
-			verify(flash_query+0x38,std::array<std::uint8_t,6>{0x41,0xb8,0xf8,0,0,0}) &&
-			verify(brass_query+0x38,std::array<std::uint8_t,6>{0x41,0xb8,0x38,4,0,0}) &&
-			verify(last_brass_query+0x38,std::array<std::uint8_t,6>{0x41,0xb8,0x48,4,0,0}) &&
-			verify(play_oriented,std::array<std::uint8_t,12>{0x48,0x89,0x5c,0x24,0x08,0x48,0x89,0x74,0x24,0x10,0x57,0x48}) &&
-			// Native model FX maps element flag 0x800 to scene depth-hack bit 1.
-			verify(0x14042EC71,std::array<std::uint8_t,19>{0x41,0x8b,0x01,0x8b,0xd1,0x83,0xca,0x01,
-				0x25,0x00,0x08,0x00,0x00,0x41,0x8b,0xc0,0x0f,0x44,0xd1}) &&
-			native_fx::checkpoint::initialize();
-		if(ready)fastfiles::on_pre_unload([] {
+			verify(flash_query+0x38,std::array<std::uint8_t,6>{0x41,0xb8,0xe8,0,0,0}) &&
+			verify(brass_query+0x38,std::array<std::uint8_t,6>{0x41,0xb8,0xa8,3,0,0}) &&
+			verify(last_brass_query+0x38,std::array<std::uint8_t,6>{0x41,0xb8,0xb8,3,0,0}) &&
+			verify(play_oriented,std::array<std::uint8_t,12>{0x48,0x89,0x5c,0x24,0x08,0x48,0x89,0x74,0x24,0x10,0x57,0x48});
+		// The world-space shell copies need the MW2 FX checkpoint contract (not
+		// rebound yet); gunshot casings use the native world shell effect instead.
+		checkpoint_ready=ready && native_fx::checkpoint::initialize();
+		if(checkpoint_ready)fastfiles::on_pre_unload([] {
 			// Same drained native zone boundary as native_followed_fx; queued
 			// particles must finish before their private descriptors are retired.
 			const std::lock_guard lock(shell_mutex);
@@ -103,12 +108,21 @@ namespace vr::gameplay::weapons::native_weapon_fx
 		const auto* def=game::weapon_defs[token];
 		if (event.has_brass && valid(event.brass) && def && (extraction ? def->boltAction : !def->boltAction))
 		{
-			if (event.last_shot) brass=utils::hook::invoke<game::FxEffectDef*>(last_brass_query,token,false);
-			if (!brass) brass=utils::hook::invoke<game::FxEffectDef*>(brass_query,token,false);
+			if (!checkpoint_ready)
+			{
+				// MWR: the weapon's own world (third-person) casing has world depth and physics.
+				if (event.last_shot) brass=def->worldLastShotEjectEffect;
+				if (!brass) brass=def->worldShellEjectEffect;
+			}
+			else
+			{
+				if (event.last_shot) brass=utils::hook::invoke<game::FxEffectDef*>(last_brass_query,token,false);
+				if (!brass) brass=utils::hook::invoke<game::FxEffectDef*>(brass_query,token,false);
+				brass=world_shell(brass);
+			}
 		}
 		const int time=game::CG_GetGameTime(0);
 		if (flash) emit(flash,time,event.muzzle);
-		brass=world_shell(brass);
 		if (brass) emit(brass,time,event.brass);
 		// Counters mean calls admitted to the native bounded queue, not a claim
 		// that every particle survived native culling/resource limits.

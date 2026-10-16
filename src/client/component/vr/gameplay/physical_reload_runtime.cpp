@@ -639,6 +639,7 @@ namespace vr::gameplay::weapons::physical_reload
 		return observed.valid && (find(observed.ammo.id()) ||
 			(active() && native_reload_profile(observed.native_name.data(),observed.base_capacity)));
 	}
+	std::atomic<const char*> fire_reason{"none"};
 	bool allow_fire(const void* ps, int command_time, int side) noexcept
 	{
 		const int role = native_ammunition::local_role(ps);
@@ -647,14 +648,23 @@ namespace vr::gameplay::weapons::physical_reload
 		const auto& observed = native.ammo;
 		const std::lock_guard lock(mutex);
 		auto* value = observed.valid ? find(observed.id()) : nullptr;
-		if (!value) return !active() || !native.valid || !native_reload_profile(native.native_name.data(),native.base_capacity);
+		if (!value)
+		{
+			const bool open = !active() || !native.valid || !native_reload_profile(native.native_name.data(),native.base_capacity);
+			if (role == 0) fire_reason = open ? "no physical instance; unprofiled" : "blocked: profiled weapon has no physical instance";
+			return open;
+		}
 		const auto& state = value->view.ammo;
 		// PM_Weapon schedules native automatic rechambering after a bolt-action
 		// shot. Manual feeds fire exclusively through allow_owned_shot/settle.
-		if (value->view.definition->ammunition.feed==mechanics::feed_type::manual_bolt) return false;
-		if (role == 0 && value->view.fault) return false;
-		const bool allowed = value->view.owner.can_fire() && !value->view.fault && observed.loaded == mechanics::native_ammo(state).loaded &&
-			mechanics::ready(value->view.definition->ammunition, state, value->view.belt_grip.part!=belt_feed::lease::none || value->view.slide_held || value->view.magazine_grabbed);
+		if (value->view.definition->ammunition.feed==mechanics::feed_type::manual_bolt) { if (role == 0) fire_reason = "blocked: manual feed"; return false; }
+		if (role == 0 && value->view.fault) { fire_reason = "blocked: fault"; return false; }
+		const bool owner_ok = value->view.owner.can_fire();
+		const bool count_ok = observed.loaded == mechanics::native_ammo(state).loaded;
+		const bool ready_ok = mechanics::ready(value->view.definition->ammunition, state, value->view.belt_grip.part!=belt_feed::lease::none || value->view.slide_held || value->view.magazine_grabbed);
+		const bool allowed = owner_ok && !value->view.fault && count_ok && ready_ok;
+		if (role == 0)
+			fire_reason = allowed ? "allowed" : !owner_ok ? "blocked: owner cannot fire" : !count_ok ? "blocked: native/mechanical count mismatch" : "blocked: action not ready";
 		// A prediction running before the server may use only an exact current
 		// count match. Historical replays use the decision above, not today's chamber.
 		return history.allow(state.weapon,state.instance_generation,command_time,observed.loaded,role == 0,allowed);
@@ -759,7 +769,8 @@ namespace vr::gameplay::weapons::physical_reload
 							<< " tip_in_well=" << i.view.examined.magazine_top_in_well[0] << ',' << i.view.examined.magazine_top_in_well[1]
 							<< ',' << i.view.examined.magazine_top_in_well[2] << " alignment=" << i.view.examined.insertion_alignment
 							<< " slide_distance=" << i.view.examined.slide_distance
-							<< " waist_distance=" << i.view.examined.waist_distance << '\n';
+							<< " waist_distance=" << i.view.examined.waist_distance 
+							<< " fire=" << fire_reason.load() << '\n';
 						out << "knife_magazine_capable=" << bool(i.view.definition->knife_magazine_in_wrist)
 							<< " knife_magazine_grasp=" << (i.view.magazine_leased() && i.view.knife_magazine_grasp)
 							<< " knife_slide_capable=" << !i.view.definition->knife_slide_grips.empty()

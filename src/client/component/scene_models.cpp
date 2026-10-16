@@ -8,6 +8,7 @@
 #include "game/xmodel_index_contract.hpp"
 #include "game/game.hpp"
 #include "loader/component_loader.hpp"
+#include "command.hpp"
 #include <utils/hook.hpp>
 #include <utils/hook_validation.hpp>
 #include <utils/startup_callbacks.hpp>
@@ -149,10 +150,32 @@ namespace scene_models
 		if (!accepted) ++registration_failures;
 		return accepted;
 	}
+	namespace
+	{
+		std::atomic<std::uint64_t> submit_calls{}, submit_admitted{};
+		std::atomic<const char*> last_submit_model{""};
+		std::array<std::atomic<float>,3> last_origin{};
+		std::array<std::atomic<float>,5> last_quat_scale{};
+		std::atomic<const game::XModel*> last_model{};
+		thread_local bool probing{};
+	}
 	std::string runtime_model_status()
 	{
 		return std::format("runtime_models={}/256 registration_failures={} asset_retirements={}\n",
-			model_identities.size(),registration_failures.load(),asset_retirements.load());
+			model_identities.size(),registration_failures.load(),asset_retirements.load()) + submit_status();
+	}
+	std::string submit_status()
+	{
+		const auto* ps = game::CL_IsCgameInitialized() ? game::CG_GetPredictedPlayerState(0) : nullptr;
+		return std::format("scene_models submits={} admitted={} last={} origin=({:.1f},{:.1f},{:.1f}) player=({:.1f},{:.1f},{:.1f}){}\n", submit_calls.load(), submit_admitted.load(), last_submit_model.load(),
+			last_origin[0].load(), last_origin[1].load(), last_origin[2].load(), ps ? ps->origin[0] : 0.f, ps ? ps->origin[1] : 0.f, ps ? ps->origin[2] : 0.f, [] {
+			const auto* m = last_model.load();
+			if (!m) return std::string{};
+			return std::format(" quat=({:.3f},{:.3f},{:.3f},{:.3f}) scale={:.3f}", last_quat_scale[0].load(), last_quat_scale[1].load(), last_quat_scale[2].load(), last_quat_scale[3].load(), last_quat_scale[4].load()) + std::format(" model={} lods={} lod0(dist={:.0f} surfs={} ptr={} modelSurfs={}) lod1(dist={:.0f} surfs={})",
+				static_cast<const void*>(m), int(m->numLods), m->lodInfo[0].dist, m->lodInfo[0].numsurfs,
+				static_cast<const void*>(m->lodInfo[0].surfs), static_cast<const void*>(m->lodInfo[0].modelSurfs),
+				m->lodInfo[1].dist, m->lodInfo[1].numsurfs);
+		}());
 	}
 	void submit(game::XModel* model, game::GfxScaledPlacement* placement, unsigned flags,
 		unsigned short* lighting_handle, float* lit, float* unlit, float* emissive, float padding)
@@ -164,7 +187,19 @@ namespace scene_models
 		// Native scales the returned radius. Convert the bounded WORLD-unit
 		// allowance to local units; an invalid scale keeps native behavior.
 		culling = {model, local_radius_padding(padding,placement->scale)};
+		// MWR port diagnostic: the scene XModel slot counter advances only when
+		// R_FilterXModelIntoScene admits the model (frustum + LOD).
+		const auto* slots = reinterpret_cast<const volatile std::uint32_t*>(0x151C6C984);
+		const auto before_slots = *slots;
 		game::R_FilterXModelIntoScene(model,placement,flags,lighting_handle,lit,unlit,emissive);
+		if (probing) return;
+		++submit_calls;
+		if (*slots != before_slots) ++submit_admitted;
+		last_submit_model = model->name;
+		last_model = model;
+		for (int i = 0; i < 3; ++i) last_origin[i] = placement->base.origin[i];
+		for (int i = 0; i < 4; ++i) last_quat_scale[i] = placement->base.quat[i];
+		last_quat_scale[4] = placement->scale;
 	}
 	void on_prepare_placement(placement_callback function)
 	{
@@ -174,6 +209,52 @@ namespace scene_models
 	{
 		void post_unpack() override
 		{
+			// MWR port diagnostic: draw a named XModel 30 units ahead of the eye
+			// through this scene-model path ("vr_scene_probe" alone clears it).
+			command::add("vr_scene_probe", [](const command::params& params)
+			{
+				static game::XModel* probe{};
+				static float distance{30};
+				static bool registered{};
+				distance = params.size() > 2 ? float(std::atof(params.get(2))) : 30.f;
+				probe = params.size() > 1 ? game::DB_FindXAssetHeader(game::ASSET_TYPE_XMODEL, params.get(1), 0).model : nullptr;
+				if (!registered)
+				{
+					registered = true;
+					on_submit([]
+					{
+						if (!probe || !game::CL_IsCgameInitialized()) return;
+						const auto* ps = game::CG_GetPredictedPlayerState(0);
+						if (!ps) return;
+						static unsigned short lightings[4]{};
+						probing = true;
+						const auto restore = gsl::finally([] { probing = false; });
+						if (distance == 0)
+						{
+							// Mirror the last presenter placement exactly.
+							game::GfxScaledPlacement placement{};
+							for (int i = 0; i < 4; ++i) placement.base.quat[i] = last_quat_scale[i];
+							for (int i = 0; i < 3; ++i) placement.base.origin[i] = last_origin[i];
+							placement.scale = 1;
+							float color[4]{1, 1, 1, 1};
+							submit(probe, &placement, 0, &lightings[0], color, color, color, 4);
+							return;
+						}
+						const float offsets[4][2]{{distance, 0}, {-distance, 0}, {0, distance}, {0, -distance}};
+						for (int i = 0; i < 4; ++i)
+						{
+							game::GfxScaledPlacement placement{};
+							placement.base.quat[3] = 1;
+							placement.base.origin[0] = ps->origin[0] + offsets[i][0];
+							placement.base.origin[1] = ps->origin[1] + offsets[i][1];
+							placement.base.origin[2] = ps->origin[2] + 55;
+							placement.scale = 1;
+							float color[4]{1, 1, 1, 1};
+							submit(probe, &placement, 0, &lightings[i], color, color, color, 4);
+						}
+					});
+				}
+			});
 			fastfiles::on_pre_unload([] {
 				// Same drained native boundary used by DObj and surface-subset
 				// owners. Pool addresses alone do not describe an asset lifetime.

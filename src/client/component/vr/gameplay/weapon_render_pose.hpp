@@ -36,6 +36,8 @@ namespace vr::gameplay::weapon_render_pose
 		const weapons::hold& owner, std::uint64_t reference) noexcept;
 	bool for_scene(const engine_stereo_view::slot_pair& views, snapshot& output, weapons::weapon_identity weapon={}) noexcept;
 	// Only inside native record preparation, after its scoped viewmodel skin.
+	// False until the native skin/submission hooks are installed (MWR: not yet rebound).
+	bool available() noexcept;
 	bool for_record(std::uintptr_t record, const std::array<float,12>& camera, snapshot& output, weapons::weapon_identity weapon={}) noexcept;
 	std::string status();
 }

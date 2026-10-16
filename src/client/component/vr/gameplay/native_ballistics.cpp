@@ -18,7 +18,7 @@ namespace vr::gameplay::weapons::native_ballistics
 	{
 		bool verified{};
 		thread_local bool emitting{};
-		constexpr std::uintptr_t definitions = 0x14CE01580;
+		constexpr std::uintptr_t definitions = 0x14D750C40; // MWR (H2 0x14CE01580)
 		template <std::size_t N> bool verify(std::uintptr_t address, const std::uint8_t (&bytes)[N])
 		{
 			std::array<std::uint8_t,N> mask{}; mask.fill(0xff);
@@ -36,43 +36,33 @@ namespace vr::gameplay::weapons::native_ballistics
 	bool initialize()
 	{
 		if (verified) return true;
-		constexpr std::uint8_t wrapper[]{0x48,0x83,0xec,0x48,0xf3,0x0f,0x10,0x44,0x24,0x78,
-			0x8b,0x44,0x24,0x70,0xf3,0x0f,0x11,0x44,0x24,0x30,0xc6,0x44,0x24,0x28,0x00,
-			0x89,0x44,0x24,0x20,0xe8,0x3e,0x0a,0x00,0x00};
-		constexpr std::uint8_t descriptor[]{0x0f,0xb6,0x53,0x44,0x8b,0x4b,0x3c};
-		constexpr std::uint8_t spread[]{0x48,0x83,0xec,0x28,0x45,0x0f,0xb6,0xc8,0x8b,0xc2,
-			0x4c,0x8d,0x05,0xff,0xfe,0x75,0x0c};
-		constexpr std::uint8_t type_entry[]{0x40,0x53,0x48,0x83,0xec,0x50,0x48,0x8b,0x05,0x13,0xff,0x56,0x00};
-		constexpr std::uint8_t trace[]{0x40,0x53,0x55,0x56,0x57,0x48,0x83,0xec,0x78};
-		constexpr std::uint8_t player_gate[]{0x41,0xf7,0x46,0x58,0x00,0x30,0x10,0x00};
-		// G_FireWeapon resolves a primary weapon name, pushes one string and
-		// sends weapon_fired BEFORE entering ballistics. The name wrapper calls
-		// the existing BG_GetWeaponNameComplete binding with alternate=false.
-		constexpr std::uint8_t name_wrapper[]{0x48,0x83,0xec,0x28,0x45,0x8b,0xc8,0x4c,0x8b,0xc2,
-			0x33,0xd2,0xe8,0x0f,0x00,0x00,0x00,0x48,0x83,0xc4,0x28,0xc3};
-		constexpr std::uint8_t fire_notify[]{0xe8,0x92,0x7c,0x18,0x00,0x48,0x8b,0xc8,
-			0xe8,0x2a,0xdf,0x0a,0x00,0x8b,0x15,0xcc,0x4e,0xf0,0x05,0x41,0xb8,0x01,0x00,0x00,0x00,
-			0x48,0x8b,0xce,0xe8,0xd6,0x92,0xff,0xff};
-		verified=verify(bullet_address,wrapper) && verify(0x1404AAE27,descriptor) &&
-			verify(ads_spread_address,spread) && verify(vr::h2::sp::weapon_type.address(),type_entry) &&
-			verify(0x1404CBFE0,trace) && verify(0x140518A7F,player_gate) &&
-			verify(0x1406A07E0,name_wrapper) && verify(0x140518B49,fire_notify) && native_ammunition::initialize();
+		// MWR: Bullet_Fire 0x140284C40, ADS spread 0x1404B2830, weapon type
+		// 0x1404B6810, G Scr_Notify 0x1402E8C70 with scr_const weapon_fired. The
+		// fire packet layout (weapon +0x3c, alternate +0x44, definition +0x48)
+		// matches G_FireWeapon 0x1402EF8F0.
+		constexpr std::uint8_t bullet[]{0x48,0x83,0xec,0x48,0xf3,0x0f,0x10,0x44,0x24,0x78,0x8b,0x44};
+		constexpr std::uint8_t spread[]{0x48,0x83,0xec,0x28,0x45,0x0f,0xb6,0xc8,0x8b,0xc2};
+		constexpr std::uint8_t notify[]{0x0f,0xbf,0x89,0x8a,0x00,0x00,0x00,0x45,0x8b,0xc8};
+		constexpr std::uint8_t fire_notify_call[]{0xe8,0x56,0x92,0xff,0xff};
+		verified=verify(bullet_address,bullet) && verify(ads_spread_address,spread) &&
+			verify(0x1402E8C70,notify) && verify(0x1402EFA15,fire_notify_call) && native_ammunition::initialize();
 		return verified;
 	}
 	bool firing_timing(std::uint32_t weapon,int shot_count,independent_fire::timing& out)
 	{
 		// Same descriptor-based mode and timing accessors as PM_Weapon_Fire,
 		// independent of selected PS state and native akimbo timers.
-		constexpr std::uint8_t mode[]{0x48,0x83,0xec,0x28,0x41,0xb8,0xe4,0x05,0,0};
+		// MWR: fire type 0x1404B65D0 (+0x554), fire timing 0x1404B5390, burst cooldown 0x1404B4E90 (+0x560).
+		constexpr std::uint8_t mode[]{0x48,0x83,0xec,0x28,0x41,0xb8,0x54,0x05,0,0};
 		constexpr std::uint8_t timing[]{0x89,0x4c,0x24,0x08,0x55,0x57,0x48,0x83,0xec,0x28};
-		constexpr std::uint8_t burst[]{0x48,0x83,0xec,0x28,0x41,0xb8,0xf0,0x05,0,0,0xe8,0x81,0xc1,0xff,0xff};
-		static const bool timing_ready=verify(0x1406A5180,mode) && verify(0x1406A3EF0,timing) && verify(0x1406A39F0,burst);
+		constexpr std::uint8_t burst[]{0x48,0x83,0xec,0x28,0x41,0xb8,0x60,0x05,0,0};
+		static const bool timing_ready=verify(0x1404B65D0,mode) && verify(0x1404B5390,timing) && verify(0x1404B4E90,burst);
 		if (!verified || !timing_ready || !weapon || weapon>=512 || !game::weapon_defs[weapon]) return false;
-		out.mode=utils::hook::invoke<int>(0x1406A5180,weapon,false);
-		utils::hook::invoke<void>(0x1406A3EF0,weapon,false,false,std::clamp(shot_count,0,31),&out.interval,&out.delay);
+		out.mode=utils::hook::invoke<int>(0x1404B65D0,weapon,false);
+		utils::hook::invoke<void>(0x1404B5390,weapon,false,false,std::clamp(shot_count,0,31),&out.interval,&out.delay);
 		// Native PM_Weapon (0x14069C3AA) rounds this accessor's float and stores
 		// it in weaponTime without a seconds conversion. Keep attachment overrides.
-		const auto pause=out.mode>=2 && out.mode<=4 ? utils::hook::invoke<float>(0x1406A39F0,weapon,false) : 0.f;
+		const auto pause=out.mode>=2 && out.mode<=4 ? utils::hook::invoke<float>(0x1404B4E90,weapon,false) : 0.f;
 		return independent_fire::decode_native_timing(out.mode,out.interval,out.delay,pause,out);
 	}
 	result fire_owned(std::uint32_t weapon,const shot_geometry& geometry,int command_time,debit_observer settled)
@@ -128,8 +118,6 @@ namespace vr::gameplay::weapons::native_ballistics
 		game::BG_GetWeaponNameComplete(native_weapon,false,fired_name.data(),static_cast<unsigned>(fired_name.size()));
 		const auto name_size=strnlen_s(fired_name.data(),fired_name.size());
 		if (!name_size || name_size==fired_name.size()) return out;
-		const scripting::entity script_player{game::scr_entref_t{entity->s.entityNum,0}};
-		const std::vector<scripting::script_value> fire_arguments{std::string(fired_name.data(),name_size)};
 		const auto timeline=native_ammunition::timeline();
 		const auto previous=native_ammunition::projected_identity(weapon);
 		if (id && !native_ammunition::project(id)) return out;
@@ -145,7 +133,9 @@ namespace vr::gameplay::weapons::native_ballistics
 		// Restore the event skipped by direct bullet dispatch. Existing notify
 		// isolates the VM stack and preserves native GSC/Lua notification routing.
 		// Never refund/retry after this boundary: scripts may have observed it.
-		scripting::notify(script_player,"weapon_fired",fire_arguments);
+		// MWR: the same native notify G_FireWeapon sends (no GSC VM wrapper).
+		game::Scr_AddString(fired_name.data());
+		utils::hook::invoke<void>(0x1402E8C70,entity,*reinterpret_cast<const unsigned*>(0x146663898),1);
 		out.notified=true;
 		if (entity->client!=reinterpret_cast<game::gclient_s*>(ps) ||
 			native_ammunition::timeline()!=timeline || !game::CL_IsCgameInitialized() || ps->commandTime!=command_time)

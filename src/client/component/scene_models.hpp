@@ -23,6 +23,7 @@ namespace scene_models
 	// published descriptor until queued rendering is finished; no slot recycling.
 	bool register_runtime_models(std::span<const runtime_model> models) noexcept;
 	std::string runtime_model_status();
+	std::string submit_status();
 	// Per-submission world-unit frustum padding. Never changes the shared asset,
 	// model scale, LOD policy or another caller/thread's visibility. Native retains
 	// lighting_handle; the caller must keep that storage alive for queued work.

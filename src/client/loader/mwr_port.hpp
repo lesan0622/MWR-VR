@@ -46,6 +46,8 @@ namespace mwr_port
 		"vr::gameplay::weapons::physical_reload",
 		"vr::gameplay::weapons::physical_reload::presentation_component",
 		"vr::gameplay::weapons::native_closed_bolt",
+		"vr::gameplay::weapons::feedback", // Weapon interaction sounds (MWR aliases) and haptics.
+		"vr::gameplay::weapons::independent_fire", // Carried guns fire from the hand muzzle (native PM fire is suppressed).
 		"vr::gameplay::interaction_coordinator",
 		"vr::gameplay::reload_items",
 		"vr::gameplay::falling_item_presentation",

@@ -113,8 +113,10 @@ namespace vr::gameplay::weapons::native_weapon_sound_slice
 	}
 	bool play(short entity,const float* origin,const char* name,sound_part part,const sound_window* window)
 	{
-		if(part==sound_part::whole && !window)return utils::hook::invoke<int>(0x140380430,entity,origin,name)!=-1;
-		if(!ready)return false;
+		if(part==sound_part::whole && !window)return utils::hook::invoke<int>(0x14015C4A0,entity,origin,name)!=-1; // MWR play (H2 0x140380430)
+		// MWR port: the stream decoder slice hooks are not rebound yet. Play the
+		// complete MWR alias once on the first part; the second part stays silent.
+		if(!ready)return part==sound_part::first && utils::hook::invoke<int>(0x14015C4A0,entity,origin,name)!=-1;
 		// Keep the stock alias selection/randomization, WeaponDef mapping, spatial
 		// bus and bookkeeping. No shared alias or extracted sound is modified.
 		const auto* alias=utils::hook::invoke<const game::snd_alias_t*>(0x1403CA0D0,name,int(entity));

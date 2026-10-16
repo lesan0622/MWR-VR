@@ -126,6 +126,17 @@ namespace command
 
 	void add_raw(const char* name, void (*callback)())
 	{
+		// MWR Cmd_AddCommandInternal ignores a name that is already registered
+		// (e.g. the game's own cheat-gated "give"). Take over its callback instead.
+		struct native_cmd { native_cmd* next; const char* name; void (*function)(); };
+		for (auto* cmd = *reinterpret_cast<native_cmd**>(0x14B490038); cmd; cmd = cmd->next)
+		{
+			if (cmd->name && !_stricmp(cmd->name, name))
+			{
+				cmd->function = callback;
+				return;
+			}
+		}
 		game::Cmd_AddCommandInternal(name, callback, utils::memory::get_allocator()->allocate<game::cmd_function_s>());
 	}
 
@@ -338,79 +349,71 @@ namespace command
 				const std::string arg2 = params.get(2);
 				const auto count = params.size();
 
+				// MWR port: native implementation; the GSC VM is not available.
 				scheduler::once([=]()
 				{
-					try
+					auto* ent = &game::g_entities[0];
+					auto* ps = ent->client;
+					if (!ps) return;
+					const auto give = [&](game::Weapon wp, bool dual_wield, bool select)
 					{
-						const scripting::entity player = scripting::call("getentbynum", {0}).as<scripting::entity>();
-						auto ps = game::g_entities[0].client;
+						if (const auto duplicate = vr::gameplay::weapons::native_carry::give_duplicate(wp.data, dual_wield);
+							duplicate.has_value())
+						{
+							if (!*duplicate) console::warn("[VR carry] give rejected: %s\n", vr::gameplay::weapons::native_carry::status());
+							return *duplicate;
+						}
+						if (!game::G_GivePlayerWeapon(ps, wp, dual_wield, 0, 0, 0)) return false;
+						game::G_InitializeAmmo(ps, wp, 0);
+						// With physical carry, a new gun is stored on the body for the hands to draw.
+						if (select && !vr::gameplay::weapons::carry::active()) game::G_SelectWeapon(0, wp);
+						return true;
+					};
 
-						if (arg == "ammo")
+					if (arg == "ammo" || arg == "allammo")
+					{
+						// Refill the start ammo of the current (or every owned) weapon.
+						for (int i = 0; i < 15; ++i)
 						{
-							const auto weapon = player.call("getcurrentweapon").as<std::string>();
-							player.call("givemaxammo", {weapon});
-						}
-						else if (arg == "allammo")
-						{
-							const auto weapons = player.call("getweaponslist").as<scripting::array>();
-							for (auto i = 0; i < weapons.size(); i++)
-							{
-								player.call("givemaxammo", {weapons[i]});
-							}
-						}
-						else if (arg == "health")
-						{
-							if (count > 2)
-							{
-								const auto amount = atoi(arg2.data());
-								const auto health = player.get("health").as<int>();
-								player.set("health", {health + amount});
-							}
-							else
-							{
-								const auto amount = game::Dvar_FindVar("g_player_maxhealth")->current.integer;
-								player.set("health", {amount});
-							}
-						}
-						else if (arg == "all")
-						{
-							const auto type = game::XAssetType::ASSET_TYPE_WEAPON;
-							fastfiles::enum_assets(type, [&player, type](const game::XAssetHeader header)
-							{
-								const auto asset = game::XAsset{type, header};
-								const auto* const asset_name = game::DB_GetXAssetName(&asset);
-								player.call("giveweapon", {asset_name});
-							}, true);
-						}
-						else
-						{
-							const auto wp = game::G_GetWeaponForName(arg.data());
-							if (wp.data)
-							{
-								const auto def = game::weapon_defs[wp.fields.weaponIdx];
-
-								const auto want_dual_wield = std::atoi(arg2.c_str());
-								const auto dual_wield = !def->noDualWield && want_dual_wield;
-
-								if (const auto duplicate=vr::gameplay::weapons::native_carry::give_duplicate(wp.data,dual_wield);duplicate.has_value())
-								{
-									if (!*duplicate) console::warn("[VR carry] give rejected: %s\n",vr::gameplay::weapons::native_carry::status());
-									return;
-								}
-								if (game::G_GivePlayerWeapon(ps, wp, dual_wield, 0, 0, 0))
-								{
-									game::G_InitializeAmmo(ps, wp, 0);
-									if (!vr::gameplay::weapons::carry::active()) game::G_SelectWeapon(0, wp);
-								}
-							}
-							else
-							{
-								game::CG_GameMessage(0, "Weapon does not exist", 0);
-							}
+							game::Weapon wp{};
+							std::memcpy(&wp.data, reinterpret_cast<const std::byte*>(ps) + 0x2cc + i * 4, 4);
+							std::uint32_t current{};
+							std::memcpy(&current, reinterpret_cast<const std::byte*>(ps) + 0x38c, 4);
+							if (wp.data && (arg == "allammo" || wp.data == current)) game::G_InitializeAmmo(ps, wp, 1);
 						}
 					}
-					catch (...)
+					else if (arg == "health")
 					{
+						// MWR gentity health +0x184, playerState health +0x1dc.
+						auto* health = reinterpret_cast<int*>(reinterpret_cast<std::byte*>(ent) + 0x184);
+						const auto* max = game::Dvar_FindVar("g_player_maxhealth");
+						const int amount = count > 2 ? *health + std::atoi(arg2.data()) : (max ? max->current.integer : 100);
+						*health = amount;
+						*reinterpret_cast<int*>(reinterpret_cast<std::byte*>(ps) + 0x1dc) = amount;
+					}
+					else if (arg == "all")
+					{
+						// Every weapon definition loaded by this level (the table ends at the first gap).
+						for (unsigned i = 1; i < 512 && game::weapon_defs[i]; ++i)
+						{
+							game::Weapon wp{};
+							wp.data = i;
+							give(wp, false, false);
+						}
+					}
+					else
+					{
+						const auto wp = game::G_GetWeaponForName(arg.data());
+						if (!wp.data)
+						{
+							game::CG_GameMessage(0, "Weapon does not exist", 0);
+							console::warn("[give] %s is not loaded in this level\n", arg.data());
+							return;
+						}
+						const auto def = game::weapon_defs[wp.fields.weaponIdx];
+						const auto dual_wield = def && !def->noDualWield && std::atoi(arg2.c_str());
+						const bool ok = give(wp, dual_wield, true);
+						console::info("[give] %s (%u) -> %s\n", arg.data(), wp.data, ok ? "given" : "rejected (inventory full)");
 					}
 				}, scheduler::pipeline::server);
 			});
