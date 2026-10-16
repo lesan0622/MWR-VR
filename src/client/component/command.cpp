@@ -260,78 +260,7 @@ namespace command
 				printf("======== End command dump =========\n");
 			});
 
-			// MWR: these h2-mod cheats use H2 entity layouts and the GSC scripting
-			// context, which are not ported. Keep the native MWR commands instead.
-			if constexpr (false)
-			{
-			add("god", []()
-			{
-				if (!game::SV_Loaded())
-				{
-					return;
-				}
-
-				game::g_entities[0].flags ^= game::FL_GODMODE;
-				game::CG_GameMessage(0, utils::string::va("godmode %s",
-					game::g_entities[0].flags & game::FL_GODMODE
-					? "^2on"
-					: "^1off"), 0);
-			});
-
-			add("demigod", []()
-			{
-				if (!game::SV_Loaded())
-				{
-					return;
-				}
-
-				game::g_entities[0].flags ^= game::FL_DEMI_GODMODE;
-				game::CG_GameMessage(0, utils::string::va("demigod mode %s",
-					game::g_entities[0].flags & game::FL_DEMI_GODMODE
-					? "^2on"
-					: "^1off"), 0);
-			});
-
-			add("notarget", []()
-			{
-				if (!game::SV_Loaded())
-				{
-					return;
-				}
-
-				game::g_entities[0].flags ^= game::FL_NOTARGET;
-				game::CG_GameMessage(0, utils::string::va("notarget %s",
-					game::g_entities[0].flags & game::FL_NOTARGET
-					? "^2on"
-					: "^1off"), 0);
-			});
-
-			add("noclip", []()
-			{
-				if (!game::SV_Loaded())
-				{
-					return;
-				}
-
-				game::g_entities[0].client->flags ^= 1;
-				game::CG_GameMessage(0, utils::string::va("noclip %s",
-					game::g_entities[0].client->flags & 1
-					? "^2on"
-					: "^1off"), 0);
-			});
-
-			add("ufo", []()
-			{
-				if (!game::SV_Loaded())
-				{
-					return;
-				}
-
-				game::g_entities[0].client->flags ^= 2;
-				game::CG_GameMessage(
-					0, utils::string::va("ufo %s", game::g_entities[0].client->flags & 2 ? "^2on" : "^1off"), 0);
-			});
-
+			// MWR: native give (no GSC); registered outside the disabled h2-mod cheat block.
 			add("give", [](const params& params)
 			{
 				if (!game::SV_Loaded())
@@ -416,6 +345,78 @@ namespace command
 						console::info("[give] %s (%u) -> %s\n", arg.data(), wp.data, ok ? "given" : "rejected (inventory full)");
 					}
 				}, scheduler::pipeline::server);
+			});
+
+			// MWR: these h2-mod cheats use H2 entity layouts and the GSC scripting
+			// context, which are not ported. Keep the native MWR commands instead.
+			if constexpr (false)
+			{
+			add("god", []()
+			{
+				if (!game::SV_Loaded())
+				{
+					return;
+				}
+
+				game::g_entities[0].flags ^= game::FL_GODMODE;
+				game::CG_GameMessage(0, utils::string::va("godmode %s",
+					game::g_entities[0].flags & game::FL_GODMODE
+					? "^2on"
+					: "^1off"), 0);
+			});
+
+			add("demigod", []()
+			{
+				if (!game::SV_Loaded())
+				{
+					return;
+				}
+
+				game::g_entities[0].flags ^= game::FL_DEMI_GODMODE;
+				game::CG_GameMessage(0, utils::string::va("demigod mode %s",
+					game::g_entities[0].flags & game::FL_DEMI_GODMODE
+					? "^2on"
+					: "^1off"), 0);
+			});
+
+			add("notarget", []()
+			{
+				if (!game::SV_Loaded())
+				{
+					return;
+				}
+
+				game::g_entities[0].flags ^= game::FL_NOTARGET;
+				game::CG_GameMessage(0, utils::string::va("notarget %s",
+					game::g_entities[0].flags & game::FL_NOTARGET
+					? "^2on"
+					: "^1off"), 0);
+			});
+
+			add("noclip", []()
+			{
+				if (!game::SV_Loaded())
+				{
+					return;
+				}
+
+				game::g_entities[0].client->flags ^= 1;
+				game::CG_GameMessage(0, utils::string::va("noclip %s",
+					game::g_entities[0].client->flags & 1
+					? "^2on"
+					: "^1off"), 0);
+			});
+
+			add("ufo", []()
+			{
+				if (!game::SV_Loaded())
+				{
+					return;
+				}
+
+				game::g_entities[0].client->flags ^= 2;
+				game::CG_GameMessage(
+					0, utils::string::va("ufo %s", game::g_entities[0].client->flags & 2 ? "^2on" : "^1off"), 0);
 			});
 
 			add("dropweapon", [](const params& params)

@@ -46,9 +46,12 @@ namespace vr::gameplay::weapons::mwr_rebase
 	reload_profile rebase(const reload_profile& source, const target& t)
 	{
 		auto p = source;
-		const auto magazine_shift = hands::sub(t.magazine_bind.position, source.magazine_rest.position);
-		const auto slide_shift =
-		    t.slide_same_part ? hands::sub(t.slide_bind.position, source.slide_rest.position) : vec{};
+		// Identical receivers keep the original rest poses: they were measured on
+		// the same asset from its idle animation, while the bind pose can sit
+		// inches away (Dragunov bolt: bind x=7.40, idle x=9.92).
+		const auto magazine_shift = t.keep_mechanism ? vec{} : hands::sub(t.magazine_bind.position, source.magazine_rest.position);
+		const auto slide_shift = t.keep_mechanism || !t.slide_same_part ? vec{} :
+		    hands::sub(t.slide_bind.position, source.slide_rest.position);
 
 		p.id = t.id;
 		if (t.native_family)
@@ -60,8 +63,11 @@ namespace vr::gameplay::weapons::mwr_rebase
 		p.magazine_model = t.magazine_model;
 
 		// Bone-anchored rest poses come from the MWR bind pose.
-		p.magazine_rest = t.magazine_bind;
-		p.slide_rest = t.slide_bind;
+		if (!t.keep_mechanism)
+		{
+			p.magazine_rest = t.magazine_bind;
+			p.slide_rest = t.slide_bind;
+		}
 
 		// Gun-local magazine features follow tag_clip.
 		p.well.position = shifted(source.well.position, magazine_shift);
@@ -146,6 +152,16 @@ namespace vr::gameplay::weapons::mwr_rebase
 			belt->details = {}; // Details may reference the bridge.
 			p.interaction.belt = belt;
 			p.ammunition.belt_bridge = false;
+		}
+
+		if (t.magazine_in_wrist)
+		{
+			p.magazine_in_wrist = *t.magazine_in_wrist;
+			if (!t.magazine_fingers.empty())
+				p.magazine_fingers = t.magazine_fingers;
+			p.magazine_grasps = {};
+			p.magazine_default_pose = 0;
+			p.interaction.magazine_pose_count = 1; // The single measured grasp.
 		}
 
 		// Sound keys are notetrack lookups resolved in the live WeaponDef map

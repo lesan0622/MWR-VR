@@ -22,33 +22,99 @@
 namespace vr::gameplay::weapons::mwr_shared
 {
 	// m16: MWR viewmodel_m16 (m16_basic); slide j_clip_release, bullets tag_bullet1.
-	inline const reload_profile m16_reload = mwr_rebase::rebase(m16::physical, {.id = "mwr_m16", .receiver = "viewmodel_m16", .magazine_bone = "tag_clip", .slide_bone = "j_clip_release", .bullets_bone = "tag_bullet1", .magazine_model = "weapon_m16_clip", .magazine_bind = {{5.143884f, -0.008398f, 2.851965f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{-0.680215f, 0.000000f, 4.499245f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = false, .magazine_from_receiver = false});
+	inline const reload_profile m16_reload = mwr_rebase::rebase(m16::physical, {.id = "mwr_m16", .receiver = "viewmodel_m16", .magazine_bone = "tag_clip", .slide_bone = "j_clip_release", .bullets_bone = "tag_bullet1", .magazine_model = "weapon_m16_clip", .magazine_bind = {{5.143885f, -0.008398f, 2.851964f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{-0.558493f, -0.000038f, 4.499308f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = false, .magazine_from_receiver = false});
+	// m4 magazine grasp: record_006.jsonl h1_wpn_asl_m4a1_reload t=0.417.
+	inline constexpr hands::anchor m4_magazine_in_wrist{{6.361427f, 2.018210f, 6.311580f}, {-0.1060722f, 0.2027624f, -0.1032472f, 0.9679753f}};
+	inline constexpr std::array<joint_pose, 18> m4_magazine_fingers{{
+		{"j_index_le_0", {0.6815847f, -0.0415822f, -0.1242264f, 0.7199174f}},
+		{"j_mid_le_0", {0.5321071f, -0.3330468f, 0.3361901f, 0.7020812f}},
+		{"j_pinkypalm_le", {0.6899359f, -0.2319725f, -0.1903450f, 0.6587458f}},
+		{"j_ringpalm_le", {0.7147811f, -0.1145675f, -0.1050763f, 0.6818513f}},
+		{"j_thumb_le_0", {-0.1709351f, -0.0592237f, 0.2380456f, 0.9542578f}},
+		{"j_webbing_le", {-0.6724142f, -0.0360730f, -0.1680958f, 0.7199317f}},
+		{"j_index_le_1", {0.0213934f, -0.0166325f, 0.5450604f, 0.8379587f}},
+		{"j_mid_le_1", {-0.0186853f, -0.0105670f, 0.5998817f, 0.7998007f}},
+		{"j_pinky_le_0", {-0.1996658f, 0.2779618f, 0.4324173f, 0.8341978f}},
+		{"j_ring_le_0", {-0.1962265f, 0.0791623f, 0.4885941f, 0.8464658f}},
+		{"j_thumb_le_1", {0.1015887f, 0.0885960f, -0.2681249f, 0.9539075f}},
+		{"j_index_le_2", {0.0021523f, 0.0362546f, 0.3356575f, 0.9412837f}},
+		{"j_mid_le_2", {-0.0290644f, 0.0043596f, 0.5791529f, 0.8146890f}},
+		{"j_pinky_le_1", {0.0268647f, 0.0080008f, 0.7373381f, 0.6749421f}},
+		{"j_ring_le_1", {0.0126682f, 0.0058138f, 0.7389232f, 0.6736455f}},
+		{"j_thumb_le_2", {-0.0201889f, -0.0691262f, -0.1658673f, 0.9835151f}},
+		{"j_pinky_le_2", {-0.0282557f, 0.0183247f, 0.6510537f, 0.7582842f}},
+		{"j_ring_le_2", {-0.0016913f, -0.0026246f, 0.5979462f, 0.8015302f}}
+	}};
 	// m4: MWR viewmodel_m4a1_sp (m4_grunt); slide j_clip_release, bullets tag_bullet.
-	inline const reload_profile m4_reload = mwr_rebase::rebase(m4::physical, {.id = "mwr_m4", .receiver = "viewmodel_m4a1_sp", .magazine_bone = "tag_clip", .slide_bone = "j_clip_release", .bullets_bone = "tag_bullet", .magazine_model = "weapon_m4_clip", .magazine_bind = {{5.075633f, -0.008398f, 2.768400f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{-0.642612f, 0.000000f, 4.590708f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = false, .magazine_from_receiver = false});
+	inline const reload_profile m4_reload = mwr_rebase::rebase(m4::physical, {.id = "mwr_m4", .receiver = "viewmodel_m4a1_sp", .magazine_bone = "tag_clip", .slide_bone = "j_clip_release", .bullets_bone = "tag_bullet", .magazine_model = "weapon_m4_clip", .magazine_bind = {{5.019701f, -0.008400f, 2.571400f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{-0.558500f, 0.000001f, 4.590700f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = false, .magazine_from_receiver = false, .magazine_in_wrist = &m4_magazine_in_wrist, .magazine_fingers = m4_magazine_fingers});
+	// ak47 magazine grasp: record_004.jsonl h1_wpn_asl_ak47_reload t=0.537.
+	inline constexpr hands::anchor ak47_magazine_in_wrist{{5.329519f, 2.084433f, 0.176801f}, {-0.7549011f, 0.3793389f, -0.2388960f, 0.4787014f}};
+	inline constexpr std::array<joint_pose, 18> ak47_magazine_fingers{{
+		{"j_index_le_0", {0.5853211f, -0.2407538f, -0.1280957f, 0.7635630f}},
+		{"j_mid_le_0", {0.6117084f, -0.1955476f, -0.0579360f, 0.7643411f}},
+		{"j_pinkypalm_le", {0.6899519f, -0.2319677f, -0.1903411f, 0.6587319f}},
+		{"j_ringpalm_le", {0.7147811f, -0.1145676f, -0.1050763f, 0.6818513f}},
+		{"j_thumb_le_0", {0.0342749f, -0.2711814f, 0.2210338f, 0.9361784f}},
+		{"j_webbing_le", {-0.6724477f, -0.0361341f, -0.1680661f, 0.7199043f}},
+		{"j_index_le_1", {0.0217612f, -0.0161446f, 0.5252253f, 0.8505317f}},
+		{"j_mid_le_1", {-0.0196843f, -0.0084535f, 0.6835723f, 0.7295684f}},
+		{"j_pinky_le_0", {-0.1886612f, 0.1905826f, 0.1697718f, 0.9482947f}},
+		{"j_ring_le_0", {-0.2100632f, -0.0219314f, 0.1888427f, 0.9590260f}},
+		{"j_thumb_le_1", {0.1051305f, 0.0843917f, -0.2291484f, 0.9640107f}},
+		{"j_index_le_2", {0.0115222f, 0.0345403f, 0.5673683f, 0.8226587f}},
+		{"j_mid_le_2", {-0.0293812f, 0.0010149f, 0.4825781f, 0.8753594f}},
+		{"j_pinky_le_1", {0.0188571f, 0.0206949f, 0.2821778f, 0.9589535f}},
+		{"j_ring_le_1", {0.0314038f, 0.0279042f, 0.5552875f, 0.8305967f}},
+		{"j_thumb_le_2", {0.0984174f, -0.0805743f, -0.3921338f, 0.9110724f}},
+		{"j_pinky_le_2", {-0.0326244f, 0.0083622f, 0.3764778f, 0.9258133f}},
+		{"j_ring_le_2", {-0.0017332f, -0.0025940f, 0.6111300f, 0.7915241f}}
+	}};
 	// ak47: MWR viewmodel_ak47 (ak47); slide j_bolt2, bullets tag_bullet.
-	inline const reload_profile ak47_reload = mwr_rebase::rebase(ak47::physical, {.id = "mwr_ak47", .receiver = "viewmodel_ak47", .magazine_bone = "tag_clip", .slide_bone = "j_bolt2", .bullets_bone = "tag_bullet", .magazine_model = "wpn_h1_ak47_clip", .magazine_bind = {{6.324782f, 0.015012f, 1.896138f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{8.942359f, -0.281668f, 3.496124f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = false, .magazine_from_receiver = false});
+	inline const reload_profile ak47_reload = mwr_rebase::rebase(ak47::physical, {.id = "mwr_ak47", .receiver = "viewmodel_ak47", .magazine_bone = "tag_clip", .slide_bone = "j_bolt2", .bullets_bone = "tag_bullet", .magazine_model = "wpn_h1_ak47_clip", .magazine_bind = {{6.324782f, 0.015013f, 1.896138f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{8.942360f, -0.281669f, 3.496124f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = false, .magazine_from_receiver = false, .magazine_in_wrist = &ak47_magazine_in_wrist, .magazine_fingers = ak47_magazine_fingers});
+	// ak74u magazine grasp: record_005.jsonl h1_wpn_smg_ak74u_reload t=0.477.
+	inline constexpr hands::anchor ak74u_magazine_in_wrist{{5.828254f, 2.151583f, 0.100950f}, {-0.7522615f, 0.3478194f, -0.3060037f, 0.4684933f}};
+	inline constexpr std::array<joint_pose, 18> ak74u_magazine_fingers{{
+		{"j_index_le_0", {0.6167199f, -0.1996626f, -0.0715370f, 0.7580725f}},
+		{"j_mid_le_0", {0.6204787f, -0.1924930f, -0.0917581f, 0.7546742f}},
+		{"j_pinkypalm_le", {0.6899229f, -0.2319376f, -0.1903719f, 0.6587639f}},
+		{"j_ringpalm_le", {0.7147490f, -0.1145673f, -0.1051065f, 0.6818803f}},
+		{"j_thumb_le_0", {0.0701360f, -0.2554687f, 0.2358127f, 0.9349915f}},
+		{"j_webbing_le", {-0.6724679f, -0.0361336f, -0.1680331f, 0.7198932f}},
+		{"j_index_le_1", {0.0233763f, -0.0136687f, 0.4288826f, 0.9029543f}},
+		{"j_mid_le_1", {-0.0199669f, -0.0078462f, 0.7062587f, 0.7076287f}},
+		{"j_pinky_le_0", {-0.1545306f, 0.1732042f, 0.1851464f, 0.9549039f}},
+		{"j_ring_le_0", {-0.1794451f, -0.0472808f, 0.1878546f, 0.9645074f}},
+		{"j_thumb_le_1", {0.1029777f, 0.0869745f, -0.2530868f, 0.9580074f}},
+		{"j_index_le_2", {0.0127544f, 0.0340394f, 0.5975056f, 0.8010404f}},
+		{"j_mid_le_2", {-0.0293894f, 0.0004234f, 0.4648726f, 0.8848895f}},
+		{"j_pinky_le_1", {0.0205693f, 0.0189661f, 0.3658213f, 0.9302645f}},
+		{"j_ring_le_1", {0.0114699f, 0.0078658f, 0.6153319f, 0.7881455f}},
+		{"j_thumb_le_2", {0.0017133f, -0.0719996f, -0.4572027f, 0.8864417f}},
+		{"j_pinky_le_2", {-0.0313601f, 0.0122222f, 0.4843376f, 0.8742335f}},
+		{"j_ring_le_2", {-0.0017395f, -0.0026604f, 0.6064696f, 0.7951003f}}
+	}};
 	inline bool ak74u_family(std::string_view name) noexcept { return native_weapon_family(name, "ak74u"); }
 	// ak74u: MWR viewmodel_ak74u_sp (ak74u); slide j_bolt, bullets tag_bullet.
-	inline const reload_profile ak74u_reload = mwr_rebase::rebase(ak47::physical, {.id = "mwr_ak74u", .receiver = "viewmodel_ak74u_sp", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullet", .magazine_model = "wpn_h1_ak74u_clip", .magazine_bind = {{6.031847f, 0.015012f, 2.456596f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{7.976082f, 0.000000f, 4.065385f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = false, .magazine_from_receiver = false, .native_family = ak74u_family});
+	inline const reload_profile ak74u_reload = mwr_rebase::rebase(ak47::physical, {.id = "mwr_ak74u", .receiver = "viewmodel_ak74u_sp", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullet", .magazine_model = "wpn_h1_ak74u_clip", .magazine_bind = {{6.031848f, 0.015012f, 2.456596f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{7.976083f, 0.000000f, 4.065385f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = false, .magazine_from_receiver = false, .magazine_in_wrist = &ak74u_magazine_in_wrist, .magazine_fingers = ak74u_magazine_fingers, .native_family = ak74u_family});
 	inline const profile ak74u_hand = [] {auto p = ak47::assemblies[0]; p.wrists = {{{{9.425227f, 1.876608f, 1.128829f}, {0.3185248f, -0.1143048f, -0.1004965f, 0.9356158f}}, {{-3.034917f, -1.794933f, -0.870813f}, {-0.0571761f, -0.6260409f, 0.7651170f, -0.1392833f}}}}; return p;}(); // Wrists: ak74u native idle.
 	inline bool uzi_family(std::string_view name) noexcept { return native_weapon_family(name, "uzi"); }
 	// uzi: MWR viewmodel_miniuzi, viewmodel_mini_uzi_sp (uzi); slide j_bolt, bullets tag_bullet.
-	inline const reload_profile uzi_reload = mwr_rebase::rebase(miniuzi::physical, {.id = "mwr_uzi", .receiver = "viewmodel_miniuzi", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullet", .magazine_model = nullptr, .magazine_bind = {{0.448726f, 0.015012f, 2.847369f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{2.417881f, 0.000000f, 4.340671f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = true, .native_family = uzi_family});
+	inline const reload_profile uzi_reload = mwr_rebase::rebase(miniuzi::physical, {.id = "mwr_uzi", .receiver = "viewmodel_miniuzi", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullet", .magazine_model = nullptr, .magazine_bind = {{0.448726f, 0.015012f, 2.847369f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{3.133799f, 0.000000f, 4.340701f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = true, .native_family = uzi_family});
 	// dragunov: MWR viewmodel_dragunov_sp (dragunov); slide j_bolt, bullets tag_bullet_single.
-	inline const reload_profile dragunov_reload = mwr_rebase::rebase(dragunov::physical, {.id = "mwr_dragunov", .receiver = "viewmodel_dragunov_sp", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullet_single", .magazine_model = "wpn_h1_dragunov_clip", .magazine_bind = {{7.558991f, 0.015012f, 2.147386f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{7.396130f, -0.382366f, 2.559919f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = false});
+	inline const reload_profile dragunov_reload = mwr_rebase::rebase(dragunov::physical, {.id = "mwr_dragunov", .receiver = "viewmodel_dragunov_sp", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullet_single", .magazine_model = "wpn_h1_dragunov_clip", .magazine_bind = {{7.558990f, 0.015012f, 2.147386f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{9.922299f, -0.382401f, 2.559901f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = false});
 	inline bool colt45_family(std::string_view name) noexcept { return native_weapon_family(name, "colt45"); }
 	// colt45: MWR wpn_h1_pst_m1911_vm (colt45); slide j_bolt, bullets tag_bullets.
-	inline const reload_profile colt45_reload = mwr_rebase::rebase(m1911::physical, {.id = "mwr_colt45", .receiver = "wpn_h1_pst_m1911_vm", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullets", .magazine_model = nullptr, .magazine_bind = {{0.592823f, 0.000000f, 0.382584f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{0.861329f, 0.000000f, 3.320774f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = true, .native_family = colt45_family});
+	inline const reload_profile colt45_reload = mwr_rebase::rebase(m1911::physical, {.id = "mwr_colt45", .receiver = "wpn_h1_pst_m1911_vm", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullets", .magazine_model = nullptr, .magazine_bind = {{0.592821f, 0.000000f, 0.382585f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{0.861328f, 0.000000f, 3.320774f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = true, .native_family = colt45_family});
 	// usp: MWR wpn_h1_pst_usp45_vm (usp); slide j_bolt, bullets tag_bullets.
-	inline const reload_profile usp_reload = mwr_rebase::rebase(usp::physical, {.id = "mwr_usp", .receiver = "wpn_h1_pst_usp45_vm", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullets", .magazine_model = nullptr, .magazine_bind = {{-0.003952f, 0.078795f, 0.270146f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{0.240145f, 0.000000f, 3.307276f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = true});
+	inline const reload_profile usp_reload = mwr_rebase::rebase(usp::physical, {.id = "mwr_usp", .receiver = "wpn_h1_pst_usp45_vm", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullets", .magazine_model = nullptr, .magazine_bind = {{0.130026f, 0.071592f, 0.393842f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{0.240144f, 0.000000f, 3.307276f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = true});
 	inline bool beretta_family(std::string_view name) noexcept { return native_weapon_family(name, "beretta"); }
 	// beretta: MWR wpn_h1_pst_m9_vm (beretta); slide j_bolt, bullets tag_bullets.
-	inline const reload_profile beretta_reload = mwr_rebase::rebase(m9::physical, {.id = "mwr_beretta", .receiver = "wpn_h1_pst_m9_vm", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullets", .magazine_model = nullptr, .magazine_bind = {{0.180226f, 0.000000f, 0.379039f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{0.424323f, 0.000000f, 3.416169f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = true, .native_family = beretta_family});
+	inline const reload_profile beretta_reload = mwr_rebase::rebase(m9::physical, {.id = "mwr_beretta", .receiver = "wpn_h1_pst_m9_vm", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullets", .magazine_model = nullptr, .magazine_bind = {{0.314293f, 0.071569f, 0.502850f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{0.424322f, 0.000001f, 3.416169f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = true, .native_family = beretta_family});
 	inline bool deserteagle_family(std::string_view name) noexcept { return native_weapon_family(name, "deserteagle"); }
 	// deserteagle: MWR wpn_h1_pst_de50_vm (deserteagle); slide j_bolt, bullets tag_bullets.
-	inline const reload_profile deserteagle_reload = mwr_rebase::rebase(de50::physical, {.id = "mwr_deserteagle", .receiver = "wpn_h1_pst_de50_vm", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullets", .magazine_model = nullptr, .magazine_bind = {{0.200863f, 0.000000f, 0.240622f}, {0.0000000f, 0.1268025f, 0.0000000f, 0.9919280f}}, .slide_bind = {{0.565419f, 0.000000f, 3.347321f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = true, .drop_bullet_parents = true, .native_family = deserteagle_family});
+	inline const reload_profile deserteagle_reload = mwr_rebase::rebase(de50::physical, {.id = "mwr_deserteagle", .receiver = "wpn_h1_pst_de50_vm", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullets", .magazine_model = nullptr, .magazine_bind = {{0.200863f, 0.000000f, 0.240623f}, {0.0000000f, 0.1268025f, 0.0000000f, 0.9919280f}}, .slide_bind = {{0.565419f, 0.000000f, 3.347321f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = true, .drop_bullet_parents = true, .native_family = deserteagle_family});
 	// rpd: MWR viewmodel_rpd_sp (rpd); slide j_bolthandle, bullets j_bullet1.
-	inline const reload_profile rpd_reload = mwr_rebase::rebase(rpd::physical, {.id = "mwr_rpd", .receiver = "viewmodel_rpd_sp", .magazine_bone = "tag_clip", .slide_bone = "j_bolthandle", .bullets_bone = "j_bullet1", .magazine_model = nullptr, .magazine_bind = {{6.833340f, -0.019182f, -1.603666f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{5.155989f, -1.061368f, 2.540080f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = true, .drop_belt_bridge = true});
+	inline const reload_profile rpd_reload = mwr_rebase::rebase(rpd::physical, {.id = "mwr_rpd", .receiver = "viewmodel_rpd_sp", .magazine_bone = "tag_clip", .slide_bone = "j_bolthandle", .bullets_bone = "j_bullet1", .magazine_model = nullptr, .magazine_bind = {{6.833341f, -0.019180f, -1.603666f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{4.777300f, -1.061399f, 2.540100f}, {0.7071068f, 0.0000000f, 0.0000000f, 0.7071068f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = true, .drop_belt_bridge = true});
 	// winchester1200: MWR viewmodel_winchester1200 (winchester1200); original mechanics kept.
 	// m1014: MWR viewmodel_benelli_m4 (m1014); original mechanics kept.
 	// rpg: MWR viewmodel_rpg7 (rpg); original mechanics kept.

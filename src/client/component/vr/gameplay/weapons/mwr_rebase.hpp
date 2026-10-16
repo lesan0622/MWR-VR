@@ -22,7 +22,7 @@ namespace vr::gameplay::weapons::mwr_rebase
 		std::string_view receiver; // MWR viewmodel receiver model.
 		std::string_view magazine_bone, slide_bone, bullets_bone;
 		const char* magazine_model{}; // MWR world clip model.
-		hands::anchor magazine_bind, slide_bind; // MWR gun-local bind poses (inches).
+		hands::anchor magazine_bind, slide_bind; // MWR gun-local native idle poses (inches).
 		bool slide_same_part{};
 		// The MWR receiver is the asset the MW2 recipe was authored on (same bone
 		// names, parents and bind): keep its bolt/catch/bullet contracts.
@@ -33,6 +33,10 @@ namespace vr::gameplay::weapons::mwr_rebase
 		bool drop_bullet_parents{}; // e.g. Desert Eagle j_bullet01 under tag_bullets.
 		bool drop_belt_bridge{};    // e.g. RPD optic rail bridge (MW2 j_rail, MWR tag_rail).
 		std::span<const std::string_view> additional_bullet_bones{};
+		// Support-hand magazine grasp measured from the MWR reload animation
+		// (replaces the MW2 grasp set, which was fitted to MW2's magazine mesh).
+		const hands::anchor* magazine_in_wrist{};
+		std::span<const joint_pose> magazine_fingers{};
 		bool (*native_family)(std::string_view) noexcept {};
 		const char* (*sound_key)(mechanics::effect) noexcept {}; // Optional override.
 	};

@@ -48,6 +48,8 @@ namespace mwr_port
 		"vr::gameplay::weapons::native_closed_bolt",
 		"vr::gameplay::weapons::feedback", // Weapon interaction sounds (MWR aliases) and haptics.
 		"vr::gameplay::weapons::independent_fire", // Carried guns fire from the hand muzzle (native PM fire is suppressed).
+		"vr::gameplay::weapons::tube", // Pump/lever tube feeds (physical pump and shell loading).
+		"vr::gameplay::weapons::tube::presenter_component",
 		"vr::gameplay::interaction_coordinator",
 		"vr::gameplay::reload_items",
 		"vr::gameplay::falling_item_presentation",
