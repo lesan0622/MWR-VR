@@ -7,6 +7,7 @@
 #include "weapon_carry_runtime.hpp"
 #include "component/command.hpp"
 #include "component/console.hpp"
+#include "component/scheduler.hpp"
 #include "game/game.hpp"
 #include "loader/component_loader.hpp"
 
@@ -222,6 +223,14 @@ namespace vr::gameplay::weapon_capture
 					std::memcpy(&health, b + 0x1dc, 4);
 					console::info("[VR capture] %s ps=%p pm_type=%u weapflags=0x%08X eflags=0x%08X weapon=%u health=%d\n",
 						label, ps, b[2], flags, eflags, weapon, health);
+					std::string owned;
+					for (int i = 0; i < 15; ++i)
+					{
+						std::uint32_t token{};
+						std::memcpy(&token, b + 0x2cc + i * 4, 4);
+						if (token) owned += std::format(" {}:{}", token, weapon_name(token));
+					}
+					console::info("[VR capture] %s inventory:%s\n", label, owned.c_str());
 				};
 				dump("server", game::g_entities[0].client);
 				bool dead{};
@@ -232,6 +241,71 @@ namespace vr::gameplay::weapon_capture
 					sequences::airport::opening::active());
 				console::info("[VR capture] carry native=%s active=%d\n", weapons::native_carry::status(), weapons::carry::active());
 				dump("predicted", game::CL_IsCgameInitialized() ? game::CG_GetPredictedPlayerState(0) : nullptr);
+			});
+			// MWR port: bind poses of every loaded weapon receiver, used to rebase
+			// the original MW2 recipes onto the MWR viewmodels offline.
+			command::add("vr_capture_weapon_models", []
+			{
+				std::string out;
+				const auto model_json = [](const game::XModel* m)
+				{
+					if (!m || !m->name) return std::string("null");
+					std::string bones;
+					for (unsigned i = 0; i < m->numBones; ++i)
+					{
+						const auto parent = i < m->numRootBones || !m->parentList ? -1 :
+							static_cast<int>(i) - static_cast<int>(m->parentList[i - m->numRootBones]);
+						const auto& b = m->baseMat[i];
+						bones += std::format("{}[\"{}\",{},[{:.6f},{:.6f},{:.6f}],[{:.7f},{:.7f},{:.7f},{:.7f}]]", i ? "," : "",
+							escape(scr_string(m->boneNames[i])), parent, b.trans[0], b.trans[1], b.trans[2],
+							b.quat[0], b.quat[1], b.quat[2], b.quat[3]);
+					}
+					const auto& v = m->bounds;
+					return std::format("{{\"name\":\"{}\",\"bounds\":[[{:.4f},{:.4f},{:.4f}],[{:.4f},{:.4f},{:.4f}]],\"bones\":[{}]}}",
+						escape(m->name), v.midPoint[0], v.midPoint[1], v.midPoint[2], v.halfSize[0], v.halfSize[1], v.halfSize[2], bones);
+				};
+				int count{};
+				for (unsigned i = 1; i < 512; ++i)
+				{
+					const auto* def = game::weapon_defs[i];
+					if (!def) break; // Loaded definitions are contiguous; the table ends at the first gap.
+					game::WeaponDef copy{};
+					if (!utils::native_memory::read_bytes(&copy, def, sizeof(copy))) break;
+					if (!copy.szInternalName || !copy.gunModel || !copy.gunModel[0]) continue;
+					out += std::format("{{\"index\":{},\"name\":\"{}\",\"gun\":{},\"clip\":{}}}\n", i, escape(def->szInternalName),
+						model_json(def->gunModel[0]), model_json(def->worldClipModel));
+					++count;
+				}
+				const auto* map = game::Dvar_FindVar("mapname");
+				const auto file = directory("_models") + "/" + (map ? map->current.string : "unknown") + ".jsonl";
+				utils::io::write_file(file, out);
+				console::info("[VR capture] wrote %d weapon receivers to %s\n", count, file.c_str());
+			});
+			// Select an owned weapon by name (after `give`), for capture sessions.
+			command::add("vr_capture_select", [](const command::params& params)
+			{
+				if (params.size() < 2) return;
+				const std::string wanted = params.get(1);
+				for (unsigned i = 1; i < 512; ++i)
+				{
+					const auto* def = game::weapon_defs[i];
+					if (!def) break;
+					if (!def->szInternalName || wanted != def->szInternalName) continue;
+					scheduler::once([wanted, i]
+					{
+						// Console give is not admitted in MWR SP; grant the definition directly.
+						game::Weapon weapon{};
+						weapon.data = i;
+						auto* ps = game::g_entities[0].client;
+						if (ps && game::G_GivePlayerWeapon(ps, weapon, 0, 0, 0, 0))
+							game::G_InitializeAmmo(ps, weapon, 0);
+						const bool ok = weapons::native_carry::select(i);
+						console::info("[VR capture] select %s (%u) -> %d (%s)\n", wanted.c_str(), i, ok,
+							weapons::native_carry::status());
+					}, scheduler::pipeline::server);
+					return;
+				}
+				console::info("[VR capture] select %s: not loaded\n", wanted.c_str());
 			});
 			command::add("vr_capture_record", [](const command::params& params)
 			{

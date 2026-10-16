@@ -14,6 +14,7 @@
 #include "weapons/m9/profile.hpp"
 #include "weapons/m4/profile.hpp"
 #include "weapons/g36c/profile.hpp"
+#include "weapons/mwr_shared.hpp"
 #include "weapons/m16/profile.hpp"
 #include "weapons/m14ebr/profile.hpp"
 #include "weapons/dragunov/profile.hpp"
@@ -62,6 +63,9 @@ namespace vr::gameplay::weapons
 	namespace
 	{
 	const auto catalog = join_registrations(
+		// MWR port: shared MW2 recipes on MWR receivers come first (the M9
+		// receiver name is shared with the MW2 recipe, which uses MW2 stems).
+		register_profiles(mwr_shared::select, mwr_shared::profiles),
 		register_profiles(rpg::select,rpg::base),
 		register_profiles(at4::select,at4::base),
 		register_profiles(stinger::select,stinger::base),

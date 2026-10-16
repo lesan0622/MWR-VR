@@ -995,7 +995,7 @@ namespace vr::gameplay::hands
 				probe.native_elbow[hand] = object->matrices[layout.arms[hand].elbow].position;
 			}
 			// MWR: read-only native capture for recipe authoring (vr_capture_*).
-			if (!empty && !independent && weapon_capture::wants())
+			if (!empty && weapon_capture::wants()) // Bind data is valid for owned (carried) DObjs too.
 			{
 				std::array<model_definition, 32> capture_models{};
 				std::array<bone_definition, 256> capture_bones{};

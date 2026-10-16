@@ -1,0 +1,53 @@
+#pragma once
+#include "../weapon_profile.hpp"
+#include "../physical_reload_profile.hpp"
+
+#include <span>
+#include <string_view>
+
+namespace vr::gameplay::weapons::mwr_rebase
+{
+	// MWR port: a gun that exists in both MW2 and MWR keeps the original
+	// Overlord recipe for everything measured relative to the hand or the
+	// magazine (grasps, fingers, magazine-in-wrist, contacts, rules), and takes
+	// its bone-anchored rest poses from the MWR viewmodel bind pose.
+	//
+	// Both games ship replicas of the same real gun, so receiver geometry is
+	// close (M16 tag_clip differs by ~1 mm). Values tied to the magazine follow
+	// the tag_clip delta. Values tied to the operated part follow the slide
+	// delta only when the MWR bone is the same physical part.
+	struct target
+	{
+		std::string_view id;       // Unique recipe id, e.g. "mwr_m16".
+		std::string_view receiver; // MWR viewmodel receiver model.
+		std::string_view magazine_bone, slide_bone, bullets_bone;
+		const char* magazine_model{}; // MWR world clip model.
+		hands::anchor magazine_bind, slide_bind; // MWR gun-local bind poses (inches).
+		bool slide_same_part{};
+		// The MWR receiver is the asset the MW2 recipe was authored on (same bone
+		// names, parents and bind): keep its bolt/catch/bullet contracts.
+		bool keep_mechanism{};
+		// No MWR world clip model: cut the magazine from the receiver mesh.
+		bool magazine_from_receiver{};
+		std::span<const std::string_view> additional_bullet_bones{};
+		bool (*native_family)(std::string_view) noexcept {};
+		const char* (*sound_key)(mechanics::effect) noexcept {}; // Optional override.
+	};
+
+	// Builds once at static initialization; storage is never released because
+	// profile registrations keep pointers into it.
+	reload_profile rebase(const reload_profile& source, const target& t);
+
+	// Moves an original hand profile (wrists, fingers, aiming) onto an MWR
+	// receiver. MW2 attachment contracts and equip-animation names are dropped.
+	// keep_parts retains equip-rest part poses (only valid on identical receivers).
+	profile adopt(const profile& source, std::string_view id, std::string_view receiver,
+		const reload_profile* reload, bool keep_parts);
+
+	// MWR builds viewmodels from a receiver plus attachment models (optic,
+	// reticle, laser, foregrip, silencer). Accept attachments that hang off the
+	// receiver or an earlier attachment; they never move the authored grips.
+	profile_match bind_attachments(const profile& selected, std::span<const hands::model_definition> models,
+		const hands::model_definition& receiver, const hands::rig& rig,
+		std::span<const hands::bone_definition> bones) noexcept;
+}
