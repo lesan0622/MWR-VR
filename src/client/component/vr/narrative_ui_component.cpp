@@ -6,6 +6,7 @@
 #include "component/command.hpp"
 #include "component/console.hpp"
 #include "component/scheduler.hpp"
+#include "game/dvars.hpp"
 #include "gameplay/campaign/scripted_sequences.hpp"
 #include "component/game_text.hpp"
 #include "game/game.hpp"
@@ -121,7 +122,12 @@ namespace vr::narrative_ui
 			// A 60-degree head-relative native canvas at the channel's depth. Lower
 			// left announcements and bottom-centered subtitles retain line wrapping,
 			// localization, shadows, glow and typewriter timing without rebuilding.
-			const float width = 2 * distance_meters * units * .57735026919f;
+			// MWR: its subtitle font is small within the 1080p canvas; enlarge the
+			// dialogue canvas (progress/announcement panels keep their size).
+			const auto* scale_dvar = game::Dvar_FindVar("vr_subtitleScale");
+			const float scale = which == channel::progress || which == channel::announcement || !scale_dvar ? 1.f :
+				std::clamp(scale_dvar->current.value, .5f, 3.f);
+			const float width = 2 * distance_meters * units * .57735026919f * scale;
 			for (unsigned c = 0; c < 3; ++c)
 				center[c] -= up[c] * placement.lower_fraction * width * ink->height / ink->width;
 			spatial_panel::quad world{};
@@ -221,6 +227,8 @@ namespace vr::narrative_ui
 	  public:
 		void post_unpack() override
 		{
+			dvars::register_float("vr_subtitleScale", 2.2f, .5f, 3.f, game::DVAR_FLAG_SAVED,
+				"Size of the VR subtitle/dialogue panel (1 = original 60-degree canvas)");
 			scheduler::loop(update_labels, scheduler::pipeline::main);
 			composition_registration =
 			    eye_composition::register_consumer(present, eye_composition::layer::narrative);

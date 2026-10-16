@@ -34,6 +34,7 @@ namespace mwr_port
 		"input",
 		"vr::native_menu",
 		"vr::native_hud_capture",
+		"vr::narrative_ui", // Subtitles, titles and fades on their own VR panel.
 		"vr::menu_backdrop",
 		"vr::native_waypoints",
 		"vr::controllers",
