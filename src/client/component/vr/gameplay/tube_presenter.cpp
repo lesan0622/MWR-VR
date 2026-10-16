@@ -73,6 +73,9 @@ namespace vr::gameplay::weapons::tube
 			}
 		}
 	}
+	std::atomic<std::uint64_t> present_calls{};
+	std::atomic<const char*> present_reason{"never called"};
+	std::string presenter_status(){return std::format(" present_calls={} present={}",present_calls.load(),present_reason.load());}
 	part_presentation::result present(const void* object,std::uint32_t epoch,const void* matrices,
 		const part_rig& parts,const hands::rig& r,const hands::pose_library& library,const weapons::profile& grip,
 		const controller_input::frame& input,const hold& owner,std::uint64_t assembly,bool gameplay,bool manipulation,
@@ -80,7 +83,9 @@ namespace vr::gameplay::weapons::tube
 		hands::vec head,hands::vec offset,float units,std::span<hands::bone> solved,clock::time_point now,hands::part_hand_frame* hand_motion)noexcept
 	{
 		using namespace hands;using namespace hands::pose_math;
-		if(!alive || !parts.valid || !grip.tube || !valid_hand(owner.holding_hand()) || !std::isfinite(units) || units<=0 || solved.size()<size_t(r.count))return {};
+		++present_calls;
+		if(!alive || !parts.valid || !grip.tube || !valid_hand(owner.holding_hand()) || !std::isfinite(units) || units<=0 || solved.size()<size_t(r.count))
+		{present_reason=!grip.tube?"profile has no tube":!parts.valid?"parts invalid":!valid_hand(owner.holding_hand())?"not held":"units/rig";return {};}
 		const auto& p=*grip.tube;auto v=current(owner.id());v.lever=displayed_lever_pose(v,owner,input.reference_generation,now);const int rear=int(owner.holding_hand()),off=1-rear;
 		unsigned posed_hands{};
 		auto gun=as_anchor(solved[r.gun]);
@@ -106,7 +111,7 @@ namespace vr::gameplay::weapons::tube
 		}
 		const auto inverse_gun=inverse(gun);
 		const auto shell_in_wrist=off ? hands::pose_mirror::object_in_wrist({},p.shell_in_wrist,library.mirror_basis[r.arms[off].wrist]) : p.shell_in_wrist;
-		if(!rotary(p.ammunition) && !levered(p.ammunition) && (p.rack_grips.empty() || p.rack_grips.size()>max_part_grips || p.rack_grips.size()!=p.interaction.rack.slide_pose_count))return {};
+		if(!rotary(p.ammunition) && !levered(p.ammunition) && (p.rack_grips.empty() || p.rack_grips.size()>max_part_grips || p.rack_grips.size()!=p.interaction.rack.slide_pose_count)){present_reason="rack grip count";return {};}
 		std::array<part_grip_pose,max_part_grips> rack_poses{};
 		for(size_t i=0;i<p.rack_grips.size();++i)rack_poses[i]=off ? hands::pose_mirror::part(p.rack_grips[i],library.mirror_basis[r.arms[off].wrist]) : p.rack_grips[i];
 		const anchor raw{targets[off].position,normalize(multiply(targets[off].rotation,free_hand_rotation(grip,off)))};
@@ -186,7 +191,7 @@ namespace vr::gameplay::weapons::tube
 		scene.binding={free_hand_rotation(grip,off),library.mirror_basis[r.arms[off].wrist],true};
 		for(int h=0;h<2;++h)scene.shell_bindings[h]={free_hand_rotation(grip,h),library.mirror_basis[r.arms[h].wrist],true};
 		scene.has_shell_bindings=true;
-		scene.ejection_world.position=add(scene.ejection_world.position,offset);scene.shell_world.position=add(scene.shell_world.position,offset);publish_scene(scene);
+		scene.ejection_world.position=add(scene.ejection_world.position,offset);scene.shell_world.position=add(scene.shell_world.position,offset);publish_scene(scene);present_reason="published";
 		if(chambering_guide::enabled() && chambering_guide::supported(p))
 		{
 			const auto guide=chambering_guide::request(grip);

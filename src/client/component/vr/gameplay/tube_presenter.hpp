@@ -38,6 +38,7 @@ namespace vr::gameplay::weapons::tube
 		}
 		return out;
 	}
+	std::string presenter_status(); // MWR port diagnostic.
 	part_presentation::result present(const void* object,std::uint32_t epoch,const void* matrices,
 		const part_rig&,const hands::rig&,const hands::pose_library&,const weapons::profile&,
 		const controller_input::frame&,const hold&,std::uint64_t assembly,bool gameplay,bool manipulation,

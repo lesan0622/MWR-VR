@@ -333,8 +333,14 @@ namespace vr::gameplay::hands
 					                                  {bones.data(), object.bone_count},
 					                                  *solver().binding.active_profile->launcher);
 				if (solver().binding.active_profile->tube)
+				{
 					solver().binding.tube_parts = weapons::tube::bind_parts(
 					    result, {bones.data(), object.bone_count}, solver().binding.active_profile->tube);
+					// MWR port diagnostic: one line per binding (bindings are cached per assembly).
+					const auto& t = solver().binding.tube_parts;
+					console::info("[VR hands] tube bind %s: valid=%d bolt=%d lifter=%d shell=%d pump=%d\n",
+						solver().binding.active_profile->id.data(), t.valid, t.bolt, t.lifter, t.shell, t.pump);
+				}
 				solver().binding.assembly_hidden = match.hidden;
 				if (solver().binding.active_profile->secondary_motion)
 					solver().binding.secondary_parts =

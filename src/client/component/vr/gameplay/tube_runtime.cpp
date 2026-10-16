@@ -113,7 +113,8 @@ namespace vr::gameplay::weapons::tube
 			if (!i)
 			{
 				const auto* p=native_tube_profile(observed.native_name.data(),observed.base_capacity,scene.definition);
-				if (!p || (manual(p->ammunition) && !observed.bolt_action)) return;
+				if (!p) { reason="no tube profile for native weapon/capacity"; return; }
+				if (manual(p->ammunition) && !observed.bolt_action) { reason="manual tube requires native bolt action"; return; }
 				if (scene.definition!=p || !scene.contact.valid || !scene.assembly || !scene.gameplay ||
 					scene.owner.id()!=observed.ammo.id() || !valid_hand(scene.owner.holding_hand()) ||
 					now<scene.input.sampled_at || now-scene.input.sampled_at>150ms || (!carry::active() && observed.ammo.weapon_state!=0))
@@ -152,8 +153,11 @@ namespace vr::gameplay::weapons::tube
 			i->view.sampled_at=scene.input.sampled_at; i->view.reference=scene.input.reference_generation;
 			i->view.input_sequence=scene.input.sequence; reason=i->gesture.decision();
 		}
+		std::atomic<const char*> tick_stage{"never"};
+		std::atomic<std::uint64_t> tick_count{};
 		void tick(bool interactions,bool suspended=false)
 		{
+			++tick_count; tick_stage = interactions ? "entered(settle)" : "entered(lifecycle)";
 			if (!alive.load() || !scheduler::is_executing(scheduler::pipeline::server)) return;
 			const bool gameplay=game::CL_IsCgameInitialized();
 			const auto* ps=gameplay ? game::g_entities[0].client : nullptr;
@@ -204,12 +208,13 @@ namespace vr::gameplay::weapons::tube
 				if (suspended || live==owners.end() || live->holding_hand()!=i.view.owner.holding_hand() || live->rear_revision!=i.view.owner.rear_revision)
 					if (!interrupt(i)) continue; // Keep failed escrow and continue the bounded inventory pass.
 			}
-			if (!interactions) return;
-			if (!active()) return;
+			if (!interactions) { tick_stage="lifecycle done"; return; }
+			if (!active()) { tick_stage="inactive"; return; }
+			tick_stage="scanning owners";
 			for (const auto& owner : owners)
 			{
 				const auto* cached=scenes.find(owner.id());
-				if (!cached) continue;
+				if (!cached) { if (owner.id() && !find(owner.id())) reason="no tube scene for held weapon"; continue; }
 				auto frame=*cached;
 				if(const auto* input=hand_interaction::simulation())
 				{
@@ -217,9 +222,11 @@ namespace vr::gameplay::weapons::tube
 					if(!hand_interaction::sample(frame,view,*input)){frame.input=input->input;frame.owner=owner;frame.contact.valid=false;frame.gameplay=true;}
 					frame.manipulation=hand_interaction::permits(hand(1-int(owner.holding_hand())),hand_interaction::domain::tube,owner.id());
 				}
-				if (frame.owner.rear_revision!=owner.rear_revision || frame.owner.holding_hand()!=owner.holding_hand()) continue;
+				if (frame.owner.rear_revision!=owner.rear_revision || frame.owner.holding_hand()!=owner.holding_hand())
+				{ reason="tube scene owner revision changed"; continue; }
 				const auto owned=native_ammunition::observe_owned(ps,owner.id());
 				if (owned.valid) update_instance(ps,frame,owned,now);
+				else reason="native owned ammunition unavailable";
 			}
 		}
 	}
@@ -360,8 +367,8 @@ namespace vr::gameplay::weapons::tube
 			command::add("vr_tube_status",[] {scheduler::once([] {
 				presentation v;const char* why;
 				{const std::lock_guard lock(mutex);auto* i=find(last_published_scene.owner.id());v=i ? i->view : presentation{};why=reason;}
-				console::info("[VR tube] contracts=%u active=%d fault=%d stored/chamber/reserve/held=%d/%d/%d/%d phase=%d rack=%d travel=%.4f lever=%.3f spin=%.3f spinning=%d operating=%d lever_grasp=%d reason=%s\n",
-					boundaries.load(),v.active,v.fault,v.ammo.stored,int(v.ammo.chamber),v.ammo.reserve,v.ammo.held_rounds,int(v.ammo.phase),v.rack_held,v.travel,v.lever.open,v.lever.spin,v.lever.spinning,v.lever.operating,v.lever.grasped,why);
+				console::info("[VR tube] contracts=%u active=%d fault=%d stored/chamber/reserve/held=%d/%d/%d/%d phase=%d rack=%d travel=%.4f lever=%.3f spin=%.3f spinning=%d operating=%d lever_grasp=%d reason=%s ticks=%llu stage=%s%s\n",
+					boundaries.load(),v.active,v.fault,v.ammo.stored,int(v.ammo.chamber),v.ammo.reserve,v.ammo.held_rounds,int(v.ammo.phase),v.rack_held,v.travel,v.lever.open,v.lever.spin,v.lever.spinning,v.lever.operating,v.lever.grasped,why,tick_count.load(),tick_stage.load(),presenter_status().c_str());
 			},scheduler::pipeline::server);});
 			// Updated by the single hand-interaction coordinator.
 		}

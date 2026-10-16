@@ -15,6 +15,7 @@
 #include "weapons/m4/profile.hpp"
 #include "weapons/g36c/profile.hpp"
 #include "weapons/mwr_shared.hpp"
+#include "weapons/r700/profile.hpp"
 #include "weapons/m16/profile.hpp"
 #include "weapons/m14ebr/profile.hpp"
 #include "weapons/dragunov/profile.hpp"
@@ -66,6 +67,7 @@ namespace vr::gameplay::weapons
 		// MWR port: shared MW2 recipes on MWR receivers come first (the M9
 		// receiver name is shared with the MW2 recipe, which uses MW2 stems).
 		register_profiles(mwr_shared::select, mwr_shared::profiles),
+		register_profiles(r700::select, r700::base), // MWR-only bolt action on the tube feed.
 		register_profiles(rpg::select,rpg::base),
 		register_profiles(at4::select,at4::base),
 		register_profiles(stinger::select,stinger::base),
@@ -126,8 +128,10 @@ namespace vr::gameplay::weapons
 	bool admits_native_reload(std::string_view name,int capacity,bool no_partial,bool segmented,int add) noexcept
 	{
 		if(native_break_action_profile(name,capacity))return true;
-		return !no_partial && (native_tube_profile(name,capacity)?
-			native_tube_shape_supported(name,capacity,segmented,add):native_reload_shape_supported(name,capacity,segmented,add));
+		// An authored tube feed owns shell-by-shell loading, so the native
+		// no-partial flag (MWR Remington 700) does not apply to it.
+		if(native_tube_profile(name,capacity))return native_tube_shape_supported(name,capacity,segmented,add);
+		return !no_partial && native_reload_shape_supported(name,capacity,segmented,add);
 	}
 	profile_match select_profile(std::span<const hands::model_definition> models,
 		const hands::rig& rig, std::span<const hands::bone_definition> bones) noexcept
