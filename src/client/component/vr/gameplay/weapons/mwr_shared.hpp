@@ -21,8 +21,30 @@
 
 namespace vr::gameplay::weapons::mwr_shared
 {
+	// m16 magazine grasp: record_001.jsonl h1_wpn_asl_m16_reload t=0.459.
+	inline constexpr hands::anchor m16_magazine_in_wrist{{5.954459f, 0.453031f, 6.055122f}, {-0.0132011f, 0.3600952f, 0.1464924f, 0.9212476f}};
+	inline constexpr std::array<joint_pose, 18> m16_magazine_fingers{{
+		{"j_index_le_0", {0.6673506f, -0.3553903f, 0.4870191f, 0.4372109f}},
+		{"j_mid_le_0", {0.4780351f, -0.3880678f, 0.1423057f, 0.7750064f}},
+		{"j_pinkypalm_le", {0.6899616f, -0.2319099f, -0.1903438f, 0.6587412f}},
+		{"j_ringpalm_le", {0.7147663f, -0.1145652f, -0.1050742f, 0.6818675f}},
+		{"j_thumb_le_0", {0.0252587f, -0.3297349f, 0.0817291f, 0.9401900f}},
+		{"j_webbing_le", {-0.6724792f, -0.0361340f, -0.1680664f, 0.7198748f}},
+		{"j_index_le_1", {0.0287788f, -0.0341914f, -0.0907617f, 0.9948694f}},
+		{"j_mid_le_1", {-0.0147614f, -0.0155743f, 0.3381884f, 0.9408337f}},
+		{"j_pinky_le_0", {-0.3368561f, -0.0292842f, 0.6445594f, 0.6857212f}},
+		{"j_ring_le_0", {-0.3318651f, -0.1653843f, 0.4757559f, 0.7976026f}},
+		{"j_thumb_le_1", {0.1161463f, 0.0684493f, -0.0883664f, 0.9869225f}},
+		{"j_index_le_2", {-0.0091968f, 0.0351465f, 0.0252997f, 0.9990196f}},
+		{"j_mid_le_2", {-0.0233468f, -0.0044162f, 0.0097248f, 0.9996704f}},
+		{"j_pinky_le_1", {0.0203251f, 0.0192473f, 0.3526074f, 0.9353526f}},
+		{"j_ring_le_1", {0.0089211f, 0.0107120f, 0.3793754f, 0.9251378f}},
+		{"j_thumb_le_2", {-0.0259710f, -0.0671511f, -0.0825522f, 0.9939826f}},
+		{"j_pinky_le_2", {-0.0325220f, -0.0087480f, -0.1283810f, 0.9911529f}},
+		{"j_ring_le_2", {-0.0362258f, -0.0035402f, -0.0011292f, 0.9993367f}}
+	}};
 	// m16: MWR viewmodel_m16 (m16_basic); slide j_clip_release, bullets tag_bullet1.
-	inline const reload_profile m16_reload = mwr_rebase::rebase(m16::physical, {.id = "mwr_m16", .receiver = "viewmodel_m16", .magazine_bone = "tag_clip", .slide_bone = "j_clip_release", .bullets_bone = "tag_bullet1", .magazine_model = "weapon_m16_clip", .magazine_bind = {{5.143885f, -0.008398f, 2.851964f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{-0.558493f, -0.000038f, 4.499308f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = false, .magazine_from_receiver = false});
+	inline const reload_profile m16_reload = mwr_rebase::rebase(m16::physical, {.id = "mwr_m16", .receiver = "viewmodel_m16", .magazine_bone = "tag_clip", .slide_bone = "j_clip_release", .bullets_bone = "tag_bullet1", .magazine_model = "weapon_m16_clip", .magazine_bind = {{5.143884f, -0.008398f, 2.851965f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{-0.558500f, -0.000000f, 4.499300f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = false, .magazine_from_receiver = false, .magazine_in_wrist = &m16_magazine_in_wrist, .magazine_fingers = m16_magazine_fingers});
 	// m4 magazine grasp: record_006.jsonl h1_wpn_asl_m4a1_reload t=0.417.
 	inline constexpr hands::anchor m4_magazine_in_wrist{{6.361427f, 2.018210f, 6.311580f}, {-0.1060722f, 0.2027624f, -0.1032472f, 0.9679753f}};
 	inline constexpr std::array<joint_pose, 18> m4_magazine_fingers{{
