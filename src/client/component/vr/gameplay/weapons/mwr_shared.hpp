@@ -6,6 +6,7 @@
 #include "m16/profile.hpp"
 #include "m4/profile.hpp"
 #include "ak47/profile.hpp"
+#include "mp5/profile.hpp"
 #include "miniuzi/profile.hpp"
 #include "dragunov/profile.hpp"
 #include "m1911/profile.hpp"
@@ -119,6 +120,57 @@ namespace vr::gameplay::weapons::mwr_shared
 	// ak74u: MWR viewmodel_ak74u_sp (ak74u); slide j_bolt, bullets tag_bullet.
 	inline const reload_profile ak74u_reload = mwr_rebase::rebase(ak47::physical, {.id = "mwr_ak74u", .receiver = "viewmodel_ak74u_sp", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullet", .magazine_model = "wpn_h1_ak74u_clip", .magazine_bind = {{6.031848f, 0.015012f, 2.456596f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{7.976083f, 0.000000f, 4.065385f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = false, .magazine_from_receiver = false, .magazine_in_wrist = &ak74u_magazine_in_wrist, .magazine_fingers = ak74u_magazine_fingers, .native_family = ak74u_family});
 	inline const profile ak74u_hand = [] {auto p = ak47::assemblies[0]; p.wrists = {{{{9.425227f, 1.876608f, 1.128829f}, {0.3185248f, -0.1143048f, -0.1004965f, 0.9356158f}}, {{-3.034917f, -1.794933f, -0.870813f}, {-0.0571761f, -0.6260409f, 0.7651170f, -0.1392833f}}}}; return p;}(); // Wrists: ak74u native idle.
+	// mp5 magazine grasp: record_001.jsonl h1_wpn_smg_mp5_reload t=0.208.
+	inline constexpr hands::anchor mp5_magazine_in_wrist{{5.051070f, 3.828585f, 0.811169f}, {-0.7050186f, 0.3792430f, -0.2078304f, 0.5620765f}};
+	inline constexpr std::array<joint_pose, 18> mp5_magazine_fingers{{
+		{"j_index_le_0", {0.5057236f, -0.3245012f, 0.2849521f, 0.7468232f}},
+		{"j_mid_le_0", {0.4268489f, -0.3847638f, 0.3779552f, 0.7258834f}},
+		{"j_pinkypalm_le", {0.6899298f, -0.2319400f, -0.1903211f, 0.6587705f}},
+		{"j_ringpalm_le", {0.7147496f, -0.1145634f, -0.1050762f, 0.6818850f}},
+		{"j_thumb_le_0", {0.2130130f, -0.1013563f, 0.3509989f, 0.9061745f}},
+		{"j_webbing_le", {-0.6724269f, -0.0361651f, -0.1680991f, 0.7199145f}},
+		{"j_index_le_1", {0.0224616f, -0.0151922f, 0.4868639f, 0.8730568f}},
+		{"j_mid_le_1", {-0.0169401f, -0.0131838f, 0.4752962f, 0.8795639f}},
+		{"j_pinky_le_0", {-0.0988837f, 0.2482759f, 0.4975750f, 0.8252274f}},
+		{"j_ring_le_0", {-0.2255299f, 0.0680587f, 0.5203944f, 0.8207886f}},
+		{"j_thumb_le_1", {0.1239819f, 0.0529436f, 0.0388315f, 0.9901099f}},
+		{"j_index_le_2", {0.0082867f, 0.0354015f, 0.4905544f, 0.8706517f}},
+		{"j_mid_le_2", {-0.0292670f, 0.0026396f, 0.5301497f, 0.8473947f}},
+		{"j_pinky_le_1", {0.0176399f, 0.0217599f, 0.2276403f, 0.9733423f}},
+		{"j_ring_le_1", {0.0099187f, 0.0098221f, 0.4663793f, 0.8844747f}},
+		{"j_thumb_le_2", {-0.0251112f, -0.0674900f, -0.0953292f, 0.9928378f}},
+		{"j_pinky_le_2", {-0.0295574f, 0.0161747f, 0.5928597f, 0.8046006f}},
+		{"j_ring_le_2", {-0.0013594f, -0.0028428f, 0.4785378f, 0.8780613f}}
+	}};
+	// mp5: MWR viewmodel_mp5_sp (mp5); slide j_bolt, bullets tag_bullet_group.
+	inline const reload_profile mp5_reload = mwr_rebase::rebase(mp5::physical, {.id = "mwr_mp5", .receiver = "viewmodel_mp5_sp", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullet_group", .magazine_model = "weapon_mp5_clip", .magazine_bind = {{6.295292f, 0.031033f, 2.231274f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{12.410398f, 0.000000f, 5.874801f}, {0.0000000f, -0.0101933f, 0.0000001f, 0.9999481f}}, .slide_same_part = true, .keep_mechanism = false, .magazine_from_receiver = false, .keep_handle_catch = true, .magazine_in_wrist = &mp5_magazine_in_wrist, .magazine_fingers = mp5_magazine_fingers});
+	inline const profile mp5_hand = [] {auto p = mp5::assemblies[0]; p.wrists = {{{{8.782047f, 1.661873f, 2.122351f}, {0.3070530f, -0.0957168f, -0.0635919f, 0.9447290f}}, {{-2.872392f, -1.878325f, 0.063399f}, {0.0342785f, -0.6531557f, 0.7490128f, -0.1057940f}}}}; return p;}(); // Wrists: mp5 native idle.
+	// g3 magazine grasp: record_002.jsonl h1_wpn_asl_g3_reload t=0.439.
+	inline constexpr hands::anchor g3_magazine_in_wrist{{7.285869f, -0.254255f, 4.363392f}, {0.0988404f, 0.3488295f, 0.0027495f, 0.9319555f}};
+	inline constexpr std::array<joint_pose, 18> g3_magazine_fingers{{
+		{"j_index_le_0", {0.7488823f, 0.1528327f, -0.0962164f, 0.6376205f}},
+		{"j_mid_le_0", {0.6741428f, -0.2873084f, 0.1564349f, 0.6622036f}},
+		{"j_pinkypalm_le", {0.6899099f, -0.2319633f, -0.1903450f, 0.6587763f}},
+		{"j_ringpalm_le", {0.7147641f, -0.1145909f, -0.1050736f, 0.6818657f}},
+		{"j_thumb_le_0", {-0.1657345f, -0.1466221f, 0.2904547f, 0.9309512f}},
+		{"j_webbing_le", {-0.6724799f, -0.0361038f, -0.1680666f, 0.7198756f}},
+		{"j_index_le_1", {0.0211190f, -0.0170055f, 0.5590802f, 0.8286701f}},
+		{"j_mid_le_1", {-0.0167894f, -0.0133671f, 0.4657490f, 0.8846566f}},
+		{"j_pinky_le_0", {-0.0746349f, 0.3379036f, 0.2722386f, 0.8978513f}},
+		{"j_ring_le_0", {-0.0965597f, 0.0812154f, 0.3074378f, 0.9431661f}},
+		{"j_thumb_le_1", {0.0837520f, 0.1056776f, -0.4377691f, 0.8889185f}},
+		{"j_index_le_2", {-0.0040808f, 0.0361163f, 0.1695078f, 0.9848584f}},
+		{"j_mid_le_2", {-0.0293280f, -0.0018006f, 0.3965761f, 0.9175315f}},
+		{"j_pinky_le_1", {0.0258185f, 0.0107949f, 0.6615159f, 0.7494088f}},
+		{"j_ring_le_1", {0.0120330f, 0.0070498f, 0.6706422f, 0.7416499f}},
+		{"j_thumb_le_2", {-0.0367737f, -0.0619532f, 0.0834049f, 0.9939080f}},
+		{"j_pinky_le_2", {-0.0303877f, 0.0145355f, 0.5485405f, 0.8354452f}},
+		{"j_ring_le_2", {-0.0012818f, -0.0028600f, 0.4752023f, 0.8798710f}}
+	}};
+	inline bool g3_family(std::string_view name) noexcept { return native_weapon_family(name, "g3"); }
+	// g3: MWR viewmodel_g3 (g3); slide j_bolt, bullets tag_bullet1.
+	inline const reload_profile g3_reload = mwr_rebase::rebase(mp5::physical, {.id = "mwr_g3", .receiver = "viewmodel_g3", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullet1", .magazine_model = "wpn_h1_g3_clip", .magazine_bind = {{6.573443f, -0.142162f, 2.741230f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{15.369194f, -0.000001f, 5.201329f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = false, .magazine_from_receiver = false, .keep_handle_catch = true, .magazine_capacity = 20, .magazine_in_wrist = &g3_magazine_in_wrist, .magazine_fingers = g3_magazine_fingers, .native_family = g3_family});
+	inline const profile g3_hand = [] {auto p = mp5::assemblies[0]; p.wrists = {{{{9.844528f, 2.093818f, 1.943316f}, {0.3460173f, -0.1030787f, -0.0928886f, 0.9279108f}}, {{-3.017807f, -1.538590f, 0.250606f}, {-0.0011727f, -0.6732532f, 0.7394049f, -0.0030434f}}}}; return p;}(); // Wrists: g3 native idle.
 	inline bool uzi_family(std::string_view name) noexcept { return native_weapon_family(name, "uzi"); }
 	// uzi: MWR viewmodel_miniuzi, viewmodel_mini_uzi_sp (uzi); slide j_bolt, bullets tag_bullet.
 	inline const reload_profile uzi_reload = mwr_rebase::rebase(miniuzi::physical, {.id = "mwr_uzi", .receiver = "viewmodel_miniuzi", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullet", .magazine_model = nullptr, .magazine_bind = {{0.448726f, 0.015012f, 2.847369f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{3.133799f, 0.000000f, 4.340701f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = true, .native_family = uzi_family});
@@ -143,11 +195,13 @@ namespace vr::gameplay::weapons::mwr_shared
 	// stinger: MWR viewmodel_stinger (stinger); original mechanics kept.
 	// p90: MWR viewmodel_p90 (p90); slide j_bolt, bullets tag_bullet_single.
 	inline const reload_profile p90_reload = mwr_rebase::rebase(p90::physical, {.id = "mwr_p90", .receiver = "viewmodel_p90", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullet_single", .magazine_model = nullptr, .magazine_bind = {{5.896818f, 0.000000f, 3.248346f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{5.118773f, 0.984914f, 2.598390f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = true});
-	inline const std::array<profile, 17> profiles{{
+	inline const std::array<profile, 19> profiles{{
 		mwr_rebase::adopt(m16::bare, "mwr_m16", "viewmodel_m16", &m16_reload, false),
 		mwr_rebase::adopt(m4::foregrip, "mwr_m4", "viewmodel_m4a1_sp", &m4_reload, false),
 		mwr_rebase::adopt(ak47::assemblies[0], "mwr_ak47", "viewmodel_ak47", &ak47_reload, false),
 		mwr_rebase::adopt(ak74u_hand, "mwr_ak74u", "viewmodel_ak74u_sp", &ak74u_reload, false),
+		mwr_rebase::adopt(mp5_hand, "mwr_mp5", "viewmodel_mp5_sp", &mp5_reload, false),
+		mwr_rebase::adopt(g3_hand, "mwr_g3", "viewmodel_g3", &g3_reload, false),
 		mwr_rebase::adopt(miniuzi::base, "mwr_uzi", "viewmodel_miniuzi", &uzi_reload, true),
 		mwr_rebase::adopt(miniuzi::base, "mwr_uzi", "viewmodel_mini_uzi_sp", &uzi_reload, true),
 		mwr_rebase::adopt(dragunov::base, "mwr_dragunov", "viewmodel_dragunov_sp", &dragunov_reload, true),

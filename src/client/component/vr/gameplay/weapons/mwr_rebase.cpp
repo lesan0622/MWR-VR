@@ -54,6 +54,8 @@ namespace vr::gameplay::weapons::mwr_rebase
 		    hands::sub(t.slide_bind.position, source.slide_rest.position);
 
 		p.id = t.id;
+		if (t.magazine_capacity > 0)
+			p.ammunition.magazine_capacity = t.magazine_capacity;
 		if (t.native_family)
 			p.native_family = t.native_family;
 		p.magazine_bone = t.magazine_bone;
@@ -131,7 +133,7 @@ namespace vr::gameplay::weapons::mwr_rebase
 					p.concealed_bolt = true;
 				p.bolt = nullptr;
 			}
-			if (p.handle_catch)
+			if (p.handle_catch && !t.keep_handle_catch)
 			{
 				p.handle_catch = nullptr;
 				p.ammunition.manual_catch = false;

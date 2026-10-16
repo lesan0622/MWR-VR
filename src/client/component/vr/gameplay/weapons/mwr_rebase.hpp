@@ -32,6 +32,8 @@ namespace vr::gameplay::weapons::mwr_rebase
 		// Keep-mode exceptions where the MWR receiver lacks an MW2 bone.
 		bool drop_bullet_parents{}; // e.g. Desert Eagle j_bullet01 under tag_bullets.
 		bool drop_belt_bridge{};    // e.g. RPD optic rail bridge (MW2 j_rail, MWR tag_rail).
+		bool keep_handle_catch{};   // HK lock-open notch (MP5K recipe on MWR MP5/G3).
+		int magazine_capacity{};     // Native capacity when it differs from the source recipe.
 		std::span<const std::string_view> additional_bullet_bones{};
 		// Support-hand magazine grasp measured from the MWR reload animation
 		// (replaces the MW2 grasp set, which was fitted to MW2's magazine mesh).
