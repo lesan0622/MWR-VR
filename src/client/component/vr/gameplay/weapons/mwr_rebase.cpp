@@ -186,7 +186,19 @@ namespace vr::gameplay::weapons::mwr_rebase
 		// Sound keys are notetrack lookups resolved in the live WeaponDef map
 		// (missing keys stay silent); MWR keeps the COD4 names MW2 inherited.
 		if (t.sound_key)
+		{
 			p.sound_key = t.sound_key;
+			// Split removal audio was resolved from the source's keys at build time.
+			if (p.removal_sound.name)
+				p.removal_sound.name = t.sound_key(mechanics::effect::magazine_out);
+		}
+		if (t.cycle_notetrack)
+		{
+			// MW2 notetrack names absent from the MWR WeaponDef sound map play nothing.
+			for (auto* sound : {&p.rear_sound, &p.close_sound})
+				if (sound->name && sound->kind == sound_reference_kind::notetrack)
+					sound->name = t.cycle_notetrack;
+		}
 		return p;
 	}
 

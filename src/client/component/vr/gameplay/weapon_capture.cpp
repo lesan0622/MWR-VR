@@ -5,6 +5,7 @@
 #include "native_scripted_control.hpp"
 #include "native_carry.hpp"
 #include "weapon_carry_runtime.hpp"
+#include "native_weapon_sound_slice.hpp"
 #include "component/command.hpp"
 #include "component/console.hpp"
 #include "component/scheduler.hpp"
@@ -334,6 +335,32 @@ namespace vr::gameplay::weapon_capture
 				console::info("[VR capture] wrote %d weapon receivers to %s\n", count, file.c_str());
 			});
 			// Select an owned weapon by name (after `give`), for capture sessions.
+			// Decode a loaded sound alias to captures/_sounds/<file>.wav (slice cue authoring).
+			command::add("vr_sound_dump", [](const command::params& params)
+			{
+				if (params.size() < 2) return;
+				const std::string alias = params.get(1);
+				scheduler::once([alias]
+				{
+					const auto entity = *reinterpret_cast<const signed char*>(0x1420E67A0);
+					const float* origin = game::g_entities[0].origin;
+					console::info("[VR audio] dump %s\n",
+						weapons::native_weapon_sound_slice::dump_alias(entity, origin, alias.c_str()).c_str());
+				}, scheduler::pipeline::main);
+			});
+			// Play one part of a split alias: vr_sound_part <alias> first|second.
+			command::add("vr_sound_part", [](const command::params& params)
+			{
+				if (params.size() < 3) return;
+				const std::string alias = params.get(1), part = params.get(2);
+				scheduler::once([alias, part]
+				{
+					const auto entity = *reinterpret_cast<const signed char*>(0x1420E67A0);
+					const bool ok = weapons::native_weapon_sound_slice::play(entity, game::g_entities[0].origin, alias.c_str(),
+						part == "second" ? weapons::sound_part::second : weapons::sound_part::first);
+					console::info("[VR audio] part %s %s -> %d\n", alias.c_str(), part.c_str(), ok);
+				}, scheduler::pipeline::main);
+			});
 			command::add("vr_capture_select", [](const command::params& params)
 			{
 				if (params.size() < 2) return;
