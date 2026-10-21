@@ -48,19 +48,17 @@ namespace vr::gameplay::melee::native
 	}
 	bool initialize()
 	{
+		// MWR entries: G_LocationalTrace 0x1402A2980 (bullettrace), G_Damage
+		// 0x140296C30 (dodamage), meleeDamage accessor (WeaponDef +0x660).
+		// Native melee's contact/blood events use H2 event numbers and are not
+		// rebound on MWR; damage, pain and death stay native.
 		constexpr std::uint8_t trace_entry[]{0x40,0x53,0x55,0x56,0x57,0x48,0x83,0xec,0x78};
-		constexpr std::uint8_t damage_body[]{0x41,0x54,0x41,0x56,0x48,0x81,0xec,0xd8,0x04,0,0};
-		constexpr std::uint8_t damage_accessor[]{0x48,0x83,0xec,0x28,0x41,0xb8,0x08,0x07,0,0,0xe8,0xb1,0xb7,0xff,0xff};
-		constexpr std::uint8_t native_call[]{0xe8,0xe4,0xfd,0xf9,0xff};
-		constexpr std::uint8_t hit_call[]{0xe8,0xa3,0xb0,0xff,0xff};
-		constexpr std::uint8_t blood_call[]{0xe8,0x69,0x8a,0xff,0xff};
-		constexpr std::uint8_t temp_entry[]{0x48,0x89,0x5c,0x24,0x08,0x48,0x89,0x74,0x24,0x10,0x57,0x48,0x83,0xec,0x50};
-		constexpr std::uint8_t event_entry[]{0x40,0x53,0x48,0x83,0xec,0x20,0x41,0x8b,0xc0,0x44,0x8b,0xd2};
+		constexpr std::uint8_t damage_entry[]{0x40,0x53,0x55,0x56,0x57,0x41,0x54,0x41,0x57,0x48,0x81,0xec,0xd8,0x04,0,0};
+		constexpr std::uint8_t damage_accessor[]{0x48,0x83,0xec,0x28,0x41,0xb8,0x60,0x06,0,0,0xe8};
 		// The generic notifies component already detours G_Damage. Validate its
 		// untouched body and the native melee caller, then call the public entry
 		// so existing script/Lua damage policy continues to participate.
-		verified=verify(0x1404c91b0,trace_entry) && verify(0x1404bd2e5,damage_body) && verify(0x1406a45d0,damage_accessor) && verify(0x14051d4f7,native_call) &&
-			verify(0x14051d338,hit_call) && verify(0x14051d532,blood_call) && verify(0x1405183e0,temp_entry) && verify(0x140515fa0,event_entry);
+		verified=verify(0x1402A2980,trace_entry) && verify(0x140296C30,damage_entry) && verify(0x1404B5A20,damage_accessor);
 		return verified;
 	}
 	bool allowed() noexcept
@@ -78,7 +76,7 @@ namespace vr::gameplay::melee::native
 		game::trace_t result{};
 		// G_LocationalTrace is exactly the model/surface trace used by native
 		// melee (0x14051c96e). No NPC origin sphere or head-forward auto targeting.
-		utils::hook::invoke<void>(0x1404c91b0,&result,from.data(),to.data(),0,0x280e091,reinterpret_cast<const void*>(0x140bf4a80));
+		utils::hook::invoke<void>(0x1402A2980,&result,from.data(),to.data(),0,0x280e091,reinterpret_cast<const void*>(0x140ECAF30)); // MWR bullettrace priority map
 		if (!std::isfinite(result.fraction) || result.fraction<0 || result.fraction>=1 || result.hitType!=1 ||
 			(result.surfaceFlags&0x10)) return {};
 		const bool flesh=npc(result.hitId);
@@ -98,11 +96,11 @@ namespace vr::gameplay::melee::native
 		if (!definition ||
 			weapons::native_carry::entity_key(contact.target.entity).generation!=contact.target.generation || contact.hit_location>=19) return 0;
 		if (contact.flesh ? !npc(contact.target.entity) : !training_target(contact.target.entity,kind)) return 0;
-		const auto native_amount=utils::hook::invoke<int>(0x1406a45d0,weapon,false);
+		const auto native_amount=utils::hook::invoke<int>(0x1404B5A20,weapon,false);
         const bool impact=cheats::ragdoll_impact();
         const bool exo=cheats::exo_punch::active();
         const auto knife_amount=(impact || exo) && weapons::native_weapon_read::get(tactical_knife) ?
-            utils::hook::invoke<int>(0x1406a45d0,tactical_knife,false):0;
+            utils::hook::invoke<int>(0x1404B5A20,tactical_knife,false):0;
         const auto amount=scaled_damage(native_amount,kind,impact || exo,knife_amount);if (!amount) return 0;
 		if(kind==tool::shield && definition.definition->weapType!=game::WEAPTYPE_RIOTSHIELD)return 0;
 		auto* target=&game::g_entities[contact.target.entity];auto* player=&game::g_entities[0];const int before=read<int>(target,0x184);
@@ -110,7 +108,7 @@ namespace vr::gameplay::melee::native
 		// Native melee sends a separate contact event before G_Damage. That
 		// event owns weapon-specific impact audio/FX; G_Damage alone never sends it.
 		// Use the physical contact, not the stock forward search/auto-lunge.
-		if (bladed(kind) || kind==tool::shield)
+		if (false && (bladed(kind) || kind==tool::shield)) // MWR: H2 event numbers not rebound.
 		{
 			const auto* ps=reinterpret_cast<const game::playerState_s*>(player->client);
 			if (ps && events::valid_weapon_hit(target->s.entityNum,player->s.entityNum,weapon))
@@ -123,7 +121,7 @@ namespace vr::gameplay::melee::native
 		// Same complete G_Damage ABI and MOD_MELEE=8 as 0x14051d4f7. Native
 		// actor pain, death, invulnerability and mission callbacks own the
 		// result; never subtract health or force an AI animation from the adapter.
-		utils::hook::invoke<void>(0x1404bd2e0,target,player,player,contact.direction.data(),contact.point.data(),amount,0,8u,
+		utils::hook::invoke<void>(0x140296C30,target,player,player,contact.direction.data(),contact.point.data(),amount,0,8u,
 			weapon,false,0u,int(contact.hit_location),contact.model_index,contact.part_name);
 		// Trainer script models consume the native damage notification, not HP
 		// loss. Their listener owns scoring, civilian penalties and target reset.
@@ -137,7 +135,7 @@ namespace vr::gameplay::melee::native
 		// Stock EV_MELEE_BLOOD reselects the current firearm and requires a
 		// tag_knife_fx on its flat viewmodel; sending it too duplicates USP hits.
 		// Shield retains its existing native event behavior.
-		if (kind==tool::shield && accepted>0 && player->client && read<void*>(target,0x120))
+		if (false && kind==tool::shield && accepted>0 && player->client && read<void*>(target,0x120))
 		{utils::hook::invoke<void>(0x140515fa0,player,events::blood,0);++shield_blood_events;}
 		return accepted;
 	}

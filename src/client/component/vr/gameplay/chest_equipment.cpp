@@ -1,4 +1,5 @@
 #include <std_include.hpp>
+#include "weapon_render_pose.hpp"
 #include "component/scene_model_record.hpp"
 #include "chest_equipment.hpp"
 #include "grenade_runtime.hpp"
@@ -107,6 +108,8 @@ namespace vr::gameplay::equipment::chest_items
 			if(grenades::occupies_slot(index) || !running() || !fresh(s) || !fresh(live) || s.reference!=live.reference || !item.model ||
 				item.weapon!=live.items[index].weapon || item.model!=live.items[index].model || live.items[index].quantity<=0 ||
 				!scene_models::native_entry::model(entry,model) || model!=item.model)return result::omit;
+			// MWR: no render-time skeleton record; keep the submit-time (hand/body) placement.
+			if(!weapon_render_pose::available())return result::unchanged;
 			std::array<float,12> camera{};vec origin{};hands::attachments::solved pose;
 			if(!read(p.record,engine_stereo_view::h2_view_origin_offset,camera) ||
 				!hands::attachments::for_record(p.record,camera,pose) || pose.reference!=s.reference)return result::retain;
@@ -127,8 +130,11 @@ namespace vr::gameplay::equipment::chest_items
 			static_assert(offsetof(game::WeaponDef, inventoryType) == 0x550);
 			constexpr std::uint8_t primary[]{0x8b,0x9e,0xb4,0x03,0,0},secondary[]{0x8b,0x9e,0xb8,0x03,0,0};
 			constexpr std::uint8_t mask[]{255,255,255,255,255,255};
-			verified=bool(utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(0x140697a88),{primary,mask,sizeof(primary)})) &&
-				bool(utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(0x140697a99),{secondary,mask,sizeof(secondary)}));
+			// MWR: offhand slots witnessed live (ps+0x380 current, +0x384 primary,
+			// +0x388 secondary); getcurrentoffhand (0x140291C00) tests +0x380.
+			constexpr std::uint8_t current[]{0xf7,0x80,0x80,0x03,0,0};
+			(void)primary;(void)secondary;
+			verified=bool(utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(0x140291C48),{current,mask,sizeof(current)}));
 			enabled=dvars::register_bool("vr_chestEquipment",true,game::DVAR_FLAG_SAVED,"Display native tactical and lethal equipment on the chest");
 			scheduler::loop(sample,scheduler::pipeline::server,16ms);
 			scene_models::on_submit(submit);scene_models::on_prepare_placement(prepare);fastfiles::on_pre_unload(retire);

@@ -222,7 +222,7 @@ namespace vr::gameplay::weapons::native_weapon_sound
 		const auto* definition=game::weapon_defs[weapon];
 		if(!definition || definition->inventoryType!=game::WEAPINVENTORY_OFFHAND || int(definition->weapType)!=2)return false;
 		for(float x:origin)if(!std::isfinite(x) || std::abs(x)>1e7f)return false;
-		sound_map map;if(!copy_map(weapon,map))return false;
+		sound_map map;if(!copy_map(weapon,map)){map={};map.entity=*reinterpret_cast<const signed char*>(0x1420E67A0);if(map.entity<0)return false;}
 		std::array<char,128> alias{};bool found{};
 		const std::string_view suffix=release?"_fire_plr":"_pin_plr";
 		for(unsigned i=0;i<map.keys.size();++i)
@@ -233,6 +233,13 @@ namespace vr::gameplay::weapons::native_weapon_sound
 			if(!std::string_view(key.data()).ends_with(suffix))continue;
 			if(found || !copy_name(game::SL_ConvertToString(map.values[i]),alias.data(),alias.size()))return false;
 			found=true;
+		}
+		// MWR offhand WeaponDefs carry no pin/throw notetrack sounds; the loaded
+		// frag player aliases serve every hand grenade.
+		if(!found)
+		{
+			const std::string_view fallback=release?"weap_fraggrenade_fire_plr":"weap_fraggrenade_pin_plr";
+			std::copy(fallback.begin(),fallback.end(),alias.begin());alias[fallback.size()]=0;found=true;
 		}
 		return found && utils::hook::invoke<int>(play_address,map.entity,origin.data(),alias.data())!=-1;
 	}

@@ -882,6 +882,15 @@ namespace vr
 				std::remove("overlord_cmd.txt");
 				if (!commands.empty()) command::execute(commands, false);
 			}, scheduler::pipeline::main, 1s);
+			// MWR: native depth of field (ADS focus blur, scripted DOF) blurs the whole
+			// stereo image in VR. Keep it off while VR runs.
+			scheduler::loop([]
+			{
+				if (!vr_enable || !vr_enable->current.enabled) return;
+				for (const auto* name : {"r_dof_enable", "r_dof_physical_enable"})
+					if (const auto* dvar = game::Dvar_FindVar(name); dvar && dvar->current.enabled)
+						command::execute(std::string(name) + " 0", true);
+			}, scheduler::pipeline::main, 1s);
 			if (char autoexec[256]{}; GetEnvironmentVariableA("OVERLORD_MWR_AUTOEXEC", autoexec, sizeof(autoexec)) != 0)
 			{
 				const std::string commands{autoexec};

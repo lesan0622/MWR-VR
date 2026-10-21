@@ -284,6 +284,17 @@ namespace vr::gameplay::weapon_capture
 						if (token) owned += std::format(" {}:{}", token, weapon_name(token));
 					}
 					console::info("[VR capture] %s inventory:%s\n", label, owned.c_str());
+					// MWR port: locate offhand slot fields (offsets holding an owned offhand token).
+					std::string slots;
+					for (int off = 0x2c0; off < 0x420; off += 4)
+					{
+						std::uint32_t value{};
+						std::memcpy(&value, b + off, 4);
+						if (value && value < 512 && game::weapon_defs[value] &&
+							game::weapon_defs[value]->inventoryType == game::WEAPINVENTORY_OFFHAND)
+							slots += std::format(" +0x{:x}={}:{}", off, value, weapon_name(value));
+					}
+					console::info("[VR capture] %s offhand fields:%s\n", label, slots.c_str());
 				};
 				dump("server", game::g_entities[0].client);
 				bool dead{};
@@ -347,6 +358,27 @@ namespace vr::gameplay::weapon_capture
 					console::info("[VR audio] dump %s\n",
 						weapons::native_weapon_sound_slice::dump_alias(entity, origin, alias.c_str()).c_str());
 				}, scheduler::pipeline::main);
+			});
+			// Print a weapon's notetrack -> sound alias map: vr_sound_map <weapon>.
+			command::add("vr_sound_map", [](const command::params& params)
+			{
+				if (params.size() < 2) return;
+				const std::string wanted = params.get(1);
+				for (unsigned i = 1; i < 512; ++i)
+				{
+					const auto* def = game::weapon_defs[i];
+					if (!def) break;
+					if (!def->szInternalName || wanted != def->szInternalName) continue;
+					const unsigned *keys{}, *values{};
+					std::memcpy(&keys, reinterpret_cast<const std::byte*>(def) + 0x90, sizeof(keys));
+					std::memcpy(&values, reinterpret_cast<const std::byte*>(def) + 0x98, sizeof(values));
+					std::string out;
+					for (unsigned n = 0; keys && values && n < 36; ++n)
+						if (keys[n] && values[n])
+							out += std::format(" {}={}", game::SL_ConvertToString(keys[n]), game::SL_ConvertToString(values[n]));
+					console::info("[VR capture] sound map %s:%s\n", wanted.c_str(), out.c_str());
+					return;
+				}
 			});
 			// Play one part of a split alias: vr_sound_part <alias> first|second.
 			command::add("vr_sound_part", [](const command::params& params)

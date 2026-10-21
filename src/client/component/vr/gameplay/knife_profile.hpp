@@ -9,7 +9,7 @@ namespace vr::gameplay::equipment::knife_profile
 {
 	// Common H2 melee knife; left-hand source: h2_wpn_knife_melee_slice, frame 8.
 	// Exported centimetres converted to native model inches; assets remain engine-owned.
-	inline constexpr const char* model_name="h2_viewmodel_knife";
+	inline constexpr const char* model_name="viewmodel_knife"; // MWR (H2 h2_viewmodel_knife)
 	inline constexpr const char* bayonet_model_name="wpn_h1_melee_rifle_bayonet_vm";
 	// Project the middle/ring knuckle midpoint onto the handle axis. The
 	// former -5 cm pivot was near the thumb, translating a flipped handle.

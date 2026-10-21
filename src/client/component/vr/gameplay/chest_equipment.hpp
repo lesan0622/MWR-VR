@@ -14,7 +14,7 @@ namespace vr::gameplay::equipment
 		if(ps.size()<0x3bc)return out;
 		for(unsigned i=0;i<out.size();++i)
 		{
-			std::memcpy(&out[i],ps.data()+(i==0 ? 0x3b8:0x3b4),4);
+			std::memcpy(&out[i],ps.data()+(i==0 ? 0x388:0x384),4); // MWR offhand secondary/primary (H2 0x3b8/0x3b4)
 			if(out[i]>511)out[i]=0;
 		}
 		return out;

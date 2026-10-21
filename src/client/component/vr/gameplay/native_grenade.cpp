@@ -20,13 +20,14 @@ namespace vr::gameplay::grenades::native
 	}
 	bool initialize()
 	{
-		constexpr std::uint8_t spawn[]{0x40,0x53,0x55,0x56,0x57,0x41,0x54,0x41,0x55,0x41,0x56,0x41,0x57,0x48,0x81,0xec,0x68,0x04,0,0};
-		constexpr std::uint8_t caller[]{0x89,0x74,0x24,0x28,0x4c,0x8d,0x44,0x24,0x40,0x48,0x8b,0xcf,0xc7,0x44,0x24,0x20,1,0,0,0,0xe8,0xa9,0x17,0xfb,0xff};
-		constexpr std::uint8_t timer[]{0x03,0x0d,0x48,0x96,0x0f,0x05,0x89,0x8b,0x80,0x01,0,0};
-		constexpr std::uint8_t fuse[]{0x48,0x83,0xec,0x28,0x45,0x84,0xc0,0x41,0xb8,0xd4,0x07,0,0,0x74,0x06,0x41,0xb8,0xd8,0x07,0,0};
-		constexpr std::uint8_t client_gate[]{0x48,0x83,0xb9,0x18,0x01,0,0,0};
-		ready=verify(0x1404cf130,spawn) && verify(0x14051d96e,caller) && verify(0x1404d3132,timer) &&
-			verify(0x1406a4080,fuse) && verify(0x14051d85d,client_gate) && weapons::native_ammunition::initialize();
+		// MWR: G_FireGrenade(parent,start,velocity,weapon,rotate,fuse_ms) as called by
+		// magicgrenademanual (0x1402CF9E0); fuse accessor reads aiFuseTime/fuseTime
+		// (WeaponDef +0x72c/+0x730); gettime (0x1402BD990) reads level.time.
+		constexpr std::uint8_t spawn[]{0x40,0x53,0x55,0x56,0x57,0x41,0x54,0x41,0x55,0x41,0x56,0x41,0x57,0x48,0x81,0xec,0x48,0x04,0,0};
+		constexpr std::uint8_t fuse[]{0x48,0x83,0xec,0x28,0x45,0x84,0xc0,0x41,0xb8,0x2c,0x07,0,0,0x74,0x06,0x41,0xb8,0x30,0x07,0,0};
+		constexpr std::uint8_t timer[]{0x8b,0x0d,0x0a,0xe1,0x41,0x05};
+		ready=verify(0x1402A8680,spawn) && verify(0x1404B5520,fuse) && verify(0x1402BD990,timer) &&
+			weapons::native_ammunition::initialize();
 		return ready;
 	}
 	bool describe(std::uint32_t weapon,descriptor& out)noexcept
@@ -38,7 +39,7 @@ namespace vr::gameplay::grenades::native
 		const auto k=classify(d->szInternalName,world?world:"");if(!valid(k))return false;
 		// Stock sets the third argument from (thrower->client == nullptr).
 		// SDK timer field names are reversed for H2: false selects player +0x7d4.
-		const int fuse=utils::hook::invoke<int>(0x1406a4080,weapon,false,false);
+		const int fuse=utils::hook::invoke<int>(0x1404B5520,weapon,false,false);
 		if(fuse<0 || fuse>60000 || (behaviors[unsigned(k)].timed ? fuse==0 : fuse!=0))return false;
 		float radius=1.5f;
 		if(k==kind::football || k==kind::pomegranate)
@@ -49,13 +50,13 @@ namespace vr::gameplay::grenades::native
 		}
 		out={weapon,k,fuse,radius};return true;
 	}
-	int time()noexcept{return ready?*reinterpret_cast<const int*>(0x1455cc780):0;}
+	int time()noexcept{return ready?*reinterpret_cast<const int*>(0x1456DBAA0):0;}
 	game::gentity_s* spawn_projectile(std::uint32_t weapon,hands::vec position,hands::vec velocity,bool rotate,int fuse_ms)noexcept
 	{
 		if(!server() || !weapon || weapon>=512 || !game::weapon_defs[weapon] || int(game::weapon_defs[weapon]->weapType)!=2 || fuse_ms<0 || fuse_ms>60000)return nullptr;
 		for(float x:position)if(!std::isfinite(x) || std::abs(x)>1e7f)return nullptr;
 		for(float x:velocity)if(!std::isfinite(x) || std::abs(x)>11000)return nullptr;
-		return utils::hook::invoke<game::gentity_s*>(0x1404cf130,&game::g_entities[0],position.data(),velocity.data(),weapon,int(rotate),fuse_ms);
+		return utils::hook::invoke<game::gentity_s*>(0x1402A8680,&game::g_entities[0],position.data(),velocity.data(),weapon,int(rotate),fuse_ms);
 	}
 	bool available(std::uint32_t weapon)noexcept
 	{

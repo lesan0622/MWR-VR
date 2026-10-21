@@ -1,4 +1,5 @@
 #include <std_include.hpp>
+#include "weapon_render_pose.hpp"
 #include "grenade_runtime.hpp"
 #include "grenade_profile.hpp"
 #include "grenade_contact.hpp"
@@ -64,6 +65,7 @@ namespace vr::gameplay::grenades
 		equipment::grab_intent draw_intent;
 		std::array<pin_debris,4> debris;
 		std::array<std::shared_ptr<asset>,kind_count> assets;
+		std::array<std::atomic<const char*>,kind_count> model_reasons{}; // MWR port diagnostic.
 		std::array<std::array<unsigned short,8>,held_count> lighting{};
 		std::array<std::array<unsigned short,8>,kind_count> debris_lighting{};
 		std::mutex sound_mutex;std::array<sound_event,16> sounds{};unsigned sound_count{};
@@ -122,10 +124,22 @@ namespace vr::gameplay::grenades
 				if(assets[k])continue;
 				const auto& profile=authored::profiles[k];
 				auto* source=game::DB_FindXAssetHeader(game::ASSET_TYPE_XMODEL,profile.model,0).model;
-				if(!source || !source->name || std::string_view(source->name)!=profile.model || source->numBones<2 || source->numBones>8 ||
-					!source->boneNames || !source->baseMat || source->numLods!=1 || !source->lodInfo[0].surfs)continue;
-				const auto* root_name=game::SL_ConvertToString(source->boneNames[1]);if(!root_name || std::string_view(root_name)!="tag_clip")continue;
-				auto next=std::make_shared<asset>();next->count=source->numBones;next->pin_mask=profile.pin_mask;
+				// MWR models carry several LODs; the hand item uses LOD0 only.
+				if(!source || !source->name || std::string_view(source->name)!=profile.model){model_reasons[k]="not loaded";continue;}
+				if(source->numBones<2 || source->numBones>8 ||
+					!source->boneNames || !source->baseMat || source->numLods<1 || !source->lodInfo[0].surfs){model_reasons[k]="bones/lod contract";continue;}
+				const auto* root_name=game::SL_ConvertToString(source->boneNames[1]);if(!root_name || std::string_view(root_name)!="tag_clip"){model_reasons[k]="bone1 not tag_clip";continue;}
+				// Pin/ring parts by bone name: MWR assets order their bones differently
+				// from the H2 recipes (authored masks are the fallback).
+				unsigned pin_mask{};
+				for(unsigned b=2;b<source->numBones;++b)
+				{
+					const auto* bone=game::SL_ConvertToString(source->boneNames[b]);if(!bone)continue;
+					const std::string_view n(bone);
+					if(n.find("ring")!=n.npos || n.find("stick")!=n.npos || n.find("activate")!=n.npos || n.find("pin")!=n.npos)pin_mask|=1u<<b;
+				}
+				if(!pin_mask || !profile.pin_mask)pin_mask=profile.pin_mask;
+				auto next=std::make_shared<asset>();next->count=source->numBones;next->pin_mask=pin_mask;
 				const auto root=inverse(bind(source->baseMat[1]));bool valid=true;unsigned geometry{};
 				const auto& source_bounds=source->bounds;
 				bool bounds_valid=true;
@@ -138,17 +152,24 @@ namespace vr::gameplay::grenades
 				// but owns no pin/lever meshes. No other asset has to be loaded first.
 				if(k==unsigned(kind::pomegranate))next->pin=compose(root,{{source_bounds.midPoint[0],source_bounds.midPoint[1]+source_bounds.halfSize[1]*.35f,source_bounds.midPoint[2]+source_bounds.halfSize[2]*.8f},{0,0,0,1}}).position;
 
-				if(k==unsigned(kind::frag))
+				// The authored M67 lever face split only applies to the H2 mesh; other
+				// meshes (MWR) keep a rigid lever on the body.
+				bool frag_lever=false;
+				if(k==unsigned(kind::frag) && source->numsurfs==1 && source->lodInfo[0].surfs[0].vertCount==authored::frag_vertices &&
+					source->lodInfo[0].surfs[0].triCount==authored::frag_triangles)
 				{
-					if(source->numsurfs!=1 || source->lodInfo[0].surfs[0].vertCount!=authored::frag_vertices || source->lodInfo[0].surfs[0].triCount!=authored::frag_triangles)continue;
 					std::array<std::byte,authored::frag_triangles*6> triangles{};
-					if(!utils::native_memory::read_bytes(triangles.data(),source->lodInfo[0].surfs[0].triIndices,triangles.size()))continue;
-					std::uint32_t hash=2166136261u;for(auto b:triangles)hash=(hash^std::to_integer<unsigned char>(b))*16777619u;
-					if(hash!=authored::frag_triangles_hash){reason="M67 lever topology changed";continue;}
+					if(utils::native_memory::read_bytes(triangles.data(),source->lodInfo[0].surfs[0].triIndices,triangles.size()))
+					{
+						std::uint32_t hash=2166136261u;for(auto b:triangles)hash=(hash^std::to_integer<unsigned char>(b))*16777619u;
+						frag_lever=hash==authored::frag_triangles_hash;
+					}
 				}
 
 				std::array<scene_models::runtime_model,8> identity{};unsigned registered{},pin_count{};
-				bool skinned{};for(unsigned n=0;n<source->numsurfs;++n)skinned=skinned || (source->lodInfo[0].surfs[n].flags&4u);
+				// Fully skinned assets (H2) partition by weights; MWR mixes rigid surfaces
+				// with a few skinned ones, which the per-bone rigid path handles.
+				bool skinned=source->numsurfs>0;for(unsigned n=0;n<source->numsurfs;++n)skinned=skinned && (source->lodInfo[0].surfs[n].flags&4u);
 				if(skinned)
 				{
 					unsigned used{};
@@ -156,7 +177,12 @@ namespace vr::gameplay::grenades
 					{
 						const auto& surf=source->lodInfo[0].surfs[n];std::size_t words{},vertices{};
 						for(unsigned j=0;j<8;++j){if(surf.blendVertCounts[j]<0){valid=false;break;}vertices+=surf.blendVertCounts[j];words+=surf.blendVertCounts[j]*(2*j+1);}
-						if(!valid || vertices!=surf.vertCount || words>65535*15){valid=false;break;}
+						if(!valid || vertices!=surf.vertCount || words>65535*15)
+						{
+							static std::array<std::string,kind_count> why;
+							why[k]=std::format("skin weights surf {}/{} verts {} blended {} rigid_lists {} flags 0x{:x}",n,source->numsurfs,surf.vertCount,vertices,surf.rigidVertListCount,surf.flags);
+							model_reasons[k]=why[k].c_str();valid=false;break;
+						}
 						std::vector<std::uint16_t> blend(words);
 						if(!utils::native_memory::read_bytes(blend.data(),surf.blendVerts,words*2)){valid=false;break;}
 						for(std::size_t at=0,j=0;j<8 && valid;++j)for(int v=0;v<surf.blendVertCounts[j] && valid;++v)
@@ -166,19 +192,20 @@ namespace vr::gameplay::grenades
 							at+=2*j+1;
 						}
 					}
-					if(!valid)continue;
-					next->count=profile.pin_mask?2:1;next->pin_mask=profile.pin_mask?2:0;
+					if(!valid){if(!model_reasons[k].load())model_reasons[k]="skin weights";continue;}
+					next->count=pin_mask?2:1;next->pin_mask=pin_mask?2:0;
 					for(unsigned part=0;part<next->count && valid;++part)
 					{
 						std::array<unsigned,8> members{};unsigned count{};
-						for(unsigned b=0;b<source->numBones;++b)if((used&(1u<<b)) && bool(profile.pin_mask&(1u<<b))==bool(part))members[count++]=b;
-						if(!count){valid=false;break;}
+						for(unsigned b=0;b<source->numBones;++b)if((used&(1u<<b)) && bool(pin_mask&(1u<<b))==bool(part))members[count++]=b;
+						if(!count){model_reasons[k]=part?"no skinned pin bones":"no skinned body bones";valid=false;break;}
 						next->pieces[part]=std::make_unique<scene_models::rigid_part>();
 						if(!next->pieces[part]->create_skin_partition(source,{members.data(),count})){reason=next->pieces[part]->status();valid=false;break;}
 						next->local[part]=root;identity[registered++]={next->pieces[part]->model(),source};
 						if(part){include_pin(*next,part);++pin_count;}
 					}
-					if(!valid || (profile.pin_mask && !pin_count) || !scene_models::register_runtime_models({identity.data(),registered}))continue;
+					if(!valid || (pin_mask && !pin_count) || !scene_models::register_runtime_models({identity.data(),registered}))
+					{if(valid)model_reasons[k]="registration";continue;}
 					assets[k]=std::move(next);
 					{const std::lock_guard lock(mutex);published.assets=assets;}reason="native skinned grenade partitions ready";continue;
 				}
@@ -198,13 +225,24 @@ namespace vr::gameplay::grenades
 					if(!valid)break;
 					if(!has_mesh)continue;
 					next->pieces[b]=std::make_unique<scene_models::rigid_part>();
-					const bool created=k==unsigned(kind::frag) && b==1 ? next->pieces[b]->create_face_partition(source,b,authored::frag_lever_faces,false) : next->pieces[b]->create(source,b);
-					if(!created){reason=next->pieces[b]->status();valid=false;break;}
+					bool created=frag_lever && b==1 ? next->pieces[b]->create_face_partition(source,b,authored::frag_lever_faces,false) : next->pieces[b]->create(source,b);
+					// MWR mixes rigid and skinned surfaces; take this bone's whole triangles from both.
+					if(!created && !(frag_lever && b==1)){next->pieces[b]=std::make_unique<scene_models::rigid_part>();created=next->pieces[b]->create_rigid_bone(source,b);}
+					if(!created)
+					{
+						static std::array<std::string,kind_count> why;
+						why[k]=std::format("bone {} part: {}",b,next->pieces[b]->status());model_reasons[k]=why[k].c_str();
+						// MWR: a bone whose triangles share skin weights with others cannot be
+						// split out; leave it off rather than rejecting the whole grenade.
+						if(!frag_lever){next->pieces[b].reset();continue;}
+						reason=next->pieces[b]->status();valid=false;break;
+					}
 					identity[registered++]={next->pieces[b]->model(),source};geometry|=1u<<b;
-					if(profile.pin_mask&(1u<<b)){include_pin(*next,b);++pin_count;}
+					if(pin_mask&(1u<<b)){include_pin(*next,b);++pin_count;}
 				}
-				if(!valid || !registered || (profile.pin_mask && !pin_count) || !(geometry&~profile.pin_mask))continue;
-				if(k==unsigned(kind::frag))
+				if(!valid || !registered || (pin_mask && !pin_count) || !(geometry&~pin_mask))
+				{model_reasons[k]=!valid?(model_reasons[k].load()?model_reasons[k].load():"part creation failed"):!registered?"no mesh parts":(pin_mask && !pin_count)?"no pin mesh":"no body mesh";continue;}
+				if(frag_lever)
 				{
 					next->pieces[0]=std::make_unique<scene_models::rigid_part>();
 					if(!next->pieces[0]->create_face_partition(source,1,authored::frag_lever_faces,true)){reason=next->pieces[0]->status();continue;}
@@ -314,6 +352,8 @@ namespace vr::gameplay::grenades
 					const auto& current_item=live.items[slot];
 					if(!fresh(live.at) || item.value.revision!=current_item.value.revision || item.value.stage!=current_item.value.stage ||
 						item.value.reference!=live.reference || item.value.holder!=current_item.value.holder)return result::omit;
+					// MWR: no render-time skeleton record; keep the submit-time (hand/body) placement.
+					if(!weapon_render_pose::available())return result::unchanged;
 					std::array<float,12> camera{};vec origin{};attachments::solved pose;
 					if(!utils::native_memory::read_bytes(camera.data(),static_cast<const std::byte*>(p.record)+engine_stereo_view::h2_view_origin_offset,sizeof(camera)) ||
 						!attachments::for_record(p.record,camera,pose) || pose.reference!=item.value.reference ||
@@ -610,7 +650,7 @@ namespace vr::gameplay::grenades
 			scene_models::on_submit(submit);scene_models::on_prepare_placement(prepare);
 			command::add("vr_grenade_status",[]{scheduler::once([]{
 				std::ostringstream out;out<<"grenades_ready="<<ready<<" takes="<<takes<<" pins="<<pins<<" returns="<<returns<<" throws="<<throws<<" cooks="<<cooks<<" in_hand="<<in_hand<<" spawn_failures="<<failed<<" handoffs="<<handoffs<<" sounds="<<sounds_played<<" missing_sounds="<<sounds_missing<<" reason="<<reason.load()<<'\n';
-				{const std::lock_guard lock(mutex);for(unsigned k=0;k<kind_count;++k)out<<"model="<<authored::profiles[k].model<<" ready="<<bool(published.assets[k])<<'\n';}
+				{const std::lock_guard lock(mutex);for(unsigned k=0;k<kind_count;++k)out<<"model="<<authored::profiles[k].model<<" ready="<<bool(published.assets[k])<<" why="<<(model_reasons[k].load()?model_reasons[k].load():"-")<<'\n';}
 				out<<"throwback_ready="<<throwback::ready()<<" throwback_takes="<<throwback_takes<<" throwback_rejected="<<throwback_rejected<<'\n';
 				const auto candidate=throwback::query();out<<"throwback_candidate="<<candidate.entity.entity<<" weapon="<<candidate.grenade.weapon<<" deadline="<<candidate.deadline<<'\n';
 				for(unsigned i=0;i<held_count;++i){const auto& s=items[i].value;out<<"slot="<<i<<" weapon="<<s.weapon<<" phase="<<unsigned(s.stage)<<" hand="<<int(s.holder)<<" puller="<<int(s.puller)<<" spent="<<s.spent<<" fuse="<<s.fuse_ms<<" deadline="<<s.deadline<<" throwback_entity="<<items[i].source.entity.entity<<'\n';}

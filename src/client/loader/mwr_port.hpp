@@ -60,6 +60,9 @@ namespace mwr_port
 		"vr::gameplay::interaction",
 		"vr::controller_calibration",
 		"vr::gameplay::weapons::viewmodel_visibility::visibility_component",
+		"vr::gameplay::grenades", // Physical frag/flash/smoke: chest grasp, pin, throw (native G_FireGrenade).
+		"vr::gameplay::equipment", // Physical knife melee (native trace + G_Damage).
+		"vr::gameplay::equipment::chest_items",
 	};
 
 	// typeid names look like "class vr::gameplay::foo::component".

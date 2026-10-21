@@ -25,7 +25,7 @@ namespace vr::gameplay::melee::feedback
 		std::size_t count{};
 		std::atomic_uint64_t epoch{}, queued{}, emitted{}, discarded{}, missing{};
 		bool ready{};
-		constexpr std::uintptr_t play_oriented=0x140453f50;
+		constexpr std::uintptr_t play_oriented=0x1402311E0; // MWR FX_PlayOrientedEffect (H2 0x140453F50)
 		bool valid(const anchor& pose)
 		{
 			for (float x:pose.position) if (!std::isfinite(x) || std::abs(x)>1e7f) return false;
@@ -43,11 +43,11 @@ namespace vr::gameplay::melee::feedback
 			const auto* alternate=game::Dvar_FindVar("player_meleeForceAlternate");
 			// These are the same native controls read by 0x1403b98e0. The
 			// unnamed enable gate is registered with this hash at 0x1403baf83.
-			const auto* enabled=game::Dvar_FindVar("0x769a7d7d");
+			const auto* enabled=game::Dvar_FindVar("0x769a7d7d"); // H2 hash; absent on MWR (gate treated as on)
 			const auto* blood=game::Dvar_FindVar("cg_blood");
 			const bool gameplay=game::CL_IsCgameInitialized() && !*game::keyCatchers && pause && !pause->current.integer &&
 				weapons::carry::active() && scripted_control::predicted_allowed();
-			if (!gameplay || !alternate || alternate->current.integer || !enabled || !enabled->current.enabled || !blood)
+			if (!gameplay || (alternate && alternate->current.integer) || (enabled && !enabled->current.enabled) || !blood)
 			{ discarded+=size; return; }
 			const auto* name=blood->current.enabled ? "vfx/weaponimpact/flesh_impact_knife" : "vfx/weaponimpact/flesh_impact_knife_noblood";
 			auto* effect=game::DB_FindXAssetHeader(game::ASSET_TYPE_FX,name,0).fx;
