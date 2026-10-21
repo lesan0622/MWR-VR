@@ -86,6 +86,7 @@ namespace vr::gameplay::weapons::physical_reload
 		constexpr size_t round_lighting_base = 15+8+30+15+15;
 		// Held, drops, partition, inserted, live chamber; then MWR counted rounds per index.
 		std::array<unsigned short,round_lighting_base*2> lighting_handles{};
+		std::atomic<std::uint64_t> chamber_draws{}; // MWR port diagnostic: live chamber cartridge submits.
 		struct event_cursor { std::uint64_t instance{}, sequence{}; };
 		instance_cache<event_cursor,512> event_cursors;
 		template<class T> bool read(const void* source, size_t offset, T& output) noexcept
@@ -268,6 +269,7 @@ namespace vr::gameplay::weapons::physical_reload
 			{
 				auto world=hand_frame.chamber_model;world.position=add(world.position,hand_frame.inserted_origin);
 				draw(world,68+hand_frame.slot,hand_frame.definition,hand_frame.units,0,true);
+				++chamber_draws;
 			}
 			if(hand_frame.partitioned_mesh && eligible(attachment_kind::action_partition))
 			{
@@ -330,9 +332,9 @@ namespace vr::gameplay::weapons::physical_reload
 	}
 	std::string presentation_status()
 	{
-		auto result = std::format("held_attachment=native_viewmodel_record matches={} misses={} rejected(record/epoch/state/origin)={}/{}/{}/{} slide_visual=current_pose return=per_profile\n",
+		auto result = std::format("held_attachment=native_viewmodel_record matches={} misses={} rejected(record/epoch/state/origin)={}/{}/{}/{} slide_visual=current_pose return=per_profile chamber_draws={}\n",
 			attachment_matches.load(),attachment_misses.load(),attachment_rejections[0].load(),attachment_rejections[1].load(),
-			attachment_rejections[2].load(),attachment_rejections[3].load());
+			attachment_rejections[2].load(),attachment_rejections[3].load(),chamber_draws.load());
 		for (size_t i=0;i<reload_profiles.size();++i)
 		{
 			result += std::format("magazine_asset({})={} [{}] ",reload_profiles[i]->id,
@@ -764,7 +766,7 @@ namespace vr::gameplay::weapons::physical_reload
 		held.units = units;
 		held.definition = profile;held.view.owner=owner;
 		held.inserted_origin=view_offset;
-		if(state.active && !state.fault && manual && magazine_assets::cartridge(profile).model)
+		if(state.active && !state.fault && (manual || definition.chamber_display) && magazine_assets::cartridge(profile).model)
 		{
 			if(const auto chamber=chamber_cartridge_pose(definition,state.ammo,visual_travel,bolt_target.travel,units))
 			{held.live_chamber=true;held.chamber_model=compose(gun,*chamber);}

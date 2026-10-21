@@ -19,9 +19,9 @@ namespace vr::gameplay::weapons
 			pose=(*p.feeding_path)[2];
 			travel=std::clamp(manual_fraction,0.f,.85f)*p.interaction.manual_bolt->stroke;
 		}
-		else if(p.chamber_round)
+		else if(p.chamber_round || p.chamber_display)
 		{
-			pose=*p.chamber_round;
+			pose=p.chamber_round ? *p.chamber_round : *p.chamber_display;
 			travel=std::clamp(manual_travel_m,0.f,p.interaction.full_stroke);
 		}
 		else return {};

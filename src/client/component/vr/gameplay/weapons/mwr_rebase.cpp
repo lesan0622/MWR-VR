@@ -192,6 +192,8 @@ namespace vr::gameplay::weapons::mwr_rebase
 			if (p.removal_sound.name)
 				p.removal_sound.name = t.sound_key(mechanics::effect::magazine_out);
 		}
+		if (t.has_chamber && !p.chamber_round && !p.feeding_path && !p.interaction.manual_bolt)
+			p.chamber_display = keep<hands::anchor>(t.chamber);
 		if (t.cycle_notetrack)
 		{
 			// MW2 notetrack names absent from the MWR WeaponDef sound map play nothing.
@@ -203,11 +205,21 @@ namespace vr::gameplay::weapons::mwr_rebase
 	}
 
 	profile adopt(const profile& source, std::string_view id, std::string_view receiver,
-		const reload_profile* reload, bool keep_parts)
+		const reload_profile* reload, bool keep_parts, std::span<const std::string_view> drop_parts)
 	{
 		auto p = source;
 		if (!keep_parts)
 			p.equip_rest = {}; // Names MW2 receiver bones.
+		else if (!drop_parts.empty())
+		{
+			// Identical receiver except a few MW2-only bones (e.g. RPD optic rail):
+			// keep every other rest part; a missing bone would reject the whole library.
+			auto* kept = keep<std::vector<hands::part_pose>>();
+			for (const auto& part : p.equip_rest)
+				if (std::find(drop_parts.begin(), drop_parts.end(), part.name) == drop_parts.end())
+					kept->push_back(part);
+			p.equip_rest = *kept;
+		}
 		p.id = id;
 		p.receiver = receiver;
 		p.variant = "mwr_rebased";

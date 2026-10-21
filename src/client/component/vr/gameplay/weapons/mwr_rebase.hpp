@@ -45,6 +45,9 @@ namespace vr::gameplay::weapons::mwr_rebase
 		const char* (*sound_key)(mechanics::effect) noexcept {}; // Optional override.
 		const belt_feed::profile* belt{}; // MWR feed cover/belt poses replacing the source recipe's.
 		const char* cycle_notetrack{}; // MWR notetrack split for rear/close when the source's is absent.
+		// Gun-local live chamber cartridge pose (bullet-bone frame) for display.
+		bool has_chamber{};
+		hands::anchor chamber{};
 	};
 
 	// Builds once at static initialization; storage is never released because
@@ -55,7 +58,7 @@ namespace vr::gameplay::weapons::mwr_rebase
 	// receiver. MW2 attachment contracts and equip-animation names are dropped.
 	// keep_parts retains equip-rest part poses (only valid on identical receivers).
 	profile adopt(const profile& source, std::string_view id, std::string_view receiver,
-		const reload_profile* reload, bool keep_parts);
+		const reload_profile* reload, bool keep_parts, std::span<const std::string_view> drop_parts = {});
 
 	// MWR builds viewmodels from a receiver plus attachment models (optic,
 	// reticle, laser, foregrip, silencer). Accept attachments that hang off the

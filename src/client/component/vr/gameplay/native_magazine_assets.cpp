@@ -42,6 +42,7 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 			scene_models::rigid_part single;
 			std::array<scene_models::rigid_part, 3> stacks;
 			std::array<asset, 3> views{};
+			asset cartridge{}; // Single round in its own bullet-bone frame (chamber/ejected).
 			game::XModel* source{};
 			game::XSurface* surfaces{};
 		};
@@ -456,7 +457,7 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 			// Double-stack stagger in receiver bind space (gun-local inches): each
 			// lower round alternates sides and drops one cartridge pitch.
 			constexpr float side = .18f, pitch = .33f;
-			std::array<scene_models::runtime_model, 3> identities{};
+			std::array<scene_models::runtime_model, 4> identities{};
 			for (size_t n = 0; n < 3; ++n)
 			{
 				std::array<scene_models::rigid_part::instance, 3> instances{};
@@ -479,6 +480,15 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 				stack->views[n] = {stack->stacks[n].model(), inverse_reload(clip_pose)};
 				identities[n] = {stack->stacks[n].model(), stack->stacks[n].source()};
 			}
+			game::DObjAnimMat bullet_bind{};
+			if (!utils::native_memory::read_bytes(&bullet_bind, source->baseMat + bullet, sizeof(bullet_bind)))
+			{
+				round_reasons[index] = "receiver round bind unreadable";
+				return;
+			}
+			stack->cartridge = {stack->single.model(), inverse_reload({{bullet_bind.trans[0], bullet_bind.trans[1], bullet_bind.trans[2]},
+				{bullet_bind.quat[0], bullet_bind.quat[1], bullet_bind.quat[2], bullet_bind.quat[3]}})};
+			identities[3] = {stack->single.model(), stack->single.source()};
 			if (!scene_models::register_runtime_models(identities))
 			{
 				round_reasons[index] = "round identity registration rejected";
@@ -531,7 +541,11 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 	{
 		const auto index = reload_profile_index(definition);
 		const auto* prepared = index < reload_profiles.size() ? selected[index].load() : nullptr;
-		return prepared ? prepared->cartridge_view : asset{};
+		if (prepared && prepared->cartridge_view.model)
+			return prepared->cartridge_view;
+		// MWR: the receiver's own round (also used for counted magazine rounds).
+		const auto* stack = index < reload_profiles.size() ? round_selected[index].load() : nullptr;
+		return stack ? stack->cartridge : asset{};
 	}
 
 	void clear() noexcept
