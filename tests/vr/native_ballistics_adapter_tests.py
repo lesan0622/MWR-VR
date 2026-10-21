@@ -8,6 +8,10 @@ root = Path(__file__).resolve().parents[2]
 source = (root / 'src/client/component/vr/gameplay/native_ballistics.cpp').read_text(encoding='utf-8')
 # Keep the actual overloads and complete transaction, replacing only engine endpoints.
 body = source[source.index('\tresult fire_owned('):]
+# The MWR adapter calls the native VM directly. Substitute only the loaded
+# scr_const address; keep the production notification and bullet calls intact.
+body = body.replace('*reinterpret_cast<const unsigned*>(0x146663898)',
+                    'fixture::weapon_fired_string_id')
 out = root / 'build/native-ballistics-adapter-tests'
 out.mkdir(parents=True, exist_ok=True)
 harness = r'''
@@ -34,6 +38,8 @@ std::vector<std::string> names;
 std::vector<unsigned> bullets;
 std::function<void()> on_notify, on_settle;
 bool invalid_name=false;
+constexpr unsigned weapon_fired_string_id=731;
+std::string pending_string;
 }
 namespace game {
 union Weapon { struct { unsigned index:8, rest:24; } fields; unsigned data; };
@@ -56,14 +62,8 @@ void BG_GetWeaponNameComplete(Weapon weapon,bool alternate,char* name,unsigned s
     const auto value=std::string("weapon_")+std::to_string(weapon.data)+"_silencer";
     std::memcpy(name,value.c_str(),value.size()+1);
 }
-}
-namespace scripting {
-struct entity { game::scr_entref_t ref; };
-struct script_value { std::string text; script_value(std::string s):text(std::move(s)){} };
-void notify(const entity& target,const std::string& event,const std::vector<script_value>& args) {
-    assert(target.ref.entnum==0 && target.ref.classnum==0 && event=="weapon_fired" && args.size()==1);
-    fixture::events.push_back("notify"); fixture::names.push_back(args[0].text);
-    if(fixture::on_notify) fixture::on_notify();
+void Scr_AddString(const char* value) {
+    assert(fixture::pending_string.empty()); fixture::pending_string=value;
 }
 }
 namespace scheduler { enum class pipeline { server }; bool is_executing(pipeline) { return fixture::server; } }
@@ -88,6 +88,16 @@ bool commit_carried(const snapshot& before,int loaded,int reserve) noexcept {
 namespace utils::hook {
 template<class Result,class... Args> Result invoke(std::uintptr_t address,Args... args) {
     if constexpr(std::is_same_v<Result,float>) { (void)std::make_tuple(args...); assert(address==native_ballistics::ads_spread_address); return 0.f; }
+    else if constexpr(sizeof...(Args)==3) {
+        assert(address==0x1402E8C70);
+        auto values=std::make_tuple(args...);
+        assert(std::get<0>(values)==&game::g_entities[0]);
+        assert(std::get<1>(values)==fixture::weapon_fired_string_id && std::get<2>(values)==1);
+        assert(!fixture::pending_string.empty());
+        fixture::events.push_back("notify"); fixture::names.push_back(fixture::pending_string);
+        fixture::pending_string.clear();
+        if(fixture::on_notify)fixture::on_notify();
+    }
     else {
         assert(address==native_ballistics::bullet_address);
         auto values=std::make_tuple(args...); const auto* packet=std::get<2>(values);
@@ -119,7 +129,7 @@ bool settle(const native_ammunition::snapshot& before,const native_ammunition::s
 }
 void reset() {
     using namespace fixture;
-    events.clear(); names.clear(); bullets.clear(); clips.clear(); projected={}; definitions.fill(&game::player);
+    events.clear(); names.clear(); pending_string.clear(); bullets.clear(); clips.clear(); projected={}; definitions.fill(&game::player);
     enabled=allowed=server=commit_ok=settle_ok=true; blocked=sustain=invalid_name=false;
     on_notify={}; on_settle={}; epoch=1; game::player={}; game::g_entities[0].client=&game::player;
     for(auto id:{first,second,duplicate,wide})clips[id.generation]={true,id.weapon,5,30,0,0,id.generation};
@@ -177,7 +187,7 @@ int main() {
 vswhere = Path(os.environ['ProgramFiles(x86)']) / 'Microsoft Visual Studio/Installer/vswhere.exe'
 installs = json.loads(subprocess.check_output([str(vswhere), '-all', '-products', '*',
     '-requires', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64', '-format', 'json', '-utf8'], encoding='utf-8'))
-install = Path(next(x for x in installs if x['installationVersion'].startswith('16.'))['installationPath'])
+install = Path(max(installs, key=lambda x: tuple(map(int, x['installationVersion'].split('.'))))['installationPath'])
 vcvars = install / 'VC/Auxiliary/Build/vcvars64.bat'
 driver = out / 'test.cmd'
 driver.write_text(f'@echo off\ncall "{vcvars}" >nul\nif errorlevel 1 exit /b 1\n'

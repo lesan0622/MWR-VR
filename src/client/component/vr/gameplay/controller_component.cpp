@@ -9,6 +9,9 @@
 #include "controller_buttons.hpp"
 #include "controller_locomotion.hpp"
 #include "controller_stance.hpp"
+#include "controller_ads.hpp"
+#include "../digital_button_gate.hpp"
+#include "weapon_carry_runtime.hpp"
 #include "mwr_weapon_pose.hpp"
 #include "independent_fire_runtime.hpp"
 #include "native_scripted_control.hpp"
@@ -19,11 +22,8 @@
 #include <utils/hook.hpp>
 #include <utils/hook_validation.hpp>
 
-// MWR port of Overlord's controller command component. Only locomotion
-// (move/turn), sprint/jump, stick stance and the HMD game view are connected.
-// The H2 weapon, vehicle, scripted-sequence and equipment modules address H2
-// memory and are intentionally not called here (see git history for the H2
-// version). Weapons/hands are a later porting step.
+// MWR command adapter. Physical weapon ADS and native binding notifications
+// share the controller samples used by movement and independent weapon fire.
 namespace vr::controllers
 {
 	namespace
@@ -53,6 +53,13 @@ namespace vr::controllers
 		game::dvar_t* turn_mode{};
 		game::dvar_t* turn_speed{};
 		game::dvar_t* turn_deadzone{};
+		game::dvar_t* auto_ads{};
+		gameplay::weapons::ads_policy ads;
+		std::array<controller_input::digital_press_gate,2> attack_notifications{};
+		std::array<gameplay::weapons::hold,2> notified_owners{};
+		bool ads_verified{}, binding_verified{};
+		std::atomic_bool ads_requested{};
+		std::atomic_uint64_t ads_command_count{}, attack_notify_count{}, ads_notify_count{};
 		controller_input::locomotion locomotion;
 		controller_input::command_buttons buttons;
 		controller_input::stance_gesture stance;
@@ -158,6 +165,7 @@ namespace vr::controllers
 			const auto input = controller_input::latest_interaction();
 			const bool gameplay = gameplay_allowed(input);
 			const auto now = controller_input::clock::now();
+			const bool weapon_gameplay = gameplay && gameplay::scripted_control::predicted_firing_allowed();
 			// Open the carried-gun fire gate for this input frame (original
 			// controller_component): independent fire owns trigger cadence.
 			vr::gameplay::weapons::independent_fire::command(gameplay && vr::gameplay::scripted_control::predicted_allowed());
@@ -190,6 +198,28 @@ namespace vr::controllers
 				cmd->buttons |= attack_button;
 				++attack_count;
 			}
+			// usercmd attack bits and weapon_fired do not deliver notifyoncommand
+			// waits. Use the same reliable binding notification as a native key,
+			// once per deliberate trigger press, without firing a second bullet.
+			const auto held = gameplay::weapons::carry::held_instances();
+			for (unsigned h=0; h<attack_notifications.size(); ++h)
+			{
+				const auto owner = held[h].owner;
+				if (!binding_verified || !weapon_gameplay || !input.focused || !input.sequence ||
+					now < input.sampled_at || now-input.sampled_at > std::chrono::milliseconds(150) ||
+					!owner.can_fire() || int(owner.rear)!=int(h) || !input.grip[h].valid)
+				{
+					attack_notifications[h]={}; notified_owners[h]={}; continue;
+				}
+				if (owner.id()!=notified_owners[h].id() || owner.rear_revision!=notified_owners[h].rear_revision)
+					attack_notifications[h]={};
+				notified_owners[h]=owner;
+				if (attack_notifications[h].consume(input.trigger[h]))
+				{
+					utils::hook::invoke<void>(notify_command_address, building_client, 1, 0);
+					++attack_notify_count;
+				}
+			}
 			if (gameplay && input.secondary[1].active && input.secondary[1].down)
 			{
 				cmd->buttons |= use_reload_button;
@@ -211,11 +241,32 @@ namespace vr::controllers
 				locomotion.reset();
 				buttons.reset();
 				stance.reset();
+				attack_notifications={}; notified_owners={};
 			}
 			last_command = now;
 			building_client = local_client;
 			normal_input_seen = false;
 			const auto result = create_command_hook.invoke<game::usercmd_s*>(output, local_client);
+			if (local_client==0 && result)
+			{
+				const auto input=controller_input::latest_interaction();
+				const auto owner=gameplay::weapons::sample_native_equipped();
+				const auto* ps=game::CG_GetPredictedPlayerState(0);
+				const bool allowed=gameplay_allowed(input) && normal_input_seen && ads_verified &&
+					auto_ads && auto_ads->current.enabled && gameplay::scripted_control::predicted_allowed() &&
+					ps && !(ps->pm_flags&(game::PMF_MANTLE|game::PMF_LADDER)) &&
+					owner.weapon==result->weapon && gameplay::weapons::firing_enabled() &&
+					gameplay::weapons::controller_fire_delivery(owner.weapon)==gameplay::weapons::fire_delivery::bullets;
+				const bool requested=ads.consume(input,owner,gameplay::weapons::current_muzzle(),allowed,now);
+				if (requested) {result->buttons|=game::BUTTON_ADS; ++ads_command_count;}
+				if (binding_verified && allowed && requested!=ads_requested.load())
+				{
+					utils::hook::invoke<void>(notify_command_address,local_client,requested ? 17 : 18,0);
+					++ads_notify_count;
+				}
+				ads_requested=requested;
+			}
+			else if (local_client==0) {ads.reset(); ads_requested=false;}
 			if (local_client == 0 && result)
 				head_pose_bridge::record_game_command(result->serverTime, result->angles[0], tracked_view_applied);
 			if (!normal_input_seen)
@@ -223,6 +274,7 @@ namespace vr::controllers
 				// Scripted/suppressed branches must rearm even if they never poll controls.
 				locomotion.reset();
 				buttons.reset();
+				attack_notifications={}; notified_owners={};
 			}
 			building_client = -1;
 			++command_count;
@@ -261,6 +313,10 @@ namespace vr::controllers
 				sprint_count.load(), jump_count.load(), jump_notify_count.load());
 			console::info("[VR input] attack_commands=%llu reload_commands=%llu weapon_hand=%d\n",
 				attack_count.load(), reload_count.load(), gameplay::mwr_weapon_pose::active());
+			console::info("[VR input] auto_ads=%d ads_verified=%d ads_requested=%d ads_commands=%llu "
+				"binding_verified=%d attack_notifies=%llu ads_notifies=%llu\n",
+				auto_ads && auto_ads->current.enabled,ads_verified,ads_requested.load(),ads_command_count.load(),
+				binding_verified,attack_notify_count.load(),ads_notify_count.load());
 			const auto* ps = game::CL_IsCgameInitialized() ? game::CG_GetPredictedPlayerState(0) : nullptr;
 			console::info("[VR input] stance_verified=%d requests=%llu requested=%d actual=%d\n",
 				stance_verified, stance_count.load(), stance_verified && ps ? *reinterpret_cast<const int*>(native_stance_address) : -1,
@@ -299,6 +355,15 @@ namespace vr::controllers
 			turn_deadzone = dvars::register_float("vr_turnDeadzone", 0.2f, 0.05f, 0.5f, game::DVAR_FLAG_SAVED,
 				"Smooth turning stick deadzone");
 			command::add("vr_input_status", print_status);
+			auto_ads=dvars::register_bool("vr_autoAds",true,game::DVAR_FLAG_SAVED,
+				"Request native ADS while a supported physical weapon is raised to the sights");
+			// MWR CL_KeyMove sets/clears usercmd bit 11 before FinishMove.
+			ads_verified=check(0x1401AA0C2,{0x81,0x4b,0x04,0x00,0x08,0x00,0x00}) &&
+				check(0x1401AA0B9,{0x81,0x63,0x04,0xff,0xf7,0xff,0xff});
+			if (!ads_verified) console::error("[VR input] Native ADS contract rejected; automatic ADS disabled\n");
+			binding_verified=true;
+			for (const auto [index,name] : std::array<std::pair<int,const char*>,3>{{{1,"+attack"},{17,"+speed_throw"},{18,"-speed_throw"}}})
+				binding_verified=binding_verified && game::command_whitelist[index] && std::strcmp(game::command_whitelist[index],name)==0;
 
 			// Native stance branches of CL_ExecuteKey and the whitelist indices.
 			stance_verified = check(0x1401A91EE, {0x44, 0x89, 0x74, 0x28, 0x1c}) &&
