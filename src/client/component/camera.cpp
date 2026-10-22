@@ -198,6 +198,12 @@ namespace camera
 				camera_origin[0] = game::refdef->org[0];
 				camera_origin[1] = game::refdef->org[1];
 				camera_origin[2] = game::refdef->org[2];
+				// MWR: CG_CalcViewValues copies the view origin into refdef.viewOffset
+				// (+0x58, the origin viewmodel DObj matrices and tag queries are relative
+				// to) before this hook applies the HMD pose. H2 recomputed it after the
+				// pose (0x1403B07C0), so hands and the scene shared the tracked head.
+				auto* const view_offset = reinterpret_cast<float*>(reinterpret_cast<std::byte*>(&game::refdef->org[0]) - 0x20 + 0x58);
+				for (int i = 0; i < 3; ++i) view_offset[i] = game::refdef->org[i];
 			}
 			vr::engine_stereo_renderer::observe_camera_state(
 				vr::engine_stereo_renderer::camera_observation_source::set_viewpos_now,
