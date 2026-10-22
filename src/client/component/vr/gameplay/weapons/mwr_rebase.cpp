@@ -191,6 +191,8 @@ namespace vr::gameplay::weapons::mwr_rebase
 		if (t.sound_key)
 		{
 			p.sound_key = t.sound_key;
+			// MWR keys are authoritative; MW2 per-event overrides name MW2 recordings.
+			p.sound_override = nullptr;
 			// Split removal audio was resolved from the source's keys at build time.
 			if (p.removal_sound.name)
 				p.removal_sound.name = t.sound_key(mechanics::effect::magazine_out);
@@ -202,6 +204,10 @@ namespace vr::gameplay::weapons::mwr_rebase
 				if (sound->name && sound->kind == sound_reference_kind::notetrack)
 					sound->name = t.cycle_notetrack;
 		}
+		if (t.rear.name)
+			p.rear_sound = t.rear;
+		if (t.close.name)
+			p.close_sound = t.close;
 		if (t.controller_magazine)
 			p = with_controller_magazine(p);
 		return p;

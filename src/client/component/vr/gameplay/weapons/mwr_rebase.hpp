@@ -46,6 +46,8 @@ namespace vr::gameplay::weapons::mwr_rebase
 		const char* (*sound_key)(mechanics::effect) noexcept {}; // Optional override.
 		const belt_feed::profile* belt{}; // MWR feed cover/belt poses replacing the source recipe's.
 		const char* cycle_notetrack{}; // MWR notetrack split for rear/close when the source's is absent.
+		// Explicit MWR action sounds (notetrack + part), replacing the source's rear/close cues.
+		sound_reference rear{}, close{};
 	};
 
 	// Builds once at static initialization; storage is never released because

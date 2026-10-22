@@ -6,19 +6,21 @@
 namespace vr::gameplay::weapons::winchester1200
 {
 	inline constexpr std::array<std::string_view, 1> names{"winchester1200"};
+	// MWR notetrack map: start (lift), loop (shell), end, pump. The pump recording is
+	// split at its quiet gap into the rearward and forward strokes.
 	inline sound_reference sound(tube::effect e) noexcept
 	{
 		switch (e)
 		{
 		case tube::effect::draw:
-			return {"h2_wpn_w1200_lift_plr"};
+			return {"weap_winch1200_start_plr"};
 		case tube::effect::load_tube:
 		case tube::effect::load_port:
 			return {"weap_winch1200_loop_plr"};
 		case tube::effect::rack_open:
-			return {"h2_wpn_w1200_open_plr"};
+			return {"weap_winch1200_pump_plr", sound_reference_kind::notetrack, sound_part::first};
 		case tube::effect::rack_close:
-			return {"h2_wpn_w1200_close_plr"};
+			return {"weap_winch1200_pump_plr", sound_reference_kind::notetrack, sound_part::second};
 		default:
 			return {};
 		}

@@ -36,6 +36,9 @@ inline const reload_profile physical = [] {
 	p.round_source = "viewmodel_g36_sp"; // Counted rounds on the world clip magazine.
 	p.interaction = physical_reload::with_box_magazine_well(p.interaction);
 	p.interaction.manual_magazine = &manual_magazine; // MP5-style rock/paddle latch.
+	// One native chamber recording: pull back | release, split at its quiet gap.
+	p.rear_sound = {"weap_g36_chamber_plr", sound_reference_kind::notetrack, sound_part::first};
+	p.close_sound = {"weap_g36_chamber_plr", sound_reference_kind::notetrack, sound_part::second};
 	// Magazine +Z follows the controller like the other box magazines; the native
 	// mid-reload grasp alone left the spare ~70 degrees off the well axis.
 	return with_controller_magazine(p);

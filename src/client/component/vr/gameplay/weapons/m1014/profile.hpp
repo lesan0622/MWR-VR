@@ -16,11 +16,12 @@ namespace vr::gameplay::weapons::m1014
 			return {"weap_m4benelli_start_plr"};
 		case tube::effect::load_tube:
 			return {"weap_m4benelli_loop_plr"};
-		// The same recording serves both manual directions and port loading.
+		// The same recording serves both manual directions and port loading
+		// (MWR notetrack map: start, loop, end).
 		case tube::effect::load_port:
 		case tube::effect::rack_open:
 		case tube::effect::rack_close:
-			return {"wpn_h2_m1014_close_chamber_plr"};
+			return {"weap_m4benelli_end_plr"};
 		default:
 			return {};
 		}

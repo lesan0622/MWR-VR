@@ -6,6 +6,7 @@
 #include "native_carry.hpp"
 #include "weapon_carry_runtime.hpp"
 #include "native_weapon_sound_slice.hpp"
+#include "weapon_reload_profiles.hpp"
 #include "component/command.hpp"
 #include "component/console.hpp"
 #include "component/scheduler.hpp"
@@ -404,6 +405,63 @@ namespace vr::gameplay::weapon_capture
 						return;
 					}
 									}, scheduler::pipeline::main);
+			});
+			// Interaction sound audit for every loaded reload profile: effect -> notetrack -> alias.
+			command::add("vr_sound_audit", []
+			{
+				scheduler::once([]
+				{
+					using namespace weapons;
+					using enum mechanics::effect;
+					constexpr std::array<std::pair<mechanics::effect, const char*>, 17> events{{
+						{magazine_out, "out"}, {magazine_take, "take"}, {magazine_draw, "draw"}, {magazine_in, "in"},
+						{action_grab, "grab"}, {action_rear, "rear"}, {action_close, "close"}, {action_latch, "latch"},
+						{action_unlatch, "unlatch"}, {dry_fire, "dry"}, {bolt_unlock, "unlock"}, {bolt_lock, "lock"},
+						{case_eject, "case"}, {live_eject, "live"}, {cover_open, "cover_open"}, {cover_close, "cover_close"},
+						{belt_laid, "belt"}}};
+					const auto map_of = [](const game::WeaponDef* def, std::string_view key) -> std::string
+					{
+						const unsigned *keys{}, *values{};
+						std::memcpy(&keys, reinterpret_cast<const std::byte*>(def) + 0x90, sizeof(keys));
+						std::memcpy(&values, reinterpret_cast<const std::byte*>(def) + 0x98, sizeof(values));
+						for (unsigned n = 0; keys && values && n < 36; ++n)
+							if (keys[n] && values[n] && key == game::SL_ConvertToString(keys[n])) return game::SL_ConvertToString(values[n]);
+						return {};
+					};
+					const auto find_def = [](auto&& accept) -> const game::WeaponDef*
+					{
+						for (unsigned i = 1; i < 512; ++i)
+						{
+							const auto* def = game::weapon_defs[i];
+							if (!def) break;
+							if (def->szInternalName && accept(std::string_view(def->szInternalName))) return def;
+						}
+						return nullptr;
+					};
+					std::string out;
+					for (const auto* p : reload_profiles)
+					{
+						const auto* def = find_def([&](std::string_view name) { return p->native_family ? p->native_family(name) : name == p->native_name; });
+						if (!def) continue;
+						out += std::format("[VR sound audit] {} ({}):", p->id, def->szInternalName);
+						for (const auto& [event, label] : events)
+						{
+							const auto sound = p->interaction_sound(event);
+							if (!sound.name) continue;
+							std::string resolved;
+							if (sound.kind == sound_reference_kind::alias) resolved = "alias";
+							else
+							{
+								const auto* source = sound.notetrack_weapon ? find_def([&](std::string_view n) { return n == sound.notetrack_weapon; }) : def;
+								resolved = source ? map_of(source, sound.name) : std::string{};
+								if (resolved.empty()) resolved = "MISSING";
+							}
+							out += std::format(" {}={}{}->{}", label, sound.name, sound.part == sound_part::first ? "[1]" : sound.part == sound_part::second ? "[2]" : sound.window ? "[w]" : "", resolved);
+						}
+						out += "\n";
+					}
+					console::info("%s", out.c_str());
+				}, scheduler::pipeline::main);
 			});
 			// Select an owned weapon by name (after `give`), for capture sessions.
 			// Decode a loaded sound alias to captures/_sounds/<file>.wav (slice cue authoring).
