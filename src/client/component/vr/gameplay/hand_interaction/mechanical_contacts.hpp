@@ -39,7 +39,10 @@ namespace vr::gameplay::hand_interaction
 		const auto shell=compose(local,grasp);const auto centre=compose(shell,{p.shell_center,{0,0,0,1}}).position;
 		std::array<part_grip_pose,max_part_grips> grips{};for(size_t i=0;i<p.rack_grips.size();++i)grips[i]=off?hands::pose_mirror::part(p.rack_grips[i],binding.mirror):p.rack_grips[i];
 		float travel=tube::manual(p.ammunition)?v.travel:v.ammo.phase==tube::action::locked_open?p.interaction.rack.locked_travel:v.ammo.phase==tube::action::held_open?p.interaction.rack.slide_stroke:0;
-		const auto c=choose_part_grip({grips.data(),p.rack_grips.size()},local,scale(p.interaction.rack.slide_axis,travel*units),p.rack_low,p.rack_high,units);
+		const auto* bolt=p.interaction.bolt && rotating_bolt::valid(*p.interaction.bolt) ? p.interaction.bolt : nullptr;
+		const auto carry=bolt ? compose(rotating_bolt::pose(p.pump_rest,*bolt,{v.lift,std::clamp(travel/bolt->stroke,0.f,1.f)},units),inverse(p.pump_rest)) : anchor{};
+		const auto c=bolt ? choose_part_grip({grips.data(),p.rack_grips.size()},compose(inverse(carry),local),{},p.rack_low,p.rack_high,units) :
+			choose_part_grip({grips.data(),p.rack_grips.size()},local,scale(p.interaction.rack.slide_axis,travel*units),p.rack_low,p.rack_high,units);
 		tube::geometry g{true,live->owner.weapon,v.active?v.ammo.instance_generation:0,f.input.reference_generation,f.input.sequence};
 		g.waist_distance=(f.valid_hands&(1u<<off))?f.waist(hand(off),{},p.interaction.rack.waist_radius):10;g.rack_distance=(tube::rotary(p.ammunition) || tube::levered(p.ammunition))?10:c.distance_meters;g.rack_pose=c.pose;g.hand_in_gun=scale(local.position,1/units);
 		g.port_delta=scale(sub(centre,p.port_center),1/units);g.tube_delta=scale(sub(centre,p.tube_center),1/units);const auto forward=rotate(shell.rotation,{1,0,0});g.port_alignment=dot(forward,p.port_forward);g.tube_alignment=dot(forward,p.tube_forward);

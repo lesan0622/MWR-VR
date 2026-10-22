@@ -193,8 +193,6 @@ namespace vr::gameplay::weapons::mwr_rebase
 			if (p.removal_sound.name)
 				p.removal_sound.name = t.sound_key(mechanics::effect::magazine_out);
 		}
-		if (t.has_chamber && !p.chamber_round && !p.feeding_path && !p.interaction.manual_bolt)
-			p.chamber_display = keep<hands::anchor>(t.chamber);
 		if (t.cycle_notetrack)
 		{
 			// MW2 notetrack names absent from the MWR WeaponDef sound map play nothing.

@@ -149,7 +149,7 @@ namespace vr::gameplay::weapons::tube
 				hand_interaction::granted(hand(1-int(scene.owner.holding_hand())),hand_interaction::domain::tube,scene.owner.id(),hand_interaction::button::trigger,hand_interaction::role::supply),
 				hand_interaction::input(hand(1-int(scene.owner.holding_hand())),hand_interaction::button::trigger).press,
 				hand_interaction::granted(hand(1-int(scene.owner.holding_hand())),hand_interaction::domain::tube,scene.owner.id(),hand_interaction::button::trigger,hand_interaction::role::part),hand_interaction::input(hand(1-int(scene.owner.holding_hand())),hand_interaction::button::trigger).release});
-			i->view.lever=i->gesture.lever_pose();i->view.fire_armed=i->gesture.fire_armed(); i->view.rack_held=i->gesture.rack_held();i->view.travel=i->gesture.travel();i->view.rack_grip=i->gesture.rack_grip();
+			i->view.lever=i->gesture.lever_pose();i->view.fire_armed=i->gesture.fire_armed(); i->view.rack_held=i->gesture.rack_held();i->view.travel=i->gesture.travel();i->view.lift=i->gesture.lift();i->view.rack_grip=i->gesture.rack_grip();
 			i->view.sampled_at=scene.input.sampled_at; i->view.reference=scene.input.reference_generation;
 			i->view.input_sequence=scene.input.sequence; reason=i->gesture.decision();
 		}
@@ -177,7 +177,7 @@ namespace vr::gameplay::weapons::tube
 			{
 				if (!script_suspended)
 				{
-					for (auto& i : inventory){i.gesture={};i.gesture.restore_travel(i.view.travel);i.view.resume_transfer();}
+					for (auto& i : inventory){i.gesture={};i.gesture.restore_travel(i.view.travel,i.view.lift);i.view.resume_transfer();}
 					scenes={};last_published_scene={};script_suspended=true;
 				}
 				reason="native script owns weapons";return;
@@ -298,7 +298,7 @@ namespace vr::gameplay::weapons::tube
 		const bool compatible=observed.valid && saved.definition && saved.definition->matches_native(observed.native_name.data(),observed.base_capacity) &&
 			observed.ammo.loaded==native_ammo(saved.ammo).loaded;
 		const std::lock_guard lock(mutex);
-		return runtime_lifecycle::restore_transfer(inventory,saved,compatible,[&](auto& value){value.view.ammo.reserve=observed.ammo.reserve;++value.view.ammo.revision;value.gesture.restore_travel(saved.travel);});
+		return runtime_lifecycle::restore_transfer(inventory,saved,compatible,[&](auto& value){value.view.ammo.reserve=observed.ammo.reserve;++value.view.ammo.revision;value.gesture.restore_travel(saved.travel,saved.lift);});
 	}
 	void publish_scene(const scene_frame& value) noexcept
 	{
@@ -341,7 +341,8 @@ namespace vr::gameplay::weapons::tube
 		// Trigger history. A cosmetic closed spin tail adds no firing delay.
 		if (i->view.fault || !i->view.definition || i->view.rack_held ||
 			(levered(i->view.definition->ammunition) && (!i->view.fire_armed || i->view.lever.returning || clock::now()<i->view.sampled_at || clock::now()-i->view.sampled_at>150ms)) ||
-			(manual(i->view.definition->ammunition) && i->view.travel>i->view.definition->interaction.rack.close_travel) || observed.loaded!=native_ammo(i->view.ammo).loaded || !ready(i->view.definition->ammunition,i->view.ammo)) return false;
+			(manual(i->view.definition->ammunition) && i->view.travel>i->view.definition->interaction.rack.close_travel) ||
+			(i->view.definition->interaction.bolt && i->view.lift>0) || observed.loaded!=native_ammo(i->view.ammo).loaded || !ready(i->view.definition->ammunition,i->view.ammo)) return false;
 		i->view.owner=owner;return true;
 	}
 	void consumed(const void* ps, int command, std::uint32_t weapon, bool alternate, int amount, int side,
@@ -367,8 +368,8 @@ namespace vr::gameplay::weapons::tube
 			command::add("vr_tube_status",[] {scheduler::once([] {
 				presentation v;const char* why;
 				{const std::lock_guard lock(mutex);auto* i=find(last_published_scene.owner.id());v=i ? i->view : presentation{};why=reason;}
-				console::info("[VR tube] contracts=%u active=%d fault=%d stored/chamber/reserve/held=%d/%d/%d/%d phase=%d rack=%d travel=%.4f lever=%.3f spin=%.3f spinning=%d operating=%d lever_grasp=%d reason=%s ticks=%llu stage=%s%s\n",
-					boundaries.load(),v.active,v.fault,v.ammo.stored,int(v.ammo.chamber),v.ammo.reserve,v.ammo.held_rounds,int(v.ammo.phase),v.rack_held,v.travel,v.lever.open,v.lever.spin,v.lever.spinning,v.lever.operating,v.lever.grasped,why,tick_count.load(),tick_stage.load(),presenter_status().c_str());
+				console::info("[VR tube] contracts=%u active=%d fault=%d stored/chamber/reserve/held=%d/%d/%d/%d phase=%d rack=%d travel=%.4f lift=%.3f lever=%.3f spin=%.3f spinning=%d operating=%d lever_grasp=%d reason=%s ticks=%llu stage=%s%s\n",
+					boundaries.load(),v.active,v.fault,v.ammo.stored,int(v.ammo.chamber),v.ammo.reserve,v.ammo.held_rounds,int(v.ammo.phase),v.rack_held,v.travel,v.lift,v.lever.open,v.lever.spin,v.lever.spinning,v.lever.operating,v.lever.grasped,why,tick_count.load(),tick_stage.load(),presenter_status().c_str());
 			},scheduler::pipeline::server);});
 			// Updated by the single hand-interaction coordinator.
 		}

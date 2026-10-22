@@ -16,7 +16,7 @@ namespace vr::gameplay::weapons::tube
 	{
 		bool active{},fault{},fire_armed{},rack_held{};state ammo{};hold owner{};const tube_profile* definition{};
 		lever::pose_state lever{};
-		clock::time_point sampled_at{},shot_at{},load_at{};float travel{};physical_reload::slide_constraint rack_grip{};
+		clock::time_point sampled_at{},shot_at{},load_at{};float travel{},lift{};physical_reload::slide_constraint rack_grip{};
 		std::uint64_t reference{},input_sequence{},event_sequence{};
 		struct event{std::uint64_t sequence{};effect kind{};clock::time_point at{};hands::anchor world{};float units{};int live{};};
 		std::array<event,8> events{};

@@ -19,7 +19,10 @@ namespace vr::gameplay::weapons::tube
 			return hands::length(delta);
 		}
 	};
-	struct tuning { physical_reload::profile rack; float port_radius{.045f},tube_radius{.045f},alignment{.35f}; loading_extension loading{}; lever::tuning lever{}; };
+	struct tuning { physical_reload::profile rack; float port_radius{.045f},tube_radius{.045f},alignment{.35f}; loading_extension loading{}; lever::tuning lever{};
+		// Bolt action (MWR R700): the rack is a rotating bolt handle -- lift, pull, push, lower --
+		// with the original rotating_bolt projection. The pump drive keeps the ammunition plan.
+		const rotating_bolt::profile* bolt{}; };
 	struct geometry
 	{
 		bool valid{};std::uint32_t weapon{};std::uint64_t instance_generation{},reference_generation{},input_sequence{};
@@ -48,7 +51,7 @@ namespace vr::gameplay::weapons::tube
 	inline bool rack_acquirable(const tuning& p,rules r,const state& s,const geometry& g,float travel,bool release) noexcept
 	{
 		return !rotary(r) && !levered(r) && s.loader_hand==hand::none && g.rack_pose<p.rack.slide_pose_count &&
-			g.rack_distance<=p.rack.slide_radius && (!manual(r) || pump_movable(p,s,travel,release));
+			g.rack_distance<=p.rack.slide_radius && (!manual(r) || p.bolt || pump_movable(p,s,travel,release));
 	}
 	class controller
 	{
@@ -56,13 +59,13 @@ namespace vr::gameplay::weapons::tube
 		std::uint64_t pinch_generation_{},fire_generation_{};
 		hand rear_{hand::none};bool armed_{},rack_held_{},contact_armed_{};
 		controller_input::consumer_continuity continuity_;
-		physical_reload::slide_constraint rack_grip_{};float travel_{};hands::vec previous_{};
+		physical_reload::slide_constraint rack_grip_{};float travel_{},lift_{};hands::vec previous_{};
 		bool cycle_unlock_{},return_release_required_{};lever::controller lever_{};
 		const char* decision_{"waiting for tube scene"};
 	public:
 		bool fire_armed()const noexcept{return armed_;}bool rack_held()const noexcept{return rack_held_;}
-		void restore_travel(float value)noexcept{travel_=std::isfinite(value) && value>=0 ? value : 0;cycle_unlock_=travel_>0;}
-		float travel()const noexcept{return travel_;}auto rack_grip()const noexcept{return rack_grip_;}
+		void restore_travel(float value,float lift=0)noexcept{travel_=std::isfinite(value) && value>=0 ? value : 0;cycle_unlock_=travel_>0;lift_=travel_>0 ? 1.f : std::isfinite(lift) ? std::clamp(lift,0.f,1.f) : 0.f;}
+		float travel()const noexcept{return travel_;}float lift()const noexcept{return lift_;}auto rack_grip()const noexcept{return rack_grip_;}
 		lever::pose_state lever_pose()const noexcept{return lever_.pose();}
 		const char* decision()const noexcept{return decision_;}
 		template<class Commit> bool interrupt(rules r,state& s,hand rear,Commit&& write)
@@ -100,6 +103,11 @@ namespace vr::gameplay::weapons::tube
 			pinch_generation_=pinch.generation;fire_generation_=fire.generation;
 			const auto apply=[&](operation op){const auto tx=plan(r,s,{op,s.weapon,s.instance_generation,s.revision,rear,levered(r) && (op==operation::rack_open || op==operation::rack_close)?rear:off,cycle_unlock_});if(!ammunition::commit(tx,write)){decision_="tube transaction rejected";return false;}s=tx.next;return true;};
 			if(levered(r)){lever_update(p,r,s,input,owner,g,access,apply);return;}
+			if(p.bolt && rotating_bolt::valid(*p.bolt))
+			{
+				armed_=owner.can_fire() && fire.active && (armed_ || !fire.down) && lift_==0 && travel_==0;
+				bolt_update(p,r,s,input,owner,g,access,apply);return;
+			}
 			if(pumped(r))
 			{
 				armed_=owner.can_fire() && fire.active && (armed_ || !fire.down);
@@ -247,6 +255,37 @@ namespace vr::gameplay::weapons::tube
 			if(acquire && access.supply && !support && pressed && pinch.down && g.waist_distance<=p.rack.waist_radius)
 			{(void)apply(operation::draw);previous_=g.hand_in_gun;contact_armed_=false;}
 			decision_=can_move ? "pump unlocked; awaiting grasp" : "loaded pump locked";
+		}
+		template<class Apply> void bolt_update(const tuning& p,rules r,state& s,const controller_input::frame& input,
+			const hold& owner,const geometry& g,hand_interaction::access access,Apply&& apply)
+		{
+			const auto rear=owner.holding_hand(),off=other_hand(rear);const int h=int(off);
+			auto pinch=input.trigger[h];if(access.release)pinch.down=false;
+			const bool available=access.manipulation && input.grip[h].valid && input.aim[h].valid && pinch.active && owner.support!=off;
+			const bool local_press=take_.consume(pinch);const bool pressed=available && access.pinch.value_or(local_press);if(!available)take_={};
+			if(!available){rack_held_=false;if(s.loader_hand!=hand::none)(void)apply(operation::cleanup);decision_="bolt released; position retained";return;}
+			if(s.loader_hand!=hand::none){load_shell(p,r,s,pinch,g,apply);return;}
+			const auto& bolt=*p.bolt;
+			if(rack_held_)
+			{
+				// Same contact rules as the original rotating bolt: the handle lifts
+				// about the bore pivot at zero travel, then strokes only when fully lifted.
+				const bool jump=hands::length(hands::sub(g.hand_in_gun,previous_))>p.rack.max_contact_step;
+				if(!pinch.down || jump || g.rack_distance>p.rack.slide_radius*2.5f)
+				{rack_held_=false;previous_=g.hand_in_gun;decision_="bolt released; position retained";return;}
+				manual_bolt::state current{};current.lift=lift_;current.travel=std::clamp(travel_/bolt.stroke,0.f,1.f);
+				const auto t=rotating_bolt::project(bolt,current,previous_,g.hand_in_gun);previous_=g.hand_in_gun;
+				const float next=t.travel*bolt.stroke;
+				if(next>=p.rack.full_stroke && s.phase!=action::held_open && !apply(operation::rack_open)){rack_held_=false;return;}
+				if(next<=p.rack.close_travel && s.phase==action::held_open && !apply(operation::rack_close)){rack_held_=false;return;}
+				lift_=t.lift;travel_=next;
+				decision_=travel_>0 ? "bolt stroke follows hand" : lift_>0 ? "bolt handle lifted" : "bolt closed and locked";return;
+			}
+			if(access.acquire && access.parts && pressed && pinch.down && rack_acquirable(p,r,s,g,travel_,false))
+			{rack_held_=true;rack_grip_={g.hand_in_gun,travel_,g.rack_pose};previous_=g.hand_in_gun;decision_="bolt handle grasped";return;}
+			if(access.acquire && access.supply && pressed && pinch.down && g.waist_distance<=p.rack.waist_radius)
+			{(void)apply(operation::draw);previous_=g.hand_in_gun;contact_armed_=false;}
+			decision_=lift_>0 || travel_>0 ? "bolt open; awaiting grasp" : "bolt closed; awaiting grasp";
 		}
 		static hand other_hand(hand h)noexcept{return h==hand::left ? hand::right : hand::left;}
 	};

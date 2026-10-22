@@ -46,9 +46,6 @@ namespace vr::gameplay::weapons::mwr_rebase
 		const char* (*sound_key)(mechanics::effect) noexcept {}; // Optional override.
 		const belt_feed::profile* belt{}; // MWR feed cover/belt poses replacing the source recipe's.
 		const char* cycle_notetrack{}; // MWR notetrack split for rear/close when the source's is absent.
-		// Gun-local live chamber cartridge pose (bullet-bone frame) for display.
-		bool has_chamber{};
-		hands::anchor chamber{};
 	};
 
 	// Builds once at static initialization; storage is never released because

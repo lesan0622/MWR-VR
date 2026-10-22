@@ -766,7 +766,7 @@ namespace vr::gameplay::weapons::physical_reload
 		held.units = units;
 		held.definition = profile;held.view.owner=owner;
 		held.inserted_origin=view_offset;
-		if(state.active && !state.fault && (manual || definition.chamber_display) && magazine_assets::cartridge(profile).model)
+		if(state.active && !state.fault && manual && magazine_assets::cartridge(profile).model)
 		{
 			if(const auto chamber=chamber_cartridge_pose(definition,state.ammo,visual_travel,bolt_target.travel,units))
 			{held.live_chamber=true;held.chamber_model=compose(gun,*chamber);}

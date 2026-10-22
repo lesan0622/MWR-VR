@@ -107,9 +107,6 @@ namespace vr::gameplay::weapons
 		// A native magazine child may depict the chambered cartridge, not a
 		// magazine round. Keep that mesh with the receiver and out of detached subsets.
 		const hands::anchor* chamber_round{};
-		// MWR: gun-local pose of a drawn live chamber cartridge (round cut from the
-		// receiver). Display only; never changes magazine/bullet mesh ownership.
-		const hands::anchor* chamber_display{};
 		// Permanent magazine components (e.g. follower/base plate), present even
 		// at zero rounds. They are not ammunition and must never enter bullet masks.
 		std::span<const std::string_view> magazine_body_bones{};

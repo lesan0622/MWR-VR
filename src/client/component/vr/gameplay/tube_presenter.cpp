@@ -119,7 +119,8 @@ namespace vr::gameplay::weapons::tube
 		const auto centre=compose(shell_local,{p.shell_center,{0,0,0,1}}).position;
 		float travel=v.active && v.ammo.phase==action::locked_open ? p.interaction.rack.locked_travel : 0;
 		if(manual(p.ammunition) && v.active)travel=v.travel;
-		if(v.active && v.rack_held && input.focused && gameplay && input.grip[off].valid && input.aim[off].valid &&
+		const auto* bolt_motion=p.interaction.bolt && rotating_bolt::valid(*p.interaction.bolt) ? p.interaction.bolt : nullptr;
+		if(!bolt_motion && v.active && v.rack_held && input.focused && gameplay && input.grip[off].valid && input.aim[off].valid &&
 			v.reference==input.reference_generation && v.owner.rear_revision==owner.rear_revision)
 			travel=physical_reload::constrained_slide_travel(p.interaction.rack,v.rack_grip,scale(raw_local.position,1/units));
 		else if(!manual(p.ammunition) && v.active && v.ammo.phase==action::held_open)travel=p.interaction.rack.slide_stroke;
@@ -135,7 +136,14 @@ namespace vr::gameplay::weapons::tube
 		if(!manual(p.ammunition) && v.active && !v.rack_held && v.ammo.phase==action::closed && now>=v.shot_at)
 		{const float age=std::chrono::duration<float>(now-v.shot_at).count();if(age<.10f)bolt_travel=std::max(bolt_travel,.1097324f*std::max(0.f,1.f-std::abs(age-.025f)/.075f));}
 		const auto rack_offset=scale(p.interaction.rack.slide_axis,travel*units);
-		const auto candidate=choose_part_grip({rack_poses.data(),p.rack_grips.size()},raw_local,rack_offset,p.rack_low,p.rack_high,units);
+		// Rotating bolt: the handle (and the hand holding it) is carried rigidly by
+		// the bolt's lift about the bore and its stroke, as the original manual bolt.
+		const float lift=v.active ? v.lift : 0;
+		const auto handle=bolt_motion ? rotating_bolt::pose(p.pump_rest,*bolt_motion,{lift,std::clamp(travel/bolt_motion->stroke,0.f,1.f)},units) : p.pump_rest;
+		const auto carry=compose(handle,inverse(p.pump_rest));
+		const auto candidate=bolt_motion ?
+			choose_part_grip({rack_poses.data(),p.rack_grips.size()},compose(inverse(carry),raw_local),{},p.rack_low,p.rack_high,units) :
+			choose_part_grip({rack_poses.data(),p.rack_grips.size()},raw_local,rack_offset,p.rack_low,p.rack_high,units);
 		geometry g{true,owner.weapon,v.active ? v.ammo.instance_generation : 0,input.reference_generation,input.sequence};
 		const auto supply=body_supply_volumes(head,body_axis,units,{},p.interaction.rack.waist_radius);
 		for(const auto& volume:supply)g.waist_distance=std::min(g.waist_distance,volume.distance(raw.position)/units);
@@ -146,6 +154,7 @@ namespace vr::gameplay::weapons::tube
 		{
 			const auto& rack_pose=rack_poses[v.rack_grip.pose];
 			auto wrist=rack_pose.wrist;wrist.position=add(wrist.position,rack_offset);
+			if(bolt_motion)wrist=compose(carry,rack_pose.wrist);
 			if(constrain_part_hand(r,library,grip,targets,shoulders,body_axis,rear,compose(gun,wrist),solved))
 			{hands::pose_mirror::fingers(r,library,grip,rack_pose.fingers,off,solved,off==1);posed_hands|=1u<<off;}
 		}
@@ -154,7 +163,9 @@ namespace vr::gameplay::weapons::tube
 		{
 			const float fraction=std::clamp(travel/p.interaction.rack.slide_stroke,0.f,1.f);
 			bolt.position=add(bolt.position,scale(sub(p.bolt_open.position,p.bolt_rest.position),fraction));
-			auto pump=p.pump_rest;pump.position=add(pump.position,rack_offset);move_part(r,parts.pump,compose(gun,pump),solved);
+			auto pump=p.pump_rest;pump.position=add(pump.position,rack_offset);
+			if(bolt_motion)pump=handle;
+			move_part(r,parts.pump,compose(gun,pump),solved);
 		}
 		else bolt.position=add(bolt.position,scale(p.interaction.rack.slide_axis,bolt_travel*units));
 		if(!p.lever && parts.bolt>=0)move_part(r,parts.bolt,compose(gun,bolt),solved);

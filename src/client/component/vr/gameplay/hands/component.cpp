@@ -1204,7 +1204,7 @@ namespace vr::gameplay::hands
 				if (support_plan.driver &&
 				    !hand_interaction::has(support_plan.abilities, hand_interaction::capability::aim))
 					posing.aiming = weapons::aim_rule::rear_hand;
-				if (posing.tube && weapons::tube::pumped(posing.tube->ammunition))
+				if (posing.tube && weapons::tube::pumped(posing.tube->ammunition) && !posing.tube->interaction.bolt)
 				{
 					const auto pump = weapons::tube::current(owner.id());
 					const auto movement = scale(posing.tube->interaction.rack.slide_axis,
@@ -1320,7 +1320,7 @@ namespace vr::gameplay::hands
 						        input,
 						        owner,
 						        (shotgun.rack_held &&
-						         !weapons::tube::pumped(shotgun.definition->ammunition)) ||
+						         (!weapons::tube::pumped(shotgun.definition->ammunition) || shotgun.definition->interaction.bolt)) ||
 						            shotgun.ammo.loader_hand != vr::hand::none);
 					    if (revolver.active)
 						    return weapons::physical_reload::support_available(
