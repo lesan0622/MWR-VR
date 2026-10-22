@@ -8,6 +8,7 @@
 // grasp and fingers reuse the original W1200 canonical-left loading hand.
 #include "../winchester1200/reload_poses.hpp"
 #include "../../tube_profile.hpp"
+#include "../cheytac/handle_poses.hpp"
 #include "../../weapon_profile.hpp"
 #include "../mwr_rebase.hpp"
 
@@ -61,11 +62,19 @@ inline constexpr hands::vec port_center={5.600000f, -0.300000f, 4.100000f};
 inline constexpr hands::vec tube_center={5.900000f, -0.100000f, 3.750000f};
 inline constexpr hands::vec port_forward={1.000000f, 0.000000f, 0.000000f};
 inline constexpr hands::vec tube_forward={0.980581f, 0.000000f, -0.196116f};
-inline constexpr hands::vec rack_low={0.705603f, -3.879029f, 1.603397f};
-inline constexpr hands::vec rack_high={3.705603f, -0.679029f, 4.403397f};
-inline constexpr hands::vec rack_contact={4.070568f, -0.935716f, 1.019798f};
-inline constexpr hands::vec rack_symmetry_center{};
-inline constexpr part_grip_pose rack_pose{"bolt",{{-1.328611f, -0.206948f, 1.699212f}, {0.1901313f, -0.1115299f, -0.0870673f, 0.9715095f}},rack_contact,winchester1200::rack_fingers,&rack_symmetry_center};
+inline constexpr hands::vec rack_low={1.287000f, -2.944000f, 0.860000f};
+inline constexpr hands::vec rack_high={4.287000f, 0.256000f, 3.660000f};
+// Bolt knob (j_bolt mesh radial tip, vr_capture_bone_mesh). The original Intervention
+// bolt-handle grasp (both hands, fingers) is carried onto it at the rest handle pose.
+inline constexpr hands::vec bolt_knob={2.787000f, -1.344000f, 2.260000f};
+inline const part_grip_pose rack_pose=[] {
+	const auto& left=cheytac::left_down_fit;const auto& right=cheytac::right_up_fit;
+	const auto contact=hands::add(right.wrist.position,hands::rotate(right.wrist.rotation,right.contact_in_wrist));
+	const auto shift=hands::sub(bolt_knob,contact);
+	auto l=left;l.wrist.position=hands::add(l.wrist.position,shift);
+	auto r=right;r.wrist.position=hands::add(r.wrist.position,shift);
+	return part_grip_pose{"bolt",l.wrist,l.contact_in_wrist,l.fingers,nullptr,r};
+}();
 inline constexpr std::array<std::string_view, 1> names{"remington700"};
 inline sound_reference sound(tube::effect e) noexcept
 {
@@ -97,7 +106,7 @@ inline constexpr tube::tuning interaction{
             .slide_radius = part_grip_capture::radius_m,
             .slide_stroke = 0.07870444f,
             .locked_travel = 0.07270444f,
-            .full_stroke = 0.07570444f,
+            .full_stroke = 0.07083400f,
             .slide_lateral_limit = physical_reload::defaults::slide_lateral_limit_m,
             .well_radius = physical_reload::defaults::well_radius_m,
             .well_contact_depth = physical_reload::defaults::well_contact_depth_m,

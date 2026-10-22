@@ -345,6 +345,66 @@ namespace vr::gameplay::weapon_capture
 				utils::io::write_file(file, out);
 				console::info("[VR capture] wrote %d weapon receivers to %s\n", count, file.c_str());
 			});
+			// Vertex extent of one bone of a weapon's gun model (rigid groups and first
+			// skin weight), model space: vr_capture_bone_mesh <xmodel> <bone>.
+			command::add("vr_capture_bone_mesh", [](const command::params& params)
+			{
+				if (params.size() < 3) return;
+				const std::string wanted = params.get(1), bone_name = params.get(2);
+				scheduler::once([wanted, bone_name]
+				{
+					{
+						const game::XModel* m = game::DB_FindXAssetHeader(game::ASSET_TYPE_XMODEL, wanted.c_str(), 0).model;
+						int bone = -1;
+						if (m && m->boneNames && m->lodInfo[0].surfs)
+							for (unsigned b = 0; b < m->numBones; ++b) if (bone_name == scr_string(m->boneNames[b])) bone = int(b);
+						if (bone < 0) { console::info("[VR capture] bone mesh: model/bone not found\n"); return; }
+						std::vector<std::array<float,3>> points;
+						for (unsigned n = 0; n < m->lodInfo[0].numsurfs; ++n)
+						{
+							const auto& surface = m->lodInfo[0].surfs[n];
+							const auto* verts = surface.verts0.packedVerts0;
+							if (!verts) continue;
+							if (surface.flags & 4u)
+							{
+								std::size_t at{}, vertex{};
+								for (unsigned extra = 0; extra < 8 && surface.blendVerts; ++extra)
+									for (int v = 0; v < surface.blendVertCounts[extra]; ++v, ++vertex)
+									{
+										const auto* words = reinterpret_cast<const unsigned short*>(surface.blendVerts);
+										if (words[at] / 64u == unsigned(bone) && vertex < surface.vertCount)
+											points.push_back({verts[vertex].xyz[0], verts[vertex].xyz[1], verts[vertex].xyz[2]});
+										at += 2 * extra + 1;
+									}
+								continue;
+							}
+							unsigned first{};
+							for (unsigned k = 0; k < surface.rigidVertListCount; ++k)
+							{
+								const auto& group = surface.rigidVertLists[k];
+								if (group.boneOffset / 64u == unsigned(bone))
+									for (unsigned v = first; v < first + group.vertCount && v < surface.vertCount; ++v)
+										points.push_back({verts[v].xyz[0], verts[v].xyz[1], verts[v].xyz[2]});
+								first += group.vertCount;
+							}
+						}
+						std::array<float,3> lo{1e9f,1e9f,1e9f}, hi{-1e9f,-1e9f,-1e9f};
+						for (const auto& p : points) for (int c = 0; c < 3; ++c) { lo[c] = std::min(lo[c], p[c]); hi[c] = std::max(hi[c], p[c]); }
+						const auto& b = m->baseMat[bone];
+						std::string out = std::format("[VR capture] bone mesh {} {} vertices={} bind=({:.3f},{:.3f},{:.3f}) min=({:.3f},{:.3f},{:.3f}) max=({:.3f},{:.3f},{:.3f})",
+							wanted, bone_name, points.size(), b.trans[0], b.trans[1], b.trans[2], lo[0], lo[1], lo[2], hi[0], hi[1], hi[2]);
+						// Extremity in the bone's local Y-Z plane (e.g. a bolt handle knob).
+						std::sort(points.begin(), points.end(), [&](const auto& x, const auto& y)
+						{ return std::hypot(x[1]-b.trans[1], x[2]-b.trans[2]) > std::hypot(y[1]-b.trans[1], y[2]-b.trans[2]); });
+						std::array<float,3> tip{};
+						const auto count = std::max<std::size_t>(1, points.size() / 20);
+						for (std::size_t k = 0; k < count && k < points.size(); ++k) for (int c = 0; c < 3; ++c) tip[c] += points[k][c] / float(count);
+						out += std::format(" radial_tip=({:.3f},{:.3f},{:.3f})\n", tip[0], tip[1], tip[2]);
+						console::info("%s", out.c_str());
+						return;
+					}
+									}, scheduler::pipeline::main);
+			});
 			// Select an owned weapon by name (after `give`), for capture sessions.
 			// Decode a loaded sound alias to captures/_sounds/<file>.wav (slice cue authoring).
 			command::add("vr_sound_dump", [](const command::params& params)

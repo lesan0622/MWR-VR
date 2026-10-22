@@ -110,14 +110,16 @@ namespace vr::gameplay::weapons::mwr_rebase
 		const auto receiver = t.receiver.data(); // Targets name literals: NUL-terminated.
 		// The triangle-mask contract describes the MW2 mesh; only identical receivers keep it.
 		p.skinned_receiver = t.keep_mechanism && source.skinned_receiver ? receiver : nullptr;
-		// Prefer the MWR world clip model: MWR receivers weight little of the
-		// magazine mesh to tag_clip, so a receiver cut can render nearly empty.
+		// Receiver magazines are cut from the receiver mesh (original recipe behaviour);
+		// world clip models do not match the receiver magazine or its rounds.
 		p.rigid_magazine_source = t.magazine_from_receiver ? receiver : nullptr;
 		// World clip magazines take their counted rounds from this receiver.
-		p.round_source = t.magazine_from_receiver ? nullptr : receiver;
+		// Belt boxes carry their links, not a magazine round stack.
+		p.round_source = t.magazine_from_receiver || t.belt ? nullptr : receiver;
 		// A chamber cartridge is cut from the receiver magazine source; without one
-		// (MWR world clip magazines) the MW2 chamber presentation cannot bind.
-		if (!p.rigid_magazine_source)
+		// (MWR world clip magazines) the MW2 chamber presentation cannot bind. Its
+		// pose is MW2 receiver geometry, so only identical receivers keep it.
+		if (!p.rigid_magazine_source || !t.keep_mechanism)
 			p.chamber_round = nullptr;
 		if (t.receiver_parented_bullets)
 			p.receiver_parented_bullets = true;
