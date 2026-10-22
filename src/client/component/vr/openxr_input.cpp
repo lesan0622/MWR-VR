@@ -405,8 +405,11 @@ namespace vr::openxr
 			          std::clamp(value.currentState.y, -1.f, 1.f)};
 			return true;
 		};
-		const auto pose =
-		    [&](XrAction action, XrSpace space, controller_input::hand_pose& output, input_channel channel)
+		const auto pose = [&](XrAction action,
+		                      XrSpace space,
+		                      controller_input::hand_pose& output,
+		                      input_channel channel,
+		                      controller_input::clock::time_point& tracked_at)
 		{
 			XrActionStatePose state{XR_TYPE_ACTION_STATE_POSE};
 			const XrActionStateGetInfo get{XR_TYPE_ACTION_STATE_GET_INFO, nullptr, action, XR_NULL_PATH};
@@ -422,6 +425,22 @@ namespace vr::openxr
 					(location.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT) != 0,
 					(location.locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT) != 0,
 					(location.locationFlags & XR_SPACE_LOCATION_ORIENTATION_TRACKED_BIT) != 0, true};
+			// VDXR reports a controller the headset briefly loses (occluded, arm
+			// extended, wrist turned away) as valid but untracked with its last pose.
+			// Treat a short loss as continued tracking so a held magazine, knife or
+			// grenade is not cancelled by a single occluded frame; a longer loss
+			// still clears interaction admission.
+			constexpr auto tracking_grace = std::chrono::milliseconds(2000);
+			if (XR_SUCCEEDED(located) && output.quality.position_valid && output.quality.orientation_valid)
+			{
+				if (output.quality.position_tracked && output.quality.orientation_tracked)
+					tracked_at = frame.sampled_at;
+				else if (tracked_at != controller_input::clock::time_point{} &&
+				         frame.sampled_at - tracked_at <= tracking_grace)
+					output.quality.position_tracked = output.quality.orientation_tracked = true;
+			}
+			else
+				tracked_at = {};
 			auto& condition = frame.source.channels[index(channel)];
 			condition = XR_FAILED(located) ? input_condition{input_reason::action_query_failed, located}
 			                               : input_condition{input_reason::pose_invalid};
@@ -458,7 +477,7 @@ namespace vr::openxr
 			frame.trigger_touch[h] = boolean(hand.touch, hand.touch_state);
 			frame.primary[h] = boolean(hand.primary, hand.primary_state);
 			frame.secondary[h] = boolean(hand.secondary, hand.secondary_state);
-			pose(hand.grip, hand.grip_space, frame.grip[h], hand_channel(input_channel::left_grip, h));
+			pose(hand.grip, hand.grip_space, frame.grip[h], hand_channel(input_channel::left_grip, h), hand.grip_tracked_at);
 			frame.sdk_grip[h] = frame.grip[h];
 			if (!grip_reference_.required_profile.empty() && !profile_matches_[h])
 			{
@@ -472,7 +491,7 @@ namespace vr::openxr
 			if (raw_grip_valid && !frame.grip[h].valid)
 				frame.source.channels[index(hand_channel(input_channel::left_grip, h))] = {
 				    input_reason::calibration_invalid};
-			pose(hand.aim, hand.aim_space, frame.aim[h], hand_channel(input_channel::left_aim, h));
+			pose(hand.aim, hand.aim_space, frame.aim[h], hand_channel(input_channel::left_aim, h), hand.aim_tracked_at);
 			frame.sdk_aim[h] = frame.aim[h];
 		}
 		controller_input::publish(frame);

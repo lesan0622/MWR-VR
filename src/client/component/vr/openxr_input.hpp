@@ -20,6 +20,8 @@ namespace vr::openxr
 			    secondary_state;
 			controller_input::analog_latch trigger_latch, squeeze_latch;
 			controller_input::analog_policy trigger_policy{}, squeeze_policy{};
+			// Last fully tracked grip/aim sample; see the tracking-loss grace in sample().
+			controller_input::clock::time_point grip_tracked_at{}, aim_tracked_at{};
 		};
 		XrActionSet set_{};
 		XrAction move_{}, turn_{}, sprint_{}, jump_{}, menu_{}, recenter_{};

@@ -50,9 +50,7 @@ namespace vr::settings
 	inline constexpr choice_setting controller_pose_mode{
 		.name = "vr_controllerPoseMode",
 		.values = {"standard", "legacy"},
-		// MWR: the legacy Touch frame puts the wrist 10 cm ahead of the SDK grip;
-		// standard keeps the SDK grip, where hands place the glove's fist.
-		.default_index = 0,
+		.default_index = 1,
 		.label_keys = {"choice.standardControllerPose", "choice.legacyControllerPose"}};
 	inline constexpr std::array choices{
 		runtime_backend, controller_pose_mode, killfeed_style,

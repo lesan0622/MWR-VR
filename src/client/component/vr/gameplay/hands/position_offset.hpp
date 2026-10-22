@@ -3,7 +3,6 @@
 #include "../../head_pose_bridge.hpp"
 #include "../../controller_input.hpp"
 #include "../../settings.hpp"
-#include "../../controller_pose_pipeline.hpp"
 
 namespace vr::gameplay::hands
 {
@@ -13,7 +12,6 @@ namespace vr::gameplay::hands
 	// Defaults and presets are tuning starting points, not measured anatomy or
 	// runtime controller metadata. Other controllers may need different values.
 	inline constexpr float max_position_offset_meters = settings::max_hand_offset;
-	inline constexpr float grip_fist_forward_meters = .046f, grip_fist_inward_meters = .015f; // Headset fit: the controller end sits in the palm (4 cm ahead of the fist centre).
 	struct position_offsets
 	{
 		float inward_meters{settings::hand_inward.default_value}, back_meters{settings::hand_back.default_value},
@@ -59,15 +57,6 @@ namespace vr::gameplay::hands
 		if (!valid_offset_axis(aim.axis) ||
 			!offset_wrist(sub(grip.position,view_offset),grip.axis,units_per_meter,hand,offsets,result.position)) return false;
 		result.rotation = from_axis(aim.axis);
-		// MWR: the standard OpenXR grip origin is the centre of the closed hand
-		// around the handle. Put the glove's fist there, not its wrist joint: in
-		// every MWR firing idle the fist (finger roots and knuckles) sits 8.6 cm
-		// ahead of and 1.5 cm inside the wrist along the held gun / aim frame.
-		if (controller_pose_pipeline::selected() == controller_pose_pipeline::mode::standard)
-		{
-			const vec fist{grip_fist_forward_meters, hand == 1 ? grip_fist_inward_meters : -grip_fist_inward_meters, 0};
-			result.position = sub(result.position, scale(rotate(result.rotation, fist), units_per_meter));
-		}
 		output = result;
 		return true;
 	}
