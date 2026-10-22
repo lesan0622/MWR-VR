@@ -13,6 +13,7 @@ namespace vr::gameplay::weapons
   {"wpfoly_de50_reload_chamber_v1",48000,27852,163},
   {"wpfoly_de50_reload_chamber_v1_short",48000,27300,151},
   {"wpfoly_m14_reload_chamber_v1",48000,36575,182},
+  {"wpfoly_m40a3_rechamber_v1",48000,54206,372},
   {"wpfoly_m4_reload_chamber",48000,25474,137},
   {"wpfoly_m82_reload_chamber_v1",48000,41847,209},
   {"wpfoly_m82_reload_clipout_v1",48000,79344,345},

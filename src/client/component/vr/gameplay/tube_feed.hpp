@@ -46,7 +46,8 @@ namespace vr::gameplay::weapons::tube
 		return native.loaded>=0 && valid(r,s) ? s : state{};
 	}
 	enum class operation { draw, load_tube, load_port, rack_open, rack_close, discard, cleanup, accepted_shot };
-	enum class effect { none, draw, load_tube, load_port, rack_open, rack_close, discard, shot };
+	// bolt_unlock/bolt_lock: rotating-bolt handle cues only; never planned transactions.
+	enum class effect { none, draw, load_tube, load_port, rack_open, rack_close, discard, shot, bolt_unlock, bolt_lock };
 	struct request {operation op{};std::uint32_t weapon{};std::uint64_t instance_generation{},revision{};hand rear{hand::none},actor{hand::none};bool unlock{};
 		hand firing_hand{hand::none}; // Explicit module authority; does not change the host's rear hand.
 		bool sustained{};

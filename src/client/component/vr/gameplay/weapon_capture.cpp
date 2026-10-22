@@ -436,6 +436,10 @@ namespace vr::gameplay::weapon_capture
 					for (unsigned n = 0; keys && values && n < 36; ++n)
 						if (keys[n] && values[n])
 							out += std::format(" {}={}", game::SL_ConvertToString(keys[n]), game::SL_ConvertToString(values[n]));
+					const auto alias_name = [](const game::snd_alias_list_t* list) { return list && list->aliasName ? list->aliasName : "-"; };
+					out += std::format(" | pullback={} fire={} rechamber={} reload={} reload_start={} reload_end={}",
+						alias_name(def->pullbackSoundPlayer), alias_name(def->fireSoundPlayer), alias_name(def->rechamberSoundPlayer),
+						alias_name(def->reloadSoundPlayer), alias_name(def->reloadStartSoundPlayer), alias_name(def->reloadEndSoundPlayer));
 					console::info("[VR capture] sound map %s:%s\n", wanted.c_str(), out.c_str());
 					return;
 				}

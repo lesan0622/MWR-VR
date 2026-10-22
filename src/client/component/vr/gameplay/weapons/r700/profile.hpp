@@ -76,6 +76,17 @@ inline const part_grip_pose rack_pose=[] {
 	return part_grip_pose{"bolt",l.wrist,l.contact_in_wrist,l.fingers,nullptr,r};
 }();
 inline constexpr std::array<std::string_view, 1> names{"remington700"};
+// Native rechamber recording (48000 Hz / 54206 frames) split at its quiet gaps into the
+// four bolt events, as the original bolt action plays unlock/open/close/lock separately.
+inline constexpr sound_window bolt_unlock_window{.recording = "wpfoly_m40a3_rechamber_v1", .begin_ms = 245, .end_ms = 372};
+inline constexpr sound_window bolt_open_window{.recording = "wpfoly_m40a3_rechamber_v1", .begin_ms = 372, .end_ms = 525};
+inline constexpr sound_window bolt_close_window{.recording = "wpfoly_m40a3_rechamber_v1", .begin_ms = 640, .end_ms = 750};
+inline constexpr sound_window bolt_lock_window{.recording = "wpfoly_m40a3_rechamber_v1", .begin_ms = 750, .end_ms = 860};
+inline sound_reference rechamber(const sound_window& window) noexcept
+{
+	return {.name = "weap_rem700_rechamber_plr", .kind = sound_reference_kind::notetrack, .part = sound_part::whole,
+	        .notetrack_weapon = nullptr, .window = &window};
+}
 inline sound_reference sound(tube::effect e) noexcept
 {
 	switch (e)
@@ -83,10 +94,14 @@ inline sound_reference sound(tube::effect e) noexcept
 	case tube::effect::load_tube:
 	case tube::effect::load_port:
 		return {"weap_rem700_loop_plr"};
+	case tube::effect::bolt_unlock:
+		return rechamber(bolt_unlock_window);
 	case tube::effect::rack_open:
-		return {"weap_rem700_start_plr"};
+		return rechamber(bolt_open_window);
 	case tube::effect::rack_close:
-		return {"weap_rem700_end_plr"};
+		return rechamber(bolt_close_window);
+	case tube::effect::bolt_lock:
+		return rechamber(bolt_lock_window);
 	default:
 		return {};
 	}
@@ -105,7 +120,7 @@ inline constexpr tube::tuning interaction{
             .waist_radius = physical_reload::defaults::waist_radius_m,
             .slide_radius = part_grip_capture::radius_m,
             .slide_stroke = 0.07870444f,
-            .locked_travel = 0.07270444f,
+            .locked_travel = 0.06689877f,
             .full_stroke = 0.07083400f,
             .slide_lateral_limit = physical_reload::defaults::slide_lateral_limit_m,
             .well_radius = physical_reload::defaults::well_radius_m,

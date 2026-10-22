@@ -234,12 +234,13 @@ namespace vr::gameplay::weapons::native_weapon_sound
 			if(found || !copy_name(game::SL_ConvertToString(map.values[i]),alias.data(),alias.size()))return false;
 			found=true;
 		}
-		// MWR offhand WeaponDefs carry no pin/throw notetrack sounds; the loaded
-		// frag player aliases serve every hand grenade.
+		// MWR offhand WeaponDefs carry no pin/throw notetrack sounds. Each grenade's
+		// own player pullback (pin) and fire (throw) aliases name the native sounds,
+		// e.g. h1_wpn_flash_pinpull_plr / h1_wpn_frag_throw_plr.
 		if(!found)
 		{
-			const std::string_view fallback=release?"weap_fraggrenade_fire_plr":"weap_fraggrenade_pin_plr";
-			std::copy(fallback.begin(),fallback.end(),alias.begin());alias[fallback.size()]=0;found=true;
+			const auto* list=release ? definition->fireSoundPlayer : definition->pullbackSoundPlayer;
+			found=list && copy_name(list->aliasName,alias.data(),alias.size());
 		}
 		return found && utils::hook::invoke<int>(play_address,map.entity,origin.data(),alias.data())!=-1;
 	}

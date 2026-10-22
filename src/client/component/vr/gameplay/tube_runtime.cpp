@@ -72,6 +72,16 @@ namespace vr::gameplay::weapons::tube
 			}
 			return true;
 		}
+		// Rotating-bolt handle lift/lower: sound-only cues outside the ammunition ledger.
+		void bolt_cue(instance& i,effect kind)
+		{
+			auto& v=i.view;const auto& scene=i.last_scene;const auto now=clock::now();
+			if(!v.definition || scene.owner.id()!=v.owner.id() || !scene.gameplay || now<scene.input.sampled_at || now-scene.input.sampled_at>100ms)return;
+			feedback::event event{mechanics::effect::none,v.owner,scene.input.reference_generation,now,scene.shell_world.position};
+			event.explicit_sound=v.definition->sound_key(kind);event.tube_definition=v.definition;
+			event.mechanical_instance=v.ammo.instance_generation;
+			if(event.explicit_sound.name)feedback::publish(event);
+		}
 		bool interrupt(instance& i)
 		{
 			i.view.fire_armed=false;
@@ -142,6 +152,7 @@ namespace vr::gameplay::weapons::tube
 			auto g=scene.contact;
 			if (scene.definition!=i->view.definition) g.valid=false;
 			i->last_scene=scene;
+			const float lift_before=i->gesture.lift();
 			i->gesture.update(i->view.definition->interaction,i->view.definition->ammunition,i->view.ammo,
 				scene.input,i->view.owner,g,scene.gameplay && scene.owner.id()==i->view.owner.id(),now,
 				[&](const auto& tx) { return commit(*i,tx); }, {scene.manipulation,
@@ -150,6 +161,11 @@ namespace vr::gameplay::weapons::tube
 				hand_interaction::input(hand(1-int(scene.owner.holding_hand())),hand_interaction::button::trigger).press,
 				hand_interaction::granted(hand(1-int(scene.owner.holding_hand())),hand_interaction::domain::tube,scene.owner.id(),hand_interaction::button::trigger,hand_interaction::role::part),hand_interaction::input(hand(1-int(scene.owner.holding_hand())),hand_interaction::button::trigger).release});
 			i->view.lever=i->gesture.lever_pose();i->view.fire_armed=i->gesture.fire_armed(); i->view.rack_held=i->gesture.rack_held();i->view.travel=i->gesture.travel();i->view.lift=i->gesture.lift();i->view.rack_grip=i->gesture.rack_grip();
+			if(i->view.definition->interaction.bolt)
+			{
+				if(lift_before==0 && i->view.lift>0)bolt_cue(*i,effect::bolt_unlock);
+				else if(lift_before>0 && i->view.lift==0)bolt_cue(*i,effect::bolt_lock);
+			}
 			i->view.sampled_at=scene.input.sampled_at; i->view.reference=scene.input.reference_generation;
 			i->view.input_sequence=scene.input.sequence; reason=i->gesture.decision();
 		}
@@ -366,10 +382,10 @@ namespace vr::gameplay::weapons::tube
 		{
 			enabled=dvars::register_bool("vr_tubeReload",true,game::DVAR_FLAG_SAVED,"Authored VR individual-shell tube feeds");
 			command::add("vr_tube_status",[] {scheduler::once([] {
-				presentation v;const char* why;
-				{const std::lock_guard lock(mutex);auto* i=find(last_published_scene.owner.id());v=i ? i->view : presentation{};why=reason;}
-				console::info("[VR tube] contracts=%u active=%d fault=%d stored/chamber/reserve/held=%d/%d/%d/%d phase=%d rack=%d travel=%.4f lift=%.3f lever=%.3f spin=%.3f spinning=%d operating=%d lever_grasp=%d reason=%s ticks=%llu stage=%s%s\n",
-					boundaries.load(),v.active,v.fault,v.ammo.stored,int(v.ammo.chamber),v.ammo.reserve,v.ammo.held_rounds,int(v.ammo.phase),v.rack_held,v.travel,v.lift,v.lever.open,v.lever.spin,v.lever.spinning,v.lever.operating,v.lever.grasped,why,tick_count.load(),tick_stage.load(),presenter_status().c_str());
+				presentation v;const char* why;float rack_m=10;
+				{const std::lock_guard lock(mutex);auto* i=find(last_published_scene.owner.id());v=i ? i->view : presentation{};why=reason;if(i)rack_m=i->last_scene.contact.rack_distance;}
+				console::info("[VR tube] contracts=%u active=%d fault=%d stored/chamber/reserve/held=%d/%d/%d/%d phase=%d rack=%d travel=%.4f lift=%.3f rack_m=%.4f lever=%.3f spin=%.3f spinning=%d operating=%d lever_grasp=%d reason=%s ticks=%llu stage=%s%s\n",
+					boundaries.load(),v.active,v.fault,v.ammo.stored,int(v.ammo.chamber),v.ammo.reserve,v.ammo.held_rounds,int(v.ammo.phase),v.rack_held,v.travel,v.lift,rack_m,v.lever.open,v.lever.spin,v.lever.spinning,v.lever.operating,v.lever.grasped,why,tick_count.load(),tick_stage.load(),presenter_status().c_str());
 			},scheduler::pipeline::server);});
 			// Updated by the single hand-interaction coordinator.
 		}
