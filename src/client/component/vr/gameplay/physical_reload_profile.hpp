@@ -136,6 +136,8 @@ namespace vr::gameplay::weapons
 		// MWR: receiver whose top-round bone (bullets_bone) supplies the counted
 		// rounds drawn on separate world clip magazines (which carry no rounds).
 		const char* round_source{};
+		// The round bone already carries the whole visible column (G36): draw it once, not stacked.
+		bool round_column{};
 		const magazine_fill_recipe* magazine_fill() const noexcept
 		{
 			if (!rigid_magazine_source)

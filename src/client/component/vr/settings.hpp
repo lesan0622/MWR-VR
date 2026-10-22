@@ -171,7 +171,8 @@ namespace vr::settings
 	    "vr_handOffsetInward", 0.f, -max_hand_offset, max_hand_offset, .01f};
 	inline constexpr number_setting hand_back{
 	    "vr_handOffsetBack", 0.f, -max_hand_offset, max_hand_offset, .01f};
-	inline constexpr number_setting hand_up{"vr_handOffsetUp", 0.f, -max_hand_offset, max_hand_offset, .01f};
+	// MWR: headset acceptance placed the hands 10 cm above the controllers at zero.
+	inline constexpr number_setting hand_up{"vr_handOffsetUp", -.1f, -max_hand_offset, max_hand_offset, .01f};
 	inline constexpr number_setting hand_pitch{"vr_handAnglePitch", 0.f, -180.f, 180.f, 1.f};
 	inline constexpr number_setting hand_yaw{"vr_handAngleYaw", 0.f, -180.f, 180.f, 1.f};
 	inline constexpr number_setting hand_roll{"vr_handAngleRoll", 0.f, -180.f, 180.f, 1.f};

@@ -34,6 +34,7 @@ inline const reload_profile physical = [] {
 	p.magazine_contacts = &contacts;
 	p.additional_bullet_bones = additional_bullets;
 	p.round_source = "viewmodel_g36_sp"; // Counted rounds on the world clip magazine.
+	p.round_column = true; // j_bullet1 skins the whole visible round column.
 	p.interaction = physical_reload::with_box_magazine_well(p.interaction);
 	p.interaction.manual_magazine = &manual_magazine; // MP5-style rock/paddle latch.
 	// One native chamber recording: pull back | release, split at its quiet gap.

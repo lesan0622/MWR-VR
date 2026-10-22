@@ -514,7 +514,7 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 		if (index >= reload_profiles.size() || count <= 0)
 			return {};
 		const auto* stack = round_selected[index].load();
-		return stack ? stack->views[std::min(count, 3) - 1] : asset{};
+		return stack ? stack->views[definition->round_column ? 0 : std::min(count, 3) - 1] : asset{};
 	}
 
 	asset get(const reload_profile* definition, int rounds) noexcept
