@@ -11,6 +11,7 @@
 #include "component/console.hpp"
 #include "component/scheduler.hpp"
 #include "game/game.hpp"
+#include "game/scripting/execution.hpp"
 #include "loader/component_loader.hpp"
 
 #include <utils/io.hpp>
@@ -489,6 +490,47 @@ namespace vr::gameplay::weapon_capture
 							*reinterpret_cast<void* const*>(reinterpret_cast<const std::byte*>(e) + 0x120) != nullptr);
 					}
 					console::info("%s", out.empty() ? "[VR capture] damageable: none\n" : out.c_str());
+				}, scheduler::pipeline::server);
+			});
+			// In-use entities matching a classname/targetname/model filter: vr_list_entities [filter] [radius].
+			command::add("vr_list_entities", [](const command::params& params)
+			{
+				const std::string filter = params.size() > 1 ? params.get(1) : "";
+				const float radius = params.size() > 2 ? float(std::atof(params.get(2))) : 100000.f;
+				scheduler::once([filter, radius]
+				{
+					const auto* player = &game::g_entities[0];
+					std::string out = std::format("[VR capture] player origin=({:.0f},{:.0f},{:.0f})\n", player->origin[0], player->origin[1], player->origin[2]);
+					for (int n = 1; n < 2048; ++n)
+					{
+						const auto* e = &game::g_entities[n];
+						std::uint8_t inuse{};
+						std::memcpy(&inuse, reinterpret_cast<const std::byte*>(e) + 0xbc, 1);
+						if (!inuse) continue;
+						const float ox = e->origin[0] - player->origin[0], oy = e->origin[1] - player->origin[1], oz = e->origin[2] - player->origin[2];
+						const float dist = std::sqrt(ox*ox + oy*oy + oz*oz);
+						if (dist > radius) continue;
+						std::string fields[4];
+						try
+						{
+							const scripting::entity target{game::scr_entref_t{static_cast<unsigned short>(n), 0}};
+							const char* keys[4]{"classname", "targetname", "script_noteworthy", "model"};
+							for (int k = 0; k < 4; ++k)
+							{
+								const auto v = target.get(keys[k]);
+								if (v.is<std::string>()) fields[k] = v.as<std::string>();
+							}
+						}
+						catch (const std::exception& error) { fields[3] = std::string("!") + error.what(); }
+						if (fields[0].empty() && e->script_classname) fields[0] = game::SL_ConvertToString(e->script_classname);
+						const auto line = std::format("{} {} tn={} sn={} model={}", n, fields[0], fields[1], fields[2], fields[3]);
+						if (!filter.empty() && line.find(filter) == std::string::npos) continue;
+						out += std::format("[VR capture] entity {} origin=({:.0f},{:.0f},{:.0f}) dist={:.0f} box=({:.1f},{:.1f},{:.1f})-({:.1f},{:.1f},{:.1f})\n",
+							line, e->origin[0], e->origin[1], e->origin[2], dist,
+							e->box.midPoint[0]-e->box.halfSize[0], e->box.midPoint[1]-e->box.halfSize[1], e->box.midPoint[2]-e->box.halfSize[2],
+							e->box.midPoint[0]+e->box.halfSize[0], e->box.midPoint[1]+e->box.halfSize[1], e->box.midPoint[2]+e->box.halfSize[2]);
+					}
+					console::info("%s", out.c_str());
 				}, scheduler::pipeline::server);
 			});
 			// Select an owned weapon by name (after `give`), for capture sessions.

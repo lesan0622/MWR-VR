@@ -15,6 +15,7 @@
 #include "mwr_weapon_pose.hpp"
 #include "independent_fire_runtime.hpp"
 #include "native_scripted_control.hpp"
+#include "world_interaction.hpp"
 #include "game/dvars.hpp"
 #include "game/game.hpp"
 #include "loader/component_loader.hpp"
@@ -227,6 +228,9 @@ namespace vr::controllers
 			}
 			if (button_mask & controller_input::sprint_button) ++sprint_count;
 			if (button_mask & controller_input::jump_button) ++jump_count;
+			// Empty-hand grip world use (original controller_component): +activate
+			// and its binding notification for the hand-selected native use target.
+			cmd->buttons |= gameplay::interaction::command(input, gameplay, now);
 			apply_locomotion(cmd, input, gameplay, now);
 		}
 
@@ -238,6 +242,7 @@ namespace vr::controllers
 			const auto now = controller_input::clock::now();
 			if (now - last_command > std::chrono::milliseconds(150))
 			{
+				if (local_client == 0) gameplay::interaction::command(controller_input::latest_interaction(), false, now);
 				locomotion.reset();
 				buttons.reset();
 				stance.reset();
@@ -272,6 +277,7 @@ namespace vr::controllers
 			if (!normal_input_seen)
 			{
 				// Scripted/suppressed branches must rearm even if they never poll controls.
+				if (local_client == 0) gameplay::interaction::command(controller_input::latest_interaction(), false, now);
 				locomotion.reset();
 				buttons.reset();
 				attack_notifications={}; notified_owners={};
