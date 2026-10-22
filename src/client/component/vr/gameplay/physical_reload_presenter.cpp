@@ -87,6 +87,7 @@ namespace vr::gameplay::weapons::physical_reload
 		// Held, drops, partition, inserted, live chamber; then MWR counted rounds per index.
 		std::array<unsigned short,round_lighting_base*2> lighting_handles{};
 		std::atomic<std::uint64_t> chamber_draws{}; // MWR port diagnostic: live chamber cartridge submits.
+		std::mutex debug_mutex;hands::anchor debug_mag{},debug_wrist{},debug_final{};bool debug_valid{};
 		struct event_cursor { std::uint64_t instance{}, sequence{}; };
 		instance_cache<event_cursor,512> event_cursors;
 		template<class T> bool read(const void* source, size_t offset, T& output) noexcept
@@ -196,7 +197,7 @@ namespace vr::gameplay::weapons::physical_reload
 					std::copy(round_world.position.begin(),round_world.position.end(),placement.base.origin);
 					std::copy(round_world.rotation.begin(),round_world.rotation.end(),placement.base.quat);
 					placement.scale=1;float color[4]{1,1,1,1};
-					scene_models::submit(counted.model,&placement,0,&lighting_handles[round_lighting_base+index],color,color,color,.25f*units);
+					scene_models::submit(counted.model,&placement,(index<15 || index>=23) ? 1u : 0u,&lighting_handles[round_lighting_base+index],color,color,color,.25f*units);
 				}
 				world = compose(world,asset.in_magazine);
 				game::GfxScaledPlacement placement{};
@@ -207,7 +208,10 @@ namespace vr::gameplay::weapons::physical_reload
 				// Pad frustum admission only; never scale the mesh or shared asset.
 				// The independent hands do not request the bit-0 foreground effect.
 				// Held and falling magazines share their scene depth, so fingers can occlude them.
-				scene_models::submit(asset.model,&placement,0,&lighting_handles[index],color,color,color,.25f*units);
+				// MWR: the hands are the native viewmodel (foreground depth). A held or
+				// inserted part uses the same foreground so world geometry cannot hide it
+				// behind a visible hand; dropped parts (index 15-22) keep world depth.
+				scene_models::submit(asset.model,&placement,(index<15 || index>=23) ? 1u : 0u,&lighting_handles[index],color,color,color,.25f*units);
 			};
 			const auto now=clock::now();
 			for (const auto& hand_frame:frames)
@@ -330,8 +334,22 @@ namespace vr::gameplay::weapons::physical_reload
 			(!definition || (magazine_assets::get(definition,0).model &&
 			 (!partition_mesh(*definition) || bool(partition_assets::get(definition)))));
 	}
+	void debug_final_wrist(const hands::anchor& wrist) noexcept
+	{const std::lock_guard lock(debug_mutex);debug_final=wrist;}
 	std::string presentation_status()
 	{
+		std::string held_debug;
+		{
+			const std::lock_guard lock(debug_mutex);
+			if(debug_valid)
+			{
+				const auto a=compose(inverse(debug_wrist),debug_mag),b=compose(inverse(debug_final),debug_mag);
+				held_debug=std::format("held_in_presenter_wrist=({:.2f},{:.2f},{:.2f}|{:.3f},{:.3f},{:.3f},{:.3f}) in_final_wrist=({:.2f},{:.2f},{:.2f}|{:.3f},{:.3f},{:.3f},{:.3f}) wrist_delta=({:.2f},{:.2f},{:.2f})\n",
+					a.position[0],a.position[1],a.position[2],a.rotation[0],a.rotation[1],a.rotation[2],a.rotation[3],
+					b.position[0],b.position[1],b.position[2],b.rotation[0],b.rotation[1],b.rotation[2],b.rotation[3],
+					debug_final.position[0]-debug_wrist.position[0],debug_final.position[1]-debug_wrist.position[1],debug_final.position[2]-debug_wrist.position[2]);
+			}
+		}
 		auto result = std::format("held_attachment=native_viewmodel_record matches={} misses={} rejected(record/epoch/state/origin)={}/{}/{}/{} slide_visual=current_pose return=per_profile chamber_draws={}\n",
 			attachment_matches.load(),attachment_misses.load(),attachment_rejections[0].load(),attachment_rejections[1].load(),
 			attachment_rejections[2].load(),attachment_rejections[3].load(),chamber_draws.load());
@@ -342,6 +360,7 @@ namespace vr::gameplay::weapons::physical_reload
 			if(partition_mesh(*reload_profiles[i]))
 				result+=std::format("partition_asset({})={} [{}] ",reload_profiles[i]->id,bool(partition_assets::get(reload_profiles[i])),partition_assets::status(reload_profiles[i]));
 		}
+		result+=held_debug;
 		return result + chambering_guide::render_status();
 	}
 	presentation_result present(void* object, std::uint32_t epoch, const void* matrix_buffer,
@@ -766,6 +785,7 @@ namespace vr::gameplay::weapons::physical_reload
 		held.units = units;
 		held.definition = profile;held.view.owner=owner;
 		held.inserted_origin=view_offset;
+		{const std::lock_guard debug_lock(debug_mutex);debug_valid=state.ammo.magazine_hand==hand(off);if(debug_valid){debug_mag=mag;debug_wrist=as_anchor(solved[r.arms[off].wrist]);}}
 		if(state.active && !state.fault && manual && magazine_assets::cartridge(profile).model)
 		{
 			if(const auto chamber=chamber_cartridge_pose(definition,state.ammo,visual_travel,bolt_target.travel,units))

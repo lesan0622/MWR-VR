@@ -12,6 +12,8 @@ namespace vr::gameplay::weapons::physical_reload
 	bool presentation_available(const reload_profile* definition = nullptr,
 		part_visibility visibility = part_visibility::surface) noexcept;
 	std::string presentation_status();
+	// MWR diagnostic: final off-hand wrist versus the wrist the held magazine was composed on.
+	void debug_final_wrist(const hands::anchor& wrist) noexcept;
 	// Authored rail attachment from this record's exact gun skin and CURRENT
 	// model origin, including after its inserted magazine has been removed.
 	bool magazine_rail_for_record(const scene_models::preparation&,weapon_identity,

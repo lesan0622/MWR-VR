@@ -13,7 +13,7 @@ namespace vr::gameplay::hands
 	// Defaults and presets are tuning starting points, not measured anatomy or
 	// runtime controller metadata. Other controllers may need different values.
 	inline constexpr float max_position_offset_meters = settings::max_hand_offset;
-	inline constexpr float grip_fist_forward_meters = .086f, grip_fist_inward_meters = .015f;
+	inline constexpr float grip_fist_forward_meters = .046f, grip_fist_inward_meters = .015f; // Headset fit: the controller end sits in the palm (4 cm ahead of the fist centre).
 	struct position_offsets
 	{
 		float inward_meters{settings::hand_inward.default_value}, back_meters{settings::hand_back.default_value},

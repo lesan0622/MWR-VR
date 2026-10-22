@@ -1712,6 +1712,9 @@ namespace vr::gameplay::hands
 				                              owner.rear,
 				                              safe_index,
 				                              {solved.data(), size_t(layout.count)});
+				if (vr::valid_hand(owner.holding_hand()))
+					weapons::physical_reload::debug_final_wrist(
+					    hands::pose_math::as_anchor(solved[layout.arms[1 - int(owner.holding_hand())].wrist]));
 				if (weapons::carry::active())
 				{
 					auto scene = weapons::carry::scene{
