@@ -43,6 +43,7 @@ namespace mwr_port
 		"vr::gameplay::weapons",
 		"vr::gameplay::weapon_capture",
 		"scene_models",
+		"fastfiles::mwr_unload", // Zone unload boundary only: retires runtime models/parts before assets free.
 		"vr::gameplay::weapons::reload_boundary",
 		"vr::gameplay::weapons::physical_reload",
 		"vr::gameplay::weapons::physical_reload::presentation_component",

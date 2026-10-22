@@ -236,6 +236,8 @@ namespace scene_models
 	{ return create(source,bone,{&bone,1}); }
 	bool rigid_part::create_rigid_bone(game::XModel* source,unsigned bone)
 	{return create_impl(source,bone,{&bone,1},membership::rigid_bone);}
+	bool rigid_part::create_rigid_bones(game::XModel* source,unsigned bone,std::span<const unsigned> bones)
+	{return create_impl(source,bone,bones,membership::rigid_bone);}
 	bool rigid_part::create(game::XModel* source,unsigned bone,std::span<const unsigned> bones)
 	{return create_impl(source,bone,bones,membership::rigid);}
 	bool rigid_part::create_skin_partition(game::XModel* source,std::span<const unsigned> bones)
@@ -353,8 +355,10 @@ namespace scene_models
 			// mask must prove separation; never discard a selected skinned part.
 			if (surface.flags&4u)
 			{
+				status_="rigid part selected bone inside a skinned surface";
 				if ((surface.flags&~7u) || std::all_of(std::begin(surface.partBits),std::end(surface.partBits),[](int v){return !v;})) return false;
 				for (auto b:bones) if (unsigned(surface.partBits[b/32])&(0x80000000u>>(b%32))) return false;
+				status_="rigid group or surface-global index contract rejected";
 				continue;
 			}
 			if ((surface.flags&~3u) || surface.subdivLevelCount ||
@@ -403,7 +407,10 @@ namespace scene_models
 				++out->count;
 			}
 		}
-		if (matched_faces!=expected_faces || seen!=((1u<<bones.size())-1) || !out->count || !read(model.boneNames+bone,out->name)) return false;
+		if (matched_faces!=expected_faces){status_="rigid part face partition count rejected";return false;}
+		if (seen!=((1u<<bones.size())-1)){status_="rigid part selected bone without geometry";return false;}
+		if (!out->count){status_="rigid part selected no surfaces";return false;}
+		if (!read(model.boneNames+bone,out->name)) return false;
 		game::Bounds bounds{};
 		float low[3]{FLT_MAX,FLT_MAX,FLT_MAX},high[3]{-FLT_MAX,-FLT_MAX,-FLT_MAX},radius_squared{};
 		for (unsigned n=0;n<out->count;++n)

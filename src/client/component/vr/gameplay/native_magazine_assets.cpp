@@ -167,6 +167,12 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 				for (size_t index = 0; index < count; ++index)
 					included[index] = bones[recipe.selected_index(population, index)];
 				created = part.create(source, bones[0], std::span(included).first(count));
+				// MWR port: receiver magazines (Skorpion) can share skinned surfaces.
+				if (!created)
+					created = part.create_rigid_bones(source, bones[0], std::span(included).first(count));
+				// A receiver without round geometry (Skorpion round stand-in tag): body only.
+				if (!created && count > recipe.body_count)
+					created = part.create_rigid_bones(source, bones[0], std::span(included).first(recipe.body_count));
 			}
 			if (!created)
 			{

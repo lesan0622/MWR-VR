@@ -870,3 +870,39 @@ namespace fastfiles
 }
 
 REGISTER_COMPONENT(fastfiles::component)
+
+namespace fastfiles::mwr_unload
+{
+	// MWR port: the full fastfiles component keeps H2 addresses. Only the zone
+	// unload boundary is rebound so pre-unload owners (runtime model identities,
+	// scene parts, equipment) retire before their source assets are freed.
+	namespace
+	{
+		utils::hook::detour unload_hook;
+		void unload_stub(const unsigned short* zones, const unsigned int count, const bool create_default)
+		{
+			if (count)
+				for (const auto callback : pre_unload_callbacks) callback();
+			unload_hook.invoke<void>(zones, count, create_default);
+		}
+	}
+
+	class component final : public component_interface
+	{
+	public:
+		void post_unpack() override
+		{
+			// DB_UnloadXZones (h1_sp64_ship.exe; same entry as h1-mod SP 0x1F6040).
+			constexpr std::uint8_t prologue[]{0x40, 0x53, 0x55, 0x56, 0x41, 0x54, 0x41, 0x56, 0x41, 0x57, 0x48, 0x83, 0xEC, 0x28};
+			if (std::memcmp(reinterpret_cast<const void*>(0x1401F6040), prologue, sizeof(prologue)))
+				throw std::runtime_error("MWR DB_UnloadXZones prologue rejected");
+			unload_hook.create(0x1401F6040, unload_stub);
+		}
+	};
+}
+
+// Second component in this translation unit: REGISTER_COMPONENT's fixed name would collide.
+namespace
+{
+	static component_loader::installer<fastfiles::mwr_unload::component> mwr_unload_component;
+}

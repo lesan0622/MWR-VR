@@ -4,6 +4,7 @@
 #include "../charging_handle_bolt.hpp"
 #include "../hands/pose_solver.hpp"
 #include "../belt_profile.hpp"
+#include "../magazine_grasp_profile.hpp"
 
 namespace vr::gameplay::weapons::mwr_rebase
 {
@@ -201,6 +202,8 @@ namespace vr::gameplay::weapons::mwr_rebase
 				if (sound->name && sound->kind == sound_reference_kind::notetrack)
 					sound->name = t.cycle_notetrack;
 		}
+		if (t.controller_magazine)
+			p = with_controller_magazine(p);
 		return p;
 	}
 

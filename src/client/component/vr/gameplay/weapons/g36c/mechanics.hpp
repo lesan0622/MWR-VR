@@ -16,6 +16,7 @@ inline constexpr auto chamber_rules=mechanics::chamber_rules(reload_rules);
 inline constexpr std::array<physical_reload::contact_box,1> strike_regions{{
 	{{{0.f, 0.f, -2.0f}, {0.f, 0.f, 0.f, 1.f}}, {1.2f, 0.7f, 3.0f}},
 }};
-inline constexpr magazine_contact_profile contacts{{4.57676006f, -0.78914369f, 6.32661795f},{-1.2f, -0.7f, -5.0f},{1.2f, 0.7f, 1.0f},{4.00222500f, 0.23752900f, 0.87855300f},strike_regions};
+// Grab box is gun-local: the tag_clip rest (5.636, 0.095, 2.073) plus the body box above.
+inline constexpr magazine_contact_profile contacts{{4.57676006f, -0.78914369f, 6.32661795f},{4.44f, -0.61f, -2.93f},{6.84f, 0.80f, 3.07f},{4.00222500f, 0.23752900f, 0.87855300f},strike_regions};
 inline constexpr auto manual_magazine=[] {auto p=physical_reload::rocking_magazine();p.grab_radius=.08f;return p;}();
 }

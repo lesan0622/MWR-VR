@@ -39,6 +39,8 @@ namespace scene_models
 		// complete triangles whose every influence is this one bone; reject mixed
 		// weights/boundaries. Handles mixed rigid/skinned source models exactly.
 		bool create_rigid_bone(game::XModel* source,unsigned bone);
+		// MWR port: several bones, cutting their triangles out of mixed skinned surfaces.
+		bool create_rigid_bones(game::XModel* source,unsigned bone,std::span<const unsigned> bones);
 		// Several rigid groups across the native byte-sized material surface count, in their common
 		// source bind coordinates. Keeps a magazine and its rounds/materials intact.
 		bool create(game::XModel* source, unsigned anchor, std::span<const unsigned> bones);

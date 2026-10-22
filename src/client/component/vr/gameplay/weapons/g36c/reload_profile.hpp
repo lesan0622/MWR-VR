@@ -2,6 +2,7 @@
 #include "mechanics.hpp"
 #include "reload_poses.hpp"
 #include "feedback.hpp"
+#include "../../magazine_grasp_profile.hpp"
 
 namespace vr::gameplay::weapons::g36c
 {
@@ -38,6 +39,8 @@ inline const reload_profile physical = [] {
 	p.interaction = physical_reload::with_box_magazine_well(p.interaction);
 	p.interaction.manual_magazine = &manual_magazine; // MP5-style rock/paddle latch.
 	p.chamber_display = &chamber_display;
-	return p;
+	// Magazine +Z follows the controller like the other box magazines; the native
+	// mid-reload grasp alone left the spare ~70 degrees off the well axis.
+	return with_controller_magazine(p);
 }();
 }
