@@ -50,7 +50,9 @@ namespace vr::settings
 	inline constexpr choice_setting controller_pose_mode{
 		.name = "vr_controllerPoseMode",
 		.values = {"standard", "legacy"},
-		.default_index = 1,
+		// MWR: the legacy Touch frame puts the wrist 10 cm ahead of the SDK grip;
+		// standard keeps the SDK grip, where hands place the glove's fist.
+		.default_index = 0,
 		.label_keys = {"choice.standardControllerPose", "choice.legacyControllerPose"}};
 	inline constexpr std::array choices{
 		runtime_backend, controller_pose_mode, killfeed_style,
@@ -171,8 +173,7 @@ namespace vr::settings
 	    "vr_handOffsetInward", 0.f, -max_hand_offset, max_hand_offset, .01f};
 	inline constexpr number_setting hand_back{
 	    "vr_handOffsetBack", 0.f, -max_hand_offset, max_hand_offset, .01f};
-	// MWR: headset acceptance placed the hands 10 cm above the controllers at zero.
-	inline constexpr number_setting hand_up{"vr_handOffsetUp", -.1f, -max_hand_offset, max_hand_offset, .01f};
+	inline constexpr number_setting hand_up{"vr_handOffsetUp", 0.f, -max_hand_offset, max_hand_offset, .01f};
 	inline constexpr number_setting hand_pitch{"vr_handAnglePitch", 0.f, -180.f, 180.f, 1.f};
 	inline constexpr number_setting hand_yaw{"vr_handAngleYaw", 0.f, -180.f, 180.f, 1.f};
 	inline constexpr number_setting hand_roll{"vr_handAngleRoll", 0.f, -180.f, 180.f, 1.f};

@@ -463,6 +463,34 @@ namespace vr::gameplay::weapon_capture
 					console::info("%s", out.c_str());
 				}, scheduler::pipeline::main);
 			});
+			// Damageable entities near the player: vr_list_damageable [radius].
+			command::add("vr_list_damageable", [](const command::params& params)
+			{
+				const float radius = params.size() > 1 ? float(std::atof(params.get(1))) : 400.f;
+				scheduler::once([radius]
+				{
+					const auto* player = &game::g_entities[0];
+					std::string out;
+					for (int n = 1; n < 2048; ++n)
+					{
+						const auto* e = &game::g_entities[n];
+						std::uint8_t inuse{}, take{};int health{};
+						std::memcpy(&inuse, reinterpret_cast<const std::byte*>(e) + 0xbc, 1);
+						std::memcpy(&take, reinterpret_cast<const std::byte*>(e) + 0x149, 1);
+						std::memcpy(&health, reinterpret_cast<const std::byte*>(e) + 0x184, 4);
+						if (!inuse || !take) continue;
+						const float ox = e->origin[0] - player->origin[0], oy = e->origin[1] - player->origin[1], oz = e->origin[2] - player->origin[2];
+						if (std::sqrt(ox*ox + oy*oy + oz*oz) > radius) continue;
+						const char* classname = e->script_classname ? game::SL_ConvertToString(e->script_classname) : "?";
+						out += std::format("[VR capture] damageable {} {} origin=({:.0f},{:.0f},{:.0f}) dist={:.0f} health={} box=({:.1f},{:.1f},{:.1f})-({:.1f},{:.1f},{:.1f}) actor={} \n",
+							n, classname ? classname : "?", e->origin[0], e->origin[1], e->origin[2], std::sqrt(ox*ox + oy*oy + oz*oz), health,
+							e->box.midPoint[0]-e->box.halfSize[0], e->box.midPoint[1]-e->box.halfSize[1], e->box.midPoint[2]-e->box.halfSize[2],
+							e->box.midPoint[0]+e->box.halfSize[0], e->box.midPoint[1]+e->box.halfSize[1], e->box.midPoint[2]+e->box.halfSize[2],
+							*reinterpret_cast<void* const*>(reinterpret_cast<const std::byte*>(e) + 0x120) != nullptr);
+					}
+					console::info("%s", out.empty() ? "[VR capture] damageable: none\n" : out.c_str());
+				}, scheduler::pipeline::server);
+			});
 			// Select an owned weapon by name (after `give`), for capture sessions.
 			// Decode a loaded sound alias to captures/_sounds/<file>.wav (slice cue authoring).
 			command::add("vr_sound_dump", [](const command::params& params)

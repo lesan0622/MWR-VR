@@ -11,6 +11,7 @@ namespace vr::gameplay::melee::native
 		unsigned part_name{},model_index{},hit_location{};
 		float fraction{1};
 		bool flesh{true};
+		bool trigger{}; // MWR: scripted trigger_damage volume (e.g. the killhouse melon).
 		explicit operator bool() const noexcept {return target.entity>0;}
 	};
 	bool initialize();

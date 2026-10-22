@@ -68,6 +68,43 @@ namespace vr::gameplay::melee::native
 		const auto* paused=game::Dvar_FindVar("cl_paused");
 		return ps && !(ps->e_flags&0x103000) && scripted_control::allowed(ps) && paused && !paused->current.integer && !*game::keyCatchers;
 	}
+	namespace
+	{
+		bool damage_trigger(int number) noexcept
+		{
+			if (number<=0 || number>=2048) return false;
+			const auto* e=&game::g_entities[number];
+			if (!read<std::uint8_t>(e,0xbc) || !read<std::uint8_t>(e,0x149) || !e->script_classname) return false;
+			const auto* classname=game::SL_ConvertToString(e->script_classname);
+			return classname && std::string_view(classname)=="trigger_damage";
+		}
+		// Small scripted damage volumes (fruit, props) are invisible to the model
+		// trace. A bladed swing segment that enters one damages it like native melee.
+		hit trigger_trace(vec from,vec to,tool kind)
+		{
+			if (!bladed(kind)) return {};
+			const auto delta=sub(to,from);const auto distance=length(delta);if (distance<.0001f) return {};
+			hit best{};best.fraction=2;
+			for (int n=1;n<2048;++n)
+			{
+				if (!damage_trigger(n)) continue;
+				const auto* e=&game::g_entities[n];
+				float enter=0,leave=1;bool miss=false;
+				for (int a=0;a<3 && !miss;++a)
+				{
+					const float lo=e->origin[a]+e->box.midPoint[a]-e->box.halfSize[a],hi=e->origin[a]+e->box.midPoint[a]+e->box.halfSize[a];
+					if (e->box.halfSize[a]<=0 || e->box.halfSize[a]>40) {miss=true;break;} // Only prop-sized volumes.
+					if (std::abs(delta[a])<1e-6f) {if (from[a]<lo || from[a]>hi) miss=true;continue;}
+					float t0=(lo-from[a])/delta[a],t1=(hi-from[a])/delta[a];if (t0>t1) std::swap(t0,t1);
+					enter=std::max(enter,t0);leave=std::min(leave,t1);if (enter>leave) miss=true;
+				}
+				if (miss || enter>=best.fraction) continue;
+				best={weapons::native_carry::entity_key(n),add(from,scale(delta,enter)),scale(delta,1/distance),0,0,0,enter,false};
+				best.trigger=true;
+			}
+			return best.fraction<=1 ? best : hit{};
+		}
+	}
 	hit trace(vec from,vec to,vec head,float units,tool kind)
 	{
 		if (!allowed() || !std::isfinite(units) || units<=0) return {};
@@ -78,9 +115,9 @@ namespace vr::gameplay::melee::native
 		// melee (0x14051c96e). No NPC origin sphere or head-forward auto targeting.
 		utils::hook::invoke<void>(0x1402A2980,&result,from.data(),to.data(),0,0x280e091,reinterpret_cast<const void*>(0x140ECAF30)); // MWR bullettrace priority map
 		if (!std::isfinite(result.fraction) || result.fraction<0 || result.fraction>=1 || result.hitType!=1 ||
-			(result.surfaceFlags&0x10)) return {};
+			(result.surfaceFlags&0x10)) return trigger_trace(from,to,kind);
 		const bool flesh=npc(result.hitId);
-		if (!flesh && !training_target(result.hitId,kind)) return {};
+		if (!flesh && !training_target(result.hitId,kind)) return trigger_trace(from,to,kind);
 		const auto point=add(from,scale(sub(to,from),result.fraction));
 		game::Bounds bounds{};game::trace_t clearance{};
 		game::G_TraceCapsule(&clearance,head.data(),point.data(),&bounds,0,0x280e831);
@@ -95,7 +132,7 @@ namespace vr::gameplay::melee::native
 		const auto definition=weapons::native_weapon_read::get(weapon);
 		if (!definition ||
 			weapons::native_carry::entity_key(contact.target.entity).generation!=contact.target.generation || contact.hit_location>=19) return 0;
-		if (contact.flesh ? !npc(contact.target.entity) : !training_target(contact.target.entity,kind)) return 0;
+		if (contact.trigger ? !damage_trigger(contact.target.entity) : contact.flesh ? !npc(contact.target.entity) : !training_target(contact.target.entity,kind)) return 0;
 		const auto native_amount=utils::hook::invoke<int>(0x1404B5A20,weapon,false);
         const bool impact=cheats::ragdoll_impact();
         const bool exo=cheats::exo_punch::active();
