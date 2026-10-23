@@ -51,6 +51,7 @@ namespace vr
 		std::atomic_bool shutdown_started{false};
 		std::atomic_bool callbacks_finalized{false};
 		game::dvar_t* vr_enable{};
+		game::dvar_t* camera_bob{};
 		game::dvar_t* vr_engine_probe{};
 		game::dvar_t* vr_engine_probe_trace{};
 		game::dvar_t* vr_head_tracking{};
@@ -881,6 +882,22 @@ namespace vr
 				file.close();
 				std::remove("overlord_cmd.txt");
 				if (!commands.empty()) command::execute(commands, false);
+			}, scheduler::pipeline::main, 1s);
+			// MWR: native walk/sprint view bob moves the stereo camera. vr_cameraBob=0
+			// (default) holds the bob amplitudes and cycle speeds at zero; 1 restores them.
+			camera_bob = dvars::register_bool(settings::camera_bob, false, game::DVAR_FLAG_SAVED,
+				"Native walk/sprint camera bob in VR");
+			scheduler::loop([]
+			{
+				if (!vr_enable || !vr_enable->current.enabled) return;
+				const bool keep = camera_bob && camera_bob->current.enabled;
+				for (const auto* name : {"bg_viewBobMax", "bg_viewBobAmplitudeBase", "bg_viewBobAmplitudeRoll",
+					"player_sprintCameraBob", "player_walkCameraBob"})
+					if (auto* dvar = game::Dvar_FindVar(name); dvar && dvar->type == game::dvar_type::value)
+					{
+						const float wanted = keep ? dvar->reset.value : 0.f;
+						if (dvar->current.value != wanted) dvar->current.value = dvar->latched.value = wanted;
+					}
 			}, scheduler::pipeline::main, 1s);
 			// MWR: native depth of field (ADS focus blur, scripted DOF) blurs the whole
 			// stereo image in VR. Keep it off while VR runs.

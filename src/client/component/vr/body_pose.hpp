@@ -51,21 +51,13 @@ namespace vr::body_pose
 				const float dt=std::chrono::duration<float>(at-at_).count();
 				vec neck{};for(unsigned i=0;i<3;++i)neck[i]=head[i]-eye[i]+eye_reference_[i];
 				const float delta_x=neck[0]-position_[0],delta_y=neck[1]-position_[1],distance=std::hypot(delta_x,delta_y);
-				const float blend=1-std::exp(-dt/.12f);
-				if(distance>.07f)
-				{
-					const float movement=std::max((distance-.07f)*blend,distance-.15f);
-					position_[0]+=delta_x/distance*movement;position_[1]+=delta_y/distance*movement;
-				}
+				// MWR: the torso stays under the neck (no deadzone or smoothing).
+				if(distance>0){position_[0]+=delta_x;position_[1]+=delta_y;}
 				// Follow physical crouching; camera/native crouch already lives in
 				// the unfiltered world base. Neck compensation reduces nod motion.
 				position_[2]+=(neck[2]-position_[2])*(1-std::exp(-dt/.08f));
-				const float angle=wrap(head_yaw-yaw_);
-				if(std::abs(angle)>35.f)
-				{
-					const float excess=angle-std::copysign(35.f,angle);
-					yaw_=wrap(yaw_+std::clamp(excess*(1-std::exp(-dt/.18f)),-180.f*dt,180.f*dt));
-				}
+				// MWR: the torso always faces the head's heading.
+				yaw_=wrap(head_yaw);
 				at_=at;
 			}
 			last_head_=head;
