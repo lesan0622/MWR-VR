@@ -11,6 +11,7 @@
 #include "command.hpp"
 #include <utils/hook.hpp>
 #include <utils/hook_validation.hpp>
+#include <utils/native_memory.hpp>
 #include <utils/startup_callbacks.hpp>
 
 namespace scene_models
@@ -167,12 +168,19 @@ namespace scene_models
 	std::string submit_status()
 	{
 		const auto* ps = game::CL_IsCgameInitialized() ? game::CG_GetPredictedPlayerState(0) : nullptr;
-		return std::format("scene_models submits={} admitted={} last={} origin=({:.1f},{:.1f},{:.1f}) player=({:.1f},{:.1f},{:.1f}){}\n", submit_calls.load(), submit_admitted.load(), last_submit_model.load(),
+		// The last model (and its name) may belong to a zone unloaded since; copy
+		// both through guarded reads instead of dereferencing them.
+		std::array<char, 64> name{};
+		const auto* name_source = last_submit_model.load();
+		if (!name_source || !utils::native_memory::read_bytes(name.data(), name_source, name.size() - 1)) name[0] = 0;
+		return std::format("scene_models submits={} admitted={} last={} origin=({:.1f},{:.1f},{:.1f}) player=({:.1f},{:.1f},{:.1f}){}\n", submit_calls.load(), submit_admitted.load(), name.data(),
 			last_origin[0].load(), last_origin[1].load(), last_origin[2].load(), ps ? ps->origin[0] : 0.f, ps ? ps->origin[1] : 0.f, ps ? ps->origin[2] : 0.f, [] {
-			const auto* m = last_model.load();
-			if (!m) return std::string{};
+			const auto* source = last_model.load();
+			game::XModel copy{};
+			if (!source || !utils::native_memory::read_bytes(&copy, source, sizeof(copy))) return std::string{};
+			const auto* m = &copy;
 			return std::format(" quat=({:.3f},{:.3f},{:.3f},{:.3f}) scale={:.3f}", last_quat_scale[0].load(), last_quat_scale[1].load(), last_quat_scale[2].load(), last_quat_scale[3].load(), last_quat_scale[4].load()) + std::format(" model={} lods={} lod0(dist={:.0f} surfs={} ptr={} modelSurfs={}) lod1(dist={:.0f} surfs={})",
-				static_cast<const void*>(m), int(m->numLods), m->lodInfo[0].dist, m->lodInfo[0].numsurfs,
+				static_cast<const void*>(source), int(m->numLods), m->lodInfo[0].dist, m->lodInfo[0].numsurfs,
 				static_cast<const void*>(m->lodInfo[0].surfs), static_cast<const void*>(m->lodInfo[0].modelSurfs),
 				m->lodInfo[1].dist, m->lodInfo[1].numsurfs);
 		}());
