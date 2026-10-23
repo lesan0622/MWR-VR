@@ -161,7 +161,15 @@ namespace vr::gameplay::interaction
 		for(float v:half){if(!std::isfinite(v) || v<0)return {};large|=v>2*r.units;}
 		// Ordinary use triggers have authored volumes, not visible model bounds.
 		// Keep legacy point selection for unusually large scene trigger volumes.
-		return large ? score(r,key,center) : score_model(r,key,center,half);
+		if(large)return score(r,key,center);
+		// MWR: authored volumes are tight (e.g. the killhouse rope). Select against
+		// a box grown by 30 cm on every side, but report the nearest point of the
+		// real volume so visibility traces never start inside nearby geometry.
+		constexpr float use_trigger_margin_m=.30f;
+		vec grown=half;for(auto& v:grown)v+=use_trigger_margin_m*r.units;
+		auto chosen=score_model(r,key,center,grown);
+		if(chosen)for(int i=0;i<3;++i)chosen.position[i]=std::clamp(chosen.position[i],center[i]-half[i],center[i]+half[i]);
+		return chosen;
 	}
 	inline target score_breach(const ray& r,target_key key,const vec& center,const vec& native_half) noexcept
 	{
