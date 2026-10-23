@@ -15,6 +15,7 @@
 #include "loader/component_loader.hpp"
 
 #include <utils/io.hpp>
+#include <utils/compression.hpp>
 #include <utils/native_memory.hpp>
 #include <utils/hook.hpp>
 
@@ -491,6 +492,35 @@ namespace vr::gameplay::weapon_capture
 					}
 					console::info("%s", out.empty() ? "[VR capture] damageable: none\n" : out.c_str());
 				}, scheduler::pipeline::server);
+			});
+			// Dev: dump loaded script assets matching a filter (bytecode + decompressed
+			// stack) to captures/_scripts for offline decompilation. vr_dump_scripts <filter>.
+			command::add("vr_dump_scripts", [](const command::params& params)
+			{
+				if (params.size() < 2) return;
+				const std::string filter = params.get(1);
+				scheduler::once([filter]
+				{
+					struct context { std::string filter; std::vector<const game::ScriptFile*> found; } ctx{filter, {}};
+					game::DB_EnumXAssets_Internal(game::ASSET_TYPE_SCRIPTFILE, [](game::XAssetHeader header, void* data)
+					{
+						auto* c = static_cast<context*>(data);
+						if (header.scriptfile && header.scriptfile->name && std::string_view(header.scriptfile->name).find(c->filter) != std::string_view::npos && c->found.size() < 256)
+							c->found.push_back(header.scriptfile);
+					}, &ctx, false);
+					unsigned written{};
+					for (const auto* f : ctx.found)
+					{
+						if (!f->buffer || !f->bytecode || f->compressedLen <= 0 || f->bytecodeLen <= 0) continue;
+						std::string name = f->name;
+						for (auto& c : name) if (c == '/' || c == '\\' || c == ':') c = '_';
+						const auto stack = utils::compression::zlib::decompress(std::string{f->buffer, static_cast<size_t>(f->compressedLen)});
+						utils::io::write_file("overlord-mwr/captures/_scripts/" + name + ".cgsc", std::string{f->bytecode, static_cast<size_t>(f->bytecodeLen)});
+						utils::io::write_file("overlord-mwr/captures/_scripts/" + name + ".cgsc.stack", stack);
+						++written;
+					}
+					console::info("[VR capture] scripts: %u/%zu -> overlord-mwr/captures/_scripts\n", written, ctx.found.size());
+				}, scheduler::pipeline::main);
 			});
 			// Loaded XModels whose name contains a filter: per lod0 surface material,
 			// rigid bones and model-space vertex extents. vr_capture_surfaces <filter>.
