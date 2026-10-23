@@ -178,8 +178,12 @@ namespace game
 					 float* color, Material* material)> R_AddCmdDrawStretchPic{0x1401A29A0 /* H2 0x1403C9710 */};
 	WEAK symbol<void(float x, float y, float width, float height, float s0, float t0, float s1, float t1,
 					 float angle, float* color, Material* material)> R_AddCmdDrawStretchPicRotateXY{0x0 /* TODO(mwr) H2 0x1403C99B0 */};
-	WEAK symbol<void*(const char* text, int maxChars, Font_s* font, float x, float y, float xScale, float yScale, 
-					 float rotation, float* color, int style)> R_AddCmdDrawText{0x0 /* TODO(mwr) H2 0x14076C660 */};
+	// MWR has no R_AddCmdDrawText wrapper; h1-mod draws through the base text command
+	// with the font height and style table (SP 0x14057EA60/0x14055BB90).
+	WEAK symbol<void*(const char* text, int maxChars, Font_s* font, int fontHeight, float x, float y, float xScale,
+					 float yScale, float rotation, float* color, int style, int cursorPos, char cursorChar,
+					 void* styleInfo)> H1_AddBaseDrawTextCmd{0x14057EA60};
+	WEAK symbol<void*(int style)> R_GetTextStyle{0x14055BB90};
 	WEAK symbol<void(const char* text, int maxChars, Font_s* font, float x, float y, float xScale, float yScale, 
 					 float rotation, float* color1, float* color2, int style)> R_AddCmdDrawText2{0x0 /* TODO(mwr) H2 0x14076C860 */};
 	WEAK symbol<void(rectangle* rect, float a2, float a3, float a4, float a5, float* color, Material* material)> R_DrawRectangle{0x0 /* TODO(mwr) H2 0x14076A280 */};

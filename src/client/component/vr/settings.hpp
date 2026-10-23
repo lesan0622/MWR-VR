@@ -118,6 +118,8 @@ namespace vr::settings
 	inline constexpr boolean_setting ads_comfort{"vr_adsComfort", true};
 	inline constexpr boolean_setting ads_sprint{"vr_adsSprint", true};
 	inline constexpr boolean_setting exo_punch{"vr_exoPunch", false};
+	// MWR: world marker on the current objective (the native compass star in VR).
+	inline constexpr boolean_setting objective_markers{"vr_objectiveMarkers", true};
 	inline constexpr auto toggles = []
 	{
 		constexpr std::array gameplay{recording_mode,
@@ -135,6 +137,7 @@ namespace vr::settings
 		                              ads_comfort,
 		                              ads_sprint,
 		                              exo_punch,
+		                              objective_markers,
 		                              boolean_setting{disable_lens_flare, false},
 		                              boolean_setting{camera_bob, false},
 		                              boolean_setting{recoil, true},

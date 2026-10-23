@@ -31,4 +31,7 @@ namespace vr::gameplay::interaction
 	};
 	presentation latest() noexcept;
 	std::string prompt_status();
+	// A VR item label was drawn within the last few frames; the stock cursor
+	// hint ("Press [Use] to ...") is then redundant and stays hidden.
+	bool prompt_visible() noexcept;
 }

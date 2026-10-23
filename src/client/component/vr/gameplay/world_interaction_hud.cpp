@@ -17,6 +17,7 @@ namespace vr::gameplay::interaction
 	namespace
 	{
 		std::atomic_uint64_t prompt_frames{},target_frames{},stale_frames{},prepared{},recorded{},rejected{};
+		std::atomic_uint64_t last_label_ms{};
 		struct weapon_prompt {game::Material* icon{};int ratio{};std::string name,attachments;};
 		template<class T> T asset_field(const void* asset,std::size_t offset)
 		{
@@ -190,9 +191,14 @@ namespace vr::gameplay::interaction
 					if (!attachments.empty()) game::R_AddCmdDrawText(attachments.c_str(),int(attachments.size()),font,
 						marker.anchor[0]-attachment_width*scale*.5f,y+32.f*scale,scale,scale,0,white,4);
 				},bounds);
-				if (accepted) ++recorded;else ++rejected;
+				if (accepted) {++recorded;last_label_ms=GetTickCount64();} else ++rejected;
 			}
 		}
+	}
+	bool prompt_visible() noexcept
+	{
+		const auto last=last_label_ms.load();
+		return last && GetTickCount64()-last<150;
 	}
 	std::string prompt_status()
 	{

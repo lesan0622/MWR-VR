@@ -37,6 +37,8 @@ namespace mwr_port
 		"vr::narrative_ui", // Subtitles, titles and fades on their own VR panel.
 		"vr::menu_backdrop",
 		"vr::native_waypoints",
+		"vr::directional_ui", // World-anchored HUD ink: VR item labels and objective markers.
+		"vr::objective_markers", // Current objective marked in the world (compass star in VR).
 		"vr::controllers",
 		// "vr::gameplay::mwr_weapon_pose" (simplified rigid viewmodel) is replaced by the original hands solver.
 		"vr::gameplay::hands",
@@ -59,6 +61,7 @@ namespace mwr_port
 		"vr::gameplay::weapons::carry",
 		"vr::gameplay::hands::empty_native",
 		"vr::gameplay::interaction",
+		"vr::gameplay::interaction::hud_component", // VR item labels ("Grip to pick up") replace the stock cursor hint.
 		"vr::controller_calibration",
 		"vr::gameplay::weapons::viewmodel_visibility::visibility_component",
 		"vr::gameplay::grenades", // Physical frag/flash/smoke: chest grasp, pin, throw (native G_FireGrenade).

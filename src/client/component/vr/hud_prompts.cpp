@@ -74,19 +74,21 @@ namespace vr::hud_prompts
 		}
 		bool hint_contract()
 		{
-			// sethintstring -> config slots [1,31]+0xd5 -> native cursor formatter.
+			// sethintstring -> config slots [1,31]+0xd4 -> native cursor formatter.
+			// MWR: formatter 0x140165B00 reads cg cursorHintString 0x1421411A8
+			// (H2 +0xd5 at 0x14038A951/957, lookup 0x1403C9D60).
 			static const bool valid=[] {
-				constexpr std::uint8_t range[]{0x81,0xc1,0xd5,0,0,0};
-				constexpr std::uint8_t current[]{0x8b,0x0d,0x21,0x80,0x88,0x01};
-				constexpr std::uint8_t lookup[]{0x48,0x63,0xc1,0x48,0x8d,0x0d,0x3a,0xfc,0xc6,0x01,0x8b,0x0c,0x81};
-				return verify(0x14038A957,range) && verify(0x14038A951,current) && verify(0x1403C9D60,lookup);
+				constexpr std::uint8_t range[]{0x81,0xc1,0xd4,0,0,0};
+				constexpr std::uint8_t current[]{0x8b,0x0d,0x81,0xb6,0xfd,0x01};
+				constexpr std::uint8_t lookup[]{0x48,0x63,0xc1,0x48,0x8d,0x0d,0x3a,0x26,0x38,0x02,0x8b,0x0c,0x81};
+				return verify(0x140165B27,range) && verify(0x140165B21,current) && verify(0x1401A2F10,lookup);
 			}();return valid;
 		}
 		std::array<char,128> hint_key(unsigned hint)
 		{
 			std::array<char,128> result{};
 			if(!valid_world_hint(hint) || !game::CL_IsCgameInitialized() || !hint_contract())return result;
-			const auto* value=utils::hook::invoke<const char*>(0x1403C9D60,int(hint)+0xd5);
+			const auto* value=utils::hook::invoke<const char*>(0x1401A2F10,int(hint)+0xd4);
 			if(!value || !utils::native_memory::read_bytes(result.data(),value,result.size()) ||
 				std::find(result.begin(),result.end(),'\0')==result.end())return {};
 			return result;
@@ -110,7 +112,7 @@ namespace vr::hud_prompts
 		const auto language=game_text::current();if(!owns_world_text(language))return true;
 		if(!game::CL_IsCgameInitialized() || !hint_contract())return true;
 		unsigned hint{};
-		if(!utils::native_memory::read_bytes(&hint,reinterpret_cast<const void*>(0x141C12978),sizeof(hint)))return true;
+		if(!utils::native_memory::read_bytes(&hint,reinterpret_cast<const void*>(0x1421411A8),sizeof(hint)))return true;
 		const auto id=world_message(hint);
 		return id && !compose(*id,language,{-1,true,{}});
 	}

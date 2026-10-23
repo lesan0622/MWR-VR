@@ -7,6 +7,9 @@
 #include "engine_stereo_bridge.hpp"
 #include "narrative_ui.hpp"
 #include "hud_prompts.hpp"
+#include "gameplay/world_interaction.hpp"
+#include "gameplay/weapon_carry_runtime.hpp"
+#include "component/game_text.hpp"
 #include "component/console.hpp"
 #include "loader/component_loader.hpp"
 #include <utils/hook.hpp>
@@ -18,7 +21,7 @@ namespace vr::native_waypoints
 	{
 		using utils::native_memory::read_bytes;
 		utils::hook::detour waypoint_hook, projection_hook, clamp_hook, reset_hook;
-		utils::hook::detour script_hud_hook;
+		utils::hook::detour script_hud_hook, hint_text_hook;
 		std::mutex mutex;
 		std::array<group,128> groups{};
 		std::atomic_bool ready{};
@@ -153,6 +156,29 @@ namespace vr::native_waypoints
 			const auto draw=[&]{drawn=true;utils::hook::invoke<void>(0x1403874C0,cg,rect,font,scale,color,style,x,y);};
 			draw_narrative_text(draw);if(!drawn)draw();
 		}
+		// MWR cursor hint formatter (0x140165B00): sethintstring text with its
+		// key bindings already expanded ("Press ^3[F]^7 to ..."). Use triggers
+		// are worked with the VR grip, so bracketed keys name that instead.
+		const char* hint_text_stub(int client)
+		{
+			const auto* native=hint_text_hook.invoke<const char*>(client);
+			if(!native || !*native || !engine_stereo_bridge::is_active() || !gameplay::weapons::carry::active())return native;
+			const auto grip=game_text::translation(game_text::key::button_grip_either,game_text::current());
+			if(!grip)return native;
+			thread_local std::string text;
+			text.clear();
+			const std::string_view source(native,strnlen(native,1024));
+			for(std::size_t i=0;i<source.size();)
+			{
+				const auto close=source[i]=='[' ? source.find(']',i) : source.npos;
+				if(close!=source.npos && close-i>1 && close-i<=32)
+				{
+					text+='[';text+=*grip;text+=']';i=close+1;continue;
+				}
+				text+=source[i++];
+			}
+			return text.c_str();
+		}
 		void cursor_hint_stub(int client,void* rect,void* font,float scale,int style)
 		{
 			// Read-only native witness: ownerdraw CALL 38AF9C -> 3869F0,
@@ -162,6 +188,9 @@ namespace vr::native_waypoints
 			// allocation to the existing narrative canvas without rebuilding it.
 			bool drawn{};
 			const auto draw=[&]{drawn=true;utils::hook::invoke<void>(cursor_hint_draw,client,rect,font,scale,style);};
+			// MWR: the VR item label (world_interaction_hud) replaces the stock
+			// key instruction while it is shown.
+			if(gameplay::interaction::prompt_visible())return;
 			if(hud_prompts::native_cursor_required())draw_narrative_text(draw);
 			if(!drawn)draw();
 		}
@@ -220,6 +249,10 @@ namespace vr::native_waypoints
 			if(verify(0x140166169,cursor_call) && verify(cursor_hint_draw,cursor_entry) && verify(0x14016614E,cursor_args))
 				utils::hook::call(0x140166169,cursor_hint_stub);
 			else console::error("[VR prompts] native cursor hint fallback boundary rejected\n");
+			constexpr std::uint8_t hint_text[]{0x48,0x89,0x5c,0x24,0x10,0x57,0x48,0x81,0xec,0x30,0x05,0,0};
+			constexpr std::uint8_t hint_index[]{0x8b,0x0d,0x81,0xb6,0xfd,0x01,0x81,0xc1,0xd4,0,0,0};
+			if(verify(0x140165B00,hint_text) && verify(0x140165B21,hint_index))hint_text_hook.create(0x140165B00,hint_text_stub);
+			else console::error("[VR prompts] native cursor hint text boundary rejected\n");
 			constexpr std::uint8_t script_hud[]{0x48,0x89,0x5c,0x24,0x18,0x55,0x56,0x57,0x48,0x8d,0xac,0x24,0x60,0xfd,0xff,0xff};
 			constexpr std::uint8_t script_text[]{0x48,0x8b,0xc4,0x48,0x89,0x58,0x08,0x48,0x89,0x68,0x10};
 			// Label (+0x50) and text (+0x94) config indices, read by the element's

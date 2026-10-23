@@ -49,3 +49,13 @@ namespace game
 }
 
 #include "symbols.hpp"
+
+namespace game
+{
+	inline void* R_AddCmdDrawText(const char* text, int max_chars, Font_s* font, float x, float y, float x_scale,
+		float y_scale, float rotation, float* color, int style)
+	{
+		return H1_AddBaseDrawTextCmd(text, max_chars, font, R_GetFontHeight(font), x, y, x_scale, y_scale, rotation,
+			color, style, -1, 0, R_GetTextStyle(style));
+	}
+}
