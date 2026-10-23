@@ -43,6 +43,10 @@ namespace vr::gameplay::weapons::optics
 		// reticle quad inside the tube, which is the aperture here.
 		{"attach_h1_scope_m21_vm","tag_sight_on","mtl_wpn_h1_sni_m21_scope_ads","mtl_wpn_h1_sni_m82a1_ret",{},
 			{-.12271f,0,.01760f},.02154f,6.f},
+		{"attach_h1_scope_m21_ghillie_vm","tag_sight_on","mtl_wpn_h1_sni_m21_scope_ads","mtl_wpn_h1_sni_m82a1_ret",{},
+			{-.12271f,0,.01760f},.02154f,6.f},
+		{"attach_h1_scope_r700_vm","tag_sight_on","mtl_wpn_h1_sni_r700_scope_ads","mtl_wpn_h1_sni_m82a1_ret",{},
+			{-.11994f,0,.02229f},.01847f,6.f},
 		{"attach_h1_scope_dragunov_vm","tag_sight_on","","mtl_wpn_h1_sni_m82a1_ret",{},
 			{-.13670f,.009665f,.04496f},.01662f,4.f},
 		// Rear lens (ads_on glass) at -3.03 in; the ads_off glass layers are hidden with it.
@@ -67,6 +71,8 @@ namespace vr::gameplay::weapons::optics
 		// Strip only witnessed prefixes, once; never accept arbitrary path tails.
 		if (name.starts_with("mc/")) name.remove_prefix(3);
 		else if (name.starts_with("m/")) name.remove_prefix(2);
+		// MWR level copies carry an "@<map>" suffix (mtl_..._scope_ads@sniperescape).
+		if (const auto at=name.find('@'); at!=std::string_view::npos) name=name.substr(0,at);
 		if (!optic.lens.empty() && variant_name(name,optic.lens)) return material_role::lens;
 		if (variant_name(name,optic.reticle)) return material_role::reticle;
 		for(const auto extra:optic.extra_hidden)
