@@ -40,6 +40,14 @@ namespace vr::gameplay::interaction::native
 			const auto* name=game::SL_ConvertToString(entity->script_classname);
 			return name && std::string_view(name)=="trigger_use_breach";
 		}
+		// MWR: ordinary use triggers (e.g. the killhouse rope with usetriggerrequirelookat)
+		// get the same head-aimed native admission fallback as breach doors.
+		bool fallback_use_trigger(const game::gentity_s* entity)
+		{
+			if(!entity || !entity->script_classname)return false;
+			const auto* name=game::SL_ConvertToString(entity->script_classname);
+			return name && use_trigger_class(name);
+		}
 		std::atomic<const char*> reason{"native use unavailable"};
 		struct command_lease {target value{};bool held{};std::uint64_t reference{};controller_input::clock::time_point at{};};
 		std::mutex command_mutex;
@@ -74,7 +82,7 @@ namespace vr::gameplay::interaction::native
 			const int count=utils::hook::invoke<int>(0x140374970,&expanded,output,capacity,contents);
 			breach_count=0;
 			if(count>=0 && count<=capacity)for(int i=0;i<count && breach_count<breach_candidates.size();++i)
-				if(output[i]>0 && output[i]<4000 && breach_trigger(&game::g_entities[output[i]]))breach_candidates[breach_count++]=output[i];
+				if(output[i]>0 && output[i]<4000 && fallback_use_trigger(&game::g_entities[output[i]]))breach_candidates[breach_count++]=output[i];
 			return count;
 		}
 		float effective_range(float ordinary)
@@ -422,7 +430,9 @@ namespace vr::gameplay::interaction::native
 				const int id=nearby[n];const auto* entity=&game::g_entities[id];
 				const auto center=read<vec>(entity,0xdc),half=read<vec>(entity,0xe8);
 				const auto identity=weapons::native_carry::entity_key(id);
-				auto proposal=score_breach(aim,{id,identity.generation},center,half);if(!proposal)continue;
+				auto proposal=breach_trigger(entity) ? score_breach(aim,{id,identity.generation},center,half) :
+					score_use_trigger(aim,{id,identity.generation},center,half);
+				if(!proposal)continue;
 				const auto delta=hands::sub(center,aim.head);const auto distance=hands::length(delta);
 				if(!std::isfinite(distance) || distance<.01f*aim.units)continue;
 				ray admission=aim;admission.origin=aim.head;admission.forward=hands::scale(delta,1.f/distance);

@@ -163,11 +163,13 @@ namespace vr::gameplay::interaction
 		// Keep legacy point selection for unusually large scene trigger volumes.
 		if(large)return score(r,key,center);
 		// MWR: authored volumes are tight (e.g. the killhouse rope). Select against
-		// a box grown by 30 cm on every side, but report the nearest point of the
-		// real volume so visibility traces never start inside nearby geometry.
-		constexpr float use_trigger_margin_m=.30f;
+		// a box grown by 50 cm on every side within a 20 degree cone, but report the
+		// nearest point of the real volume so visibility traces never start inside
+		// nearby geometry.
+		constexpr float use_trigger_margin_m=.50f,use_trigger_cone_degrees=20.f;
 		vec grown=half;for(auto& v:grown)v+=use_trigger_margin_m*r.units;
-		auto chosen=score_model(r,key,center,grown);
+		auto wide=r;wide.half_angle_degrees=std::max(r.half_angle_degrees,use_trigger_cone_degrees);
+		auto chosen=score_model(wide,key,center,grown);
 		if(chosen)for(int i=0;i<3;++i)chosen.position[i]=std::clamp(chosen.position[i],center[i]-half[i],center[i]+half[i]);
 		return chosen;
 	}
