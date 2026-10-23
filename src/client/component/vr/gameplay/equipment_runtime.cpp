@@ -1,4 +1,5 @@
 #include <std_include.hpp>
+#include "render_origin_rebase.hpp"
 #include "weapon_render_pose.hpp"
 #include "component/vr/gameplay/weapon_pose_library.hpp"
 #include "shield_geometry.hpp"
@@ -156,8 +157,8 @@ namespace vr::gameplay::equipment
 				if (!running() || cheats::waist_pickaxes() || variant!=int(s.bayonet) || !s.visible || !fresh(s.at,clock::now())) return result::omit;
 			const bool held=vr::valid_hand(s.knife.holder);
 			if(!held && !sequences::chest_equipment_visible())return result::omit;
-			// MWR: no render-time skeleton record; keep the submit-time (hand/body) placement.
-			if(!weapon_render_pose::available())return result::unchanged;
+			// MWR: no render-time skeleton record; follow the arm's current placement origin.
+			if(!weapon_render_pose::available())return render_origin_rebase::apply(p.record,current,previous);
 			std::array<float,12> camera{};vec origin{};hands::attachments::solved pose;
 			if (!utils::native_memory::read_bytes(camera.data(),static_cast<const std::byte*>(p.record)+engine_stereo_view::h2_view_origin_offset,sizeof(camera)) ||
 				!hands::attachments::for_record(p.record,camera,pose) || pose.reference!=s.reference || pose.lease!=s.knife.revision ||

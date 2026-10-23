@@ -1,4 +1,5 @@
 #include <std_include.hpp>
+#include "../render_origin_rebase.hpp"
 #include "status.hpp"
 #include "../weapons/derived_profiles.hpp"
 #include "../weapon_capture.hpp"
@@ -898,6 +899,7 @@ namespace vr::gameplay::hands
 			}
 			vec view_offset{};
 			std::memcpy(view_offset.data(), render_view + 0x58, sizeof(view_offset));
+			render_origin_rebase::publish_solve_origin(view_offset);
 			probe.offsets = {shoulder_half_width->current.value,
 			                 shoulder_down->current.value,
 			                 shoulder_back->current.value};

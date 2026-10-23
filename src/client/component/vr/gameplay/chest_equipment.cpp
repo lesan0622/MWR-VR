@@ -1,4 +1,5 @@
 #include <std_include.hpp>
+#include "render_origin_rebase.hpp"
 #include "weapon_render_pose.hpp"
 #include "component/scene_model_record.hpp"
 #include "chest_equipment.hpp"
@@ -108,8 +109,8 @@ namespace vr::gameplay::equipment::chest_items
 			if(grenades::occupies_slot(index) || !running() || !fresh(s) || !fresh(live) || s.reference!=live.reference || !item.model ||
 				item.weapon!=live.items[index].weapon || item.model!=live.items[index].model || live.items[index].quantity<=0 ||
 				!scene_models::native_entry::model(entry,model) || model!=item.model)return result::omit;
-			// MWR: no render-time skeleton record; keep the submit-time (hand/body) placement.
-			if(!weapon_render_pose::available())return result::unchanged;
+			// MWR: no render-time skeleton record; follow the arm's current placement origin.
+			if(!weapon_render_pose::available())return render_origin_rebase::apply(p.record,current,previous);
 			std::array<float,12> camera{};vec origin{};hands::attachments::solved pose;
 			if(!read(p.record,engine_stereo_view::h2_view_origin_offset,camera) ||
 				!hands::attachments::for_record(p.record,camera,pose) || pose.reference!=s.reference)return result::retain;

@@ -1,4 +1,5 @@
 #include <std_include.hpp>
+#include "render_origin_rebase.hpp"
 #include "weapon_render_pose.hpp"
 #include "grenade_runtime.hpp"
 #include "grenade_profile.hpp"
@@ -352,8 +353,8 @@ namespace vr::gameplay::grenades
 					const auto& current_item=live.items[slot];
 					if(!fresh(live.at) || item.value.revision!=current_item.value.revision || item.value.stage!=current_item.value.stage ||
 						item.value.reference!=live.reference || item.value.holder!=current_item.value.holder)return result::omit;
-					// MWR: no render-time skeleton record; keep the submit-time (hand/body) placement.
-					if(!weapon_render_pose::available())return result::unchanged;
+					// MWR: no render-time skeleton record; follow the arm's current placement origin.
+					if(!weapon_render_pose::available())return render_origin_rebase::apply(p.record,current,previous);
 					std::array<float,12> camera{};vec origin{};attachments::solved pose;
 					if(!utils::native_memory::read_bytes(camera.data(),static_cast<const std::byte*>(p.record)+engine_stereo_view::h2_view_origin_offset,sizeof(camera)) ||
 						!attachments::for_record(p.record,camera,pose) || pose.reference!=item.value.reference ||

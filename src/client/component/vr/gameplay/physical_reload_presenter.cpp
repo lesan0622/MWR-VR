@@ -1,4 +1,5 @@
 #include <std_include.hpp>
+#include "render_origin_rebase.hpp"
 #include "hand_interaction/runtime.hpp"
 #include "empty_hands_native.hpp"
 #include "physical_reload_presenter.hpp"
@@ -64,6 +65,7 @@ namespace vr::gameplay::weapons::physical_reload
 			anchor attached_model{};
 		};
 		std::array<held_frame,15> held_frames{};
+		std::array<vec,15> submitted_view{}; // MWR: view origin each slot's parts were submitted with
 		std::array<held_frame,128> held_poses{};
 		size_t held_cursor{};
 		struct return_state {part_return_transition slide,catch_motion,bridge,cover,bolt_lift;std::uint64_t cover_owner_revision{};charging_handle_fold_motion fold;hands::arm_clearance::motion support_arm;};
@@ -103,11 +105,26 @@ namespace vr::gameplay::weapons::physical_reload
 			const auto base=reinterpret_cast<std::uintptr_t>(lighting_handles.data());
 			if (!alive.load() || !scene_models::native_entry::lighting(entry,lighting) || lighting<base || lighting>=base+sizeof(lighting_handles) || (lighting-base)%sizeof(unsigned short)) return result::unchanged;
 			const auto index=(lighting-base)/sizeof(unsigned short);
-			if(index>=round_lighting_base)return result::unchanged; // MWR counted rounds follow their magazine submit.
+			if(!weapon_render_pose::available())
+			{
+				// MWR port: no render-time skeleton record. The arm is drawn from this
+				// record's CURRENT placement origin, so move the solve-time part (and
+				// its counted rounds) by the same origin change; drops stay in world.
+				const auto part=index>=round_lighting_base?index-round_lighting_base:index;
+				if(part>=15 && part<23)return result::unchanged;
+				const bool chamber_part=part>=68,inserted_part=part>=53 && !chamber_part,partition_part=part>=23 && part<53;
+				const auto part_slot=chamber_part?part-68:inserted_part?part-53:partition_part?(part-23)/2:part;
+				if(part_slot>=submitted_view.size())return result::unchanged;
+				vec origin{},solved{};
+				{const std::lock_guard lock(mutex);solved=submitted_view[part_slot];}
+				if(!read(preparing.record,engine_stereo_view::h2_current_model_placement_origin_offset,origin) || !finite(origin))return result::unchanged;
+				const auto shift=sub(origin,solved);
+				if(!finite(shift) || length(shift)>64.f)return result::unchanged; // stale or foreign record
+				for(int i=0;i<3;++i){placed.origin[i]+=shift[i];previous.origin[i]+=shift[i];}
+				return result::replace;
+			}
+			if(index>=round_lighting_base)return result::unchanged;
 			if(index>=15 && index<23)return result::unchanged;
-			// MWR port: without the render-time skeleton record, keep the solve-time
-			// placement instead of omitting the held/inserted part.
-			if(!weapon_render_pose::available())return result::unchanged;
 			const bool chamber=index>=68;
 			const bool inserted=index>=53 && !chamber;
 			const bool partitioning=index>=23 && index<53;const auto piece=partitioning?(index-23)%2:0;
@@ -214,6 +231,7 @@ namespace vr::gameplay::weapons::physical_reload
 			for (const auto& hand_frame:frames)
 			{
 			if (!hand_frame.weapon) continue;
+			if (hand_frame.slot<submitted_view.size()) { const std::lock_guard lock(mutex); submitted_view[hand_frame.slot]=hand_frame.inserted_origin; }
 			const auto live = current(hand_frame.view.owner.id());
 			const auto& frozen = hand_frame.view;
 			const auto wall_now = clock::now();
