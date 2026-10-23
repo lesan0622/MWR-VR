@@ -197,7 +197,7 @@ namespace vr::gameplay::weapons::physical_reload
 					std::copy(round_world.position.begin(),round_world.position.end(),placement.base.origin);
 					std::copy(round_world.rotation.begin(),round_world.rotation.end(),placement.base.quat);
 					placement.scale=1;float color[4]{1,1,1,1};
-					scene_models::submit(counted.model,&placement,(index<15 || index>=23) ? 1u : 0u,&lighting_handles[round_lighting_base+index],color,color,color,.25f*units);
+					scene_models::submit(counted.model,&placement,0,&lighting_handles[round_lighting_base+index],color,color,color,.25f*units);
 				}
 				world = compose(world,asset.in_magazine);
 				game::GfxScaledPlacement placement{};
@@ -208,10 +208,7 @@ namespace vr::gameplay::weapons::physical_reload
 				// Pad frustum admission only; never scale the mesh or shared asset.
 				// The independent hands do not request the bit-0 foreground effect.
 				// Held and falling magazines share their scene depth, so fingers can occlude them.
-				// MWR: the hands are the native viewmodel (foreground depth). A held or
-				// inserted part uses the same foreground so world geometry cannot hide it
-				// behind a visible hand; dropped parts (index 15-22) keep world depth.
-				scene_models::submit(asset.model,&placement,(index<15 || index>=23) ? 1u : 0u,&lighting_handles[index],color,color,color,.25f*units);
+				scene_models::submit(asset.model,&placement,0,&lighting_handles[index],color,color,color,.25f*units);
 			};
 			const auto now=clock::now();
 			for (const auto& hand_frame:frames)
