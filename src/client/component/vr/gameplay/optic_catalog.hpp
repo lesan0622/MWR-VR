@@ -38,6 +38,16 @@ namespace vr::gameplay::weapons::optics
 		{"attach_h2_thermal_scope_2_vm","tag_thermal_scope","mtl_attach_h2_optic_thermal_glass_ads_blend","mtl_wpn_h2_thermal_scope_ret_ads",
 			{"h2og_mtl_weapon_thermal_screen","h2og_mtl_weapon_thermal_screen_scanlines","mtl_attach_h2_optic_thermal_vignette","mtl_wpn_h2_thermal_scope_ret_new"},
 			{-.05706f,.000089f,.024504f},.0105f,4.f,.94f,.133f,true}, // Native reticle alpha is opaque at .90-.94, then fades outside.
+		// MWR (H1) optics, inches from vr_capture_surfaces converted to metres.
+		// Sniper scopes have no rear glass: native ADS shows a tag_scope_ads_on
+		// reticle quad inside the tube, which is the aperture here.
+		{"attach_h1_scope_m21_vm","tag_sight_on","mtl_wpn_h1_sni_m21_scope_ads","mtl_wpn_h1_sni_m82a1_ret",{},
+			{-.12271f,0,.01760f},.02154f,6.f},
+		{"attach_h1_scope_dragunov_vm","tag_sight_on","","mtl_wpn_h1_sni_m82a1_ret",{},
+			{-.13670f,.009665f,.04496f},.01662f,4.f},
+		// Rear lens (ads_on glass) at -3.03 in; the ads_off glass layers are hidden with it.
+		{"vm_optics_acog2","tag_acog_2","mtl_wep_shared_lens","mtl_acog2_crosshair",{"mtl_mors_lens","mtl_mors_lens_inner"},
+			{-.07697f,0,.03400f},.0150f,4.f},
 	};
 	inline bool variant_name(std::string_view name, std::string_view base) noexcept
 	{
@@ -57,7 +67,7 @@ namespace vr::gameplay::weapons::optics
 		// Strip only witnessed prefixes, once; never accept arbitrary path tails.
 		if (name.starts_with("mc/")) name.remove_prefix(3);
 		else if (name.starts_with("m/")) name.remove_prefix(2);
-		if (variant_name(name,optic.lens)) return material_role::lens;
+		if (!optic.lens.empty() && variant_name(name,optic.lens)) return material_role::lens;
 		if (variant_name(name,optic.reticle)) return material_role::reticle;
 		for(const auto extra:optic.extra_hidden)
 			if(variant_name(name,extra))return material_role::extra_hidden;

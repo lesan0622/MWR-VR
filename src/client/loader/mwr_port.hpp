@@ -64,6 +64,7 @@ namespace mwr_port
 		"vr::gameplay::grenades", // Physical frag/flash/smoke: chest grasp, pin, throw (native G_FireGrenade).
 		"vr::gameplay::equipment", // Physical knife melee (native trace + G_Damage).
 		"vr::gameplay::equipment::chest_items",
+		"vr::gameplay::weapons::optics", // Same-eye scope magnifier (no auxiliary scene view).
 	};
 
 	// typeid names look like "class vr::gameplay::foo::component".

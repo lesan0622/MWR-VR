@@ -9,6 +9,8 @@ namespace vr::gameplay::weapons
 	class ads_policy
 	{
 	public:
+		inline static std::atomic<const char*> last_reason{"none"};
+		inline static std::atomic<float> last_depth{}, last_lateral{}, last_height{}, last_facing{};
 		void reset() noexcept
 		{
 			active_ = entering_ = leaving_ = false;
@@ -19,6 +21,10 @@ namespace vr::gameplay::weapons
 			const muzzle_frame& muzzle, bool allowed, controller_input::clock::time_point now) noexcept
 		{
 			const bool discontinuity = continuity_.update(input, now);
+			last_reason = !allowed ? "not allowed" : !ads_alignment::supported(input,owner) ? "no tracked two-hand hold" :
+				!ready(muzzle, owner, input.reference_generation, now) ? "muzzle not ready" :
+				muzzle.input_sequence > input.sequence ? "muzzle ahead of input" : !valid_translation(muzzle) ? "invalid ADS translation" :
+				!ads_alignment::valid_sight_distance(muzzle.ads_sight_to_muzzle_meters) ? "invalid sight distance" : "aligned check";
 			if (!allowed || !input.focused || !input.sequence || input.orientation_settling ||
 				!ads_alignment::supported(input,owner) ||
 				now < input.sampled_at || now - input.sampled_at > std::chrono::milliseconds(150) ||
@@ -43,7 +49,8 @@ namespace vr::gameplay::weapons
 
 			const auto alignment=ads_alignment::measure(muzzle.head_position,muzzle.head_forward,
 				hands::sub(muzzle.position,muzzle.ads_translation),muzzle.axis,muzzle.units_per_meter);
-			if(!alignment.valid) {reset();return false;}
+			if(!alignment.valid) {last_reason="alignment invalid";reset();return false;}
+			last_depth=alignment.depth;last_lateral=alignment.lateral;last_height=alignment.height;last_facing=alignment.facing;
 			// Center-eye tolerance admits either aiming eye and different sight
 			// heights. The physical lens applies its own eye box afterwards.
 			const bool aligned=ads_alignment::inside(alignment,active_,thermal_,muzzle.ads_sight_to_muzzle_meters);

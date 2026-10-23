@@ -53,7 +53,7 @@ namespace vr::engine_stereo_renderer
 	using evidence::ownership_boundary_stage_count;
 	namespace
 	{
-		static_assert(offsetof(game::Material, techniqueSet) == 0x138);
+		static_assert(offsetof(game::Material, techniqueSet) == 0x128); // MWR (H1) layout
 		static_assert(offsetof(game::MaterialInfo, textureAtlasRowCount) == 0xA);
 		static_assert(offsetof(game::MaterialTechniqueHeader, passCount) == 0xA);
 		static_assert(offsetof(game::MaterialTechnique, passArray) == 0x10);

@@ -37,6 +37,17 @@ namespace vr::gameplay::weapons::optics
 		std::atomic_uint64_t render_requests{}, rendered_images{};
 		std::atomic<const char*> reason{"waiting for a supported optic"};
 		std::atomic<const char*> binding_reason{"no supported optic sampled"};
+		// MWR: the H2 render-pose hooks are not rebound, so scenes carry no
+		// weapon snapshot. Use the lens the hands solver presented this frame.
+		struct presented_lens
+		{
+			hold owner{};
+			view optic{};
+			float units{};
+			std::uint64_t reference{};
+		};
+		std::mutex presented_mutex;
+		presented_lens presented;
 		std::string_view native_name(const char* value) noexcept
 		{
 			return value ? std::string_view(value, strnlen_s(value, 256)) : std::string_view{};
@@ -93,7 +104,16 @@ namespace vr::gameplay::weapons::optics
 			}
 			const auto owner = current_hold();
 			weapon_render_pose::snapshot pose;
-			if (!owner.can_fire() || !weapon_render_pose::for_scene(event.views, pose, owner.id()) ||
+			if (!weapon_render_pose::available())
+			{
+				const std::lock_guard lock(presented_mutex);
+				pose.muzzle.owner = presented.owner;
+				pose.muzzle.optic = presented.optic;
+				pose.muzzle.units_per_meter = presented.units;
+				pose.muzzle.reference_generation = presented.reference;
+			}
+			if (!owner.can_fire() ||
+			    (weapon_render_pose::available() && !weapon_render_pose::for_scene(event.views, pose, owner.id())) ||
 			    pose.muzzle.owner.id() != owner.id() || pose.muzzle.owner.rear != owner.rear ||
 			    pose.muzzle.owner.rear_revision != owner.rear_revision || !pose.muzzle.optic.active)
 			{
@@ -373,7 +393,7 @@ namespace vr::gameplay::weapons::optics
 				candidate.hidden[count++] = surface;
 				has_lens |= lens;
 			}
-			if (!has_lens || !candidate.reticle_image)
+			if ((!has_lens && !def->lens.empty()) || !candidate.reticle_image)
 			{
 				++rejected;
 				binding_reason =
@@ -478,6 +498,10 @@ namespace vr::gameplay::weapons::optics
 		// ADS intent validates the translated muzzle before the lens is active.
 		// Keep the admitted capability so a valid >20 cm thermal approach cannot
 		// cancel the very ADS request needed to publish its image next frame.
+		{
+			const std::lock_guard lock(presented_mutex);
+			presented = {};
+		}
 		if (!ads_requested || !alive.load() || !enabled || !enabled->current.enabled || !bound_lens.lens ||
 		    bound_lens.root < 0 || size_t(bound_lens.root) >= bones.size() || !owner.can_fire() ||
 		    !input.focused || input.orientation_settling || !input.grip[int(owner.rear)].valid ||
@@ -515,6 +539,10 @@ namespace vr::gameplay::weapons::optics
 			for (float value : axis)
 				if (!std::isfinite(value))
 					return {};
+		{
+			const std::lock_guard lock(presented_mutex);
+			presented = {owner, result, units, input.reference_generation};
+		}
 		return result;
 	}
 	class component final : public component_interface
@@ -535,7 +563,7 @@ namespace vr::gameplay::weapons::optics
 			                          "Scope image magnification override; 0 uses prototype optic defaults");
 			render_scene =
 			    dvars::register_bool("vr_scopeRender",
-			                         true,
+			                         false, // MWR: no auxiliary scene view; same-eye magnifier.
 			                         game::DVAR_FLAG_SAVED,
 			                         "Render one additional narrow scene view for the active scope");
 			world_contract = native_thermal::world_ready();

@@ -1299,7 +1299,7 @@ namespace game
 			const char* name;
 			MaterialInfo info;
 		};
-		unsigned char stateBitsEntry[252];
+		unsigned char stateBitsEntry[240]; // MWR (H1); H2 has 252.
 		unsigned char textureCount;
 		unsigned char constantCount;
 		unsigned char stateBitsCount;
@@ -1312,21 +1312,20 @@ namespace game
 		MaterialTextureDef* textureTable;
 		MaterialConstantDef* constantTable;
 		GfxStateBits* stateBitsTable;
-		unsigned char constantBufferIndex[252];
-		char __pad0[4];
+		unsigned char constantBufferIndex[240];
 		MaterialConstantBufferDef* constantBufferTable;
 		unsigned char constantBufferCount;
 		const char** subMaterials;
-	}; static_assert(sizeof(Material) == 0x270);
+	}; static_assert(sizeof(Material) == 0x250); // Live MWR material: textureCount +0x120, textureTable +0x130.
 
-	static_assert(offsetof(Material, textureCount) == 0x12C);
-	static_assert(offsetof(Material, techniqueSet) == 0x138);
-	static_assert(offsetof(Material, textureTable) == 0x140);
-	static_assert(offsetof(Material, constantTable) == 0x148);
-	static_assert(offsetof(Material, stateBitsTable) == 0x150);
-	static_assert(offsetof(Material, constantBufferTable) == 0x258);
-	static_assert(offsetof(Material, constantBufferCount) == 0x260);
-	static_assert(offsetof(Material, subMaterials) == 0x268);
+	static_assert(offsetof(Material, textureCount) == 0x120);
+	static_assert(offsetof(Material, techniqueSet) == 0x128);
+	static_assert(offsetof(Material, textureTable) == 0x130);
+	static_assert(offsetof(Material, constantTable) == 0x138);
+	static_assert(offsetof(Material, stateBitsTable) == 0x140);
+	static_assert(offsetof(Material, constantBufferTable) == 0x238);
+	static_assert(offsetof(Material, constantBufferCount) == 0x240);
+	static_assert(offsetof(Material, subMaterials) == 0x248);
 
 	struct GfxImageLoadDef
 	{

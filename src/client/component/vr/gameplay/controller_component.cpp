@@ -16,6 +16,7 @@
 #include "independent_fire_runtime.hpp"
 #include "native_scripted_control.hpp"
 #include "world_interaction.hpp"
+#include "optic_runtime.hpp"
 #include "game/dvars.hpp"
 #include "game/game.hpp"
 #include "loader/component_loader.hpp"
@@ -263,6 +264,8 @@ namespace vr::controllers
 					owner.weapon==result->weapon && gameplay::weapons::firing_enabled() &&
 					gameplay::weapons::controller_fire_delivery(owner.weapon)==gameplay::weapons::fire_delivery::bullets;
 				const bool requested=ads.consume(input,owner,gameplay::weapons::current_muzzle(),allowed,now);
+				// Physical scope magnification follows the same ADS request (original controller_component).
+				gameplay::weapons::optics::request(owner,{allowed,requested},input);
 				if (requested) {result->buttons|=game::BUTTON_ADS; ++ads_command_count;}
 				if (binding_verified && allowed && requested!=ads_requested.load())
 				{
@@ -271,7 +274,7 @@ namespace vr::controllers
 				}
 				ads_requested=requested;
 			}
-			else if (local_client==0) {ads.reset(); ads_requested=false;}
+			else if (local_client==0) {ads.reset(); ads_requested=false; gameplay::weapons::optics::request({},{},{});}
 			if (local_client == 0 && result)
 				head_pose_bridge::record_game_command(result->serverTime, result->angles[0], tracked_view_applied);
 			if (!normal_input_seen)
@@ -323,6 +326,9 @@ namespace vr::controllers
 				"binding_verified=%d attack_notifies=%llu ads_notifies=%llu\n",
 				auto_ads && auto_ads->current.enabled,ads_verified,ads_requested.load(),ads_command_count.load(),
 				binding_verified,attack_notify_count.load(),ads_notify_count.load());
+			console::info("[VR input] ads_gate=%s depth=%.3f lateral=%.3f height=%.3f facing=%.3f\n", gameplay::weapons::ads_policy::last_reason.load(),
+				gameplay::weapons::ads_policy::last_depth.load(), gameplay::weapons::ads_policy::last_lateral.load(),
+				gameplay::weapons::ads_policy::last_height.load(), gameplay::weapons::ads_policy::last_facing.load());
 			const auto* ps = game::CL_IsCgameInitialized() ? game::CG_GetPredictedPlayerState(0) : nullptr;
 			console::info("[VR input] stance_verified=%d requests=%llu requested=%d actual=%d\n",
 				stance_verified, stance_count.load(), stance_verified && ps ? *reinterpret_cast<const int*>(native_stance_address) : -1,

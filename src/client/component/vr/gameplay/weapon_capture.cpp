@@ -492,6 +492,56 @@ namespace vr::gameplay::weapon_capture
 					console::info("%s", out.empty() ? "[VR capture] damageable: none\n" : out.c_str());
 				}, scheduler::pipeline::server);
 			});
+			// Loaded XModels whose name contains a filter: per lod0 surface material,
+			// rigid bones and model-space vertex extents. vr_capture_surfaces <filter>.
+			command::add("vr_capture_surfaces", [](const command::params& params)
+			{
+				if (params.size() < 2) return;
+				const std::string filter = params.get(1);
+				scheduler::once([filter]
+				{
+					struct context { std::string filter; std::vector<const game::XModel*> found; } ctx{filter, {}};
+					game::DB_EnumXAssets_Internal(game::ASSET_TYPE_XMODEL, [](game::XAssetHeader header, void* data)
+					{
+						auto* c = static_cast<context*>(data);
+						if (header.model && header.model->name && std::string_view(header.model->name).find(c->filter) != std::string_view::npos && c->found.size() < 64)
+							c->found.push_back(header.model);
+					}, &ctx, false);
+					std::string out;
+					for (const auto* m : ctx.found)
+					{
+						out += std::format("model {} bones={} surfs={} lods={} root={}\n", m->name, m->numBones, m->numsurfs, int(m->numLods),
+							m->numBones && m->boneNames ? scr_string(m->boneNames[0]) : "");
+						for (unsigned b = 0; b < m->numBones && m->boneNames; ++b)
+						{
+							const auto& t = m->baseMat[b];
+							out += std::format("  bone {} {} bind=({:.3f},{:.3f},{:.3f})\n", b, scr_string(m->boneNames[b]), t.trans[0], t.trans[1], t.trans[2]);
+						}
+						const auto& lod = m->lodInfo[0];
+						for (unsigned n = 0; n < lod.numsurfs && lod.surfs; ++n)
+						{
+							const auto& surface = lod.surfs[n];
+							const auto* material = m->materialHandles ? m->materialHandles[lod.surfIndex + n] : nullptr;
+							std::array<float,3> lo{1e9f,1e9f,1e9f}, hi{-1e9f,-1e9f,-1e9f};
+							const auto* verts = surface.verts0.packedVerts0;
+							for (unsigned v = 0; verts && v < surface.vertCount; ++v)
+								for (int c = 0; c < 3; ++c) { lo[c] = std::min(lo[c], verts[v].xyz[c]); hi[c] = std::max(hi[c], verts[v].xyz[c]); }
+							std::string bones;
+							for (unsigned k = 0; k < surface.rigidVertListCount && surface.rigidVertLists; ++k)
+							{
+								const auto bone = surface.rigidVertLists[k].boneOffset / 64u;
+								bones += std::format("{}{}", k ? "," : "", bone < m->numBones ? scr_string(m->boneNames[bone]) : "?");
+							}
+							out += std::format("  surf {} material={} flags={} verts={} textures={} rigid=[{}] min=({:.3f},{:.3f},{:.3f}) max=({:.3f},{:.3f},{:.3f})\n",
+								n, material && material->info.name ? material->info.name : "?", surface.flags, surface.vertCount,
+								material ? int(material->textureCount) : -1, bones, lo[0], lo[1], lo[2], hi[0], hi[1], hi[2]);
+						}
+					}
+					const auto file = directory("_models") + "/surfaces_" + filter + ".txt";
+					utils::io::write_file(file, out);
+					console::info("[VR capture] surfaces: %zu models -> %s\n", ctx.found.size(), file.c_str());
+				}, scheduler::pipeline::main);
+			});
 			// In-use entities matching a classname/targetname/model filter: vr_list_entities [filter] [radius].
 			command::add("vr_list_entities", [](const command::params& params)
 			{

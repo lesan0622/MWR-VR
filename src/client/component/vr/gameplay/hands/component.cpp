@@ -2056,6 +2056,10 @@ namespace vr::gameplay::hands
 				     << " models=" << probe.model_count << " bones=" << probe.bone_count
 				     << " hands=" << probe.hands_name.data() << " weapon=" << probe.weapon_name.data()
 				     << '\n';
+				text << "model_names=";
+				for (unsigned m = 0; m < solver().last_model_count && m < solver().last_models.size(); ++m)
+					text << (m ? "," : "") << (solver().last_models[m] && solver().last_models[m]->name ? solver().last_models[m]->name : "?");
+				text << '\n';
 				text << "elbows=body_swing_outward_down shoulders=hmd_yaw_estimate half_width/down/back_m="
 				     << probe.offsets.half_width_meters << '/' << probe.offsets.down_meters << '/'
 				     << probe.offsets.back_meters << " head=[" << probe.head_position[0] << ','
