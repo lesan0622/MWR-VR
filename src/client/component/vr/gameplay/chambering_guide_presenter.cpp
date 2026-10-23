@@ -96,10 +96,23 @@ namespace vr::gameplay::weapons::chambering_guide
 				{
 					if (!owner)
 						continue;
+					sample selected;
+					if (!weapon_render_pose::available())
+					{
+						// MWR: no render-time skeleton record. Use the newest published
+						// pose; it is relative to the same placement origin as the arms.
+						const std::lock_guard lock(mutex);
+						const auto found = std::find_if(latest.begin(), latest.end(),
+							[&](const sample& v) noexcept { return v.owner.id() == owner; });
+						if (found == latest.end())
+							continue;
+						selected = *found;
+					}
+					else
+					{
 					weapon_render_pose::snapshot rendered;
 					if (!weapon_render_pose::for_scene(event.views, rendered, owner))
 						continue;
-					sample selected;
 					{
 						const std::lock_guard lock(mutex);
 						if (!scene_models::latest_skeleton_pose(
@@ -112,6 +125,7 @@ namespace vr::gameplay::weapons::chambering_guide
 							++misses;
 							continue;
 						}
+					}
 					}
 					if (!selected.count || !current(selected))
 						continue;
