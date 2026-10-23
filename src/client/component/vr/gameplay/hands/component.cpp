@@ -701,7 +701,7 @@ namespace vr::gameplay::hands
 				return;
 			}
 			if (!scripted_control::predicted_allowed() &&
-			    !(empty && (vehicles::presentation_allowed() || cliffhanger_physical::independent_hands() ||
+			    !(empty && (scripted_control::predicted_disarmed() || vehicles::presentation_allowed() || cliffhanger_physical::independent_hands() ||
 			                sequences::independent_hands(game::CG_GetPredictedPlayerState(0)))))
 			{
 				original();
@@ -834,7 +834,7 @@ namespace vr::gameplay::hands
 			auto owner = model_pose_owner(
 			    independent ? owned_native::owner(object) : weapons::sample_native_equipped(),
 			    empty,
-			    vehicles::presentation_allowed() || cliffhanger_physical::independent_hands() ||
+			    scripted_control::predicted_disarmed() || vehicles::presentation_allowed() || cliffhanger_physical::independent_hands() ||
 			        sequences::independent_hands(game::CG_GetPredictedPlayerState(0)));
 			probe.owner = owner;
 			bool selection_transition = false;

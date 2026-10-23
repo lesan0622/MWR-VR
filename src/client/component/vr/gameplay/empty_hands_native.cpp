@@ -337,7 +337,7 @@ namespace vr::gameplay::hands::empty_native
 			if (!suppress_legacy_viewmodel(filter_native_firearms || suppress_native,suppress_native,firearm)) submit_hook.invoke<void>(obj,placement,entity,flags,light,scale,a,b);
 		}
 
-		bool requested(head_pose_bridge::spatial_frame& spatial)
+		bool requested(head_pose_bridge::spatial_frame& spatial,bool disarmed)
 		{
 			if (!alive || !installed || !game::CL_IsCgameInitialized()) return false;
 			const auto* enabled=game::Dvar_FindVar("vr_independentHands");
@@ -349,9 +349,10 @@ namespace vr::gameplay::hands::empty_native
             if(player_life::dead(game::CG_GetPredictedPlayerState(0)))return false;
             if ((std::to_integer<unsigned>(ps[2])>=2 && std::to_integer<unsigned>(ps[2])<=3) ||
                 (!climbing && (((*reinterpret_cast<const std::uint32_t*>(ps+0x58)&0x103000) && !vehicles::presentation_allowed()) ||
-                (!weapons::carry::active() && ((*reinterpret_cast<const std::uint32_t*>(ps+0x38c)&0x1ff) ||
+                // Script-disabled weapons leave the hands empty whatever is carried.
+                (!disarmed && !weapons::carry::active() && ((*reinterpret_cast<const std::uint32_t*>(ps+0x38c)&0x1ff) ||
                     vr::h2::sp::weapon_selection_request.read())) ||
-                (weapons::current_hold().weapon && !vehicles::presentation_allowed())))) return false;
+                (!disarmed && weapons::current_hold().weapon && !vehicles::presentation_allowed())))) return false;
 			const auto input=controller_input::latest();
 			const auto now=controller_input::clock::now();
 			if (!input.focused || !input.sequence || now<input.sampled_at ||
@@ -376,7 +377,10 @@ namespace vr::gameplay::hands::empty_native
 			filter_native_firearms=filter;
 			const auto restore_filter=gsl::finally([&]{filter_native_firearms=previous_filter;});
             const bool climbing=cliffhanger_physical::independent_hands() || sequences::independent_hands(game::CG_GetPredictedPlayerState(0));
-            if (!client && !scripted_control::predicted_allowed() && !climbing &&
+            // Weapons disabled by script (briefings, scripted walks): the arms
+            // stay tracked and empty; only the held firearm is withheld.
+            const bool disarmed=!client && scripted_control::predicted_disarmed();
+            if (!client && !scripted_control::predicted_allowed() && !disarmed && !climbing &&
 				(player_life::dead(game::CG_GetPredictedPlayerState(0)) || !vehicles::presentation_allowed()))
 			{
 				// Native cinematic props and world bodies remain native-owned.
@@ -393,13 +397,13 @@ namespace vr::gameplay::hands::empty_native
             const bool independent=filter && owned_native::active() && !vehicles::presentation_allowed() && !climbing;
             const bool spatial_ready=!vehicles::presentation_allowed() && !climbing && owned_requested(spatial);
 			const auto previous=suppress_native;
-            suppress_native=independent || climbing;
+            suppress_native=independent || climbing || disarmed;
 			{ const auto restore=gsl::finally([&]{suppress_native=previous;}); add_hook.invoke<void>(client); }
 			filter_native_firearms=previous_filter; // MOD-owned submissions are not legacy fallbacks.
 			if (client) return;
-			if(spatial_ready)add_owned(spatial,independent);
-			if (independent && weapons::carry::current_hold().weapon) { visible=false; return; }
-			if (!requested(spatial)) { visible=false; reason="not empty or tracking unavailable"; return; }
+			if(spatial_ready)add_owned(spatial,independent && !disarmed);
+			if (independent && !disarmed && weapons::carry::current_hold().weapon) { visible=false; return; }
+			if (!requested(spatial,disarmed)) { visible=false; reason="not empty or tracking unavailable"; return; }
 			auto* model=character_model();
 			if (!model) { visible=false; reason="native character hand model unavailable"; ++rejected; return; }
 			if (!created || source!=model || source_bind!=model->baseMat)

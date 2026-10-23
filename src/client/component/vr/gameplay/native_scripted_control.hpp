@@ -35,6 +35,22 @@ namespace vr::gameplay::scripted_control
 			(permits_weapons(flags) || sequences::airport::opening::active()) &&
 			!mounted::attached(entity_flags) && !sequences::owns_body(player_state) && !sequences::owns_arms(player_state);
 	}
+	// The player still owns their arms while a script only disables weapons
+	// (briefings, scripted walks). Death, turrets and scripted bodies stay native.
+	inline bool hands_allowed(const void* player_state) noexcept
+	{
+		std::uint32_t entity_flags{};
+		bool dead{};
+		return player_state && native_contract() && player_life::read(player_state,dead) && !dead &&
+			utils::native_memory::read_bytes(&entity_flags,static_cast<const std::byte*>(player_state)+offsetof(game::playerState_s,e_flags),sizeof(entity_flags)) &&
+			!mounted::attached(entity_flags) && !sequences::owns_body(player_state) && !sequences::owns_arms(player_state);
+	}
+	inline bool predicted_disarmed() noexcept
+	{
+		if (!game::CL_IsCgameInitialized()) return false;
+		const auto* ps = game::CG_GetPredictedPlayerState(0);
+		return hands_allowed(ps) && !allowed(ps);
+	}
 	inline bool firing_allowed(const void* player_state) noexcept
 	{
 		return !sequences::airport::opening::active() && allowed(player_state);
