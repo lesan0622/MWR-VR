@@ -33,6 +33,11 @@ namespace vr::native_waypoints
 			std::optional<narrative_ui::backdrop> hint_backdrop;
 		};
 		thread_local script_group* script_current{};
+		// MWR (h1_sp64_ship) CG_DrawHudElem boundaries. Same ABI as the H2 originals
+		// (CG_DrawHudElem 37B080, its text draw 37AE70, CL_GetConfigString 3C9D60,
+		// cursor hint 3869F0); MWR localized config strings start at 0xf4, not 0xf5.
+		constexpr std::uintptr_t hud_elem_draw=0x140157170,hud_text_draw=0x140156F70,config_string=0x1401A2F10,cursor_hint_draw=0x140162480;
+		constexpr int localized_config_base=0xf4;
 		struct cursor { std::uintptr_t base{}, used{}; };
 		cursor commands() noexcept
 		{
@@ -117,10 +122,10 @@ namespace vr::native_waypoints
 			{
 				int index{};
 				// CG_DrawHudElem resolves both its label (+0x50) and text (+0x94)
-				// through the native localized config-string range, starting at 0xf5.
+				// through the native localized config-string range (MWR base 0xf4).
 				if (utils::native_memory::read_bytes(&index,static_cast<const std::byte*>(element)+key_offset,sizeof(index)) && index>0 && index<1024)
 				{
-					const auto* value=utils::hook::invoke<const char*>(0x1403C9D60,index+0xf5);
+					const auto* value=utils::hook::invoke<const char*>(config_string,index+localized_config_base);
 					if (!value || !utils::native_memory::read_bytes(key.data(),value,key.size()) ||
 						std::find(key.begin(),key.end(),'\0')==key.end()) key={};
 				}
@@ -133,7 +138,7 @@ namespace vr::native_waypoints
 				const auto labels=narrative_ui::progress_labels();
 				if(text && labels)script_current->progress=script_current->progress || narrative_ui::progress_text(text,*labels);
 			}
-			utils::hook::invoke<void>(0x14037AE70,client,text,element,parameters);
+			utils::hook::invoke<void>(hud_text_draw,client,text,element,parameters);
 		}
 		void script_label_stub(int client,const char* text,const void* element,const void* parameters)
 		{draw_script_text(client,text,element,parameters,0x50);}
@@ -156,7 +161,7 @@ namespace vr::native_waypoints
 			// and parameters. On a missing VR translation, admit its exact text
 			// allocation to the existing narrative canvas without rebuilding it.
 			bool drawn{};
-			const auto draw=[&]{drawn=true;utils::hook::invoke<void>(0x1403869F0,client,rect,font,scale,style);};
+			const auto draw=[&]{drawn=true;utils::hook::invoke<void>(cursor_hint_draw,client,rect,font,scale,style);};
 			if(hud_prompts::native_cursor_required())draw_narrative_text(draw);
 			if(!drawn)draw();
 		}
@@ -199,8 +204,48 @@ namespace vr::native_waypoints
 		bool text_call(std::uintptr_t site)
 		{
 			std::array<std::uint8_t,5> bytes{0xe8},mask{};mask.fill(0xff);
-			const auto delta=std::int32_t(0x14037AE70-site-5);std::memcpy(bytes.data()+1,&delta,4);
+			const auto delta=std::int32_t(hud_text_draw-site-5);std::memcpy(bytes.data()+1,&delta,4);
 			return bool(utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(site),{bytes.data(),mask.data(),bytes.size()}));
+		}
+		template<std::size_t N> bool verify(std::uintptr_t address,const std::uint8_t (&bytes)[N]);
+		// MWR: script HUD elements (tutorial hints, objective text) and the cursor
+		// use hint are scoped into the narrative layer; a matching hud_prompts rule
+		// replaces their stock key/button instruction with the VR action.
+		void install_script_hud()
+		{
+			constexpr std::uint8_t cursor_call[]{0xe8,0x12,0xc3,0xff,0xff};
+			constexpr std::uint8_t cursor_entry[]{0x4c,0x8b,0xdc,0x55,0x56,0x41,0x54,0x48,0x81,0xec,0x10,0x0a,0,0};
+			constexpr std::uint8_t cursor_args[]{0x8b,0x85,0xcf,0,0,0,0x48,0x8d,0x55,0x97,0xf3,0x0f,0x10,0x9d,0xb7,0,0,0,
+				0x4c,0x8b,0xc3,0x8b,0xce,0x89,0x44,0x24,0x20};
+			if(verify(0x140166169,cursor_call) && verify(cursor_hint_draw,cursor_entry) && verify(0x14016614E,cursor_args))
+				utils::hook::call(0x140166169,cursor_hint_stub);
+			else console::error("[VR prompts] native cursor hint fallback boundary rejected\n");
+			constexpr std::uint8_t script_hud[]{0x48,0x89,0x5c,0x24,0x18,0x55,0x56,0x57,0x48,0x8d,0xac,0x24,0x60,0xfd,0xff,0xff};
+			constexpr std::uint8_t script_text[]{0x48,0x8b,0xc4,0x48,0x89,0x58,0x08,0x48,0x89,0x68,0x10};
+			// Label (+0x50) and text (+0x94) config indices, read by the element's
+			// draw-info setup 1573C0 before both text calls.
+			constexpr std::uint8_t label_key[]{0x8b,0x4e,0x50,0x85,0xc9};
+			constexpr std::uint8_t value_key[]{0x8b,0x96,0x94,0,0,0,0x85,0xd2};
+			constexpr std::uint8_t key_lookup[]{0x48,0x63,0xc1,0x48,0x8d,0x0d,0x3a,0x26,0x38,0x02,0x8b,0x0c,0x81};
+			script_text_keys_ready=verify(0x1401574EA,label_key) && verify(0x14015758B,value_key) && verify(config_string,key_lookup);
+			if(verify(hud_elem_draw,script_hud) && verify(hud_text_draw,script_text) && text_call(0x1401572F2) && text_call(0x14015733B))
+			{
+				script_hud_hook.create(hud_elem_draw,script_hud_stub);
+				utils::hook::call(0x1401572F2,script_label_stub);utils::hook::call(0x14015733B,script_text_stub);
+				// CG_DrawHudElemImage common layout (156BF0): same registers as H2
+				// 37AB52 -- rbx info, rsi element, rdi material, xmm0 y, xmm7/xmm6 size.
+				constexpr std::uint8_t image_layout[]{0xf7,0x86,0xb8,0,0,0,0,0x40,0,0};
+				if(verify(0x140156CB2,image_layout))
+				{
+					const auto marker=utils::hook::assemble([](auto& a){emit_image_layout_marker(a,reinterpret_cast<std::uintptr_t>(observe_script_image_layout),0x140156CBC);});
+					if(const auto relay=utils::hook::create_preserving_near_jump(0x140156CB2,marker))
+					{utils::hook::jump(0x140156CB2,relay);utils::hook::nop(0x140156CB7,5);}
+					else console::error("[VR narrative] native image layout relay unavailable\n");
+				}
+				else console::error("[VR narrative] native hint backdrop layout boundary rejected\n");
+				ready.store(true);
+			}
+			else console::error("[VR narrative] native script HUD ownership signatures rejected\n");
 		}
 		void waypoint_stub(int client, void* parameters)
 		{
@@ -270,6 +315,7 @@ namespace vr::native_waypoints
 			if (!verify(0x140582F70,mwr_reset))
 			{ console::error("[VR indicators] native frame reset signature rejected\n"); return; }
 			reset_hook.create(0x140582F70,reset_stub);
+			install_script_hud();
 			if (!h2_boundaries_rebound) return;
 			constexpr std::uint8_t waypoint[]{0x40,0x55,0x53,0x57,0x48,0x8d,0xac,0x24,0x60,0xff,0xff,0xff};
 			constexpr std::uint8_t projection[]{0x48,0x89,0x5c,0x24,0x08,0x48,0x89,0x74,0x24,0x18};
@@ -290,38 +336,6 @@ namespace vr::native_waypoints
 			if(verify(0x14038AEE3,dead_quote_call) && verify(0x1403874C0,dead_quote_entry))
 				utils::hook::call(0x14038AEE3,dead_quote_stub);
 			else console::error("[VR narrative] native death quote boundary rejected\n");
-			constexpr std::uint8_t cursor_call[]{0xe8,0x4f,0xba,0xff,0xff};
-			constexpr std::uint8_t cursor_entry[]{0x4c,0x8b,0xdc,0x55,0x56,0x41,0x54,0x48,0x81,0xec,0x10,0x0a,0,0};
-			constexpr std::uint8_t cursor_args[]{0x8b,0x85,0xcf,0,0,0,0x48,0x8d,0x55,0x97,0xf3,0x0f,0x10,0x9d,0xb7,0,0,0,
-				0x4c,0x8b,0xc3,0x8b,0xce,0x89,0x44,0x24,0x20};
-			if(verify(0x14038AF9C,cursor_call) && verify(0x1403869F0,cursor_entry) && verify(0x14038AF81,cursor_args))
-				utils::hook::call(0x14038AF9C,cursor_hint_stub);
-			else console::error("[VR prompts] native cursor hint fallback boundary rejected\n");
-			// CG_DrawHudElem and its label/value text calls. These boundaries
-			// retain native timing, localization, binding glyphs and font patches.
-			constexpr std::uint8_t script_hud[]{0x48,0x89,0x5c,0x24,0x18,0x55,0x56,0x57,0x48,0x8d,0xac,0x24,0x60,0xfd,0xff,0xff};
-			constexpr std::uint8_t script_text[]{0x48,0x8b,0xc4,0x48,0x89,0x58,0x08,0x48,0x89,0x68,0x10};
-			constexpr std::uint8_t label_key[]{0x8b,0x4e,0x50,0x85,0xc9};
-			constexpr std::uint8_t value_key[]{0x8b,0x96,0x94,0,0,0,0x85,0xd2};
-			constexpr std::uint8_t key_lookup[]{0x48,0x63,0xc1,0x48,0x8d,0x0d,0x3a,0xfc,0xc6,0x01,0x8b,0x0c,0x81};
-			script_text_keys_ready=verify(0x14037B401,label_key) && verify(0x14037B4A2,value_key) && verify(0x1403C9D60,key_lookup);
-			if(verify(0x14037B080,script_hud) && verify(0x14037AE70,script_text) && text_call(0x14037B202) && text_call(0x14037B24B))
-			{
-				script_hud_hook.create(0x14037B080,script_hud_stub);
-				utils::hook::call(0x14037B202,script_label_stub);utils::hook::call(0x14037B24B,script_text_stub);
-				// Common image layout is at 37AB52, not the separate 37A800
-				// producer's scalar call. It covers all real HUD image branches.
-				constexpr std::uint8_t image_layout[]{0xf7,0x86,0xb8,0,0,0,0,0x40,0,0};
-				if(verify(0x14037AB52,image_layout))
-				{
-					const auto marker=utils::hook::assemble([](auto& a){emit_image_layout_marker(a,reinterpret_cast<std::uintptr_t>(observe_script_image_layout),0x14037AB5C);});
-					if(const auto relay=utils::hook::create_preserving_near_jump(0x14037AB52,marker))
-					{utils::hook::jump(0x14037AB52,relay);utils::hook::nop(0x14037AB57,5);}
-					else console::error("[VR narrative] native image layout relay unavailable\n");
-				}
-				else console::error("[VR narrative] native hint backdrop layout boundary rejected\n");
-			}
-			else console::error("[VR narrative] native script HUD ownership signatures rejected\n");
 		}
 		void pre_destroy() override { ready.store(false); }
 	};
