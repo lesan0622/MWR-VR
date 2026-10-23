@@ -44,6 +44,9 @@ namespace vr::controllers
 		// before updating the movement keys (H2 0x1403D3A90).
 		constexpr std::uintptr_t notify_command_address = 0x1401ACBD0;
 		constexpr int jump_binding = 37; // Native whitelist: +gostand.
+		constexpr int sprint_binding = 83; // Native whitelist: +sprint.
+		bool sprint_binding_verified{};
+		std::atomic<std::uint64_t> sprint_notify_count{};
 		// clientActive_t 0x14252B190 (stride 0xF730): viewangles +0x5C, stance +0x1C.
 		constexpr std::uintptr_t client_angles_address = 0x14252B1EC;
 		constexpr std::uintptr_t client_yaw_address = 0x14252B1F0;
@@ -196,6 +199,12 @@ namespace vr::controllers
 				// One native binding notification per accepted press (notifyoncommand).
 				utils::hook::invoke<void>(notify_command_address, building_client, jump_binding, 0);
 				++jump_notify_count;
+			}
+			if (sprint_binding_verified && (button_state.pressed & controller_input::sprint_button))
+			{
+				// Script hints (killhouse sprint) wait on notifyoncommand +sprint.
+				utils::hook::invoke<void>(notify_command_address, building_client, sprint_binding, 0);
+				++sprint_notify_count;
 			}
 			// Right trigger fires, right B reloads (+usereload). Native weapon
 			// state, ammunition and fire rate keep authority over the request.
@@ -391,6 +400,8 @@ namespace vr::controllers
 			binding_verified=true;
 			for (const auto [index,name] : std::array<std::pair<int,const char*>,3>{{{1,"+attack"},{17,"+speed_throw"},{18,"-speed_throw"}}})
 				binding_verified=binding_verified && game::command_whitelist[index] && std::strcmp(game::command_whitelist[index],name)==0;
+			sprint_binding_verified=game::command_whitelist[sprint_binding] &&
+				std::strcmp(game::command_whitelist[sprint_binding],"+sprint")==0;
 			reload_binding_verified=binding_verified && game::command_whitelist[reload_binding] &&
 				std::strcmp(game::command_whitelist[reload_binding],"+reload")==0;
 
