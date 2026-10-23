@@ -101,6 +101,9 @@ namespace vr::gameplay::weapons::physical_reload
 	};
 	// Short copied snapshots only; no native calls or ammo writes on render thread.
 	presentation current(weapon_identity id) noexcept;
+	// Committed physical magazine insertions (all guns). The controller turns an
+	// increase into the native +reload binding notification for script hints.
+	std::uint64_t magazine_insertions() noexcept;
 	// Read-only primary-feed priority for a new waist draw. Unavailable or
 	// mismatched native/mechanical state conservatively keeps primary priority.
 	bool primary_supply_needed(weapon_identity id) noexcept;

@@ -17,6 +17,7 @@
 #include "native_scripted_control.hpp"
 #include "world_interaction.hpp"
 #include "optic_runtime.hpp"
+#include "physical_reload_runtime.hpp"
 #include "game/dvars.hpp"
 #include "game/game.hpp"
 #include "loader/component_loader.hpp"
@@ -59,7 +60,10 @@ namespace vr::controllers
 		gameplay::weapons::ads_policy ads;
 		std::array<controller_input::digital_press_gate,2> attack_notifications{};
 		std::array<gameplay::weapons::hold,2> notified_owners{};
-		bool ads_verified{}, binding_verified{};
+		bool ads_verified{}, binding_verified{}, reload_binding_verified{};
+		std::uint64_t reload_inserts_seen{};
+		std::atomic_uint64_t reload_notify_count{};
+		constexpr int reload_binding = 75; // MWR command whitelist "+reload"
 		std::atomic_bool ads_requested{};
 		std::atomic_uint64_t ads_command_count{}, attack_notify_count{}, ads_notify_count{};
 		controller_input::locomotion locomotion;
@@ -222,6 +226,17 @@ namespace vr::controllers
 					++attack_notify_count;
 				}
 			}
+			// A physical magazine insertion is the VR reload. Script hints wait on the
+			// +reload binding (notifyoncommand); deliver it once per committed insert.
+			if (const auto inserts = gameplay::weapons::physical_reload::magazine_insertions(); inserts != reload_inserts_seen)
+			{
+				reload_inserts_seen = inserts;
+				if (reload_binding_verified && weapon_gameplay)
+				{
+					utils::hook::invoke<void>(notify_command_address, building_client, reload_binding, 0);
+					++reload_notify_count;
+				}
+			}
 			if (gameplay && input.secondary[1].active && input.secondary[1].down)
 			{
 				cmd->buttons |= use_reload_button;
@@ -323,9 +338,9 @@ namespace vr::controllers
 			console::info("[VR input] attack_commands=%llu reload_commands=%llu weapon_hand=%d\n",
 				attack_count.load(), reload_count.load(), gameplay::mwr_weapon_pose::active());
 			console::info("[VR input] auto_ads=%d ads_verified=%d ads_requested=%d ads_commands=%llu "
-				"binding_verified=%d attack_notifies=%llu ads_notifies=%llu\n",
+				"binding_verified=%d attack_notifies=%llu ads_notifies=%llu reload_notifies=%llu\n",
 				auto_ads && auto_ads->current.enabled,ads_verified,ads_requested.load(),ads_command_count.load(),
-				binding_verified,attack_notify_count.load(),ads_notify_count.load());
+				binding_verified,attack_notify_count.load(),ads_notify_count.load(),reload_notify_count.load());
 			console::info("[VR input] ads_gate=%s depth=%.3f lateral=%.3f height=%.3f facing=%.3f\n", gameplay::weapons::ads_policy::last_reason.load(),
 				gameplay::weapons::ads_policy::last_depth.load(), gameplay::weapons::ads_policy::last_lateral.load(),
 				gameplay::weapons::ads_policy::last_height.load(), gameplay::weapons::ads_policy::last_facing.load());
@@ -376,6 +391,8 @@ namespace vr::controllers
 			binding_verified=true;
 			for (const auto [index,name] : std::array<std::pair<int,const char*>,3>{{{1,"+attack"},{17,"+speed_throw"},{18,"-speed_throw"}}})
 				binding_verified=binding_verified && game::command_whitelist[index] && std::strcmp(game::command_whitelist[index],name)==0;
+			reload_binding_verified=binding_verified && game::command_whitelist[reload_binding] &&
+				std::strcmp(game::command_whitelist[reload_binding],"+reload")==0;
 
 			// Native stance branches of CL_ExecuteKey and the whitelist indices.
 			stance_verified = check(0x1401A91EE, {0x44, 0x89, 0x74, 0x28, 0x1c}) &&

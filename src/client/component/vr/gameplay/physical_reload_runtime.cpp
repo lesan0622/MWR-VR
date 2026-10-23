@@ -91,6 +91,7 @@ namespace vr::gameplay::weapons::physical_reload
 			if (kind==mechanics::effect::case_eject) {event.brass=s.ejection_world;event.has_brass=true;event.position=event.brass.position;}
 			feedback::publish(event);
 		}
+		std::atomic_uint64_t magazine_inserts{};
 		bool commit(instance& value, const mechanics::transaction& tx, bool direct_load=false)
 		{
 			std::optional<motion::release_impulse> impulse;
@@ -113,6 +114,7 @@ namespace vr::gameplay::weapons::physical_reload
 				return false;
 			}
 			++commits;
+			if(tx.feedback==mechanics::effect::magazine_in)++magazine_inserts;
 			if(released)reload_items::complete_release(released,true);
 			// Continuous manual-bolt poses commit mechanically but are not feedback events.
 			if (tx.feedback==mechanics::effect::none || tx.silent) return true;
@@ -542,6 +544,7 @@ namespace vr::gameplay::weapons::physical_reload
 				hi::button::trigger,pose,{}});
 		}
 	}
+	std::uint64_t magazine_insertions() noexcept { return magazine_inserts.load(); }
 	presentation current(weapon_identity id) noexcept
 	{
 		const std::lock_guard lock(mutex);
