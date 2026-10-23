@@ -1,6 +1,7 @@
 #include <std_include.hpp>
 
 #include "engine_stereo_view.hpp"
+#include <atomic>
 #include "stabilization.hpp"
 
 #include <algorithm>
@@ -519,12 +520,29 @@ namespace vr::engine_stereo_view
 		return combined_energy >= 0.1f && inverse_energy >= 0.1f;
 	}
 
+	namespace
+	{
+		std::array<std::atomic<float>, 3> latest_placement_lag{};
+	}
+	std::array<float, 3> placement_lag() noexcept
+	{
+		return {latest_placement_lag[0].load(), latest_placement_lag[1].load(), latest_placement_lag[2].load()};
+	}
 	bool clone_scene_records(const void* const natural_record,
 		const slot_pair& views, scene_record_pair& output) noexcept
 	{
 		output = {};
 		if (natural_record == nullptr || !validate_finalized(views)) return false;
 		std::memcpy(output.left.data(), natural_record, output.left.size());
+		{
+			std::array<float, 3> camera{}, placement{}, lag{};
+			std::memcpy(camera.data(), output.left.data() + h2_view_origin_offset, sizeof(camera));
+			std::memcpy(placement.data(), output.left.data() + h2_current_model_placement_origin_offset, sizeof(placement));
+			float energy{};
+			for (std::size_t i = 0; i < 3; ++i) { lag[i] = camera[i] - placement[i]; energy += lag[i] * lag[i]; }
+			if (!std::isfinite(energy) || energy > 64.0f * 64.0f) lag = {};
+			for (std::size_t i = 0; i < 3; ++i) latest_placement_lag[i].store(lag[i], std::memory_order_relaxed);
+		}
 		if (std::memcmp(output.left.data() + h2_view_origin_offset,
 			views.natural_camera.data(), sizeof(views.natural_camera)) != 0)
 		{

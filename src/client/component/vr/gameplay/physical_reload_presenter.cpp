@@ -231,7 +231,7 @@ namespace vr::gameplay::weapons::physical_reload
 			for (const auto& hand_frame:frames)
 			{
 			if (!hand_frame.weapon) continue;
-			if (hand_frame.slot<submitted_view.size()) { const std::lock_guard lock(mutex); submitted_view[hand_frame.slot]=hand_frame.inserted_origin; }
+			if (hand_frame.slot<submitted_view.size()) { const auto lag=render_origin_rebase::solve_lag(); const std::lock_guard lock(mutex); for(int i=0;i<3;++i)submitted_view[hand_frame.slot][i]=hand_frame.inserted_origin[i]-lag[i]; }
 			const auto live = current(hand_frame.view.owner.id());
 			const auto& frozen = hand_frame.view;
 			const auto wall_now = clock::now();

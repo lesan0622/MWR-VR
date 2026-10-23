@@ -1,4 +1,5 @@
 #include <std_include.hpp>
+#include "render_origin_rebase.hpp"
 #include "chambering_guide_presenter.hpp"
 #include "chambering_guide.hpp"
 #include "chambering_guide_pulse.hpp"
@@ -92,6 +93,10 @@ namespace vr::gameplay::weapons::chambering_guide
 					                engine_stereo_view::h2_current_view_projection_offset,
 					            sizeof(vp[eye]));
 				}
+				// MWR: the arms are rendered shifted by the placement lag; follow them.
+				auto placement = event.model_origins.placement;
+				const auto lag = render_origin_rebase::solve_lag();
+				for (int i = 0; i < 3; ++i) placement[i] += lag[i];
 				for (const auto owner : owners)
 				{
 					if (!owner)
@@ -139,7 +144,7 @@ namespace vr::gameplay::weapons::chambering_guide
 						const auto model = hands::pose_math::compose(part.pose, part.asset.in_part);
 						for (unsigned eye = 0; eye < 2; ++eye)
 							draw.transform[eye] = opaque_mesh::transform(
-							    model, event.model_origins.placement, event.model_origins.eyes[eye], vp[eye]);
+							    model, placement, event.model_origins.eyes[eye], vp[eye]);
 					}
 				}
 				if (pair.count)

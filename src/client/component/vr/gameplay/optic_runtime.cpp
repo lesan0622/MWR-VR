@@ -1,4 +1,5 @@
 #include <std_include.hpp>
+#include "render_origin_rebase.hpp"
 #include "optic_runtime.hpp"
 #include "optic_geometry.hpp"
 #include "weapon_render_pose.hpp"
@@ -146,7 +147,11 @@ namespace vr::gameplay::weapons::optics
 				return false;
 			}
 			pair.reticle = image.texture.shaderView;
-			const auto center = place_model_anchor(lens.center, event.model_origins.placement);
+			// MWR: the gun is rendered shifted by the arm placement lag; follow it.
+			auto placement = event.model_origins.placement;
+			const auto lag = render_origin_rebase::solve_lag();
+			for (int i = 0; i < 3; ++i) placement[i] += lag[i];
+			const auto center = place_model_anchor(lens.center, placement);
 			for (unsigned eye = 0; eye < 2; ++eye)
 			{
 				spatial_panel::matrix vp{};

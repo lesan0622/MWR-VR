@@ -1,4 +1,5 @@
 #include <std_include.hpp>
+#include "../../engine_stereo_view.hpp"
 #include "../render_origin_rebase.hpp"
 #include "status.hpp"
 #include "../weapons/derived_profiles.hpp"
@@ -63,6 +64,24 @@ namespace vr::gameplay::hands
 {
 	namespace
 	{
+		// MWR: native draws these skinned bones from the scene record's skinned
+		// placement, which trails the camera while the player moves (H2 kept it on
+		// the camera). Offset only the rendered copy by the measured lag so arms and
+		// stowed guns stay with the head; gameplay keeps the true solved pose.
+		vec render_lag() noexcept
+		{
+			const auto lag = engine_stereo_view::placement_lag();
+			return {lag[0], lag[1], lag[2]};
+		}
+		template <class Bones>
+		void commit_render_bones(const Bones& solved, int count, bone* out, const vec& lag) noexcept
+		{
+			for (int i = 0; i < count; ++i)
+			{
+				out[i] = solved[i];
+				out[i].position = add(out[i].position, lag);
+			}
+		}
 		// MWR DObjCalcSkel (H2 0x140657D80); same prologue and DObj layout
 		// (models 0xF/0xD8, calculated 0x80, matrices 0xA8, timestamp 0xB0).
 		constexpr std::uintptr_t calc_skeleton_address = 0x140469E80;
@@ -493,6 +512,7 @@ namespace vr::gameplay::hands
 				return false;
 			vec offset{};
 			std::memcpy(offset.data(), render_view + 0x58, sizeof(offset));
+			const auto lag = render_lag();
 			if (!std::all_of(offset.begin(),
 			                 offset.end(),
 			                 [](float x) { return std::isfinite(x) && std::abs(x) < 1e7f; }))
@@ -592,7 +612,7 @@ namespace vr::gameplay::hands
 				if (!layout.weapon_bones[i])
 					native_hidden[i / 32] |= 0x80000000u >> (i % 32);
 			std::memcpy(native_bits, native_hidden.data(), sizeof(native_hidden));
-			std::copy_n(solved.begin(), layout.count, object->matrices);
+			commit_render_bones(solved, layout.count, object->matrices, lag);
 			viewmodel_visibility::publish(
 			    object, object->matrices, object->timestamp, hidden, profile->viewmodel.visibility);
 			owned_native::accept(object, object->matrices, object->timestamp);
@@ -899,7 +919,8 @@ namespace vr::gameplay::hands
 			}
 			vec view_offset{};
 			std::memcpy(view_offset.data(), render_view + 0x58, sizeof(view_offset));
-			render_origin_rebase::publish_solve_origin(view_offset);
+			const auto lag = render_lag();
+			render_origin_rebase::publish_solve_origin(view_offset, lag);
 			probe.offsets = {shoulder_half_width->current.value,
 			                 shoulder_down->current.value,
 			                 shoulder_back->current.value};
@@ -1082,7 +1103,7 @@ namespace vr::gameplay::hands
 				                                 .visible_hands = 3});
 				reload_tokens = interaction_presentation.reload_item_tokens;
 				finalize_arms();
-				std::copy_n(solved.begin(), layout.count, object->matrices);
+				commit_render_bones(solved, layout.count, object->matrices, lag);
 				attachments::publish(
 				    {reinterpret_cast<std::uintptr_t>(object),
 				     reinterpret_cast<std::uintptr_t>(object->matrices),
@@ -1867,7 +1888,7 @@ namespace vr::gameplay::hands
 					return;
 				}
 				finalize_arms();
-				std::copy_n(solved.begin(), layout.count, object->matrices);
+				commit_render_bones(solved, layout.count, object->matrices, lag);
 				probe.solved = true;
 				++applications;
 				++transition_poses;
@@ -1955,7 +1976,7 @@ namespace vr::gameplay::hands
 			                                 .visible_hands = visible_hands});
 			reload_tokens = interaction_presentation.reload_item_tokens;
 			finalize_arms(visible_hands);
-			std::copy_n(solved.begin(), layout.count, object->matrices);
+			commit_render_bones(solved, layout.count, object->matrices, lag);
 			attachments::publish(
 			    {reinterpret_cast<std::uintptr_t>(object),
 			     reinterpret_cast<std::uintptr_t>(object->matrices),

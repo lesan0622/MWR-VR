@@ -17,15 +17,22 @@ namespace vr::gameplay::render_origin_rebase
 	namespace detail
 	{
 		inline std::mutex mutex;
-		inline vec solve_origin{};
+		inline vec solve_origin{}, solve_lag{};
 		inline bool valid{};
 	}
 	// The hand solve's view offset (refdef.viewOffset) for the latest published pose.
-	inline void publish_solve_origin(const vec& origin) noexcept
+	// `lag` is the camera-minus-placement offset added to the rendered arm bones.
+	inline void publish_solve_origin(const vec& origin, const vec& lag = {}) noexcept
 	{
 		const std::lock_guard lock(detail::mutex);
-		detail::solve_origin = origin;
+		for (int i = 0; i < 3; ++i) detail::solve_origin[i] = origin[i] - lag[i];
+		detail::solve_lag = lag;
 		detail::valid = true;
+	}
+	inline vec solve_lag() noexcept
+	{
+		const std::lock_guard lock(detail::mutex);
+		return detail::solve_lag;
 	}
 	inline bool solve_origin(vec& out) noexcept
 	{
