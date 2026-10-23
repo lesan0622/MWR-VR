@@ -90,10 +90,10 @@ namespace vr::gameplay::equipment::nightvision
 	}
 	inline native_state decode(std::span<const std::byte> ps)noexcept
 	{
-		if(ps.size()<0x1fb0)return {};
-		unsigned flags{};std::array<unsigned,4> types{};std::memcpy(&flags,ps.data()+0x3c0,4);
-		// H2 setactionslot's "nightvision" branch stores type 3 at PS+1fa0.
-		std::memcpy(types.data(),ps.data()+0x1fa0,sizeof(types));return decode(types,flags);
+		if(ps.size()<0x1df0)return {};
+		unsigned flags{};std::array<unsigned,4> types{};std::memcpy(&flags,ps.data()+0x390,4);
+		// MWR setactionslot's "nightvision" branch stores type 3 at PS+1de0 (H2 1fa0).
+		std::memcpy(types.data(),ps.data()+0x1de0,sizeof(types));return decode(types,flags);
 	}
 	inline std::optional<vec> head_local(const head_pose_bridge::spatial_frame& body,vec point)noexcept
 	{

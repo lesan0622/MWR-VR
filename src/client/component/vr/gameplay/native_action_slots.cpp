@@ -11,21 +11,23 @@ namespace vr::gameplay::equipment::action_slots
 {
 	namespace
 	{
-		constexpr std::uintptr_t execute_binding_address=0x1403CF1E0;
+		// MWR CL key-binding dispatcher (H2 0x1403CF1E0); whitelist 19..26 are the
+		// +/-actionslot 1..4 cases of its jump table at 0x1401A92CC.
+		constexpr std::uintptr_t execute_binding_address=0x1401A8350;
 		bool native_binding_ready()noexcept
 		{
 			static const bool ready=[] {
 				// CL_ExecuteKey bindings 19..26 call the original slot down/up
 				// handlers. These names are whitelist bindings, not registered
 				// console commands. The down handler sets native NVG input 0x40000.
-				constexpr std::array<std::uint32_t,8> cases{0x3cf4d5,0x3cf4e3,0x3cf4f1,0x3cf502,
-					0x3cf513,0x3cf524,0x3cf535,0x3cf546};
-				constexpr std::array<std::uint8_t,9> down{0x33,0xd2,0x8b,0xcb,0xe8,0x92,0x45,0xfe,0xff};
-				constexpr std::array<std::uint8_t,9> up{0x33,0xd2,0x8b,0xcb,0xe8,0x24,0x47,0xfe,0xff};
+				constexpr std::array<std::uint32_t,8> cases{0x1a8645,0x1a8653,0x1a8661,0x1a8672,
+					0x1a8683,0x1a8694,0x1a86a5,0x1a86b6};
+				constexpr std::array<std::uint8_t,9> down{0x33,0xd2,0x8b,0xcb,0xe8,0x72,0x4c,0xfe,0xff};
+				constexpr std::array<std::uint8_t,9> up{0x33,0xd2,0x8b,0xcb,0xe8,0x14,0x4e,0xfe,0xff};
 				std::array<std::uint32_t,8> actual_cases{};std::array<std::uint8_t,9> a{},b{};
-				return utils::native_memory::read_bytes(actual_cases.data(),reinterpret_cast<const void*>(0x1403D01A4),sizeof(actual_cases)) && actual_cases==cases &&
-					utils::native_memory::read_bytes(a.data(),reinterpret_cast<const void*>(0x1403CF4D5),a.size()) && a==down &&
-					utils::native_memory::read_bytes(b.data(),reinterpret_cast<const void*>(0x1403CF4E3),b.size()) && b==up &&
+				return utils::native_memory::read_bytes(actual_cases.data(),reinterpret_cast<const void*>(0x1401A9314),sizeof(actual_cases)) && actual_cases==cases &&
+					utils::native_memory::read_bytes(a.data(),reinterpret_cast<const void*>(0x1401A8645),a.size()) && a==down &&
+					utils::native_memory::read_bytes(b.data(),reinterpret_cast<const void*>(0x1401A8653),b.size()) && b==up &&
 					bool(utils::hook_validation::validate_executable_target(reinterpret_cast<const void*>(execute_binding_address)));
 			}();
 			return ready;
@@ -43,9 +45,9 @@ namespace vr::gameplay::equipment::action_slots
 				timeline!=weapons::native_ammunition::timeline() || GetTickCount64()-at>250 || !paused || paused->current.integer || *game::keyCatchers)return;
 			unsigned current_type{},current_weapon{};
 			const auto* bytes=reinterpret_cast<const std::byte*>(player);
-			if(!utils::native_memory::read_bytes(&current_type,bytes+0x1fa0+index*4,4) || current_type!=type ||
-				(type==1 && (!utils::native_memory::read_bytes(&current_weapon,bytes+0x1fb0+index*4,4) || current_weapon!=weapon)))return;
-			const auto* table=reinterpret_cast<const char* const*>(0x140BF84E0);
+			if(!utils::native_memory::read_bytes(&current_type,bytes+0x1de0+index*4,4) || current_type!=type ||
+				(type==1 && (!utils::native_memory::read_bytes(&current_weapon,bytes+0x1df0+index*4,4) || current_weapon!=weapon)))return;
+			const auto* table=reinterpret_cast<const char* const*>(0x14115ADF0);
 			const auto press="+actionslot "+std::to_string(index+1),release="-actionslot "+std::to_string(index+1);
 			const unsigned down=19+index*2,up=down+1;
 			if(!table[down] || !table[up] || std::string_view(table[down])!=press || std::string_view(table[up])!=release)return;

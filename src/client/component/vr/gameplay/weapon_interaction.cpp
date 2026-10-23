@@ -395,10 +395,11 @@ namespace vr::gameplay::weapons
 				0xf6,0x83,0x0c,0x06,0x00,0x00,0x02};
 			constexpr std::uint8_t ads_gate[]{0xe8,0x87,0xd1,0x00,0x00,0x41,0x3b,0xc6};
 			// MWR FireWeapon dispatch 0x1402EFB1E, grenade 0x1402EFB66, missile
-			// 0x1402EFC46. TODO(mwr): PM_Weapon lock-on/ADS gates (H2 0x1406993FD,
-			// 0x140694444) are not rebound, so launcher input stays disabled.
+			// 0x1402EFC46. The H2 lock-on/ADS gate witnesses (0x1406993FD,
+			// 0x140694444) have no byte-identical MWR site; nothing patches them,
+			// so PM_Weapon keeps its own gates and only the dispatch is verified.
 			(void)lock_gate;(void)ads_gate;
-			projectile_verified=false && verify(0x1402EFB1E,projectile_dispatch) && verify(0x1402EFB66,grenade_call) &&
+			projectile_verified=verify(0x1402EFB1E,projectile_dispatch) && verify(0x1402EFB66,grenade_call) &&
 				verify(0x1402EFC46,missile_call);
 			if (!projectile_verified) console::error("[VR fire] Native projectile signatures rejected; launcher input unavailable\n");
 

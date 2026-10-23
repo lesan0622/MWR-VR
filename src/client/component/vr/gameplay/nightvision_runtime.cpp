@@ -44,7 +44,7 @@ namespace vr::gameplay::equipment::nightvision
 			const bool allowed=vr && vr->current.enabled && ps && !player_life::dead(ps) && (!disabled || !disabled->current.enabled);
 			const auto epoch=weapons::native_ammunition::timeline();
 			const int time=allowed?field<int>(ps,0x4c):0;
-			const bool on=allowed && (field<unsigned>(ps,0x3c0)&0x40)!=0;
+			const bool on=allowed && (field<unsigned>(ps,0x390)&0x40)!=0;
 			const std::lock_guard lock(presentation_mutex);
 			const auto value=allowed?(rendering?presentation.render(epoch,time,on):presentation.sample(epoch,time,on)):device_view{};
 			// Prediction may temporarily replay a command older than the accepted
@@ -141,11 +141,11 @@ namespace vr::gameplay::equipment::nightvision
 			const auto* ps=pm->ps;
 			const int role=ps?weapons::native_ammunition::local_role(ps):-1;
 			const bool local=role>=0 && head_pose_bridge::get_status().enabled;
-			const bool was_on=local && (field<unsigned>(ps,0x3c0)&0x40)!=0;
+			const bool was_on=local && (field<unsigned>(ps,0x390)&0x40)!=0;
 			const std::array before{local?field<int>(ps,0x2c0):-1,local?field<int>(ps,0x2e4):-1};
 			transition_hook.invoke<void>(pm);
 			if(!local || pm->ps!=ps)return;
-			const bool on=(field<unsigned>(ps,0x3c0)&0x40)!=0;
+			const bool on=(field<unsigned>(ps,0x390)&0x40)!=0;
 			if(on==was_on)return; // Native rejection never starts visual/audio feedback.
 			const auto* fade=game::Dvar_FindVar("nightVisionFadeInOutTime");
 			const auto* power=game::Dvar_FindVar("nightVisionPowerOnTime");
@@ -193,8 +193,8 @@ namespace vr::gameplay::equipment::nightvision
 			if(!verified || !game::CL_IsCgameInitialized())return {};
 			const auto* ps=reinterpret_cast<const std::byte*>(game::g_entities[0].client);
 			unsigned flags{};std::array<unsigned,4> types{};
-			if(!scripted_control::allowed(ps) || !utils::native_memory::read_bytes(&flags,ps+0x3c0,4) ||
-				!utils::native_memory::read_bytes(types.data(),ps+0x1fa0,sizeof(types)))return {};
+			if(!scripted_control::allowed(ps) || !utils::native_memory::read_bytes(&flags,ps+0x390,4) ||
+				!utils::native_memory::read_bytes(types.data(),ps+0x1de0,sizeof(types)))return {};
 			return decode(types,flags);
 		}
 	}
@@ -259,12 +259,14 @@ namespace vr::gameplay::equipment::nightvision
 		{
 			// Read-only force-on/off method witnesses establish the active bit;
 			// the actual operation always follows the original action-slot input.
-			constexpr std::array<unsigned char,7> on{0x83,0x88,0xc0,3,0,0,0x40},off{0x83,0xa0,0xc0,3,0,0,0xbf};
+			// MWR nightvisiongogglesforceon/off (0x1402958C0/0x140295910) and the
+			// setactionslot "nightvision" branch (0x14028FC59).
+			constexpr std::array<unsigned char,7> on{0x83,0x88,0x90,3,0,0,0x40},off{0x83,0xa0,0x90,3,0,0,0xbf};
 			constexpr std::array<unsigned char,4> slot{0x44,0x8d,0x70,3};
 			std::array<unsigned char,7> a{},b{};std::array<unsigned char,4> c{};
-			verified=utils::native_memory::read_bytes(a.data(),reinterpret_cast<const void*>(0x1404BBE03),a.size()) && a==on &&
-				utils::native_memory::read_bytes(b.data(),reinterpret_cast<const void*>(0x1404BBE53),b.size()) && b==off &&
-				utils::native_memory::read_bytes(c.data(),reinterpret_cast<const void*>(0x1404B5229),c.size()) && c==slot;
+			verified=utils::native_memory::read_bytes(a.data(),reinterpret_cast<const void*>(0x140295903),a.size()) && a==on &&
+				utils::native_memory::read_bytes(b.data(),reinterpret_cast<const void*>(0x140295953),b.size()) && b==off &&
+				utils::native_memory::read_bytes(c.data(),reinterpret_cast<const void*>(0x14028FC59),c.size()) && c==slot;
 			// Native input acceptance, native view mode/fade and the two local
 			// goggles aliases are one contract. No shared weapon asset is edited.
 			constexpr std::array<std::uint8_t,13> entry{0x48,0x89,0x5c,0x24,0x20,0x56,0x57,0x41,0x54,0x48,0x83,0xec,0x20};
@@ -274,7 +276,9 @@ namespace vr::gameplay::equipment::nightvision
 			constexpr std::array<std::uint8_t,5> sound_on{0xe8,0x05,0xb9,0,0},sound_off{0xe8,0x9e,0xb8,0,0};
 			constexpr std::array<std::uint8_t,5> foley_on{0xe8,0x1d,0xb9,0,0},foley_off{0xe8,0xb6,0xb8,0,0};
 			constexpr std::array<std::uint8_t,10> entity_sound{0x48,0x0f,0xbf,0xc2,0x48,0x8d,0x0d,0x29,0x28,0x8b};
-			transition_ready=verified && matches(0x140697780,entry) && matches(0x1403B1050,vision_entry) &&
+			// MWR: the H2 device fade/sound presentation boundaries are not rebound;
+			// the native NVG animation, view and sounds play unchanged.
+			transition_ready=false && verified && matches(0x140697780,entry) && matches(0x1403B1050,vision_entry) &&
 				matches(0x1403B32E0,fade_entry) && matches(0x1403801C0,sound_entry) &&
 				matches(0x1403748B6,sound_on) && matches(0x14037491D,sound_off) &&
 				matches(0x1403748DE,foley_on) && matches(0x140374945,foley_off) && matches(0x140380200,entity_sound);

@@ -67,6 +67,7 @@ namespace mwr_port
 		"vr::gameplay::grenades", // Physical frag/flash/smoke: chest grasp, pin, throw (native G_FireGrenade).
 		"vr::gameplay::equipment", // Physical knife melee (native trace + G_Damage).
 		"vr::gameplay::equipment::chest_items",
+		"vr::gameplay::equipment::nightvision", // Hand-to-goggles gesture presses the native NVG action slot.
 		"vr::gameplay::weapons::optics", // Same-eye scope magnifier (no auxiliary scene view).
 		"vr::gameplay::weapons::chambering_guide", // Yellow pulse on the action to rack.
 	};
