@@ -76,7 +76,10 @@ namespace vr::gameplay::interaction
 	bool scripted_frame(hand_interaction::frame& f)noexcept
 	{
 		if(!ready || !alive || !enabled->current.enabled || !weapons::carry::active() || !game::CL_IsCgameInitialized() ||
-			!sequences::for_player(game::g_entities[0].client).allow_world_use || scripted_control::allowed(game::g_entities[0].client))return false;
+			!(sequences::for_player(game::g_entities[0].client).allow_world_use ||
+			// MWR: scripts disable weapons around use prompts (sniperescape Barrett); the
+			// empty hands still work world uses.
+			scripted_control::predicted_disarmed()) || scripted_control::allowed(game::g_entities[0].client))return false;
 		f.input=controller_input::latest_interaction();const auto now=controller_input::clock::now();const auto head=head_pose_bridge::get_status();
 		const auto* paused=game::Dvar_FindVar("cl_paused");
 		if(!f.input.focused || f.input.orientation_settling || !f.input.sequence || !head.enabled || !head.pose_available || head.recenter_pending ||

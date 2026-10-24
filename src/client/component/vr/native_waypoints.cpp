@@ -170,10 +170,19 @@ namespace vr::native_waypoints
 			const std::string_view source(native,strnlen(native,1024));
 			for(std::size_t i=0;i<source.size();)
 			{
+				// "[F]" (bracketed) or "^3F^7" (highlighted, e.g. Korean) key names.
 				const auto close=source[i]=='[' ? source.find(']',i) : source.npos;
 				if(close!=source.npos && close-i>1 && close-i<=32)
 				{
 					text+='[';text+=*grip;text+=']';i=close+1;continue;
+				}
+				if(source.compare(i,2,"^3")==0)
+				{
+					const auto end=source.find("^7",i+2);
+					if(end!=source.npos && end-i>2 && end-i<=34 && source.substr(i+2,end-i-2).find(' ')==source.npos)
+					{
+						text+="^3";text+=*grip;text+="^7";i=end+2;continue;
+					}
 				}
 				text+=source[i++];
 			}

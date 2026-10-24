@@ -27,7 +27,7 @@ namespace vr::objective_markers
 		// keys ("0x%08X"): state, str, org0..org7, etNum0.
 		constexpr std::uintptr_t config_string = 0x1401A2F10;
 		constexpr int first_objective = 0xb, objective_count = 36;
-		constexpr int state_current = 4; // OBJST_CURRENT
+		constexpr int state_active = 1, state_current = 4; // OBJST_ACTIVE / OBJST_CURRENT
 		constexpr std::uint32_t hash(std::string_view text) noexcept
 		{
 			std::uint32_t value = 0x319712C3;
@@ -68,7 +68,14 @@ namespace vr::objective_markers
 			return std::isfinite(out[0]) && std::isfinite(out[1]) && std::isfinite(out[2]) &&
 			       (out[0] != 0 || out[1] != 0 || out[2] != 0);
 		}
+		std::vector<vec3> objectives_in_state(int wanted);
+		// Current objectives; levels that only add "active" ones (sniperescape) show those.
 		std::vector<vec3> current_objectives()
+		{
+			auto result = objectives_in_state(state_current);
+			return result.empty() ? objectives_in_state(state_active) : result;
+		}
+		std::vector<vec3> objectives_in_state(int wanted)
 		{
 			std::vector<vec3> result;
 			for (int i = 0; i < objective_count; ++i)
@@ -77,7 +84,7 @@ namespace vr::objective_markers
 				if (!raw || !*raw) continue;
 				const std::string_view info(raw, strnlen(raw, 1024));
 				const auto state = value(info, hash("state"));
-				if (!state || *state != std::to_string(state_current)) continue;
+				if (!state || *state != std::to_string(wanted)) continue;
 				// An objective on an entity follows that entity.
 				if (const auto entity = value(info, hash("etNum0")); entity && !entity->empty())
 				{
