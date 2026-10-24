@@ -123,7 +123,7 @@
   "settings.chamberingGuideHint": "탄약이 있는 무기에 약실 장전이 필요하면 조작 부위를 불투명한 노란색으로 강조합니다. 기본적으로 꺼져 있습니다.",
   "settings.climbing": "등반",
   "settings.physicalLadders": "손으로 사다리 오르기",
-  "settings.physicalLaddersHint": "가로대를 잡고 당겨 올라갑니다. 양손을 놓으면 사다리에서 떨어집니다. 끄면 기본 사다리 조작을 사용합니다. 기본적으로 켜져 있습니다.",
+  "settings.physicalLaddersHint": "가로대를 잡고 당겨 올라갑니다. 양손을 놓으면 사다리에서 떨어집니다. 끄면 기본 사다리 조작(바라보는 방향 + 스틱)을 사용하며, 잡을 가로대가 없는 사다리는 항상 기본 조작으로 오릅니다. 기본적으로 켜져 있습니다.",
   "settings.quickReloadEnabled": "허리 빠른 장전",
   "settings.quickReloadHint": "지원되는 빈 무기를 허리에 1초 동안 대면 예비 탄약으로 장전합니다. 약실 장전은 수동으로 해야 합니다.",
   "settings.challenge": "도전",

@@ -9,6 +9,7 @@
 #include "console.hpp"
 #include "camera.hpp"
 #include "gui/gui.hpp"
+#include "vr/gameplay/ladder_runtime.hpp"
 #include "vr/engine_stereo_renderer.hpp"
 #include "vr/head_pose_bridge.hpp"
 
@@ -192,6 +193,10 @@ namespace camera
 			utils::hook::invoke<void>(calc_view_values, local_client_num);
 			paused_free_move();
 			const auto* const ps = game::CG_GetPredictedPlayerState(local_client_num);
+			// Physical ladder: preview the held-hand pull between server samples.
+			if (ps)
+				vr::gameplay::ladders::apply_camera_origin(game::refdef->org, ps->viewHeightCurrent,
+					vr::gameplay::ladders::owned_carrier(), ps->commandTime);
 			if (ps && vr::head_pose_bridge::apply_camera(game::refdef->org, game::refdef->axis,
 				ps->commandTime, game::cgs->refdefViewAngles))
 			{

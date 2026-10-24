@@ -41,7 +41,7 @@ function gsc_tool.project()
 		-- forwarding constructor. Their literal keys fit the destination types;
 		-- MSVC v142 still reports C4244 inside <utility>. Limit the Release
 		-- exception to these three tables, retaining /WX for other diagnostics.
-		for _, source in ipairs({"h2_code.cpp", "h2_func.cpp", "h2_meth.cpp"}) do
+		for _, source in ipairs({"h2_code.cpp", "h2_func.cpp", "h2_meth.cpp", "h1_func.cpp", "h1_meth.cpp"}) do
 			filter {"action:vs*", "configurations:Release", "files:**/" .. source}
 				disablewarnings {"4244"}
 		end
@@ -57,6 +57,12 @@ function gsc_tool.project()
 			path.join(gsc_tool.source, "src/gsc/engine/h2_func.cpp"),
 			path.join(gsc_tool.source, "src/gsc/engine/h2_meth.cpp"),
 			path.join(gsc_tool.source, "src/gsc/engine/h2_token.cpp"),
+
+			-- MWR (H1 SP) builtin name catalogs: the SP builtin tables use the
+			-- same ids (778 functions, 1415 methods) as this H1 PC catalog.
+			path.join(gsc_tool.source, "include/xsk/gsc/engine/h1.hpp"),
+			path.join(gsc_tool.source, "src/gsc/engine/h1_func.cpp"),
+			path.join(gsc_tool.source, "src/gsc/engine/h1_meth.cpp"),
 
 			path.join(gsc_tool.source, "src/gsc/*.cpp"),
 

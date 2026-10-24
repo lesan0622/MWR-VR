@@ -19,6 +19,7 @@
 #include "optic_runtime.hpp"
 #include "physical_reload_runtime.hpp"
 #include "view_aimed_weapon.hpp"
+#include "ladder_runtime.hpp"
 #include "game/dvars.hpp"
 #include "game/game.hpp"
 #include "loader/component_loader.hpp"
@@ -218,11 +219,18 @@ namespace vr::controllers
 			// Open the carried-gun fire gate for this input frame (original
 			// controller_component): independent fire owns trigger cadence.
 			vr::gameplay::weapons::independent_fire::command(gameplay && vr::gameplay::scripted_control::predicted_allowed());
-			const auto button_state = buttons.consume(input, gameplay, now);
+			// A physical ladder grip owns the body: no walking, jumping or stance.
+			const bool climbing = gameplay::ladders::owns_movement();
+			if (climbing)
+			{
+				cmd->forwardmove = cmd->rightmove = 0;
+				cmd->buttons &= ~(game::BUTTON_JUMP | game::BUTTON_SPRINT | game::BUTTON_DUCK | game::BUTTON_PRONE);
+			}
+			const auto button_state = buttons.consume(input, gameplay && !climbing, now);
 			auto button_mask = button_state.held;
 			const auto* posture_ps = game::CG_GetPredictedPlayerState(0);
 			const auto posture = posture_ps ? controller_input::native_posture(posture_ps->pm_flags) : controller_input::posture::unknown;
-			const bool stance_allowed = gameplay && stance_verified && posture_ps &&
+			const bool stance_allowed = gameplay && !climbing && stance_verified && posture_ps &&
 				!(posture_ps->pm_flags & (game::PMF_MANTLE | game::PMF_LADDER));
 			const auto posture_command = stance.consume(input, posture, stance_allowed, now,
 				(button_state.pressed & controller_input::jump_button) != 0, (button_mask & controller_input::jump_button) != 0);
@@ -311,6 +319,7 @@ namespace vr::controllers
 			// Gunship: no movement. Turret: the left stick still drives the native
 			// forward/back (Barrett zoom); turning belongs to the aiming stick.
 			if (!gameplay::view_aimed::gunship()) apply_locomotion(cmd, input, gameplay, now);
+			if (climbing) cmd->forwardmove = cmd->rightmove = 0; // Turning stays available.
 			if (gameplay && gameplay::view_aimed::mounted())
 			{
 				// Right grip is the native use key: dismount (and its notify).

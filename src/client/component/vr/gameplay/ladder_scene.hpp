@@ -17,5 +17,6 @@ namespace vr::gameplay::ladders::scene
     contact nearest(vec wrist,vec head,float units);
     bool refresh(contact&,float units);
     float top(const contact&,float units);
+    bool rungs_near(vec player,float units); // A built rung mesh lies within reach.
     std::string status();
 }

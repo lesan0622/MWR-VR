@@ -2,6 +2,7 @@
 #include "ladder_scene.hpp"
 #include "native_carry.hpp"
 #include "game/game.hpp"
+#include "component/fastfiles.hpp"
 #include <utils/native_memory.hpp>
 #include <unordered_map>
 
@@ -24,10 +25,34 @@ namespace vr::gameplay::ladders::scene
             std::uint32_t id{};game::XModel* model{};placement transform{};
             int entity{-1};unsigned part{},static_index{};std::uint64_t generation{},lease{};
         };
+        // MWR (H1 SP) GfxWorld: dpvs at +1864 (H2 +1880); smodelCount +0 and
+        // smodelDrawInsts +680 inside it. A draw instance (80 bytes) starts
+        // with its packed placement (origin, axis, scale +48); the model is +56.
+        // The H2 server DObj map (0x14b113080/0x14ae2dff0) is not rebound for
+        // MWR. Its ladders are static models, so script instances stay off.
+        constexpr bool script_instances=false;
+        constexpr size_t world_dpvs=1864,dpvs_draw_insts=680,draw_inst_size=80,draw_inst_model=56;
+        struct draw_inst{game::XModel* model{};placement transform{};};
+        bool static_model(const game::GfxWorld* w,unsigned index,draw_inst& value)
+        {
+            const std::byte* insts{};std::array<float,13> packed{};
+            if(!at(w,world_dpvs+dpvs_draw_insts,insts) || !insts)return false;
+            const auto* inst=insts+size_t(index)*draw_inst_size;
+            if(!read(inst,packed) || !at(inst,draw_inst_model,value.model))return false;
+            std::memcpy(value.transform.origin.data(),packed.data(),12);std::memcpy(value.transform.axis.data(),packed.data()+3,36);value.transform.size=packed[12];
+            return true;
+        }
+        unsigned static_count(const game::GfxWorld* w){unsigned n{};return at(w,world_dpvs,n)?n:0;}
+        const game::GfxWorld* loaded_world()
+        {
+            const game::GfxWorld* found{};
+            fastfiles::enum_assets(game::ASSET_TYPE_GFX_MAP,[&](game::XAssetHeader h){if(!found)found=reinterpret_cast<const game::GfxWorld*>(h.data);},false);
+            return found;
+        }
         std::unordered_map<game::XModel*,mesh> assets;
         std::vector<instance> instances;
-        game::GfxWorld* world{};unsigned static_cursor{},entity_cursor{};
-        std::uint64_t epoch{1},next_lease{},rejected{},queries{};
+        const game::GfxWorld* world{};unsigned static_cursor{},entity_cursor{};
+        std::uint64_t epoch{1},next_lease{},rejected{},queries{};vec last_player{};
         constexpr unsigned max_instances=1024,max_edges=8192;
         bool profile(game::XModel* model)
         {
@@ -38,7 +63,8 @@ namespace vr::gameplay::ladders::scene
             const std::string_view key(text.data());
             // Asset families, not map names or captured entity numbers. Native
             // surface admission below rejects decorative/disabled instances.
-            const bool trim=key.find("ladder_hooks")!=key.npos || key.ends_with("ladder_top");
+            // MWR also names its cap "safety_ladder_top_mob".
+            const bool trim=key.find("ladder_hooks")!=key.npos || key.find("ladder_top")!=key.npos;
             const bool supported=!trim && (key.find("ladder")!=key.npos || key.find("vehicle_mack_truck_short")!=key.npos || key=="h2_con_submarine_bridge_01");
             assets.emplace(model,mesh{supported?std::string(key):std::string{}});return supported;
         }
@@ -93,12 +119,13 @@ namespace vr::gameplay::ladders::scene
         {
             if(item.entity<0)
             {
-                game::GfxStaticModelDrawInst value{};
-                if(!world || item.static_index>=world->dpvs.smodelCount || !read(world->dpvs.smodelDrawInsts+item.static_index,value) || value.model!=item.model)return false;
-                std::memcpy(item.transform.origin.data(),value.placement.origin,12);std::memcpy(item.transform.axis.data(),value.placement.axis,36);item.transform.size=value.placement.scale;
+                draw_inst value{};
+                if(!world || item.static_index>=static_count(world) || !static_model(world,item.static_index,value) || value.model!=item.model)return false;
+                item.transform=value.transform;
             }
             else
             {
+                if constexpr(!script_instances)return false;
                 if(weapons::native_carry::entity_key(item.entity).generation!=item.generation)return false;
                 short idx{};if(!read(reinterpret_cast<const short*>(0x14b113080)+item.entity,idx) || idx<=0 || idx>=4096)return false;
                 const auto* obj=reinterpret_cast<const std::byte*>(0x14ae2dff0)+idx*0x240;
@@ -139,21 +166,23 @@ namespace vr::gameplay::ladders::scene
     void reset()noexcept{assets.clear();instances.clear();world=nullptr;static_cursor=entity_cursor=0;++epoch;}
     void prepare(vec player,float units)
     {
+        last_player=player;
         if(!game::CL_IsCgameInitialized() || !std::isfinite(units) || units<=0)return;
-        auto* current=*game::gfx_map;if(current!=world){reset();world=current;}
-        if(!world || world->dpvs.smodelCount>200000)return;
-        const auto count=world->dpvs.smodelCount;
+        // Level start/shutdown reset the cache; the loaded world is found once.
+        if(!world){const auto* current=loaded_world();if(!current)return;reset();world=current;}
+        const auto count=static_count(world);
+        if(!count || count>200000)return;
         for(unsigned end=std::min(count,static_cursor+512);static_cursor<end;++static_cursor)
         {
-            game::GfxStaticModelDrawInst v{};
+            draw_inst v{};
             if(instances.size()>=max_instances)break;
-            if(!read(world->dpvs.smodelDrawInsts+static_cursor,v) || !profile(v.model))continue;
+            if(!static_model(world,static_cursor,v) || !profile(v.model))continue;
             instance item;item.id=static_cursor+1;item.model=v.model;item.static_index=static_cursor;
             if(refresh_instance(item)){item.lease=++next_lease;instances.push_back(item);}
         }
         // Script objects can spawn, move, switch destruction models or vanish.
         // Revisit a bounded slice rather than scanning all entities every frame.
-        for(unsigned n=0;n<128;++n)
+        if constexpr(script_instances)for(unsigned n=0;n<128;++n)
         {
             const int ent=int(++entity_cursor%3998)+1;const auto id=1000000u+unsigned(ent);
             auto it=std::find_if(instances.begin(),instances.end(),[&](const instance& i){return i.id==id;});
@@ -170,7 +199,7 @@ namespace vr::gameplay::ladders::scene
         {
             if(!budget)break;
             auto& cache=assets.at(i.model);if(cache.done || cache.failed || !refresh_instance(i))continue;
-            game::Bounds b{};if(!at(i.model,584,b))continue;
+            game::Bounds b{};if(!at(i.model,offsetof(game::XModel,bounds),b))continue;
             const auto p=i.transform.local(player);float gap{};
             for(unsigned j=0;j<3;++j)gap+=std::pow(std::max(0.f,std::abs(p[j]-b.midPoint[j])-b.halfSize[j]),2.f);
             if(std::sqrt(gap)*i.transform.size>4*units)continue;
@@ -217,6 +246,18 @@ namespace vr::gameplay::ladders::scene
         auto normal=unit(cross(c.tangent,{0,0,1}));if(dot(normal,c.normal)<0)normal=scale(normal,-1);
         return native_face(c.point,normal,units,c.normal);
     }
+    bool rungs_near(vec player,float units)
+    {
+        for(auto& i:instances)
+        {
+            const auto& mesh=assets.at(i.model);if(!mesh.done || mesh.failed || mesh.edges.empty() || !refresh_instance(i))continue;
+            game::Bounds b{};if(!at(i.model,offsetof(game::XModel,bounds),b))continue;
+            const auto p=i.transform.local(player);float gap{};
+            for(unsigned j=0;j<3;++j)gap+=std::pow(std::max(0.f,std::abs(p[j]-b.midPoint[j])-b.halfSize[j]),2.f);
+            if(std::sqrt(gap)*i.transform.size<1.5f*units)return true;
+        }
+        return false;
+    }
     float top(const contact& c,float units)
     {
         std::vector<vec> points;
@@ -238,5 +279,17 @@ namespace vr::gameplay::ladders::scene
         return c.point[2];
     }
     std::string status()
-    {unsigned built{};for(const auto& [_,m]:assets)built+=m.done;return std::format("instances={} meshes={} rejected={} queries={} scan={} epoch={}",instances.size(),built,rejected,queries,static_cursor,epoch);}
+    {
+        unsigned built{};for(const auto& [_,m]:assets)built+=m.done;
+        auto text=std::format("instances={} meshes={} rejected={} queries={} scan={} epoch={}",instances.size(),built,rejected,queries,static_cursor,epoch);
+        // Nearest admitted instance, for locating a test ladder.
+        const instance* nearest_item{};float best=INFINITY;
+        for(const auto& i:instances){const float d=length(sub(i.transform.origin,last_player));if(d<best){best=d;nearest_item=&i;}}
+        if(nearest_item)
+        {
+            const auto& m=assets.at(nearest_item->model);const auto& o=nearest_item->transform.origin;const auto& x=nearest_item->transform.axis[0];
+            text+=std::format("\nnearest={} at ({:.0f}, {:.0f}, {:.0f}) depth axis ({:.2f}, {:.2f}, {:.2f}) distance={:.0f} edges={} done={} failed={}",m.name,o[0],o[1],o[2],x[0],x[1],x[2],best,m.edges.size(),m.done,m.failed);
+        }
+        return text;
+    }
 }

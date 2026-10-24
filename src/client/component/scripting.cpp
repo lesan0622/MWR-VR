@@ -113,7 +113,6 @@ namespace scripting
 			for (const auto& callback : level_start_callbacks) callback();
 			scr_auto_respawn->current.enabled = true;
 			clear_scheduled_notifies();
-			lua::engine::start();
 		}
 
 		void g_shutdown_game_stub(const int free_scripts)
@@ -131,7 +130,6 @@ namespace scripting
 			}
 
 			clear_scheduled_notifies();
-			lua::engine::stop();
 			g_shutdown_game_hook.invoke<void>(free_scripts);
 
 			for (const auto& callback : shutdown_callbacks)
@@ -368,38 +366,20 @@ namespace scripting
 	public:
 		void post_unpack() override
 		{
-			vm_notify_hook.create(0x1405CC450, vm_notify_stub);
-
-			g_shutdown_game_hook.create(0x1404CBAD0, g_shutdown_game_stub);
-			client_spawn_hook.create(0x1404B0710, client_spawn_stub);
-			sv_check_load_level_hook.create(0x1406B2940, sv_check_load_level_stub);
-
-			scr_add_class_field_hook.create(0x1405C2C30, scr_add_class_field_stub);
-			scr_set_thread_position_hook.create(0x1405BC7E0, scr_set_thread_position_stub);
-			process_script_hook.create(0x1405C6160, process_script_stub);
-			sl_get_canonical_string_hook.create(game::SL_GetCanonicalString, sl_get_canonical_string_stub);
+			// MWR (H1 SP) rebinding, addresses shared with h1-mod's SP build.
+			// Only level lifetime and entity field discovery are installed:
+			// GSC loading/notify relays and the Lua engine stay H2-only.
+			g_shutdown_game_hook.create(0x1402A5130, g_shutdown_game_stub);
+			client_spawn_hook.create(0x14028ADC0, client_spawn_stub);
+			scr_add_class_field_hook.create(0x1403C3CE0, scr_add_class_field_stub);
 
 			scr_auto_respawn = dvars::register_bool("scr_autoRespawn", true, 0, "Automatically respawn player on death");
-			respawn_hook.create(0x1404B1E00, respawn_stub);
-
-			scr_run_current_threads_hook.create(0x1405C8370, scr_run_current_threads_stub);
-
-			scr_get_dvar_int_hook.create(0x1404F0730, scr_get_dvar_int_stub);
-
-			scr_delete_hook.create(0x1404F0460, scr_delete_stub);
-
-			utils::hook::call(0x1404B07D2, get_spawn_point_stub);
 
 			command::add("getfunctionptr", [](const command::params& params)
 			{
 				const auto func = find_function(params.get(1), false);
 				console::info("%p\n", func);
 			});
-
-			scheduler::loop([]()
-			{
-				lua::engine::run_frame();
-			}, scheduler::pipeline::server);
 		}
 	};
 }

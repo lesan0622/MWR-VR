@@ -25,6 +25,7 @@ namespace mwr_port
 		"dvars",
 		"logger",
 		"filesystem",
+		"scripting", // Builtin calls, entity fields and level lifetime (no GSC loading/Lua).
 		// Phase 2: VR runtime, native stereo and head tracking
 		"d3d11",
 		"camera",
@@ -71,6 +72,7 @@ namespace mwr_port
 		"vr::gameplay::equipment::nightvision", // Hand-to-goggles gesture presses the native NVG action slot.
 		"vr::gameplay::weapons::optics", // Same-eye scope magnifier (no auxiliary scene view).
 		"vr::gameplay::weapons::chambering_guide", // Yellow pulse on the action to rack.
+		"vr::gameplay::ladders", // Physical ladder grips (vr_physicalLadders 0 keeps the native ladder).
 	};
 
 	// typeid names look like "class vr::gameplay::foo::component".

@@ -737,11 +737,12 @@ namespace game
 
 	struct scrVarGlob_t
 	{
-		ObjectVariableValue objectVariableValue[56320];
-		ObjectVariableChildren objectVariableChildren[56320];
+		ObjectVariableValue objectVariableValue[40960]; // MWR (H2 56320)
+		ObjectVariableChildren objectVariableChildren[40960];
 		unsigned __int16 childVariableBucket[65536];
 		ChildVariableValue childVariableValue[384000];
 	};
+	static_assert(offsetof(scrVarGlob_t, childVariableBucket) == 0x78000); // Scr_AddClassField 0x1403C3D0F
 
 	enum GfxDrawSceneMethod
 	{

@@ -5,36 +5,50 @@
 #include "component/gsc/script_loading.hpp"
 
 #include <utils/string.hpp>
+#include <xsk/gsc/engine/h1.hpp>
+
+namespace xsk::gsc::h1
+{
+	extern std::array<std::pair<u16, char const*>, func_count> const func_list;
+	extern std::array<std::pair<u16, char const*>, meth_count> const meth_list;
+}
 
 namespace scripting
 {
 	namespace
 	{
+		// MWR (H1 SP) has no GSC context. Its builtin ids match the H1 PC
+		// catalog: functions 1..0x30a, methods 0x8000..0x8586.
+		const std::unordered_map<std::string_view, std::uint16_t>& builtin_ids(const bool methods)
+		{
+			static const auto build = [](const auto& list)
+			{
+				std::unordered_map<std::string_view, std::uint16_t> map;
+				for (const auto& [id, name] : list) map.emplace(name, id);
+				return map;
+			};
+			static const auto functions = build(xsk::gsc::h1::func_list);
+			static const auto method_map = build(xsk::gsc::h1::meth_list);
+			return methods ? method_map : functions;
+		}
+
 		int find_function_index(const std::string& name, const bool prefer_global)
 		{
 			const auto target = utils::string::to_lower(name);
-			// MWR port: the H2 GSC context is never created; report unknown.
-			if (!gsc::gsc_ctx) return -1;
-			auto const& first = gsc::gsc_ctx->func_map();
-			auto const& second = gsc::gsc_ctx->meth_map();
-
-			if (const auto itr = first.find(name); itr != first.end())
-			{
-				return static_cast<int>(itr->second);
-			}
-
-			if (const auto itr = second.find(name); itr != second.end())
-			{
-				return static_cast<int>(itr->second);
-			}
-
+			const auto& first = builtin_ids(!prefer_global);
+			const auto& second = builtin_ids(prefer_global);
+			if (const auto itr = first.find(target); itr != first.end()) return itr->second;
+			if (const auto itr = second.find(target); itr != second.end()) return itr->second;
 			return -1;
 		}
 
 		script_function get_function_by_index(const unsigned index)
 		{
-			static const auto function_table = &gsc::func_table;
-			static const auto method_table = 0x14B155890;
+			// MWR native builtin tables written by Scr_RegisterFunction
+			// (0x1403BD860): functions [id-1] (0x30a), methods [id-0x8000] (0x587).
+			static const auto function_table = 0x14B8CC510;
+			static const auto method_table = 0x14B8CDD60;
+			if ((index < 0x1000 && (index < 1 || index > 0x30a)) || (index >= 0x1000 && (index < 0x8000 || index > 0x8586))) return nullptr;
 
 			if (index < 0x1000)
 			{

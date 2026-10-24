@@ -123,7 +123,7 @@
   "settings.chamberingGuideHint": "Highlight chambering controls in opaque yellow when a loaded weapon needs chambering. Off by default.",
   "settings.climbing": "Climbing",
   "settings.physicalLadders": "Physical ladder climbing",
-  "settings.physicalLaddersHint": "Grip a rung and pull to climb. Release both hands to let go. Turn off to use native ladder controls. On by default.",
+  "settings.physicalLaddersHint": "Grip a rung and pull to climb. Release both hands to let go. Turn off to use native ladder controls (look and stick); ladders without grippable rungs always use them. On by default.",
   "settings.quickReloadEnabled": "Waist quick reload",
   "settings.quickReloadHint": "Hold an empty, compatible weapon at your waist for 1 second to reload from reserves. Chamber manually.",
   "settings.challenge": "Challenge",

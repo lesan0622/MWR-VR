@@ -189,9 +189,11 @@ namespace vr::gameplay::ladders
             game::Bounds b{};if(!bounds(b))return {};
             const auto actual=position();auto center=scale(add(actual,support.point),.5f);center[2]=top_height;
             // Search above and beyond the face, keeping the full player capsule.
-            for(float advance:{.4f,.65f,.9f})
+            // A low roof over the top (killhouse fast-rope tower) leaves no room to
+            // start the full capsule 1.2 m up; retry from lower starts.
+            for(float advance:{.4f,.65f,.9f})for(float above:{1.2f,.7f,.35f})
             {
-                auto from=sub(center,scale(support.normal,advance*units));from[2]=top_height+1.2f*units;
+                auto from=sub(center,scale(support.normal,advance*units));from[2]=top_height+above*units;
                 auto to=from;to[2]=top_height-.2f*units;game::trace_t floor{};
                 game::G_TraceCapsule(&floor,from.data(),to.data(),&b,0,player_mask);
                 if(floor.startsolid || floor.allsolid || !std::isfinite(floor.fraction) || floor.fraction>=1 || floor.normal[2]<.7f)continue;
@@ -210,6 +212,7 @@ namespace vr::gameplay::ladders
     }
     bool owns_movement()noexcept{const std::lock_guard lock(mutex);return published.moving;}
     bool owns_carrier(int ent)noexcept{const std::lock_guard lock(mutex);return published.moving && published.carrier==ent;}
+    int owned_carrier()noexcept{const std::lock_guard lock(mutex);return published.moving?published.carrier:-1;}
     void collect_interactions(const hi::frame& f)noexcept
     {
         offered={};
@@ -218,7 +221,11 @@ namespace vr::gameplay::ladders
             if(!permission() || (stage==phase::idle && parent()>=0))return;
             // Held contacts are refreshed directly. Discovery and mesh reads
             // are acquisition work, not a recurring cost on every climb step.
-            if(!solver.held())scene::prepare(position(),f.body.units_per_meter);
+            if(!solver.held())
+            {
+                scene::prepare(position(),f.body.units_per_meter);
+                native::set_physical_nearby(scene::rungs_near(position(),f.body.units_per_meter));
+            }
             if(stage==phase::lifting || stage==phase::landing)return;
             grip_binding binding;{const std::lock_guard lock(mutex);binding=grips;}
             if(binding.reference!=f.input.reference_generation)return;
@@ -418,11 +425,12 @@ namespace vr::gameplay::ladders
             constexpr std::uint8_t bytes[]{0x40,0x53,0x55,0x56,0x57,0x48,0x83,0xec,0x78};
             std::array<std::uint8_t,sizeof(bytes)> mask{};mask.fill(255);
             // The collision wrapper is shared with existing native consumers;
-            // validate its executable mapping without installing another hook.
-            verified=bool(utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(0x1404CBFE0),{bytes,mask.data(),sizeof(bytes)}));
+            // validate its executable mapping without installing another hook
+            // (MWR G_TraceCapsule 0x1402A5640, H2 0x1404CBFE0).
+            verified=bool(utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(0x1402A5640),{bytes,mask.data(),sizeof(bytes)}));
             if(verified)verified=native::initialize();
-            scripting::on_level_start([]{forget();scene::reset();});
-            scripting::on_shutdown([](bool,bool after){if(!after){try{detach(false);}catch(...){forget();}scene::reset();}});
+            scripting::on_level_start([]{forget();scene::reset();native::set_physical_nearby(false);});
+            scripting::on_shutdown([](bool,bool after){if(!after){try{detach(false);}catch(...){forget();}scene::reset();native::set_physical_nearby(false);}});
             command::add("vr_ladder_status",[]{scheduler::once([]{const auto text=status();console::info("[VR ladder] %s",text.c_str());scheduler::once([text]{utils::io::write_file_atomic("minidumps/overlord-ladder.txt",text);},scheduler::pipeline::async);},scheduler::pipeline::server);});
         }
         void pre_destroy()override{running=false;}
