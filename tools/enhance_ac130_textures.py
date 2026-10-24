@@ -44,6 +44,7 @@ def detail(tile, size, repeats, mean_color):
 loaded = {n: Image.open(os.path.join(tiles, n + '.png')).convert('RGB') for n in ('insulation', 'console', 'fabric', 'gunmetal')}
 for name, regions in PLAN.items():
     path = os.path.join(cabin, name)
+    if not os.path.exists(path): continue  # atlas no longer referenced by the cabin
     src = Image.open(path).convert('RGB')
     W, H = src.size
     out = src.resize((W * SCALE, H * SCALE), Image.NEAREST)

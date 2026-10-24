@@ -90,7 +90,16 @@ namespace vr::gunship_cabin
 			for (const auto& g : value->groups)
 			{
 				image decoded;
-				if (!g.texture.empty() && g.texture != "@screen")
+				// "@color:RRGGBB" (lit) and "@emit:RRGGBB" (unlit) are solid procedural surfaces.
+				const auto hex = g.texture.rfind("@color:", 0) == 0 ? g.texture.substr(7) :
+				                 g.texture.rfind("@emit:", 0) == 0 ? g.texture.substr(6) : std::string{};
+				if (!hex.empty())
+				{
+					const auto rgb = std::strtoul(hex.c_str(), nullptr, 16);
+					const unsigned char pixel[4]{static_cast<unsigned char>(rgb >> 16 & 0xff), static_cast<unsigned char>(rgb >> 8 & 0xff), static_cast<unsigned char>(rgb & 0xff), 0xff};
+					decoded = {std::string(reinterpret_cast<const char*>(pixel), 4), 1, 1};
+				}
+				else if (!g.texture.empty() && g.texture != "@screen")
 				{
 					std::string file;
 					if (g.texture.find_first_of("/\\") != std::string::npos ||
@@ -162,6 +171,7 @@ float4 lit(VO i) : SV_Target {
     float light = 0.20 + 0.40 * saturate(abs(dot(n, normalize(float3(0.25, 0.9, -0.35)))));
     return float4(encode(albedo.Sample(linearWrap, i.uv).rgb * light * options.z), 1);
 }
+float4 emissive(VO i) : SV_Target { return float4(encode(albedo.Sample(linearWrap, i.uv).rgb * options.y), 1); }
 float4 screen(VO i) : SV_Target {
     if (any(i.uv < 0) || any(i.uv > 1)) return float4(0, 0, 0, 1);
     float3 c = albedo.Sample(linearWrap, i.uv).rgb;
@@ -196,7 +206,7 @@ float4 screen(VO i) : SV_Target {
 		Microsoft::WRL::ComPtr<ID3D11Device> device;
 		std::shared_ptr<const asset> source;
 		Microsoft::WRL::ComPtr<ID3D11VertexShader> vs;
-		Microsoft::WRL::ComPtr<ID3D11PixelShader> lit, screen;
+		Microsoft::WRL::ComPtr<ID3D11PixelShader> lit, screen, emissive;
 		Microsoft::WRL::ComPtr<ID3D11InputLayout> layout;
 		Microsoft::WRL::ComPtr<ID3D11Buffer> vertices, indices, constants;
 		Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler;
@@ -214,15 +224,16 @@ float4 screen(VO i) : SV_Target {
 		{
 			device = owner;
 			source = model;
-			Microsoft::WRL::ComPtr<ID3DBlob> vs_code, lit_code, screen_code, diagnostics;
+			Microsoft::WRL::ComPtr<ID3DBlob> vs_code, lit_code, screen_code, emissive_code, diagnostics;
 			const auto compile = [&](const char* entry, const char* profile, Microsoft::WRL::ComPtr<ID3DBlob>& out) {
 				return SUCCEEDED(D3DCompile(shader, sizeof(shader) - 1, "gunship-cabin", nullptr, nullptr, entry, profile,
 				                            D3DCOMPILE_OPTIMIZATION_LEVEL3, 0, &out, &diagnostics));
 			};
-			if (!compile("vs", "vs_5_0", vs_code) || !compile("lit", "ps_5_0", lit_code) || !compile("screen", "ps_5_0", screen_code) ||
+			if (!compile("vs", "vs_5_0", vs_code) || !compile("lit", "ps_5_0", lit_code) || !compile("screen", "ps_5_0", screen_code) || !compile("emissive", "ps_5_0", emissive_code) ||
 			    FAILED(device->CreateVertexShader(vs_code->GetBufferPointer(), vs_code->GetBufferSize(), nullptr, &vs)) ||
 			    FAILED(device->CreatePixelShader(lit_code->GetBufferPointer(), lit_code->GetBufferSize(), nullptr, &lit)) ||
-			    FAILED(device->CreatePixelShader(screen_code->GetBufferPointer(), screen_code->GetBufferSize(), nullptr, &screen)))
+			    FAILED(device->CreatePixelShader(screen_code->GetBufferPointer(), screen_code->GetBufferSize(), nullptr, &screen)) ||
+			    FAILED(device->CreatePixelShader(emissive_code->GetBufferPointer(), emissive_code->GetBufferSize(), nullptr, &emissive)))
 			{
 				error = "cabin shaders rejected";
 				return false;
@@ -410,7 +421,7 @@ float4 screen(VO i) : SV_Target {
 			D3D11_RENDER_TARGET_VIEW_DESC target_desc{};
 			target->GetDesc(&target_desc);
 			const bool srgb_target = target_desc.Format == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB || target_desc.Format == DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
-			frame.options = {srgb_target ? 0.f : 1.f, 0.f, 1.f, 0.f};
+			frame.options = {srgb_target ? 0.f : 1.f, .85f, 1.f, 0.f}; // y: light strip level
 			D3D11_MAPPED_SUBRESOURCE mapped{};
 			if (FAILED(context->Map(s.constants.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped))) { error = "cabin constants map failed"; return false; }
 			std::memcpy(mapped.pData, &frame, sizeof(frame));
@@ -440,7 +451,8 @@ float4 screen(VO i) : SV_Target {
 				const bool is_screen = g.texture == "@screen";
 				ID3D11ShaderResourceView* view_srv = is_screen ? (has_screen ? s.screen_view.Get() : s.white.Get()) :
 				                                     s.textures[i] ? s.textures[i].Get() : s.white.Get();
-				context->PSSetShader(is_screen && has_screen ? s.screen.Get() : s.lit.Get(), nullptr, 0);
+				const bool is_emissive = g.texture.rfind("@emit:", 0) == 0;
+				context->PSSetShader(is_screen && has_screen ? s.screen.Get() : is_emissive ? s.emissive.Get() : s.lit.Get(), nullptr, 0);
 				context->PSSetShaderResources(0, 1, &view_srv);
 				context->DrawIndexed(g.count, g.first, 0);
 			}
