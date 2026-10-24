@@ -204,6 +204,9 @@ namespace vr::gameplay::weapons::mwr_shared
 	inline bool m14_family(std::string_view name) noexcept { return native_weapon_family(name, "m14"); }
 	// m14: MWR wpn_h1_sni_m21_vm (m14_scoped); slide j_charging_handle, bullets tag_bullet2.
 	inline const reload_profile m14_reload = mwr_rebase::rebase(m14ebr::physical, {.id = "mwr_m14", .receiver = "wpn_h1_sni_m21_vm", .magazine_bone = "tag_clip", .slide_bone = "j_charging_handle", .bullets_bone = "tag_bullet2", .magazine_model = "weapon_m14_clip", .magazine_bind = {{6.600234f, 0.000000f, 2.769873f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{7.382946f, 0.024526f, 3.939867f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = false, .magazine_from_receiver = true, .magazine_in_wrist = &m14_magazine_in_wrist, .magazine_fingers = m14_magazine_fingers, .native_family = m14_family});
+	// m14_scoped_woodland / m14_scoped_silencer_woodland (scoutsniper): ghillie-wrapped
+	// wpn_h1_sni_m21_ghillie_vm, same weapon skeleton and tags as wpn_h1_sni_m21_vm.
+	inline const reload_profile m14_ghillie_reload = mwr_rebase::rebase(m14ebr::physical, {.id = "mwr_m14_ghillie", .receiver = "wpn_h1_sni_m21_ghillie_vm", .magazine_bone = "tag_clip", .slide_bone = "j_charging_handle", .bullets_bone = "tag_bullet2", .magazine_model = "weapon_m14_clip", .magazine_bind = {{6.600234f, 0.000000f, 2.769873f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{7.382946f, 0.024526f, 3.939867f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = false, .magazine_from_receiver = true, .magazine_in_wrist = &m14_magazine_in_wrist, .magazine_fingers = m14_magazine_fingers, .native_family = m14_family});
 	inline const profile m14_hand = [] {auto p = m14ebr::assemblies[0]; p.wrists = {{{{10.405339f, 1.701065f, 1.149466f}, {0.2668419f, -0.1095752f, -0.1268212f, 0.9490548f}}, {{-2.662538f, -2.404540f, 1.713356f}, {0.1487403f, -0.7244728f, 0.6717864f, -0.0414554f}}}}; return p;}(); // Wrists: m14_scoped native idle.
 	// saw magazine grasp: record_004.jsonl h1_wpn_lmg_m249saw_reload t=0.260.
 	inline constexpr hands::anchor saw_magazine_in_wrist{{4.802880f, 2.059550f, 3.603353f}, {-0.8041970f, 0.3329471f, 0.2330727f, 0.4336940f}};
@@ -286,7 +289,7 @@ namespace vr::gameplay::weapons::mwr_shared
 	// stinger: MWR viewmodel_stinger (stinger); original mechanics kept.
 	// p90: MWR viewmodel_p90 (p90); slide j_bolt, bullets tag_bullet_single.
 	inline const reload_profile p90_reload = mwr_rebase::rebase(p90::physical, {.id = "mwr_p90", .receiver = "viewmodel_p90", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullet_single", .magazine_model = nullptr, .magazine_bind = {{5.896818f, 0.000000f, 3.248346f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{5.118773f, 0.984914f, 2.598390f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = true});
-	inline const std::array<profile, 24> profiles{{
+	inline const std::array<profile, 25> profiles{{
 		mwr_rebase::adopt(m16::bare, "mwr_m16", "viewmodel_m16", &m16_reload, false),
 		mwr_rebase::adopt(m4::foregrip, "mwr_m4", "viewmodel_m4a1_sp", &m4_reload, false),
 		mwr_rebase::adopt(ak47::assemblies[0], "mwr_ak47", "viewmodel_ak47", &ak47_reload, false),
@@ -295,6 +298,7 @@ namespace vr::gameplay::weapons::mwr_shared
 		mwr_rebase::adopt(mp5_hand, "mwr_mp5_wet", "viewmodel_mp5_sp_wet", &mp5_wet_reload, false),
 		mwr_rebase::adopt(g3_hand, "mwr_g3", "viewmodel_g3", &g3_reload, false),
 		mwr_rebase::adopt(m14_hand, "mwr_m14", "wpn_h1_sni_m21_vm", &m14_reload, false),
+		mwr_rebase::adopt(m14_hand, "mwr_m14_ghillie", "wpn_h1_sni_m21_ghillie_vm", &m14_ghillie_reload, false),
 		mwr_rebase::adopt(saw_hand, "mwr_saw", "viewmodel_m249_sp", &saw_reload, false),
 		mwr_rebase::adopt(skorpion_hand, "mwr_skorpion", "viewmodel_skorpion", &skorpion_reload, false),
 		mwr_rebase::adopt(miniuzi::base, "mwr_uzi", "viewmodel_miniuzi", &uzi_reload, true),

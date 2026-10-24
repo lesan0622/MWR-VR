@@ -35,18 +35,31 @@ namespace vr::gameplay::weapons::optics
 		if (!spatial_panel::billboard(center,right,lens.axis[2],lens.radius*2,lens.radius*2,quad)) return {};
 		projected_view result;
 		if (!spatial_panel::project(quad,eye,vp,.001f,result.corners,preserve_depth)) return {};
-		const float u=.5f+hands::dot(delta,right)/(2*lens.radius);
-		const float v=.5f-hands::dot(delta,lens.axis[2])/(2*lens.radius);
-		// Ordinary scopes require complete coverage. Thermal admits a partial
-		// image through a wider pupil, fading to scope shadow on the GPU. Keep
-		// the physical quad and aiming-axis UV exact; never recenter the reticle.
+		float u=.5f+hands::dot(delta,right)/(2*lens.radius);
+		float v=.5f-hands::dot(delta,lens.axis[2])/(2*lens.radius);
 		const float displacement=std::hypot((u-.5f)*2,(v-.5f)*2);
-		result.eye_box_scale=lens.thermal ? 2.f : 1.f;
-		const bool visible=lens.thermal ?
-			displacement<lens.pupil_radius*result.eye_box_scale+1 &&
-			displacement*(1-1/lens.magnification)-1/lens.magnification < .98f*result.eye_box_scale :
-			displacement<2 &&
-			displacement*(1-1/lens.magnification)+1/lens.magnification <= (preserve_depth ? 1.f : .94f);
+		result.eye_box_scale=2.f;
+		bool visible;
+		if (lens.thermal)
+			// Thermal admits a partial image through a wider pupil, fading to
+			// scope shadow on the GPU. Keep the aiming-axis UV exact.
+			visible=displacement<lens.pupil_radius*result.eye_box_scale+1 &&
+				displacement*(1-1/lens.magnification)-1/lens.magnification < .98f*result.eye_box_scale;
+		else
+		{
+			// MWR sniper scopes have no rear glass, and an exact exit pupil left the
+			// lens black unless one eye sat within ~2 cm of the axis; in a headset
+			// that read as a broken scope. Within four lens radii of the axis the
+			// exit pupil is drawn as if the eye were at most .6 radii off it: a
+			// nearly full image whose reticle stays on the aiming side.
+			constexpr float assisted=.6f;
+			visible=displacement<4.f;
+			if (visible && displacement>assisted)
+			{
+				const float k=assisted/displacement;
+				u=.5f+(u-.5f)*k;v=.5f+(v-.5f)*k;
+			}
+		}
 		result.parameters={u,v,lens.magnification,visible ? 1.f : 0.f};result.valid=true;result.pupil_radius=lens.pupil_radius;
 		return result;
 	}
