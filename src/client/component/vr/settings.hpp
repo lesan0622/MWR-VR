@@ -112,7 +112,7 @@ namespace vr::settings
 	inline constexpr boolean_setting hide_hud{"vr_hideHud", false};
 	inline constexpr boolean_setting disable_blur{"vr_disableBlur", false};
 	inline constexpr boolean_setting depth_of_field{"r_dof_limit", false, 3};
-	inline constexpr boolean_setting motion_blur{"r_mbLimit", false, 3};
+	// MWR: camera motion blur (r_mbLimit) is forced off in stereo (stereo_postfx.cpp).
 	inline constexpr boolean_setting subtitles{"vr_subtitles", true};
 	inline constexpr boolean_setting disable_dog_pounce{"vr_disableDogPounce", true};
 	inline constexpr boolean_setting ads_comfort{"vr_adsComfort", true};
@@ -131,7 +131,6 @@ namespace vr::settings
 		                              hide_hud,
 		                              disable_blur,
 		                              depth_of_field,
-		                              motion_blur,
 		                              subtitles,
 		                              disable_dog_pounce,
 		                              ads_comfort,

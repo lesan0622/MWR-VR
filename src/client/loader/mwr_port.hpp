@@ -73,6 +73,7 @@ namespace mwr_port
 		"vr::gameplay::weapons::optics", // Same-eye scope magnifier (no auxiliary scene view).
 		"vr::gameplay::weapons::chambering_guide", // Yellow pulse on the action to rack.
 		"vr::gameplay::ladders", // Physical ladder grips (vr_physicalLadders 0 keeps the native ladder).
+		"vr::stereo_postfx", // Camera motion blur off in stereo (per-eye reprojection smears a rectangle).
 	};
 
 	// typeid names look like "class vr::gameplay::foo::component".

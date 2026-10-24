@@ -110,14 +110,6 @@
     "description": "settings.depthOfFieldHint"
   },
   {
-    "name": "r_mbLimit",
-    "category": "basics",
-    "group": "settings.comfort",
-    "label": "settings.motionBlur",
-    "type": "toggle",
-    "description": "settings.motionBlurHint"
-  },
-  {
     "name": "vr_disableLensFlare",
     "category": "basics",
     "group": "settings.comfort",

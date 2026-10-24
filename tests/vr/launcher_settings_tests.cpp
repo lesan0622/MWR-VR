@@ -103,7 +103,7 @@ int main(int argc, char** argv)
 			require(read_values(update_config("bind F10 togglemenu\n", selected)) == selected,
 				"Subtitle preference round trips independently of native profile initialization");
 		}
-		for (const auto& field : {vr::settings::depth_of_field, vr::settings::motion_blur})
+		for (const auto& field : {vr::settings::depth_of_field})
 		{
 			require(initial[field.name] == false, "Native comfort effects default off");
 			std::ostringstream alias;
