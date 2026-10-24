@@ -8,7 +8,7 @@ triangle. Texture names are files in data/ac130_cabin, or "@color:RRGGBB" /
 """
 import math
 
-INSULATION, FLOOR, FRAME, FABRIC = 'insulation.png', 'floor.png', 'frame.png', 'fabric.png'
+INSULATION, FLOOR, FRAME, FABRIC, CONSOLE = 'insulation.png', 'floor.png', 'frame.png', 'fabric.png', 'console.png'
 LIGHT = '@emit:c8d2e6'
 RAIL = '@color:3a3d40'
 
@@ -212,4 +212,37 @@ def fuselage(x0, x1, half_width=1.62, floor_y=0.30, top_y=3.00):
                   (xe, yb, zb, nx, 0, 0, zb / tile, yb / tile))
         m.tri(INSULATION, (xe, *hub[1:], nx, 0, 0, 0, hub[1] / tile), (xe, profile[-1][1], profile[-1][0], nx, 0, 0, 0, 0),
               (xe, profile[0][1], profile[0][0], nx, 0, 0, 0, 0))
+    return m
+
+
+def console(center_x, floor_y, monitor_back_z, keyboard_y, panel_y, half_width=0.42):
+    """The officer's own station: desk, base cabinet, monitor bay, overhead shelf, side cheeks.
+
+    monitor_back_z: rear face of the monitor housing (the bay panel sits behind it);
+    keyboard_y: underside of the keyboard (desk top); panel_y: underside of the
+    overhead armament panel (shelf top).
+    """
+    m = mesh()
+    x, w = center_x, half_width
+    front = monitor_back_z - 0.42
+    desk_y = keyboard_y - 0.02
+    rounded_box(m, CONSOLE, (x, desk_y, (front + monitor_back_z) / 2), (w, 0.022, (monitor_back_z - front) / 2), exponent=0.18, segments=20)
+    # Base cabinet set back to leave knee room.
+    cab_front = front + 0.24
+    rounded_box(m, CONSOLE, (x, (floor_y + desk_y) / 2, (cab_front + monitor_back_z + 0.06) / 2),
+                (w - 0.02, (desk_y - floor_y) / 2 - 0.02, (monitor_back_z + 0.06 - cab_front) / 2), exponent=0.15, segments=16)
+    rounded_box(m, FRAME, (x, floor_y + 0.04, (cab_front + monitor_back_z + 0.06) / 2),
+                (w - 0.03, 0.035, (monitor_back_z + 0.06 - cab_front) / 2 + 0.01), exponent=0.3, segments=12)
+    top = panel_y + 0.24
+    # Monitor bay panel behind the housing, up to the shelf and beyond.
+    rounded_box(m, CONSOLE, (x, (desk_y + top) / 2, monitor_back_z + 0.035), (w, (top - desk_y) / 2, 0.03), exponent=0.15, segments=20)
+    # Overhead shelf carrying the armament panel.
+    shelf_front = front + 0.05
+    rounded_box(m, CONSOLE, (x, panel_y - 0.022, (shelf_front + monitor_back_z) / 2), (w, 0.022, (monitor_back_z - shelf_front) / 2 + 0.02), exponent=0.18, segments=20)
+    # Side cheeks framing the station from floor to the top of the bay.
+    for side in (-1, 1):
+        rounded_box(m, CONSOLE, (x + side * (w + 0.015), (floor_y + top) / 2, (front + monitor_back_z + 0.07) / 2),
+                    (0.015, (top - floor_y) / 2, (monitor_back_z + 0.07 - front) / 2), exponent=0.2, segments=16)
+    # Dark trim strip on the desk's front edge and a kick plate.
+    rounded_box(m, '@color:1c1e20', (x, desk_y - 0.004, front + 0.004), (w - 0.005, 0.014, 0.008), exponent=0.35, segments=12)
     return m
