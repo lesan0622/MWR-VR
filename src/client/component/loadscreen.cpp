@@ -231,11 +231,11 @@ namespace loadscreen
 
 	void clear()
 	{
-		game::Dvar_Reset(cl_enable_custom_loadscreen, game::DVAR_SOURCE_INTERNAL);
-		game::Dvar_Reset(cl_disable_map_movies, game::DVAR_SOURCE_INTERNAL);
-		game::Dvar_Reset(cl_loadscreen_image, game::DVAR_SOURCE_INTERNAL);
-		game::Dvar_Reset(cl_loadscreen_title, game::DVAR_SOURCE_INTERNAL);
-		game::Dvar_Reset(cl_loadscreen_desc, game::DVAR_SOURCE_INTERNAL);
+		// MWR: this component is not registered (H2 addresses), so its dvars
+		// stay null while Com_Error (logger) still calls clear().
+		for (auto* dvar : {cl_enable_custom_loadscreen, cl_disable_map_movies, cl_loadscreen_image,
+			cl_loadscreen_title, cl_loadscreen_desc})
+			if (dvar) game::Dvar_Reset(dvar, game::DVAR_SOURCE_INTERNAL);
 	}
 
 	class component final : public component_interface
