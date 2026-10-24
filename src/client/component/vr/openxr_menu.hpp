@@ -54,6 +54,8 @@ namespace vr::openxr
 		};
 		preparation_result prepare(const dispatch_table&, const presentation_input&);
 		void observe_backdrop(const head_pose_bridge::tracking_pose&, std::uint64_t generation) noexcept;
+		// Latest native backbuffer copy taken for the theater (also the AC-130 cabin screen).
+		std::shared_ptr<const native_hud_capture::frame> movie_frame() const noexcept {return movie_frame_;}
 		std::span<const XrCompositionLayerBaseHeader* const> layers() const noexcept
 		{
 			return {layers_.data(), count_};

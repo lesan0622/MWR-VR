@@ -100,6 +100,16 @@ OpenXR runtime separately; this project distributes no vendor runtime. OpenXR
 is the default backend, with OpenVR available through explicit selection. Hardware
 validation is scoped to the combinations documented in the runtime guide.
 
+## AC-130 fire-control cabin model
+
+`data/ac130_cabin` (shipped as `overlord-mwr/ac130_cabin`) is derived from the
+FlightGear "AC130 Hercules" model by Emmanuel Baranger (helijah,
+http://helijah.free.fr), with the weapons and armament station by Jack Mermod,
+distributed under the GPL (its `Read-Me.txt` is kept beside the asset; the
+Sketchfab release lists CC Attribution 4.0). `tools/build_ac130_cabin.py`
+extracts the battle management center; `tools/enhance_ac130_textures.py` adds
+generated (GPT Image via Codex) material detail to its flat-color atlases.
+
 ## REFramework reference implementation
 
 The D3D11/OpenXR architecture was researched with reference to REFramework.

@@ -38,6 +38,7 @@ namespace mwr_port
 		"vr::menu_backdrop",
 		"vr::native_waypoints",
 		"vr::directional_ui", // World-anchored HUD ink: VR item labels and objective markers.
+		"vr::gunship_cabin", // AC-130 played on a fire-control station screen (data/ac130_cabin).
 		"vr::objective_markers", // Current objective marked in the world (compass star in VR).
 		"vr::controllers",
 		// "vr::gameplay::mwr_weapon_pose" (simplified rigid viewmodel) is replaced by the original hands solver.

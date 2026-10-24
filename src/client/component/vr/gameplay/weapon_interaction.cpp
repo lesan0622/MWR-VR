@@ -1,6 +1,7 @@
 #include <std_include.hpp>
 #include "../h2/entrypoints.hpp"
 #include "designator_events.hpp"
+#include "view_aimed_weapon.hpp"
 #include "native_scripted_control.hpp"
 #include "component/command.hpp"
 #include "component/console.hpp"
@@ -140,7 +141,8 @@ namespace vr::gameplay::weapons
 			active_shot = nullptr;
 			const auto restore = gsl::finally([&] { active_shot = previous; });
 			if (entity==&game::g_entities[0] && independent_fire::owns_native(entity->client)) return;
-			if (!firing_enabled() || entity != &game::g_entities[0] || !entity->client)
+			if (!firing_enabled() || entity != &game::g_entities[0] || !entity->client ||
+				view_aimed::weapon(entity_weapon(entity)))
 			{
 				utils::hook::invoke<void>(fire_address, entity, event_parameter);
 				return;

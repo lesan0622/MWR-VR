@@ -3,6 +3,7 @@
 #include "mounted_turret_policy.hpp"
 #include "campaign/scripted_sequences.hpp"
 #include "native_player_life.hpp"
+#include "view_aimed_weapon.hpp"
 #include "campaign/sequences/airport_opening.hpp"
 #include <utils/native_memory.hpp>
 #include "game/game.hpp"
@@ -33,7 +34,8 @@ namespace vr::gameplay::scripted_control
 			utils::native_memory::read_bytes(&flags,static_cast<const std::byte*>(player_state)+0x390,sizeof(flags)) &&
 			utils::native_memory::read_bytes(&entity_flags,static_cast<const std::byte*>(player_state)+offsetof(game::playerState_s,e_flags),sizeof(entity_flags)) &&
 			(permits_weapons(flags) || sequences::airport::opening::active()) &&
-			!mounted::attached(entity_flags) && !sequences::owns_body(player_state) && !sequences::owns_arms(player_state);
+			!mounted::attached(entity_flags) && !sequences::owns_body(player_state) && !sequences::owns_arms(player_state) &&
+			!view_aimed::active(); // AC-130: the gunship camera, not VR hands, owns the weapon.
 	}
 	// The player still owns their arms while a script only disables weapons
 	// (briefings, scripted walks). Death, turrets and scripted bodies stay native.
@@ -43,7 +45,8 @@ namespace vr::gameplay::scripted_control
 		bool dead{};
 		return player_state && native_contract() && player_life::read(player_state,dead) && !dead &&
 			utils::native_memory::read_bytes(&entity_flags,static_cast<const std::byte*>(player_state)+offsetof(game::playerState_s,e_flags),sizeof(entity_flags)) &&
-			!mounted::attached(entity_flags) && !sequences::owns_body(player_state) && !sequences::owns_arms(player_state);
+			!mounted::attached(entity_flags) && !sequences::owns_body(player_state) && !sequences::owns_arms(player_state) &&
+			!view_aimed::active();
 	}
 	inline bool predicted_disarmed() noexcept
 	{

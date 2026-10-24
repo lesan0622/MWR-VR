@@ -39,8 +39,14 @@ namespace vr::narrative_ui
 	{return name=="h1_hud_tutorial_border" || name=="h1_hud_fng_results_border" || name=="h2_hud_ssdd_results_line";}
 	inline bool subtractive_script_ink(std::string_view name,bool owned) noexcept
 	{return owned && hint_border_material(name);}
+	// MWR AC-130 script HUD: crosshairs and readouts (not grain, blur, distortion
+	// or the full-screen tint, which belong to the flat monitor look).
+	inline bool gunship_material(std::string_view name) noexcept
+	{
+		return name.starts_with("ac130_overlay_") && name!="ac130_overlay_grain" && !name.ends_with("_blur");
+	}
 	inline bool script_ink_material(std::string_view name) noexcept
-	{return hint_border_material(name);}
+	{return hint_border_material(name) || gunship_material(name);}
 	// Trainer script HUD is a table: pulsing values, timers and ordinary labels
 	// retain one canvas. Dialogue and LUI have separate native producers.
 	inline bool script_panel(std::string_view map) noexcept {return map=="trainer";}

@@ -18,6 +18,7 @@
 #include "world_interaction.hpp"
 #include "optic_runtime.hpp"
 #include "physical_reload_runtime.hpp"
+#include "view_aimed_weapon.hpp"
 #include "game/dvars.hpp"
 #include "game/game.hpp"
 #include "loader/component_loader.hpp"
@@ -46,6 +47,11 @@ namespace vr::controllers
 		constexpr int jump_binding = 37; // Native whitelist: +gostand.
 		constexpr int sprint_binding = 83; // Native whitelist: +sprint.
 		bool sprint_binding_verified{};
+		// AC-130 gunship script waits: notifyoncommand weapnext (gun cycle) and
+		// +usereload/+activate (thermal polarity).
+		constexpr int use_reload_binding = 11, weapnext_binding = 91;
+		bool gunship_bindings_verified{};
+		std::uint64_t gunship_reload_presses{}, gunship_cycle_presses{};
 		std::atomic<std::uint64_t> sprint_notify_count{};
 		// clientActive_t 0x14252B190 (stride 0xF730): viewangles +0x5C, stance +0x1C.
 		constexpr std::uintptr_t client_angles_address = 0x14252B1EC;
@@ -114,6 +120,34 @@ namespace vr::controllers
 				!head.recenter_pending && head.recenter_count == input.reference_generation && normal_gameplay();
 		}
 
+		// AC-130 flat screen: the head no longer steers the native view; the right
+		// stick aims like the native mouse (the gunship link clamps the result).
+		controller_input::clock::time_point gunship_aim_at{};
+		void aim_flat_screen(float* angles, const game::playerState_s* ps)
+		{
+			const auto now = controller_input::clock::now();
+			const float dt = gunship_aim_at.time_since_epoch().count() ?
+				std::min(std::chrono::duration<float>(now - gunship_aim_at).count(), .1f) : 0.f;
+			gunship_aim_at = now;
+			const auto input = controller_input::latest();
+			if (!input.focused || !input.turn_active || dt <= 0) return;
+			const float dead = turn_deadzone ? turn_deadzone->current.value : .2f;
+			const auto axis = [dead](float v) {
+				const float a = std::abs(v);
+				return a <= dead || !std::isfinite(v) ? 0.f : std::copysign((a - dead) / (1 - dead), v);
+			};
+			// Narrower native FOV (40/25 mm) aims proportionally slower.
+			const auto* fov = game::Dvar_FindVar("cg_fov");
+			const float rate = 50.f * std::clamp(fov ? fov->current.value / 65.f : 1.f, .2f, 1.5f);
+			// Step from the view the gunship link actually allowed, so pushing past
+			// its clamp never banks a dead zone on the way back.
+			const float pitch = ps->viewangles[0] - ps->delta_angles[0], yaw = ps->viewangles[1] - ps->delta_angles[1];
+			if (std::isfinite(pitch) && std::isfinite(yaw))
+			{
+				angles[1] = std::remainder(yaw - axis(input.turn[0]) * rate * dt, 360.f);
+				angles[0] = std::clamp(std::remainder(pitch, 360.f) - axis(input.turn[1]) * rate * dt, -85.f, 85.f);
+			}
+		}
 		void finish_move_stub(const int local_client, game::usercmd_s* const cmd)
 		{
 			// The native pitch clamp and other input sources run after the
@@ -124,8 +158,13 @@ namespace vr::controllers
 				if (const auto* const ps = game::CG_GetPredictedPlayerState(0))
 				{
 					auto* angles = reinterpret_cast<float*>(client_angles_address);
-					tracked_view_applied = head_pose_bridge::apply_game_view(angles, ps->delta_angles);
-					if (tracked_view_applied) ++view_count;
+					if (gameplay::view_aimed::active()) aim_flat_screen(angles, ps);
+					else
+					{
+						gunship_aim_at = {};
+						tracked_view_applied = head_pose_bridge::apply_game_view(angles, ps->delta_angles);
+						if (tracked_view_applied) ++view_count;
+					}
 				}
 			}
 			utils::hook::invoke<void>(finish_move_address, local_client, cmd);
@@ -246,6 +285,18 @@ namespace vr::controllers
 					++reload_notify_count;
 				}
 			}
+			// AC-130: right B toggles thermal, right A or left Y cycles the guns.
+			if (gunship_bindings_verified && gameplay && gameplay::view_aimed::active())
+			{
+				const auto cycle = input.primary[1].presses + input.secondary[0].presses;
+				if (input.secondary[1].presses != gunship_reload_presses)
+					utils::hook::invoke<void>(notify_command_address, building_client, use_reload_binding, 0);
+				if (cycle != gunship_cycle_presses)
+					utils::hook::invoke<void>(notify_command_address, building_client, weapnext_binding, 0);
+				gunship_cycle_presses = cycle;
+			}
+			else gunship_cycle_presses = input.primary[1].presses + input.secondary[0].presses;
+			gunship_reload_presses = input.secondary[1].presses;
 			if (gameplay && input.secondary[1].active && input.secondary[1].down)
 			{
 				cmd->buttons |= use_reload_button;
@@ -256,7 +307,7 @@ namespace vr::controllers
 			// Empty-hand grip world use (original controller_component): +activate
 			// and its binding notification for the hand-selected native use target.
 			cmd->buttons |= gameplay::interaction::command(input, gameplay, now);
-			apply_locomotion(cmd, input, gameplay, now);
+			if (!gameplay::view_aimed::active()) apply_locomotion(cmd, input, gameplay, now);
 		}
 
 		game::usercmd_s* create_command_stub(game::usercmd_s* output, const int local_client)
@@ -402,6 +453,9 @@ namespace vr::controllers
 				binding_verified=binding_verified && game::command_whitelist[index] && std::strcmp(game::command_whitelist[index],name)==0;
 			sprint_binding_verified=game::command_whitelist[sprint_binding] &&
 				std::strcmp(game::command_whitelist[sprint_binding],"+sprint")==0;
+			gunship_bindings_verified=game::command_whitelist[use_reload_binding] && game::command_whitelist[weapnext_binding] &&
+				std::strcmp(game::command_whitelist[use_reload_binding],"+usereload")==0 &&
+				std::strcmp(game::command_whitelist[weapnext_binding],"weapnext")==0;
 			reload_binding_verified=binding_verified && game::command_whitelist[reload_binding] &&
 				std::strcmp(game::command_whitelist[reload_binding],"+reload")==0;
 

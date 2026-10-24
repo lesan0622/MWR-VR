@@ -1,5 +1,6 @@
 #include <std_include.hpp>
 #include "native_menu.hpp"
+#include "gameplay/view_aimed_weapon.hpp"
 #include "movie_presentation.hpp"
 #include "native_menu_hook.hpp"
 #include "native_menu_stack.hpp"
@@ -474,6 +475,9 @@ namespace vr::native_menu
 		// Native CG's cinematic draw combines active playback
 		// with this dvar. It is an ownership gate, never playback evidence alone.
 		const auto* fullscreen=game::Dvar_FindVar("cg_cinematicFullscreen");
+		// MWR AC-130: the gunship monitor is presented flat. The native (non-stereo)
+		// frame with its own HUD goes to the theater surface or the cabin screen.
+		if(gameplay::view_aimed::active())return {true,frontend_active(),true,true,true};
 		return {true,frontend_active(),game::CL_IsCgameInitialized(),
 			video_playing(),fullscreen && fullscreen->current.enabled};
 	}

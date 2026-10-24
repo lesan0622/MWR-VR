@@ -7,6 +7,7 @@
 #include "native_viewmodel_policy.hpp"
 #include "native_hide_tags.hpp"
 #include "empty_hands_native.hpp"
+#include "view_aimed_weapon.hpp"
 #include "hands/rig_builder.hpp"
 #include "weapon_interaction.hpp"
 #include "weapon_carry_runtime.hpp"
@@ -364,6 +365,14 @@ namespace vr::gameplay::hands::empty_native
 
 		void add(int client)
 		{
+			// MWR AC-130: the view is the gunship's camera; no arms in it.
+			if(!client && head_pose_bridge::get_status().enabled && view_aimed::active())
+			{
+				visible=false;reason="gunship camera owns view";
+				const auto previous=suppress_native;suppress_native=true;
+				const auto restore=gsl::finally([&]{suppress_native=previous;});
+				add_hook.invoke<void>(client);return;
+			}
 			if(!client && head_pose_bridge::get_status().enabled && equipment::special::notebook::camera_epoch())
 			{
 				visible=false;reason="native UAV camera owns view";

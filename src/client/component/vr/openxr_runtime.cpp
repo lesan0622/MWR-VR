@@ -20,6 +20,7 @@
 #include "engine_scene_resolution.hpp"
 #include "movie_presentation.hpp"
 #include "presentation_options.hpp"
+#include "gunship_cabin.hpp"
 
 #include <d3d11_4.h>
 #include <algorithm>
@@ -157,7 +158,8 @@ namespace vr::openxr
 		enum class eye_content
 		{
 			native_texture,
-			diagnostic_color
+			diagnostic_color,
+			gunship_cabin
 		};
 		struct prediction
 		{
@@ -179,6 +181,12 @@ namespace vr::openxr
 
 		menu_layers menus_;
 		texture_blit::renderer blit_;
+		// MWR AC-130: the native flat frame on a fire-control station screen.
+		gunship_cabin::renderer cabin_;
+		gunship_cabin::anchor cabin_anchor_;
+		std::uint64_t cabin_reference_{};
+		bool cabin_active_{};
+		ID3D11Texture2D* cabin_screen_{};
 
 		startup_query startup_query_{};
 
@@ -1613,7 +1621,21 @@ namespace vr::openxr
 				result = XR_ERROR_RUNTIME_FAILURE;
 				return false;
 			}
-			if (content == eye_content::diagnostic_color)
+			if (content == eye_content::gunship_cabin)
+			{
+				const auto& v = prediction_.views[index];
+				const gunship_cabin::eye_view view{{v.pose.position.x, v.pose.position.y, v.pose.position.z},
+					{v.pose.orientation.x, v.pose.orientation.y, v.pose.orientation.z, v.pose.orientation.w},
+					std::tan(v.fov.angleLeft), std::tan(v.fov.angleRight), std::tan(v.fov.angleUp), std::tan(v.fov.angleDown)};
+				const auto queue = d3d11::acquire_gpu_queue_interop();
+				if (!cabin_.render(graphics_.device.Get(), graphics_.context.Get(), eye.render_targets[eye.acquired_index].Get(),
+					eye.width, eye.height, view, cabin_anchor_, cabin_screen_, error))
+				{
+					result = XR_ERROR_RUNTIME_FAILURE;
+					return false;
+				}
+			}
+			else if (content == eye_content::diagnostic_color)
 			{
 				const float pulse = float((status_.submitted_frames % 253) + 1) / 255.f;
 				const float color[]{index == 0 ? 1.f : 0.f, index == 0 ? 0.f : 1.f, 1.f, pulse};
@@ -1741,7 +1763,47 @@ namespace vr::openxr
 				return frame_failure(detail.c_str(), menu_result.call.code);
 			}
 			prediction_.menu_layers_ready = true;
+			if (prediction_.ui_only && cabin_frame())
+			{
+				// The cabin replaces the theater quad; its screen carries the same frame.
+				XrResult result{};
+				std::string error;
+				for (unsigned eye = 0; eye < 2; ++eye)
+					if (!render_eye(eyes_[eye], eye, nullptr, eye_content::gunship_cabin, result, error))
+						return frame_failure(error.empty() ? "OpenXR gunship cabin" : error.c_str(), result);
+				prediction_.menu_layers_ready = false;
+				world = true;
+			}
 			return finish_prediction(world ? world_submission::include : world_submission::omit);
+		}
+		// True when this ui-only frame is the AC-130 and the cabin can draw it. The
+		// seat is anchored at the head when the cabin opens and on every recenter.
+		bool cabin_frame()
+		{
+			const auto ui = native_menu::current();
+			const auto now = GetTickCount64();
+			const bool menu_open = ui.enabled && now >= ui.timestamp && now - ui.timestamp <= 250 && ui.count;
+			const auto frame = menus_.movie_frame();
+			std::string cabin_error;
+			if (menu_open || !frame || !frame->texture || !gunship_cabin::requested() ||
+			    !cabin_.prepare(graphics_.device.Get(), cabin_error))
+			{
+				cabin_active_ = false;
+				return false;
+			}
+			const auto reference = controller_input::latest().reference_generation;
+			if (!cabin_active_ || !cabin_anchor_.valid || cabin_reference_ != reference)
+			{
+				const auto& l = prediction_.views[0].pose;
+				const auto& r = prediction_.views[1].pose;
+				cabin_anchor_ = gunship_cabin::make_anchor(
+					{(l.position.x + r.position.x) * .5f, (l.position.y + r.position.y) * .5f, (l.position.z + r.position.z) * .5f},
+					{l.orientation.x, l.orientation.y, l.orientation.z, l.orientation.w});
+				cabin_reference_ = reference;
+			}
+			cabin_screen_ = frame->texture.Get();
+			cabin_active_ = cabin_anchor_.valid;
+			return cabin_active_;
 		}
 		bool maintain_session(const d3d11::device_snapshot& graphics)
 		{
