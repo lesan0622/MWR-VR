@@ -75,9 +75,11 @@ def included(name):
     if not objects[name] or name in SKIP or name.startswith(SKIP_PREFIX + ('avantbras', 'chair')): return False
     if name in WALLS: return True
     lo, hi = bbox(name); c = center(name)
-    # Only the officer's own monitor and keyboard remain; other stations' go.
+    # Every original monitor goes (the officer's is rebuilt larger); only the
+    # officer's own keyboard remains.
     mats = {materials.get(m, '') for m, _ in objects[name]}
-    if name.startswith(('screen', 'switch', 'keys', 'leds')) or mats & {'comp.png', 'keyboard.png'}:
+    if name.startswith(('screen', 'switch')) or 'comp.png' in mats: return False
+    if name.startswith(('keys', 'leds')) or 'keyboard.png' in mats:
         sc = center(SCREEN)
         if math.hypot(c[0] - sc[0], c[2] - sc[2]) > 0.35: return False
     # Wall-attached parts of the old faceted shell would float off the new one.
@@ -127,6 +129,8 @@ for name in order:
 extra = procedural.fuselage(STATION_X[0] - 1.2, STATION_X[1] + 1.0, HALF_WIDTH)
 extra.merge(procedural.seat(seat[0], seat[2], bbox(SEAT)[0][1]))
 monitor = 'base.004_base.mesh.004'; keyboard = 'base.015_base.mesh.015'; panel = 'mount_mount.mesh'
+MONITOR_WIDTH = 0.72
+extra.merge(procedural.monitor(center(SCREEN)[0], bbox(SCREEN)[0][2], bbox(keyboard)[1][1] + 0.03, MONITOR_WIDTH))
 extra.merge(procedural.console(center(SCREEN)[0], bbox(SEAT)[0][1], bbox(monitor)[1][2], bbox(keyboard)[0][1], bbox(panel)[0][1]))
 for texture, verts in extra.groups.items():
     groups.setdefault(texture, []).extend(range(len(vertices), len(vertices) + len(verts))); vertices.extend(verts)

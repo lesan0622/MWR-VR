@@ -246,3 +246,18 @@ def console(center_x, floor_y, monitor_back_z, keyboard_y, panel_y, half_width=0
     # Dark trim strip on the desk's front edge and a kick plate.
     rounded_box(m, '@color:1c1e20', (x, desk_y - 0.004, front + 0.004), (w - 0.005, 0.014, 0.008), exponent=0.35, segments=12)
     return m
+
+
+def monitor(center_x, screen_z, bottom_y, width, aspect=16 / 9):
+    """Large 16:9 display facing -z (the seated officer); its glass shows the game frame."""
+    m = mesh()
+    h = width / aspect
+    cy = bottom_y + h / 2
+    rounded_box(m, '@color:16181a', (center_x, cy, screen_z + 0.028), (width / 2 + 0.028, h / 2 + 0.028, 0.026), exponent=0.16, segments=20)
+    rounded_box(m, '@color:202326', (center_x, cy, screen_z + 0.075), (width / 2 - 0.05, h / 2 - 0.04, 0.025), exponent=0.3, segments=12)
+    # The viewer looks along +z, so their right is -x: u runs from +x to -x, v from the top down.
+    x0, x1, y0, y1, z = center_x + width / 2, center_x - width / 2, cy + h / 2, cy - h / 2, screen_z - 0.0015
+    m.quad('@screen', (x0, y0, z, 0, 0, -1, 0, 0), (x1, y0, z, 0, 0, -1, 1, 0), (x1, y1, z, 0, 0, -1, 1, 1), (x0, y1, z, 0, 0, -1, 0, 1))
+    # Status LED under the glass.
+    rounded_box(m, '@emit:30ff60', (center_x + width / 2 - 0.02, cy - h / 2 - 0.014, screen_z - 0.002), (0.004, 0.003, 0.002), exponent=0.5, segments=8)
+    return m
