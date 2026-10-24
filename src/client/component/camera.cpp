@@ -10,6 +10,7 @@
 #include "camera.hpp"
 #include "gui/gui.hpp"
 #include "vr/gameplay/ladder_runtime.hpp"
+#include "vr/gameplay/scripted_motion.hpp"
 #include "vr/engine_stereo_renderer.hpp"
 #include "vr/head_pose_bridge.hpp"
 
@@ -197,8 +198,13 @@ namespace camera
 			if (ps)
 				vr::gameplay::ladders::apply_camera_origin(game::refdef->org, ps->viewHeightCurrent,
 					vr::gameplay::ladders::owned_carrier(), ps->commandTime);
+			// Story rigs that throw the body around (rope descents, crashes): the
+			// authored eye with no room-scale offset, centring the player.
+			vr::game_view::camera_request request{};
+			if (vr::gameplay::scripted_motion::active())
+				request.policy.translation = vr::game_view::head_translation::fixed;
 			if (ps && vr::head_pose_bridge::apply_camera(game::refdef->org, game::refdef->axis,
-				ps->commandTime, game::cgs->refdefViewAngles))
+				ps->commandTime, game::cgs->refdefViewAngles, request))
 			{
 				camera_origin[0] = game::refdef->org[0];
 				camera_origin[1] = game::refdef->org[1];

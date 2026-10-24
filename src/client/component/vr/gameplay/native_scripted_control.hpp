@@ -4,6 +4,7 @@
 #include "campaign/scripted_sequences.hpp"
 #include "native_player_life.hpp"
 #include "view_aimed_weapon.hpp"
+#include "scripted_motion.hpp"
 #include "campaign/sequences/airport_opening.hpp"
 #include <utils/native_memory.hpp>
 #include "game/game.hpp"
@@ -46,7 +47,7 @@ namespace vr::gameplay::scripted_control
 		return player_state && native_contract() && player_life::read(player_state,dead) && !dead &&
 			utils::native_memory::read_bytes(&entity_flags,static_cast<const std::byte*>(player_state)+offsetof(game::playerState_s,e_flags),sizeof(entity_flags)) &&
 			!mounted::attached(entity_flags) && !sequences::owns_body(player_state) && !sequences::owns_arms(player_state) &&
-			!view_aimed::active();
+			!view_aimed::active() && !scripted_motion::active();
 	}
 	inline bool predicted_disarmed() noexcept
 	{
