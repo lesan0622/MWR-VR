@@ -51,6 +51,7 @@ namespace vr::controllers
 		// +usereload/+activate (thermal polarity).
 		constexpr int use_reload_binding = 11, weapnext_binding = 91;
 		bool gunship_bindings_verified{};
+		std::uint64_t turret_use_presses{};
 		std::uint64_t gunship_reload_presses{}, gunship_cycle_presses{};
 		std::atomic<std::uint64_t> sprint_notify_count{};
 		// clientActive_t 0x14252B190 (stride 0xF730): viewangles +0x5C, stance +0x1C.
@@ -145,7 +146,7 @@ namespace vr::controllers
 			if (std::isfinite(pitch) && std::isfinite(yaw))
 			{
 				angles[1] = std::remainder(yaw - axis(input.turn[0]) * rate * dt, 360.f);
-				angles[0] = std::clamp(std::remainder(pitch, 360.f) - axis(input.turn[1]) * rate * dt, -85.f, 85.f);
+				angles[0] = std::remainder(pitch - axis(input.turn[1]) * rate * dt, 360.f); // The link/turret clamps.
 			}
 		}
 		void finish_move_stub(const int local_client, game::usercmd_s* const cmd)
@@ -191,7 +192,7 @@ namespace vr::controllers
 			cmd->rightmove = add_axis(cmd->rightmove, movement.right);
 			if (movement.forward != 0 || movement.right != 0)
 				++movement_count;
-			if (movement.yaw_delta != 0)
+			if (movement.yaw_delta != 0 && !gameplay::view_aimed::active())
 			{
 				auto& yaw = *reinterpret_cast<float*>(client_yaw_address);
 				if (std::isfinite(yaw))
@@ -286,7 +287,7 @@ namespace vr::controllers
 				}
 			}
 			// AC-130: right B toggles thermal, right A or left Y cycles the guns.
-			if (gunship_bindings_verified && gameplay && gameplay::view_aimed::active())
+			if (gunship_bindings_verified && gameplay && gameplay::view_aimed::gunship())
 			{
 				const auto cycle = input.primary[1].presses + input.secondary[0].presses;
 				if (input.secondary[1].presses != gunship_reload_presses)
@@ -307,7 +308,17 @@ namespace vr::controllers
 			// Empty-hand grip world use (original controller_component): +activate
 			// and its binding notification for the hand-selected native use target.
 			cmd->buttons |= gameplay::interaction::command(input, gameplay, now);
-			if (!gameplay::view_aimed::active()) apply_locomotion(cmd, input, gameplay, now);
+			// Gunship: no movement. Turret: the left stick still drives the native
+			// forward/back (Barrett zoom); turning belongs to the aiming stick.
+			if (!gameplay::view_aimed::gunship()) apply_locomotion(cmd, input, gameplay, now);
+			if (gameplay && gameplay::view_aimed::mounted())
+			{
+				// Right grip is the native use key: dismount (and its notify).
+				if (input.squeeze[1].presses != turret_use_presses)
+					utils::hook::invoke<void>(notify_command_address, building_client, 73, 0);
+				if (input.squeeze[1].active && input.squeeze[1].down) cmd->buttons |= 0x8;
+			}
+			turret_use_presses = input.squeeze[1].presses;
 		}
 
 		game::usercmd_s* create_command_stub(game::usercmd_s* output, const int local_client)

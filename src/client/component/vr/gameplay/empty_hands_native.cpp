@@ -373,6 +373,9 @@ namespace vr::gameplay::hands::empty_native
 				const auto restore=gsl::finally([&]{suppress_native=previous;});
 				add_hook.invoke<void>(client);return;
 			}
+			// Turret/vehicle gun: the native viewmodel hands hold its grips; no VR arms.
+			if(!client && head_pose_bridge::get_status().enabled && view_aimed::mounted())
+			{visible=false;reason="native turret owns the hands";add_hook.invoke<void>(client);return;}
 			if(!client && head_pose_bridge::get_status().enabled && equipment::special::notebook::camera_epoch())
 			{
 				visible=false;reason="native UAV camera owns view";

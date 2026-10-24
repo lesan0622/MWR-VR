@@ -10,6 +10,7 @@
 #include "../vehicles/runtime.hpp"
 #include "../native_shield.hpp"
 #include "../native_scripted_control.hpp"
+#include "../view_aimed_weapon.hpp"
 #include "../mounted_turret.hpp"
 #include "../weapon_carry_runtime.hpp"
 #include "../weapon_carry_pose.hpp"
@@ -696,6 +697,12 @@ namespace vr::gameplay::hands
 				return;
 			}
 			if (!empty && !independent && owned_native::active())
+			{
+				original();
+				return;
+			}
+			// Turret/vehicle gun: keep the native hands on its grips.
+			if (view_aimed::mounted())
 			{
 				original();
 				return;

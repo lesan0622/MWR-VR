@@ -186,7 +186,7 @@ float4 screen(VO i) : SV_Target {
 	bool requested() noexcept
 	{
 		if (!enabled || !enabled->current.enabled || load_failed.load()) return false;
-		if (!gameplay::view_aimed::active()) return false;
+		if (!gameplay::view_aimed::gunship()) return false;
 		begin_load();
 		return bool(current_asset());
 	}
