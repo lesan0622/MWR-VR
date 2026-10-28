@@ -20,7 +20,10 @@ namespace vr::gameplay::npc_collision
 		std::atomic_bool installed{};
 		std::array<std::atomic_uint64_t,2> candidates{},adjustments{};
 		std::atomic_uint64_t environment_blocks{},rejected{};
-		constexpr std::uintptr_t native_trace=0x14068f210;
+		// MWR PM trace dispatcher 0x1404A0C00 (H2 0x14068F210); its PM_playerTrace
+		// (0x1404A0A90) and PM_trace call sites are byte-identical to H2.
+		constexpr std::uintptr_t native_trace=0x1404a0c00;
+		constexpr std::uintptr_t first_site=0x1404a0aec,retry_site=0x1404a0b97,general_site=0x1404a0bf2;
 		template<class T> T read(const void* source,std::size_t offset) noexcept
 		{T value{};utils::native_memory::read_bytes(&value,static_cast<const std::byte*>(source)+offset,sizeof(value));return value;}
 		bool actor(const game::trace_t& trace) noexcept
@@ -79,9 +82,9 @@ namespace vr::gameplay::npc_collision
 			constexpr std::uint8_t first[]{0xe8,0x0f,0x01,0,0},retry[]{0xe8,0x64,0,0,0},general[]{0xe8,0x09,0,0,0};
 			// Read-only live witness: both PM_playerTrace calls and PM_trace pass
 			// bounds/skip/mask/PS at stack slots 0x20/0x28/0x30/0x38 respectively.
-			if (verify(native_trace,entry) && verify(0x14068f0fc,first) && verify(0x14068f1a7,retry) && verify(0x14068f202,general))
+			if (verify(native_trace,entry) && verify(first_site,first) && verify(retry_site,retry) && verify(general_site,general))
 			{
-				utils::hook::call(0x14068f0fc,trace);utils::hook::call(0x14068f1a7,trace);utils::hook::call(0x14068f202,trace);installed=true;
+				utils::hook::call(first_site,trace);utils::hook::call(retry_site,trace);utils::hook::call(general_site,trace);installed=true;
 			}
 			command::add("vr_npc_collision_status",[] {
 				const auto report=status();console::print_text(console::con_type_info,report);

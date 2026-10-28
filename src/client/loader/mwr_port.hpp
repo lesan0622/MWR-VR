@@ -72,6 +72,7 @@ namespace mwr_port
 		"vr::gameplay::equipment::nightvision", // Hand-to-goggles gesture presses the native NVG action slot.
 		"vr::gameplay::weapons::optics", // Same-eye scope magnifier (no auxiliary scene view).
 		"vr::gameplay::weapons::chambering_guide", // Yellow pulse on the action to rack.
+		"vr::gameplay::npc_collision", // Closer player/NPC contact (15 -> 9 unit radius); walls keep native clearance.
 		"vr::gameplay::ladders", // Physical ladder grips (vr_physicalLadders 0 keeps the native ladder).
 		"vr::gameplay::ammo_counter", // Held gun's loaded/reserve count above its wrist.
 		"vr::stereo_postfx", // Camera motion blur off in stereo (per-eye reprojection smears a rectangle).
