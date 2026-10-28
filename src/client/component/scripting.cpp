@@ -107,12 +107,23 @@ namespace scripting
 			});
 		}
 
-		void client_spawn_stub(const game::gentity_s* client)
+		// MWR G_InitGame stores 2 here while a savegame is being restored (1 otherwise);
+		// SV_CheckLoadLevel clears it after G_LoadGame (0x1402A231A / 0x1402A18A3).
+		constexpr auto level_save_restore = 0x1456DC6C0;
+
+		void start_level()
 		{
-			client_spawn_hook.invoke<void>(client);
 			for (const auto& callback : level_start_callbacks) callback();
 			scr_auto_respawn->current.enabled = true;
 			clear_scheduled_notifies();
+		}
+
+		void client_spawn_stub(const game::gentity_s* client)
+		{
+			client_spawn_hook.invoke<void>(client);
+			// SV_MapRestart can spawn the client and then restore a save over it;
+			// that level start is reported once, after the restore, by SV_CheckLoadLevel.
+			if (*reinterpret_cast<const int*>(level_save_restore) != 2) start_level();
 		}
 
 		void g_shutdown_game_stub(const int free_scripts)
@@ -233,17 +244,12 @@ namespace scripting
 		}
 
 
-		char sv_check_load_level_stub(void* save_game)
+		// A save load skips ClientBegin/ClientSpawn (SV_InitGameVM 0x1404C40DB), so the
+		// level start comes from here once G_LoadGame has restored the level.
+		void sv_check_load_level_stub(void* save_game)
 		{
-			const auto result = sv_check_load_level_hook.invoke<char>(save_game);
-			if (save_game != nullptr)
-			{
-				for (const auto& callback : level_start_callbacks) callback();
-				scr_auto_respawn->current.enabled = true;
-				clear_scheduled_notifies();
-				lua::engine::start();
-			}
-			return result;
+			sv_check_load_level_hook.invoke<void>(save_game);
+			if (save_game != nullptr) start_level();
 		}
 
 		unsigned int sl_get_canonical_string_stub(const char* str)
@@ -371,6 +377,8 @@ namespace scripting
 			// GSC loading/notify relays and the Lua engine stay H2-only.
 			g_shutdown_game_hook.create(0x1402A5130, g_shutdown_game_stub);
 			client_spawn_hook.create(0x14028ADC0, client_spawn_stub);
+			// H2 0x1406B2940
+			sv_check_load_level_hook.create(0x1404C38D0, sv_check_load_level_stub);
 			scr_add_class_field_hook.create(0x1403C3CE0, scr_add_class_field_stub);
 
 			scr_auto_respawn = dvars::register_bool("scr_autoRespawn", true, 0, "Automatically respawn player on death");
