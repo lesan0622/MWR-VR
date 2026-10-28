@@ -1,6 +1,7 @@
 #include <std_include.hpp>
 #include "native_scripted_control.hpp"
 #include "independent_fire_runtime.hpp"
+#include "view_aimed_weapon.hpp"
 #include "weapon_recoil.hpp"
 #include "independent_fire_clock.hpp"
 #include "native_ballistics.hpp"
@@ -66,6 +67,8 @@ namespace vr::gameplay::weapons::independent_fire
 		if (native_ammunition::local_role(ps)<0) return false;
 		if (sequences::airport::opening::active()) return true;
 		if (mounted::attached(static_cast<const game::playerState_s*>(ps)->e_flags) || !independent()) return false;
+		// The AC-130 and a lock launcher's ADS view fire natively along the view.
+		if (view_aimed::active()) return false;
 		// Owned DObjs do not imply an independent ballistic implementation. The
 		// projected launcher needs native +attack for automatic ADS and lock-on;
 		// a bullet weapon in the other hand can still use its independent clock.

@@ -160,7 +160,7 @@ namespace vr::controllers
 				if (const auto* const ps = game::CG_GetPredictedPlayerState(0))
 				{
 					auto* angles = reinterpret_cast<float*>(client_angles_address);
-					if (gameplay::view_aimed::active()) aim_flat_screen(angles, ps);
+					if (gameplay::view_aimed::gunship()) aim_flat_screen(angles, ps);
 					else
 					{
 						gunship_aim_at = {};
@@ -368,6 +368,28 @@ namespace vr::controllers
 					++ads_notify_count;
 				}
 				ads_requested=requested;
+				// Lock launchers (Javelin CLU, Stinger): a controller at the eyes raises
+				// the native ADS lock view, presented flat and aimed by the head. The
+				// trigger fires natively once the game has its lock.
+				bool sight=false;
+				head_pose_bridge::tracking_reference reference;
+				if (gameplay_allowed(input) && gameplay::view_aimed::lock_launcher(result->weapon) &&
+					head_pose_bridge::get_tracking_reference(reference) && reference.generation==input.reference_generation)
+				{
+					float nearest=INFINITY;
+					for (int h=0;h<2;++h)
+					{
+						head_pose_bridge::vector3 hand{};
+						if (!input.grip[h].valid || !head_pose_bridge::tracking_position(reference,input.grip[h].tracking.position_meters,hand)) continue;
+						float d2{};for (int i=0;i<3;++i) d2+=(hand[i]-reference.head_position_meters[i])*(hand[i]-reference.head_position_meters[i]);
+						nearest=std::min(nearest,std::sqrt(d2));
+					}
+					sight=nearest<=(gameplay::view_aimed::launcher_sight ? .35f : .25f);
+				}
+				if (sight!=gameplay::view_aimed::launcher_sight.load() && binding_verified)
+					utils::hook::invoke<void>(notify_command_address,local_client,sight ? 17 : 18,0);
+				gameplay::view_aimed::launcher_sight=sight;
+				if (sight) result->buttons|=game::BUTTON_ADS;
 			}
 			else if (local_client==0) {ads.reset(); ads_requested=false; gameplay::weapons::optics::request({},{},{});}
 			if (local_client == 0 && result)
