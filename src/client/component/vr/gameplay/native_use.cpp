@@ -42,8 +42,15 @@ namespace vr::gameplay::interaction::native
 		}
 		// MWR: ordinary use triggers (e.g. the killhouse rope with usetriggerrequirelookat)
 		// get the same head-aimed native admission fallback as breach doors.
+		// MWR: mounted guns (s.eType 8 = ET_TURRET, MWR entity type name table at
+		// 0x140ECDFF0) are native use targets in GetUseList with their own range.
+		// A point at their bounds centre in a 12 degree cone is too strict for a hand
+		// reaching for the grips; select them like use-trigger volumes.
+		bool mounted_gun(const game::gentity_s* entity)
+		{return entity && *reinterpret_cast<const std::uint8_t*>(entity)==8;}
 		bool fallback_use_trigger(const game::gentity_s* entity)
 		{
+			if(mounted_gun(entity))return true;
 			if(!entity || !entity->script_classname)return false;
 			const auto* name=game::SL_ConvertToString(entity->script_classname);
 			return name && use_trigger_class(name);
@@ -334,7 +341,7 @@ namespace vr::gameplay::interaction::native
 			}
 			const bool breach=breach_trigger(entity);
 			const auto* classname=entity->script_classname ? game::SL_ConvertToString(entity->script_classname) : nullptr;
-			const bool use_volume=!item.weapon && !script_model && classname && use_trigger_class(classname);
+			const bool use_volume=!item.weapon && !script_model && ((classname && use_trigger_class(classname)) || mounted_gun(entity));
 			auto proposal=breach ? score_breach(aim,{id,key.generation},center,read<vec>(entity,0xe8)) :
 				use_volume ? score_use_trigger(aim,{id,key.generation},center,read<vec>(entity,0xe8)) :
 				item.weapon || script_model ? score_volume(aim,{id,key.generation},volume,item.weapon) : score(aim,{id,key.generation},center);

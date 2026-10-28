@@ -53,6 +53,7 @@ namespace vr::controllers
 		constexpr int use_reload_binding = 11, weapnext_binding = 91;
 		bool gunship_bindings_verified{};
 		std::uint64_t turret_use_presses{};
+		bool turret_use_armed{}; // Right grip released since the mount began.
 		std::uint64_t gunship_reload_presses{}, gunship_cycle_presses{};
 		std::atomic<std::uint64_t> sprint_notify_count{};
 		// clientActive_t 0x14252B190 (stride 0xF730): viewangles +0x5C, stance +0x1C.
@@ -322,11 +323,18 @@ namespace vr::controllers
 			if (climbing) cmd->forwardmove = cmd->rightmove = 0; // Turning stays available.
 			if (gameplay && gameplay::view_aimed::mounted())
 			{
-				// Right grip is the native use key: dismount (and its notify).
-				if (input.squeeze[1].presses != turret_use_presses)
+				// Right grip is the native use key: dismount (and its notify). A new
+				// use edge while mounted dismounts (MWR 0x1402FC770 from Player_Use).
+				// The world-use lease that mounted the gun ends with the mount, one
+				// command before the predicted turret flag appears; a grip still held
+				// from that press must not become a second edge. Require a release.
+				const bool down = input.squeeze[1].active && input.squeeze[1].down;
+				if (!down) turret_use_armed = true;
+				if (turret_use_armed && input.squeeze[1].presses != turret_use_presses)
 					utils::hook::invoke<void>(notify_command_address, building_client, 73, 0);
-				if (input.squeeze[1].active && input.squeeze[1].down) cmd->buttons |= 0x8;
+				if (turret_use_armed && down) cmd->buttons |= 0x8;
 			}
+			else turret_use_armed = false;
 			turret_use_presses = input.squeeze[1].presses;
 		}
 
