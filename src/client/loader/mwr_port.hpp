@@ -78,6 +78,7 @@ namespace mwr_port
 		"vr::stereo_postfx", // Camera motion blur off in stereo (per-eye reprojection smears a rectangle).
 		"vr::gameplay::weapons::javelin_screen", // Javelin CLU display at the eye; lock gate via playerads.
 		"vr::gameplay::weapons::launcher::native_component", // Javelin lock projection from the launcher (Target_IsInRect).
+		"vr::gameplay::fixed_sniper", // sniperescape Barrett: hand-drag/stick aim, flat native scope view.
 	};
 
 	// typeid names look like "class vr::gameplay::foo::component".

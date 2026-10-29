@@ -12,6 +12,7 @@
 #include "vr/gameplay/ladder_runtime.hpp"
 #include "vr/gameplay/scripted_motion.hpp"
 #include "vr/gameplay/javelin_screen.hpp"
+#include "vr/gameplay/fixed_sniper.hpp"
 #include "vr/engine_stereo_renderer.hpp"
 #include "vr/head_pose_bridge.hpp"
 
@@ -204,6 +205,10 @@ namespace camera
 			vr::game_view::camera_request request{};
 			if (vr::gameplay::scripted_motion::active())
 				request.policy.translation = vr::game_view::head_translation::fixed;
+			// Fixed sniper (flat scope view): the native turret camera, no head pose
+			// (original Overlord thermal_scope camera request).
+			if (const auto sniper = vr::gameplay::fixed_sniper::current(ps).epoch)
+				request = {vr::game_view::camera_profiles::fixed_scope, sniper | (1ull << 63)};
 			if (ps && vr::head_pose_bridge::apply_camera(game::refdef->org, game::refdef->axis,
 				ps->commandTime, game::cgs->refdefViewAngles, request))
 			{

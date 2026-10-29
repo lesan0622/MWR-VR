@@ -2,8 +2,7 @@
 #include "fixed_sniper.hpp"
 #include "fixed_sniper_hand_aim.hpp"
 #include "native_carry.hpp"
-#include "../auxiliary_scene.hpp"
-#include "../native_thermal.hpp"
+#include "view_aimed_weapon.hpp"
 #include "../settings.hpp"
 #include "../diagnostics/report_paths.hpp"
 #include "component/command.hpp"
@@ -37,7 +36,7 @@ namespace vr::gameplay::fixed_sniper
 		std::atomic<float> sampled_head_gain{settings::scripted_head_gain.default_value},sampled_hand_travel{hand_travel.default_value},sampled_hand_noise{hand_noise.default_value};
 		template<class T> T read(const void* p,std::size_t offset)
 		{T value{};std::memcpy(&value,static_cast<const std::byte*>(p)+offset,sizeof(value));return value;}
-		void invalidate(){const std::lock_guard lock(mutex);published={};entity_generation=0;}
+		void invalidate(){const std::lock_guard lock(mutex);published={};entity_generation=0;view_aimed::fixed_sniper_view=false;}
 		void observe()
 		{
 			state next{};std::uint64_t generation{};
@@ -54,7 +53,9 @@ namespace vr::gameplay::fixed_sniper
 					const auto* name=definition?read<const char*>(definition,0):nullptr;
 					if(name)std::memcpy(weapon_name.data(),name,(std::min)(strnlen_s(name,128),weapon_name.size()-1));
 					why="weapon_or_turret_owner_mismatch";
-					if(name && accepts(ps->e_flags,entity,{name,strnlen_s(name,128)}) && read<std::uint16_t>(ent,0x10c)==1 && read<void*>(ent,0x138))
+					// MWR: turret entity +0x138 is its turretInfo (G_IsTurretUsable 0x1403086B0);
+					// the H2 +0x10C owner-state check is not rebound.
+					if(name && accepts(ps->e_flags,entity,{name,strnlen_s(name,128)}) && read<void*>(ent,0x138))
 					{next.entity=entity;next.time=ps->commandTime;next.player=reinterpret_cast<std::uintptr_t>(ps);generation=weapons::native_carry::entity_key(entity).generation;why="admitted";}
 				}
 			}
@@ -66,6 +67,7 @@ namespace vr::gameplay::fixed_sniper
 				next.epoch=same?published.epoch:++next_epoch;next.started=same?published.started:next.time;
 			}
 			published=next;entity_generation=generation;
+			view_aimed::fixed_sniper_view=next.entity>0;
 			admission_reason=why;observed_weapon=weapon_name;observed_entity=candidate;
 			observer_tick=GetTickCount64();
 		}
@@ -143,10 +145,12 @@ namespace vr::gameplay::fixed_sniper
 				game::DVAR_FLAG_SAVED,"Fixed-sniper hand translation noise radius in meters; spatial deadband without a smoothing tail");
 			// Native PostFX bit 0 selects thermal; bit 1 removes the flat scope
 			// stencil and skips the ordinary-color redraw. Only our private scope
-			// view uses that mode; HMD world eyes and the native tail remain exact.
-			installed=native_thermal::ready();
-			if(!installed){console::error("[VR fixed sniper] native thermal contract rejected\n");return;}
-			auxiliary_scene::screen_scope_epoch.store(+[]() noexcept{return current().epoch;});
+			// view uses that mode on H2; HMD world eyes and the native tail remain exact.
+			// MWR: the Barrett scope is ordinary color and the auxiliary scene view
+			// renders black, so the private thermal scope view is not used. The
+			// native scope frame is presented flat (view_aimed::active), like the
+			// AC-130; only the fixed-sniper controls are kept.
+			installed=true;
 			scheduler::loop(observe,scheduler::pipeline::server);
 			scripting::on_level_start(invalidate);scripting::on_shutdown([](bool,bool after){if(!after)invalidate();});
 			::command::add("vr_fixedSniper_status",[]
@@ -157,7 +161,7 @@ namespace vr::gameplay::fixed_sniper
 				else console::info("[VR fixed sniper] Saved %s\n",diagnostics::report_path_text(path).c_str());
 			});
 		}
-		void pre_destroy() override{alive=false;auxiliary_scene::screen_scope_epoch=nullptr;invalidate();}
+		void pre_destroy() override{alive=false;invalidate();}
 	};
 }
 REGISTER_COMPONENT(vr::gameplay::fixed_sniper::component)

@@ -7,8 +7,10 @@ namespace vr::gameplay::fixed_sniper
 {
 	inline constexpr unsigned aim_hand=0,zoom_hand=1;
 	inline constexpr float aim_speed_scale=.1f,zoom_input_scale=.25f;
+	// MWR sniperescape turret2 (model weapon_m82_mg_setup; useby after barrett_trigger).
+	inline constexpr std::string_view mwr_barrett_turret{"m14_bipod_stand"};
 	inline bool accepts(unsigned flags, int entity, std::string_view weapon) noexcept
-	{return mounted::attached(flags) && entity>0 && entity<4000 && weapon=="m82_bipod_stand_thermal";}
+	{return mounted::attached(flags) && entity>0 && entity<4000 && (weapon=="m82_bipod_stand_thermal" || weapon==mwr_barrett_turret);}
 	inline bool overlay_material(std::string_view name) noexcept
 	{
 		return name=="h1_hud_overlay_sniperescape_scope" || name=="h2_hud_overlay_sniper_thermal_reticle" ||

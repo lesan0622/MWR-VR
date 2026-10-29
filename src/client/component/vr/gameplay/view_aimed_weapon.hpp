@@ -65,8 +65,13 @@ namespace vr::gameplay::view_aimed
 		       utils::native_memory::read_bytes(&token, reinterpret_cast<const std::byte*>(&game::g_entities[0]) + 0x80, sizeof(token)) &&
 		       !(token & 0x1ff);
 	}
+	// Published by the fixed-sniper observer while the player works an admitted
+	// fixed sniper turret (sniperescape Barrett).
+	inline std::atomic_bool fixed_sniper_view{};
 	// Presented as the native flat view: the AC-130 (cabin or theater, aimed with
-	// the stick) and a lock launcher's ADS view (theater, aimed by the head).
-	// Turrets stay in stereo VR, aimed by the head like any native view.
-	inline bool active() noexcept { return gunship() || launcher_view(); }
+	// the stick), a lock launcher's ADS view (theater, aimed by the head) and the
+	// fixed sniper scope (theater, aimed by hand drag/stick). Other turrets stay
+	// in stereo VR, aimed by the head like any native view.
+	inline bool active() noexcept
+	{return gunship() || launcher_view() || (fixed_sniper_view.load(std::memory_order_relaxed) && mounted());}
 }
