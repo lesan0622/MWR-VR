@@ -41,17 +41,20 @@ namespace vr::gameplay::weapons::optics
 		// MWR (H1) optics, inches from vr_capture_surfaces converted to metres.
 		// Sniper scopes have no rear glass: native ADS shows a tag_scope_ads_on
 		// reticle quad inside the tube, which is the aperture here.
+		// MWR: the extra scope view starts at the eye, so without a clearance it
+		// renders the tube interior and sleeve (vr_debug_aux_eye). Clearance =
+		// rear aperture to the front housing's max x, plus 1 cm.
 		{"attach_h1_scope_m21_vm","tag_sight_on","mtl_wpn_h1_sni_m21_scope_ads","mtl_wpn_h1_sni_m82a1_ret",{},
-			{-.12271f,0,.01760f},.02154f,6.f},
+			{-.12271f,0,.01760f},.02154f,6.f,1.f,.304f}, // Housing to +6.748 in.
 		{"attach_h1_scope_m21_ghillie_vm","tag_sight_on","mtl_wpn_h1_sni_m21_scope_ads","mtl_wpn_h1_sni_m82a1_ret",{},
-			{-.12271f,0,.01760f},.02154f,6.f},
+			{-.12271f,0,.01760f},.02154f,6.f,1.f,.304f},
 		{"attach_h1_scope_r700_vm","tag_sight_on","mtl_wpn_h1_sni_r700_scope_ads","mtl_wpn_h1_sni_m82a1_ret",{},
-			{-.11994f,0,.02229f},.01847f,6.f},
+			{-.11994f,0,.02229f},.01847f,6.f,1.f,.30f}, // Not captured; M21-length estimate.
 		{"attach_h1_scope_dragunov_vm","tag_sight_on","","mtl_wpn_h1_sni_m82a1_ret",{},
-			{-.13670f,.009665f,.04496f},.01662f,4.f},
+			{-.13670f,.009665f,.04496f},.01662f,4.f,1.f,.258f}, // Housing to +4.394 in.
 		// Rear lens (ads_on glass) at -3.03 in; the ads_off glass layers are hidden with it.
 		{"vm_optics_acog2","tag_acog_2","mtl_wep_shared_lens","mtl_acog2_crosshair",{"mtl_mors_lens","mtl_mors_lens_inner"},
-			{-.07697f,0,.03400f},.0150f,4.f},
+			{-.07697f,0,.03400f},.0150f,4.f,1.f,.126f}, // Housing to +1.522 in.
 	};
 	inline bool variant_name(std::string_view name, std::string_view base) noexcept
 	{

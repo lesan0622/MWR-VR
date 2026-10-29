@@ -92,6 +92,12 @@ namespace vr::gameplay::weapons::optics
 		};
 		thread_local pair_view pair;
 		thread_local spatial_panel::renderer renderer;
+		// MWR bring-up: per-eye eye-box inputs from the last prepared pair
+		// (eye/lens world, eye in lens frame, lens params, projected centre).
+		struct eye_diagnostic {std::array<float,3> eye{},center{},local{};spatial_panel::vec4 parameters{};std::array<float,2> ndc{};bool valid{};};
+		std::mutex diagnostic_mutex;
+		std::array<eye_diagnostic,2> diagnostics_by_eye{};
+		float eye_side{}; // dot(eye0-eye1, lens left axis): >0 when eye 0 is on the lens-left side.
 		bool prepare(const eye_composition::event& event)
 		{
 			pair = {};
@@ -168,6 +174,27 @@ namespace vr::gameplay::weapons::optics
 				                         pair.independent);
 				pair.near_distance[eye] =
 				    scene_near_distance(lens, center, event.model_origins.eyes[eye], vp);
+			}
+			{
+				std::array<eye_diagnostic,2> sample{};
+				for (unsigned eye = 0; eye < 2; ++eye)
+				{
+					auto& d = sample[eye];
+					const auto& origin = event.model_origins.eyes[eye];
+					std::copy(origin.begin(), origin.end(), d.eye.begin());
+					std::copy(center.begin(), center.end(), d.center.begin());
+					const auto delta = hands::sub(hands::vec{origin[0], origin[1], origin[2]}, center);
+					d.local = {-hands::dot(delta, lens.axis[0]), -hands::dot(delta, lens.axis[1]), hands::dot(delta, lens.axis[2])};
+					d.parameters = pair.eyes[eye].parameters;
+					d.valid = pair.eyes[eye].valid;
+					float x{}, y{};unsigned n{};
+					for (const auto& c : pair.eyes[eye].corners) if (c[3] > .001f) {x += c[0] / c[3];y += c[1] / c[3];++n;}
+					if (n) d.ndc = {x / n, y / n};
+				}
+				const auto& a = event.model_origins.eyes[0];const auto& b = event.model_origins.eyes[1];
+				const float side = hands::dot(hands::vec{a[0] - b[0], a[1] - b[1], a[2] - b[2]}, lens.axis[1]);
+				const std::lock_guard lock(diagnostic_mutex);
+				diagnostics_by_eye = sample;eye_side = side;
 			}
 			pair.ready = pair.eyes[0].valid || pair.eyes[1].valid;
 			return pair.ready;
@@ -300,7 +327,10 @@ namespace vr::gameplay::weapons::optics
 				                        event.width,
 				                        event.height,
 				                        parameters,
-				                        pair.independent ? event.scene_depth : nullptr,
+				                        // MWR: the scope body's eyepiece faces lie in front of
+				                        // the aperture quad, so a depth test rejects the whole
+				                        // lens (plain black disc, no reticle). Draw it over them.
+				                        nullptr,
 				                        window,
 				                        eye.pupil_radius,
 				                        eye.eye_box_scale))
@@ -568,8 +598,11 @@ namespace vr::gameplay::weapons::optics
 			                          game::DVAR_FLAG_SAVED,
 			                          "Scope image magnification override; 0 uses prototype optic defaults");
 			render_scene =
-			    dvars::register_bool("vr_scopeRender",
-			                         false, // MWR: no auxiliary scene view; same-eye magnifier.
+			    // MWR: renamed from vr_scopeRender so configs that saved the old
+			    // default (0) pick up the extra scene view; the same-eye image behind
+			    // the aperture is the scope body itself.
+			    dvars::register_bool("vr_scopeScene",
+			                         true,
 			                         game::DVAR_FLAG_SAVED,
 			                         "Render one additional narrow scene view for the active scope");
 			world_contract = native_thermal::world_ready();
@@ -601,6 +634,16 @@ namespace vr::gameplay::weapons::optics
 				        thermal_scene::world_pairs.load(),
 				        thermal_scene::last_native_ssr.load(),
 				        thermal_scene::last_world_ssr.load());
+				    std::array<eye_diagnostic,2> sample;float side;
+				    {const std::lock_guard lock(diagnostic_mutex);sample=diagnostics_by_eye;side=eye_side;}
+				    console::info("[VR optics] eye0_minus_eye1_on_lens_left=%.3f\n", side);
+				    for (unsigned eye = 0; eye < 2; ++eye)
+				    {
+					    const auto& d = sample[eye];
+					    console::info("[VR optics] eye%u valid=%d eye=(%.2f,%.2f,%.2f) lens=(%.2f,%.2f,%.2f) local depth/right/up=%.2f/%.2f/%.2f uv=%.3f,%.3f mag=%.1f visible=%.0f ndc=%.3f,%.3f\n",
+						    eye, d.valid, d.eye[0], d.eye[1], d.eye[2], d.center[0], d.center[1], d.center[2],
+						    d.local[0], d.local[1], d.local[2], d.parameters[0], d.parameters[1], d.parameters[2], d.parameters[3], d.ndc[0], d.ndc[1]);
+				    }
 			    });
 		}
 		void pre_destroy() override
