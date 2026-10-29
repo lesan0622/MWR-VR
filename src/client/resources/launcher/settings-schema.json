@@ -376,6 +376,14 @@
     "description": "settings.chamberingGuideHint"
   },
   {
+    "name": "vr_ammoCounter",
+    "category": "gameplay",
+    "group": "settings.weaponInteraction",
+    "label": "settings.ammoCounter",
+    "type": "toggle",
+    "description": "settings.ammoCounterHint"
+  },
+  {
     "name": "vr_smartAmmoSelection",
     "category": "gameplay",
     "group": "settings.weaponInteraction",
