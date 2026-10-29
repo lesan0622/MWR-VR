@@ -13,6 +13,7 @@
 #include "vr/gameplay/scripted_motion.hpp"
 #include "vr/gameplay/javelin_screen.hpp"
 #include "vr/gameplay/fixed_sniper.hpp"
+#include "vr/gameplay/barrett_gun.hpp"
 #include "vr/engine_stereo_renderer.hpp"
 #include "vr/head_pose_bridge.hpp"
 
@@ -209,6 +210,11 @@ namespace camera
 			// (original Overlord thermal_scope camera request).
 			if (const auto sniper = vr::gameplay::fixed_sniper::current(ps).epoch)
 				request = {vr::game_view::camera_profiles::fixed_scope, sniper | (1ull << 63)};
+			// Held Barrett: the barrel steers the native angles, so the camera holds
+			// its entry heading and the head turns and moves freely.
+			else if (const auto barrett = vr::gameplay::barrett_gun::epoch())
+				request = {{vr::game_view::camera_owner::script, vr::game_view::head_rotation::free,
+					vr::game_view::head_translation::tracked}, barrett | (1ull << 61)};
 			if (ps && vr::head_pose_bridge::apply_camera(game::refdef->org, game::refdef->axis,
 				ps->commandTime, game::cgs->refdefViewAngles, request))
 			{

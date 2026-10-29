@@ -8,6 +8,7 @@
 #include "native_hide_tags.hpp"
 #include "empty_hands_native.hpp"
 #include "view_aimed_weapon.hpp"
+#include "barrett_gun.hpp"
 #include "hands/rig_builder.hpp"
 #include "weapon_interaction.hpp"
 #include "weapon_carry_runtime.hpp"
@@ -349,7 +350,7 @@ namespace vr::gameplay::hands::empty_native
             const bool climbing=cliffhanger_physical::independent_hands() || sequences::independent_hands(game::CG_GetPredictedPlayerState(0));
             if(player_life::dead(game::CG_GetPredictedPlayerState(0)))return false;
             if ((std::to_integer<unsigned>(ps[2])>=2 && std::to_integer<unsigned>(ps[2])<=3) ||
-                (!climbing && (((*reinterpret_cast<const std::uint32_t*>(ps+0x58)&0x103000) && !vehicles::presentation_allowed()) ||
+                (!climbing && (((*reinterpret_cast<const std::uint32_t*>(ps+0x58)&0x103000) && !vehicles::presentation_allowed() && !barrett_gun::epoch()) ||
                 // Script-disabled weapons leave the hands empty whatever is carried.
                 (!disarmed && !weapons::carry::active() && ((*reinterpret_cast<const std::uint32_t*>(ps+0x38c)&0x1ff) ||
                     vr::h2::sp::weapon_selection_request.read())) ||
@@ -374,7 +375,7 @@ namespace vr::gameplay::hands::empty_native
 				add_hook.invoke<void>(client);return;
 			}
 			// Turret/vehicle gun: the native viewmodel hands hold its grips; no VR arms.
-			if(!client && head_pose_bridge::get_status().enabled && view_aimed::mounted())
+			if(!client && head_pose_bridge::get_status().enabled && view_aimed::mounted() && !barrett_gun::epoch())
 			{visible=false;reason="native turret owns the hands";add_hook.invoke<void>(client);return;}
 			if(!client && head_pose_bridge::get_status().enabled && equipment::special::notebook::camera_epoch())
 			{
@@ -392,7 +393,7 @@ namespace vr::gameplay::hands::empty_native
             // Weapons disabled by script (briefings, scripted walks): the arms
             // stay tracked and empty; only the held firearm is withheld.
             const bool disarmed=!client && scripted_control::predicted_disarmed();
-            if (!client && !scripted_control::predicted_allowed() && !disarmed && !climbing &&
+            if (!client && !scripted_control::predicted_allowed() && !disarmed && !climbing && !barrett_gun::epoch() &&
 				(player_life::dead(game::CG_GetPredictedPlayerState(0)) || !vehicles::presentation_allowed()))
 			{
 				// Native cinematic props and world bodies remain native-owned.

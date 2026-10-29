@@ -6,7 +6,7 @@
 #include "hands/rig_builder.hpp"
 #include "../controller_input.hpp"
 #include <span>
-namespace game {struct XModel; struct XSurface;}
+namespace game {struct XModel; struct XSurface; struct Material;}
 
 namespace vr::gameplay::weapons::optics
 {
@@ -29,4 +29,9 @@ namespace vr::gameplay::weapons::optics
 	ads_control control_for(const hold&, const controller_input::frame&) noexcept;
 	view present(const binding&, const hold&, const controller_input::frame&, std::span<const hands::bone>,
 		const hands::vec& view_offset, float units, bool ads_requested) noexcept;
+	// A lens held outside the weapon carry (MWR Barrett): center in world units,
+	// zero solve origin; it expires 150 ms after the last call.
+	void present_external(const view&, float units, std::uint64_t reference, std::uint64_t owner) noexcept;
+	// The native color map of a reticle material (0 when not a usable 2D image).
+	std::uintptr_t reticle_for(const game::Material*) noexcept;
 }

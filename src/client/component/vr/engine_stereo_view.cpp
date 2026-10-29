@@ -523,7 +523,9 @@ namespace vr::engine_stereo_view
 	namespace
 	{
 		std::array<std::atomic<float>, 3> latest_placement_lag{};
+		std::atomic_bool far_placement{};
 	}
+	void allow_far_placement(bool allowed) noexcept { far_placement = allowed; }
 	std::array<float, 3> placement_lag() noexcept
 	{
 		return {latest_placement_lag[0].load(), latest_placement_lag[1].load(), latest_placement_lag[2].load()};
@@ -540,7 +542,8 @@ namespace vr::engine_stereo_view
 			std::memcpy(placement.data(), output.left.data() + h2_current_model_placement_origin_offset, sizeof(placement));
 			float energy{};
 			for (std::size_t i = 0; i < 3; ++i) { lag[i] = camera[i] - placement[i]; energy += lag[i] * lag[i]; }
-			if (!std::isfinite(energy) || energy > 64.0f * 64.0f) lag = {};
+			const float limit = far_placement.load(std::memory_order_relaxed) ? 2048.0f : 64.0f;
+			if (!std::isfinite(energy) || energy > limit * limit) lag = {};
 			for (std::size_t i = 0; i < 3; ++i) latest_placement_lag[i].store(lag[i], std::memory_order_relaxed);
 		}
 		if (std::memcmp(output.left.data() + h2_view_origin_offset,

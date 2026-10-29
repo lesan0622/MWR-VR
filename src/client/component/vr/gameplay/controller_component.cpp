@@ -21,6 +21,7 @@
 #include "view_aimed_weapon.hpp"
 #include "javelin_screen.hpp"
 #include "fixed_sniper.hpp"
+#include "barrett_gun.hpp"
 #include "ladder_runtime.hpp"
 #include "game/dvars.hpp"
 #include "game/game.hpp"
@@ -165,6 +166,13 @@ namespace vr::controllers
 				{
 					auto* angles = reinterpret_cast<float*>(client_angles_address);
 					if (gameplay::view_aimed::gunship()) aim_flat_screen(angles, ps);
+					else if (gameplay::barrett_gun::epoch())
+					{
+						// Held Barrett: the barrel sets the native view the script fires along.
+						gunship_aim_at = {};
+						const auto input = controller_input::latest_interaction();
+						(void)gameplay::barrett_gun::command(input, gameplay_allowed(input), cmd, angles, ps);
+					}
 					else if (gameplay::fixed_sniper::current(ps).epoch)
 					{
 						// Fixed sniper (original Overlord): hand drag and the left stick aim,
@@ -240,7 +248,7 @@ namespace vr::controllers
 				cmd->forwardmove = cmd->rightmove = 0;
 				cmd->buttons &= ~(game::BUTTON_JUMP | game::BUTTON_SPRINT | game::BUTTON_DUCK | game::BUTTON_PRONE);
 			}
-			const bool sniper = gameplay::fixed_sniper::current().epoch != 0;
+			const bool sniper = gameplay::fixed_sniper::current().epoch != 0 || gameplay::barrett_gun::epoch() != 0;
 			const auto button_state = buttons.consume(input, gameplay && !climbing && !sniper, now);
 			auto button_mask = button_state.held;
 			const auto* posture_ps = game::CG_GetPredictedPlayerState(0);

@@ -11,6 +11,7 @@
 #include "../native_shield.hpp"
 #include "../native_scripted_control.hpp"
 #include "../view_aimed_weapon.hpp"
+#include "../barrett_gun.hpp"
 #include "../mounted_turret.hpp"
 #include "../weapon_carry_runtime.hpp"
 #include "../weapon_carry_pose.hpp"
@@ -701,14 +702,15 @@ namespace vr::gameplay::hands
 				original();
 				return;
 			}
-			// Turret/vehicle gun: keep the native hands on its grips.
-			if (view_aimed::mounted())
+			// Turret/vehicle gun: keep the native hands on its grips (the held
+			// Barrett uses the independent empty hands).
+			if (view_aimed::mounted() && !(empty && barrett_gun::epoch()))
 			{
 				original();
 				return;
 			}
 			if (!scripted_control::predicted_allowed() &&
-			    !(empty && (scripted_control::predicted_disarmed() || vehicles::presentation_allowed() || cliffhanger_physical::independent_hands() ||
+			    !(empty && (scripted_control::predicted_disarmed() || barrett_gun::epoch() || vehicles::presentation_allowed() || cliffhanger_physical::independent_hands() ||
 			                sequences::independent_hands(game::CG_GetPredictedPlayerState(0)))))
 			{
 				original();
@@ -1064,6 +1066,8 @@ namespace vr::gameplay::hands
 				cliffhanger_physical::constrain_hands(
 				    targets, solver().binding.equipment_parts.basis, view_offset, input.reference_generation);
 				ending::constrain_hands(
+				    targets, solver().binding.equipment_parts.basis, view_offset, input.reference_generation);
+				barrett_gun::constrain_hands(
 				    targets, solver().binding.equipment_parts.basis, view_offset, input.reference_generation);
 			}
 			const auto equipment_targets = targets;

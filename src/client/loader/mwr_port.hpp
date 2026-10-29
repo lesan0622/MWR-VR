@@ -79,6 +79,7 @@ namespace mwr_port
 		"vr::gameplay::weapons::javelin_screen", // Javelin CLU display at the eye; lock gate via playerads.
 		"vr::gameplay::weapons::launcher::native_component", // Javelin lock projection from the launcher (Target_IsInRect).
 		"vr::gameplay::fixed_sniper", // sniperescape Barrett: hand-drag/stick aim, flat native scope view.
+		"vr::gameplay::barrett_gun", // sniperescape Barrett held as a VR rifle (physical scope); replaces fixed_sniper there.
 		"vr::gameplay::c4_detonator", // maps/_c4 detonator: trigger press sends the player's "detonate".
 	};
 

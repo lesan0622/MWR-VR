@@ -3,6 +3,7 @@
 #include "fixed_sniper_hand_aim.hpp"
 #include "native_carry.hpp"
 #include "view_aimed_weapon.hpp"
+#include "barrett_gun.hpp"
 #include "../settings.hpp"
 #include "../diagnostics/report_paths.hpp"
 #include "component/command.hpp"
@@ -55,7 +56,9 @@ namespace vr::gameplay::fixed_sniper
 					why="weapon_or_turret_owner_mismatch";
 					// MWR: turret entity +0x138 is its turretInfo (G_IsTurretUsable 0x1403086B0);
 					// the H2 +0x10C owner-state check is not rebound.
-					if(name && accepts(ps->e_flags,entity,{name,strnlen_s(name,128)}) && read<void*>(ent,0x138))
+					// MWR: the held Barrett (barrett_gun) replaces the flat scope unless disabled.
+					if(name && barrett_gun::enabled() && std::string_view(name,strnlen_s(name,128))==mwr_barrett_turret)why="held_barrett_gun";
+					else if(name && accepts(ps->e_flags,entity,{name,strnlen_s(name,128)}) && read<void*>(ent,0x138))
 					{next.entity=entity;next.time=ps->commandTime;next.player=reinterpret_cast<std::uintptr_t>(ps);generation=weapons::native_carry::entity_key(entity).generation;why="admitted";}
 				}
 			}

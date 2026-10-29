@@ -12,6 +12,9 @@ namespace vr::engine_stereo_view
 	// MWR: camera origin (+0x100) minus skinned placement (+0x190) of the latest
 	// natural scene record. The placement trails the camera while the player moves.
 	std::array<float, 3> placement_lag() noexcept;
+	// A mounted turret view (sniperescape Barrett) sits hundreds of units from the
+	// player's skinned placement; accept that offset instead of the 64-unit guard.
+	void allow_far_placement(bool) noexcept;
 	inline constexpr std::size_t h2_view_slot_size = 0x170;
 	inline constexpr std::size_t h2_scene_record_size = 0x7B80;
 	inline constexpr std::size_t h2_frontend_rebase_view_offset = 0x2A10;

@@ -11,6 +11,7 @@
 #include "../vehicles/runtime.hpp"
 #include "../reload_item_runtime.hpp"
 #include "../c4_detonator.hpp"
+#include "../barrett_gun.hpp"
 #include "../hand_interaction/runtime.hpp"
 #include "game/game.hpp"
 
@@ -120,6 +121,7 @@ namespace vr::gameplay::hands
 		const auto tokens =
 		    reload_items::present(parts, r, input, targets, solved, posed_hands, visible_hands);
 		c4_detonator::present(parts, r, input, targets, solved, posed_hands, visible_hands);
+		barrett_gun::present(parts, r, solved, visible_hands);
 		return {.knife_revision = knife_state.knife.revision, .reload_item_tokens = tokens};
 	}
 }

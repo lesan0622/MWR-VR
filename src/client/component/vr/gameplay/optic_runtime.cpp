@@ -50,6 +50,15 @@ namespace vr::gameplay::weapons::optics
 		};
 		std::mutex presented_mutex;
 		presented_lens presented;
+		// MWR sniperescape Barrett (barrett_gun): a lens held outside the weapon
+		// carry, in world units at scene submission. Guarded by presented_mutex.
+		struct external_lens
+		{
+			view optic{};
+			float units{};
+			std::uint64_t reference{}, owner{};
+			controller_input::clock::time_point at{};
+		} external;
 		std::string_view native_name(const char* value) noexcept
 		{
 			return value ? std::string_view(value, strnlen_s(value, 256)) : std::string_view{};
@@ -112,6 +121,7 @@ namespace vr::gameplay::weapons::optics
 			}
 			const auto owner = current_hold();
 			weapon_render_pose::snapshot pose;
+			external_lens outside;
 			if (!weapon_render_pose::available())
 			{
 				const std::lock_guard lock(presented_mutex);
@@ -119,8 +129,18 @@ namespace vr::gameplay::weapons::optics
 				pose.muzzle.optic = presented.optic;
 				pose.muzzle.units_per_meter = presented.units;
 				pose.muzzle.reference_generation = presented.reference;
+				outside = external;
 			}
-			if (!owner.can_fire() ||
+			const auto now = controller_input::clock::now();
+			const bool held_outside = outside.owner && outside.optic.active && now >= outside.at &&
+			                          now - outside.at <= std::chrono::milliseconds(150);
+			if (held_outside)
+			{
+				pose.muzzle.optic = outside.optic;
+				pose.muzzle.units_per_meter = outside.units;
+				pose.muzzle.reference_generation = outside.reference;
+			}
+			else if (!owner.can_fire() ||
 			    (weapon_render_pose::available() && !weapon_render_pose::for_scene(event.views, pose, owner.id())) ||
 			    pose.muzzle.owner.id() != owner.id() || pose.muzzle.owner.rear != owner.rear ||
 			    pose.muzzle.owner.rear_revision != owner.rear_revision || !pose.muzzle.optic.active)
@@ -135,10 +155,10 @@ namespace vr::gameplay::weapons::optics
 				reason = "thermal optic requires verified native scene rendering";
 				return false;
 			}
-			pair.owner = owner.id().weapon;
-			pair.generation = owner.id().generation;
+			pair.owner = held_outside ? outside.owner : owner.id().weapon;
+			pair.generation = held_outside ? 0 : owner.id().generation;
 			pair.reference = pose.muzzle.reference_generation;
-			pair.revision = owner.rear_revision;
+			pair.revision = held_outside ? 0 : owner.rear_revision;
 			if (!valid_model_anchor(lens.center))
 			{
 				reason = "invalid lens anchor";
@@ -158,6 +178,7 @@ namespace vr::gameplay::weapons::optics
 			auto placement = event.model_origins.placement;
 			const auto lag = render_origin_rebase::solve_lag();
 			for (int i = 0; i < 3; ++i) placement[i] += lag[i];
+			if (held_outside) placement = {}; // Already world, placed at scene submission.
 			const auto center = place_model_anchor(lens.center, placement);
 			for (unsigned eye = 0; eye < 2; ++eye)
 			{
@@ -580,6 +601,28 @@ namespace vr::gameplay::weapons::optics
 			presented = {owner, result, units, input.reference_generation};
 		}
 		return result;
+	}
+	void present_external(const view& lens, float units, std::uint64_t reference, std::uint64_t owner) noexcept
+	{
+		const std::lock_guard lock(presented_mutex);
+		if (!alive.load() || !enabled || !enabled->current.enabled || !owner || !lens.active ||
+		    !valid_model_anchor(lens.center) || !std::isfinite(units) || units <= 0 || units > 10000)
+		{
+			external = {};
+			return;
+		}
+		external = {lens, units, reference, owner, controller_input::clock::now()};
+	}
+	std::uintptr_t reticle_for(const game::Material* material) noexcept
+	{
+		try
+		{
+			return reticle_image(material);
+		}
+		catch (...)
+		{
+			return 0;
+		}
 	}
 	class component final : public component_interface
 	{
