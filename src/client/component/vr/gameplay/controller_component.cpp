@@ -19,6 +19,7 @@
 #include "optic_runtime.hpp"
 #include "physical_reload_runtime.hpp"
 #include "view_aimed_weapon.hpp"
+#include "javelin_screen.hpp"
 #include "ladder_runtime.hpp"
 #include "game/dvars.hpp"
 #include "game/game.hpp"
@@ -77,6 +78,7 @@ namespace vr::controllers
 		std::atomic_uint64_t reload_notify_count{};
 		constexpr int reload_binding = 75; // MWR command whitelist "+reload"
 		std::atomic_bool ads_requested{};
+		bool javelin_open{};
 		std::atomic_uint64_t ads_command_count{}, attack_notify_count{}, ads_notify_count{};
 		controller_input::locomotion locomotion;
 		controller_input::command_buttons buttons;
@@ -257,7 +259,9 @@ namespace vr::controllers
 			}
 			// Right trigger fires, right B reloads (+usereload). Native weapon
 			// state, ammunition and fire rate keep authority over the request.
-			if (gameplay && input.trigger[1].active && input.trigger[1].down)
+			// Javelin fires only from an open display, after a fresh trigger press.
+			if (gameplay && input.trigger[1].active && input.trigger[1].down &&
+				gameplay::weapons::javelin_screen::allows_fire(gameplay::weapons::sample_native_equipped()))
 			{
 				cmd->buttons |= attack_button;
 				++attack_count;
@@ -376,12 +380,26 @@ namespace vr::controllers
 					++ads_notify_count;
 				}
 				ads_requested=requested;
-				// Lock launchers (Javelin CLU, Stinger): a controller at the eyes raises
-				// the native ADS lock view, presented flat and aimed by the head. The
-				// trigger fires natively once the game has its lock.
+				// Javelin (Overlord javelin_screen): the CLU eyepiece at the eye opens the
+				// independent display and holds native ADS; the camera follows the launcher.
+				gameplay::weapons::javelin_screen::input(input,owner,gameplay_allowed(input) && normal_input_seen &&
+					gameplay::scripted_control::predicted_allowed());
+				const bool javelin=gameplay::weapons::javelin_screen::enabled() &&
+					gameplay::weapons::current_muzzle().profile_id=="javelin";
+				if (javelin)
+				{
+					const bool open=gameplay::weapons::javelin_screen::requested(owner);
+					if (open!=javelin_open && binding_verified)
+						utils::hook::invoke<void>(notify_command_address,local_client,open ? 17 : 18,0);
+					javelin_open=open;
+					if (open) result->buttons|=game::BUTTON_ADS;
+				}
+				else javelin_open=false;
+				// Stinger: a controller at the eyes raises the native ADS lock view,
+				// presented flat and aimed by the head. The trigger fires natively.
 				bool sight=false;
 				head_pose_bridge::tracking_reference reference;
-				if (gameplay_allowed(input) && gameplay::view_aimed::lock_launcher(result->weapon) &&
+				if (!javelin && gameplay_allowed(input) && gameplay::view_aimed::lock_launcher(result->weapon) &&
 					head_pose_bridge::get_tracking_reference(reference) && reference.generation==input.reference_generation)
 				{
 					float nearest=INFINITY;
@@ -399,7 +417,7 @@ namespace vr::controllers
 				gameplay::view_aimed::launcher_sight=sight;
 				if (sight) result->buttons|=game::BUTTON_ADS;
 			}
-			else if (local_client==0) {ads.reset(); ads_requested=false; gameplay::weapons::optics::request({},{},{});}
+			else if (local_client==0) {ads.reset(); ads_requested=false; gameplay::weapons::optics::request({},{},{}); gameplay::weapons::javelin_screen::input({},{},false);}
 			if (local_client == 0 && result)
 				head_pose_bridge::record_game_command(result->serverTime, result->angles[0], tracked_view_applied);
 			if (!normal_input_seen)

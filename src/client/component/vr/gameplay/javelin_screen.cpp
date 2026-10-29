@@ -14,6 +14,8 @@
 #include "component/command.hpp"
 #include "component/console.hpp"
 #include "component/scripting.hpp"
+#include "component/scheduler.hpp"
+#include "game/scripting/execution.hpp"
 #include "game/scripting/functions.hpp"
 #include "game/dvars.hpp"
 #include "game/game.hpp"
@@ -57,12 +59,16 @@ namespace vr::gameplay::weapons::javelin_screen
 		utils::hook::detour player_ads_hook;
 		std::atomic<const char*> lock_ads_call{};
 		std::atomic_uint64_t lock_ads_overrides{};
+		// Diagnostics: last lock-gate inputs and camera FOV (MWR bring-up).
+		std::atomic_uint32_t gate_bits{};std::atomic_int gate_loaded{},gate_state{},gate_time{};
+		std::atomic<float> fov_in_x{},fov_in_y{},fov_out_y{},plan_half_y{};
 		struct pair_state
 		{
 			std::uint64_t pair{}, publication{}, device{}, epoch{};
 			std::shared_ptr<const native_hud_capture::frame> ink;
 			std::array<spatial_panel::projected_quad, 2> canvas{};
 			auxiliary_scene::request request{};
+			std::array<std::array<float, 4>, 2> windows{}; // MWR: per-eye crop of the eye image.
 		};
 		thread_local pair_state pair;
 		thread_local spatial_panel::renderer renderer;
@@ -100,28 +106,25 @@ namespace vr::gameplay::weapons::javelin_screen
 			                   lock_gate_ready(near_eye, ammo.loaded, ammo.weapon_state, ammo.weapon_time);
 			game::scr_VmPub->top->u.floatValue = ready ? 1.f : 0.f;
 			++lock_ads_overrides;
+			gate_bits = unsigned(near_eye) | unsigned(ammo.valid) << 1 | unsigned(ammo.id() == owner.id()) << 2 | unsigned(ready) << 3;
+			gate_loaded = ammo.loaded; gate_state = ammo.weapon_state; gate_time = ammo.weapon_time;
 		}
 		void bind_lock_gate()
 		{
 			lock_ads_call = nullptr;
-			const auto file = scripting::script_function_table_sort.find(scripting::get_token_single(44133));
-			if (file == scripting::script_function_table_sort.end())
+			// MWR: no GSC thread-position table (H2 read file 44133 / function 0xBCBD).
+			// The VM runs maps/_javelin straight from its ScriptFile bytecode.
+			struct context { const game::ScriptFile* file{}; } found;
+			game::DB_EnumXAssets_Internal(game::ASSET_TYPE_SCRIPTFILE, [](game::XAssetHeader header, void* data)
+			{
+				if (header.scriptfile && header.scriptfile->name && std::string_view(header.scriptfile->name) == "maps/_javelin")
+					static_cast<context*>(data)->file = header.scriptfile;
+			}, &found, false);
+			const auto* file = found.file;
+			if (!file || !file->bytecode || file->bytecodeLen <= 0)
 				return;
-			const auto name = scripting::get_token_single(0xbcbd);
-			const char* begin{};
-			const char* end{};
-			for (const auto& entry : file->second)
-				if (entry.first == name)
-					begin = entry.second;
-			if (!begin)
-				return;
-			for (const auto& entry : file->second)
-				if (entry.second > begin && (!end || entry.second < end))
-					end = entry.second;
-			if (!end)
-				return;
-			const auto call = full_ads_call(
-			    {reinterpret_cast<const std::uint8_t*>(begin), std::size_t(end - begin)}, 0x834b);
+			const auto call = single_full_ads_call(
+			    {reinterpret_cast<const std::uint8_t*>(file->bytecode), std::size_t(file->bytecodeLen)}, 0x833d);
 			if (!call)
 			{
 				console::warn("[VR Javelin] native lock ADS script contract rejected\n");
@@ -134,7 +137,8 @@ namespace vr::gameplay::weapons::javelin_screen
 				    0x48, 0x83, 0xec, 0x28, 0x8b, 0xc1, 0xc1, 0xe8, 0x10, 0x66, 0x85, 0xc0};
 				std::array<std::uint8_t, sizeof(entry)> mask{};
 				mask.fill(255);
-				if (reinterpret_cast<std::uintptr_t>(method) != 0x1404B4DB0 ||
+				// MWR PlayerADS 0x14028FCC0 (H2 0x1404B4DB0); identical entry bytes.
+				if (reinterpret_cast<std::uintptr_t>(method) != 0x14028FCC0 ||
 				    !utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(method),
 				                                                 {entry, mask.data(), mask.size()}))
 				{
@@ -143,11 +147,11 @@ namespace vr::gameplay::weapons::javelin_screen
 				}
 				player_ads_hook.create(reinterpret_cast<void*>(method), player_ads);
 			}
-			lock_ads_call = begin + *call;
+			lock_ads_call = file->bytecode + *call;
 		}
 		bool hud_active(int local_client)
 		{
-			const bool native = utils::hook::invoke<bool>(0x1403B9780, local_client);
+			const bool native = utils::hook::invoke<bool>(0x140193490, local_client); // H2 0x1403B9780
 			++hud_watch_calls;
 			const auto finish=[&](bool result,bool overridden=false)
 			{hud_watch_result=(native?1u:0u)|(result?2u:0u)|(overridden?4u:0u);if(overridden)++hud_watch_overrides;return result;};
@@ -253,7 +257,7 @@ namespace vr::gameplay::weapons::javelin_screen
 				                  head.local_orientation,
 				                  fixed_sniper::head_gain()))
 				{observed.rejected|=probe::plane;return {};}
-				engine_stereo_bridge::eye_projection source;
+				std::array<engine_stereo_bridge::eye_projection, 2> sources;
 				for (unsigned eye = 0; eye < 2; ++eye)
 				{
 					engine_stereo_bridge::eye_projection projection;
@@ -264,19 +268,23 @@ namespace vr::gameplay::weapons::javelin_screen
 					                   canvas_height,
 					                   pair.canvas[eye]))
 					{observed.rejected|=probe::projection;return {};}
-					if (!eye)
-						source = projection;
+					sources[eye] = projection;
 				}
 				auxiliary_scene::request request;
 				const float half_y = event.views.native_tan_half[1];
+				plan_half_y = half_y;
 				observed.stage="plan_crop";
-				if (!screen_scope::window(source, half_y * canvas_aspect, half_y, request.window) ||
-				    !auxiliary_scene::valid_window(request.window))
-				{
-					reason = "native Javelin FOV rejected";
-					observed.rejected|=probe::window;observed.crop=request.window;
-					return {};
-				}
+				// MWR: the auxiliary scene view renders black, so each eye's own
+				// image (already at the muzzle camera) supplies its central crop.
+				for (unsigned eye = 0; eye < 2; ++eye)
+					if (!screen_scope::window(sources[eye], half_y * canvas_aspect, half_y, pair.windows[eye]) ||
+					    !auxiliary_scene::valid_window(pair.windows[eye]))
+					{
+						reason = "native Javelin FOV rejected";
+						observed.rejected|=probe::window;observed.crop=pair.windows[eye];
+						return {};
+					}
+				request.window = pair.windows[0];
 				request.eye = 0;
 				request.owner = state.owner.weapon;
 				request.generation = state.owner.instance_generation;
@@ -288,7 +296,7 @@ namespace vr::gameplay::weapons::javelin_screen
 				pair.request = request;
 				observed.stage="planned";observed.crop=request.window;observed.success=true;
 				++planned;
-				return request;
+				return {};
 			}
 			catch (...)
 			{
@@ -299,7 +307,7 @@ namespace vr::gameplay::weapons::javelin_screen
 		}
 		void compose(const eye_composition::event& event,
 		             ID3D11DeviceContext* context,
-		             ID3D11ShaderResourceView*,
+		             ID3D11ShaderResourceView* source,
 		             ID3D11RenderTargetView* target) noexcept
 		{
 			auto observed=probe::observation(event,event.views.weapon_display_epoch,GetTickCount64());observed.stage="compose";
@@ -321,44 +329,34 @@ namespace vr::gameplay::weapons::javelin_screen
 			};
 			try
 			{
-				const auto* request = event.auxiliary;
 				probe::check(observed.rejected,pair.pair==event.pair_id,probe::pair);
 				probe::check(observed.rejected,pair.publication==event.views.eyes[event.eye].publication,probe::publication);
 				probe::check(observed.rejected,pair.device==event.device_generation,probe::device);
 				probe::check(observed.rejected,pair.epoch==event.views.weapon_display_epoch,probe::epoch);
 				if(pair.ink)probe::check(observed.rejected,pair.ink->context==observed.context,probe::hud_context);
-				probe::check(observed.rejected,request&&request->valid,probe::auxiliary_missing);
-				probe::check(observed.rejected,event.auxiliary_image!=nullptr,probe::auxiliary_image);
-				if(request)
-				{
-					probe::check(observed.rejected,request->native_center,probe::auxiliary_mode);
-					probe::check(observed.rejected,request->owner==pair.request.owner,probe::auxiliary_owner);
-					probe::check(observed.rejected,request->generation==pair.request.generation,probe::auxiliary_generation);
-					probe::check(observed.rejected,request->revision==pair.epoch,probe::epoch);
-					probe::check(observed.rejected,request->reference==pair.request.reference,probe::auxiliary_reference);
-				}
+				probe::check(observed.rejected,source!=nullptr,probe::auxiliary_image);
 				observed.canvas_min_w=observed.canvas_max_w=pair.canvas[event.eye][0][3];
 				for(const auto& corner:pair.canvas[event.eye]){observed.canvas_min_w=(std::min)(observed.canvas_min_w,corner[3]);observed.canvas_max_w=(std::max)(observed.canvas_max_w,corner[3]);}
 				if (pair.pair != event.pair_id ||
 				    pair.publication != event.views.eyes[event.eye].publication ||
 				    pair.device != event.device_generation ||
-				    pair.epoch != event.views.weapon_display_epoch ||
-				    (pair.ink && pair.ink->context != reinterpret_cast<std::uintptr_t>(context)) ||
-				    !request || !request->valid || !request->native_center || !event.auxiliary_image ||
-				    request->owner != pair.request.owner || request->generation != pair.request.generation ||
-				    request->revision != pair.epoch || request->reference != pair.request.reference)
+				    pair.epoch != event.views.weapon_display_epoch || !pair.request.valid ||
+				    (pair.ink && pair.ink->context != reinterpret_cast<std::uintptr_t>(context)) || !source)
 				{
 					reason = "display frame unavailable";
 					fail();
 					return;
 				}
 				if (!renderer.draw_screen_scope(context,
-				                                event.auxiliary_image,
+				                                source,
 				                                pair.ink ? pair.ink->view.Get() : nullptr,
 				                                target,
 				                                pair.canvas[event.eye],
 				                                event.width,
-				                                event.height))
+				                                event.height,
+				                                nullptr,
+				                                nullptr,
+				                                pair.windows[event.eye]))
 				{
 					reason = "display composition rejected";
 					probe::draw_result(observed,renderer.last_scope_draw());
@@ -396,6 +394,10 @@ namespace vr::gameplay::weapons::javelin_screen
 			age(state.at),state.epoch,state.reference,state.owner.weapon,state.owner.instance_generation,state.owner.rear_revision,view.epoch,age(view.at),view.aim.valid,
 			auxiliary_scene::weapon_display_plan.load()!=nullptr,planned.load(),drawn.load(),missing.load(),reason.load(),
 			view.aim.position[0],view.aim.position[1],view.aim.position[2],view.aim.axis[0][0],view.aim.axis[0][1],view.aim.axis[0][2])+
+			std::format("  gate near/valid/id/ready={}/{}/{}/{} loaded={} state={} time={} fov_in={},{} fov_out_y={} plan_half_y={} projection calls/rejected/projected={}/{}/{}\n",
+				bool(gate_bits&1),bool(gate_bits&2),bool(gate_bits&4),bool(gate_bits&8),gate_loaded.load(),gate_state.load(),gate_time.load(),
+				fov_in_x.load(),fov_in_y.load(),fov_out_y.load(),plan_half_y.load(),
+				launcher::native_statistics()[1],launcher::native_statistics()[2],launcher::native_statistics()[0])+
 			std::format("  input_gate={} hud_watch_calls={} overrides={} last_native/returned/override={}/{}/{}\n",gate,
 				hud_watch_calls.load(),hud_watch_overrides.load(),bool(watch_result&1),bool(watch_result&2),bool(watch_result&4))+
 			probe::javelin_scope.format("Javelin display stages",GetTickCount64());
@@ -406,7 +408,10 @@ namespace vr::gameplay::weapons::javelin_screen
 		const auto now = controller_input::clock::now();
 		const bool valid = enabled() && allowed && muzzle.profile_id == "javelin" &&
 		                   ready(muzzle, owner, frame.reference_generation, now);
-		const bool loaded = valid && launcher::current(owner.id()).loaded > 0;
+		// MWR: no launcher runtime; the native clip is the loaded state.
+		const auto* ps = game::g_entities[0].client;
+		const auto ammo = valid && ps ? native_ammunition::observe(ps) : native_ammunition::snapshot{};
+		const bool loaded = ammo.valid && ammo.id() == owner.id() && ammo.loaded > 0;
 		const std::lock_guard lock(mutex);
 		// Button entry/exit is temporarily disabled for the near-eye ADS trial.
 		// static controls buttons; const auto next=buttons.consume(frame,owner,valid,now);
@@ -489,8 +494,10 @@ namespace vr::gameplay::weapons::javelin_screen
 				std::copy(muzzle.axis[i].begin(), muzzle.axis[i].end(), axis[i]);
 			// Preserve optical framing during native reload and ADS interpolation.
 			// HUD projection sees this same corrected widescreen camera.
+			fov_in_x = tan_half[0]; fov_in_y = tan_half[1];
 			tan_half[0] = half_y * canvas_aspect;
 			tan_half[1] = half_y;
+			fov_out_y = half_y;
 		}
 		const std::lock_guard lock(mutex);
 		camera = next;
@@ -508,13 +515,13 @@ namespace vr::gameplay::weapons::javelin_screen
 			// UIIntWatch's JavelinActive case: CALL followed by TEST AL,AL and
 			// SETNE into its integer result. Do not detour the shared getter: its
 			// other callers include target drawing and non-UI native code.
-			constexpr std::uint8_t watch[]{0xe8, 0x76, 0x35, 0x06, 0x00, 0x84, 0xc0, 0xb0, 0x01};
+			constexpr std::uint8_t watch[]{0xe8, 0x46, 0x1c, 0x06, 0x00, 0x84, 0xc0, 0xb0, 0x01};
 			std::array<std::uint8_t, sizeof(watch)> mask{};
 			mask.fill(255);
 			hud_watch_ready = bool(utils::hook_validation::verify_masked_bytes(
-			    reinterpret_cast<void*>(0x140356205), {watch, mask.data(), mask.size()}));
+			    reinterpret_cast<void*>(0x140131845), {watch, mask.data(), mask.size()})); // H2 0x140356205
 			if (hud_watch_ready)
-				utils::hook::call(0x140356205, hud_active);
+				utils::hook::call(0x140131845, hud_active);
 			else
 				console::error(
 				    "[VR Javelin display] HUD watch contract rejected; native HUD timing retained\n");
@@ -537,6 +544,28 @@ namespace vr::gameplay::weapons::javelin_screen
 				    const auto path=diagnostics::save_named_report("overlord-javelin-display.txt",report);
 				    if(path.empty())console::error("[VR Javelin display] Report save failed\n");
 				    else console::info("[VR Javelin display] Saved %s\n",diagnostics::report_path_text(path).c_str());
+			    });
+			// Test aid: vr_javelin_target <entnum> registers a native Javelin target
+			// (target_set) and prints the target array size.
+			::command::add(
+			    "vr_javelin_target",
+			    [](const ::command::params& params)
+			    {
+				    const int entnum = params.size() > 1 ? std::atoi(params.get(1)) : -1;
+				    scheduler::once([entnum]
+				    {
+					    try
+					    {
+						    if (entnum >= 0)
+							    scripting::call("target_set", {scripting::call("getentbynum", {entnum})});
+						    const auto targets = scripting::call("target_getarray", {}).as<scripting::array>();
+						    console::info("[VR Javelin] target %d set; targets=%u\n", entnum, unsigned(targets.size()));
+					    }
+					    catch (const std::exception& error)
+					    {
+						    console::error("[VR Javelin] target command failed: %s\n", error.what());
+					    }
+				    }, scheduler::pipeline::server);
 			    });
 		}
 		void pre_destroy() override

@@ -76,6 +76,8 @@ namespace mwr_port
 		"vr::gameplay::ladders", // Physical ladder grips (vr_physicalLadders 0 keeps the native ladder).
 		"vr::gameplay::ammo_counter", // Held gun's loaded/reserve count above its wrist.
 		"vr::stereo_postfx", // Camera motion blur off in stereo (per-eye reprojection smears a rectangle).
+		"vr::gameplay::weapons::javelin_screen", // Javelin CLU display at the eye; lock gate via playerads.
+		"vr::gameplay::weapons::launcher::native_component", // Javelin lock projection from the launcher (Target_IsInRect).
 	};
 
 	// typeid names look like "class vr::gameplay::foo::component".

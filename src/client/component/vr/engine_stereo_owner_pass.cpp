@@ -37,6 +37,8 @@ namespace vr::engine_stereo_owner_pass
 {
 	namespace
 	{
+		// Debug aid (vr_debug_aux_eye 1): the right eye shows the raw auxiliary image.
+		std::atomic_int debug_aux_eye{};
 		constexpr std::uint32_t maximum_query_polls = 240;
 		constexpr std::uintptr_t h2_gpu_context_mutex_handle = 0x141167910;
 		constexpr DWORD h2_gpu_context_mutex_timeout_ms = 100;
@@ -1861,6 +1863,8 @@ namespace vr::engine_stereo_owner_pass
 				active.completed_eye_mask|=1u;active.current_view=auxiliary_scene::no_view;
 				return true;
 			}
+			if (eye==1 && debug_aux_eye.load() && active.auxiliary_complete && active.auxiliary_image.color)
+				active.context->CopyResource(display_source.Get(),active.auxiliary_image.color.Get());
 			composition.auxiliary=&active.auxiliary;
 			composition.auxiliary_image=active.auxiliary_complete ? active.auxiliary_image.view.Get() : nullptr;
 			const auto copied = native_render_session::active().copy_eye(
@@ -2695,4 +2699,5 @@ namespace vr::engine_stereo_owner_pass
 		}
 	}
 
+	void set_debug_aux_eye(int value) noexcept { debug_aux_eye = value; }
 }

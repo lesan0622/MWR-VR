@@ -19,7 +19,7 @@ namespace vr::gameplay::weapons::javelin_screen
 	{
 		using namespace hands;
 		if(!valid_geometry(muzzle) || !std::isfinite(muzzle.units_per_meter) || muzzle.units_per_meter<=0 || muzzle.units_per_meter>10000)return false;
-		const auto* contract=reviewed_muzzle("h2_viewmodel_javelin_base");
+		const auto* contract=reviewed_muzzle("viewmodel_javelin") /* MWR model; H2 h2_viewmodel_javelin_base */;
 		if(!contract)return false;
 		const auto transform=[&](vec v) {
 			v=rotate(conjugate(normalize(contract->muzzle.rotation)),v);vec world{};

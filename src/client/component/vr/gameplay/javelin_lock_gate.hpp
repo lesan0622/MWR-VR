@@ -26,6 +26,21 @@ namespace vr::gameplay::weapons::javelin_screen
 		}
 		return methods==2 && full==1 && partial==1 ? std::optional{continuation} : std::nullopt;
 	}
+	// MWR maps/_javelin has one playerads() call, the full-ADS test, and no
+	// pickup-suppression test. Scan the whole file for it.
+	inline std::optional<std::size_t> single_full_ads_call(std::span<const std::uint8_t> code,std::uint16_t method) noexcept
+	{
+		unsigned methods{},full{};std::size_t continuation{};
+		constexpr std::uint8_t complete[]{0x2b,0,0,0x80,0x3f,0x61,0xb0,2,0,0x79,0x19};
+		for(std::size_t i=0;i+4<=code.size();++i)
+		{
+			if(code[i]!=0x41 || code[i+1]!=0xa9 || code[i+2]!=(method&255) || code[i+3]!=(method>>8))continue;
+			++methods;bool matches=i+4+sizeof(complete)<=code.size();
+			for(std::size_t n=0;matches && n<sizeof(complete);++n)matches=code[i+4+n]==complete[n];
+			if(matches){++full;continuation=i+4;}
+		}
+		return methods==1 && full==1 ? std::optional{continuation} : std::nullopt;
+	}
 	inline bool lock_gate_ready(bool near_eye,int loaded,int native_state,int native_time) noexcept
 	{
 		// Ammo insertion alone may precede native reload completion. Wait for

@@ -155,7 +155,7 @@ float4 scope_ps(Vertex v) : SV_Target {
     float2 uv = v.uv; // Perspective-correct coordinates on the anchored 3D plane.
     if (any(uv < 0) || any(uv > 1)) return float4(0,0,0,1);
     float4 fg = backdrop_count.w > 0 ? ink.Sample(linear_clamp,uv) : float4(0,0,0,0);
-    float3 bg = scene.Sample(linear_clamp,uv);
+    float3 bg = scene.Sample(linear_clamp,source_window.xy+uv*source_window.zw); // identity window for an auxiliary image
     if (backdrop_count.z > 0) {
         float4 flash = scope_flash.Sample(linear_clamp,uv);
         bg = saturate(flash.rgb + bg*(1-flash.a));
@@ -549,13 +549,13 @@ float4 recording_ps(Vertex v) : SV_Target {
 		return draw_internal(context,background,reticle,target,corners,width,height,0,0,optic,false,true,scene_depth,source_window,{},pupil_radius,false,nullptr,nullptr,blur_mode::none,eye_box_scale);
 	}
 	bool renderer::draw_screen_scope(ID3D11DeviceContext* context,ID3D11ShaderResourceView* scene,ID3D11ShaderResourceView* ink,
-		ID3D11RenderTargetView* target,const projected_quad& canvas,unsigned width,unsigned height,ID3D11ShaderResourceView* shadow,ID3D11ShaderResourceView* flash) noexcept
+		ID3D11RenderTargetView* target,const projected_quad& canvas,unsigned width,unsigned height,ID3D11ShaderResourceView* shadow,ID3D11ShaderResourceView* flash,const vec4& source_window) noexcept
 	{
 		scope_status_={"canvas",0,false};
 		for(const auto& corner:canvas)for(float x:corner)if(!std::isfinite(x) || std::abs(x)>100)return false;
 		// Nonzero plane edges are required, including when it lies behind the eye.
 		if(canvas[0]==canvas[1] || canvas[0]==canvas[2])return false;
-		return draw_internal(context,scene,ink,target,canvas,width,height,0,0,{},false,false,nullptr,{0,0,1,1},{},1,true,shadow,flash);
+		return draw_internal(context,scene,ink,target,canvas,width,height,0,0,{},false,false,nullptr,source_window,{},1,true,shadow,flash);
 	}
 	bool renderer::draw_internal(ID3D11DeviceContext* context, ID3D11ShaderResourceView* background,
 		ID3D11ShaderResourceView* ink, ID3D11RenderTargetView* destination,

@@ -1,4 +1,5 @@
 #include <std_include.hpp>
+#include "../engine_stereo_owner_pass.hpp"
 #include "render_origin_rebase.hpp"
 #include "optic_runtime.hpp"
 #include "optic_geometry.hpp"
@@ -579,6 +580,7 @@ namespace vr::gameplay::weapons::optics
 			auxiliary_scene::plan.store(plan_scene);
 			composition_registration =
 			    eye_composition::register_consumer(compose, eye_composition::layer::optics);
+			::command::add("vr_debug_aux_eye",[](const ::command::params& p){engine_stereo_owner_pass::set_debug_aux_eye(p.size()>1?std::atoi(p.get(1)):0);});
 			command::add(
 			    "vr_optics_status",
 			    []

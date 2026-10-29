@@ -11,6 +11,7 @@
 #include "gui/gui.hpp"
 #include "vr/gameplay/ladder_runtime.hpp"
 #include "vr/gameplay/scripted_motion.hpp"
+#include "vr/gameplay/javelin_screen.hpp"
 #include "vr/engine_stereo_renderer.hpp"
 #include "vr/head_pose_bridge.hpp"
 
@@ -209,6 +210,10 @@ namespace camera
 				camera_origin[0] = game::refdef->org[0];
 				camera_origin[1] = game::refdef->org[1];
 				camera_origin[2] = game::refdef->org[2];
+				// Javelin CLU at the eye: only the scene/HUD camera moves to the
+				// launcher (tracking and hand space stay HMD-owned), as on H2.
+				vr::gameplay::weapons::javelin_screen::apply_camera(game::refdef->org, game::refdef->axis,
+					!request.policy.owns_rotation(), &game::refdef->fovX);
 				// MWR: CG_CalcViewValues copies the view origin into refdef.viewOffset
 				// (+0x58, the origin viewmodel DObj matrices and tag queries are relative
 				// to) before this hook applies the HMD pose. H2 recomputed it after the

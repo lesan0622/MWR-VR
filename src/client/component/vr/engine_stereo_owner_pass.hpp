@@ -455,4 +455,5 @@ namespace vr::engine_stereo_owner_pass
 	[[nodiscard]] const char* to_string(gate_state state) noexcept;
 	[[nodiscard]] const char* to_string(failure value) noexcept;
 	[[nodiscard]] const char* to_string(model_state_failure_stage value) noexcept;
+	void set_debug_aux_eye(int) noexcept; // vr_debug_aux_eye (auxiliary view bring-up)
 }

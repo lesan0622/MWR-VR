@@ -42,7 +42,7 @@ namespace vr::spatial_panel
 		// Its exterior is opaque black; ink may be absent during native reload.
 		bool draw_screen_scope(ID3D11DeviceContext*,ID3D11ShaderResourceView* scene,ID3D11ShaderResourceView* ink,
 			ID3D11RenderTargetView*,const projected_quad& canvas,unsigned width,unsigned height,
-			ID3D11ShaderResourceView* shadow=nullptr,ID3D11ShaderResourceView* flash=nullptr) noexcept;
+			ID3D11ShaderResourceView* shadow=nullptr,ID3D11ShaderResourceView* flash=nullptr,const vec4& source_window={0,0,1,1}) noexcept;
 		struct scope_draw_status {const char* stage{"not_attempted"};HRESULT result{};bool result_known{};const char* shader{"none"};};
 		scope_draw_status last_scope_draw() const noexcept {return scope_status_;}
 		// Batch native encoded ink with source-over, then composite once over the
