@@ -614,7 +614,11 @@ namespace vr::gameplay::weapons::carry
 				const auto input = controller_input::latest_interaction();
 				edges.consume(input, false, now);
 				last_sequence = input.sequence;
-				const bool world_use = !dead && sequences::for_player(native.player).allow_world_use &&
+				// MWR: scripts also disable weapons around use prompts (sniperescape
+				// Barrett, also inside its story-rig link). Keep the grip use input and
+				// lease, as world_interaction::scripted_frame does.
+				const bool world_use = !dead && (sequences::for_player(native.player).allow_world_use ||
+				                       scripted_control::player_owns_arms(native.player)) &&
 				                       !equipment::special::notebook::controlling();
 				hand_interaction::suspend(world_use || (!dead && vehicles::active()));
 				if (!world_use)

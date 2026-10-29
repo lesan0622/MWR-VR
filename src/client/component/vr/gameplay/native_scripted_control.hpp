@@ -40,20 +40,34 @@ namespace vr::gameplay::scripted_control
 	}
 	// The player still owns their arms while a script only disables weapons
 	// (briefings, scripted walks). Death, turrets and scripted bodies stay native.
-	inline bool hands_allowed(const void* player_state) noexcept
+	inline bool player_owns_arms(const void* player_state) noexcept
 	{
 		std::uint32_t entity_flags{};
 		bool dead{};
 		return player_state && native_contract() && player_life::read(player_state,dead) && !dead &&
 			utils::native_memory::read_bytes(&entity_flags,static_cast<const std::byte*>(player_state)+offsetof(game::playerState_s,e_flags),sizeof(entity_flags)) &&
 			!mounted::attached(entity_flags) && !sequences::owns_body(player_state) && !sequences::owns_arms(player_state) &&
-			!view_aimed::active() && !scripted_motion::active();
+			!view_aimed::active();
+	}
+	inline bool hands_allowed(const void* player_state) noexcept
+	{
+		return player_owns_arms(player_state) && !scripted_motion::active();
 	}
 	inline bool predicted_disarmed() noexcept
 	{
 		if (!game::CL_IsCgameInitialized()) return false;
 		const auto* ps = game::CG_GetPredictedPlayerState(0);
 		return hands_allowed(ps) && !allowed(ps);
+	}
+	// MWR: a story rig (linked + weapons disabled) gives the arms to the native
+	// rig but may still offer a script use trigger (sniperescape Barrett intro:
+	// playerlinktodelta, then barrett_trigger). Grip world use stays available;
+	// native GetUseList admission still decides what is usable.
+	inline bool predicted_world_use_disarmed() noexcept
+	{
+		if (!game::CL_IsCgameInitialized()) return false;
+		const auto* ps = game::CG_GetPredictedPlayerState(0);
+		return player_owns_arms(ps) && !allowed(ps);
 	}
 	inline bool firing_allowed(const void* player_state) noexcept
 	{
