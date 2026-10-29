@@ -7,6 +7,7 @@
 #include "special_equipment_runtime.hpp"
 #include "hand_interaction/runtime.hpp"
 #include "native_scripted_control.hpp"
+#include "c4_detonator.hpp"
 #include "notebook_runtime.hpp"
 #include "designator_events.hpp"
 #include "native_claymore.hpp"
@@ -1073,7 +1074,8 @@ namespace vr::gameplay::weapons::carry
 		{
 			const auto actor = hand(h);
 			const auto edge = hi::input(actor, hi::button::grip);
-			if (!edge.press || !edge.down || !(valid_hands & (1u << h)) || owned.in_hand(actor))
+			if (!edge.press || !edge.down || !(valid_hands & (1u << h)) || owned.in_hand(actor) ||
+			    c4_detonator::holds(actor)) // The forced detonator hand claims no gun.
 				continue;
 			for (size_t i = 0; i < owned.instances().size(); ++i)
 			{

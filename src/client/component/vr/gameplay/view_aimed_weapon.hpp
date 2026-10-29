@@ -31,8 +31,21 @@ namespace vr::gameplay::view_aimed
 	}
 	// Set by the controller while the held lock launcher's sight is at the eyes.
 	inline std::atomic_bool launcher_sight{};
-	// Native view-aimed fire: the gunship guns, and lock launchers in their sight.
-	inline bool weapon(std::uint32_t token) noexcept { return gunship_weapon(token) || lock_launcher(token); }
+	// maps/_c4 detonator (bog_a ZPU): the script selects "c4" with an empty clip
+	// and waits for the player's native "detonate" notify. No VR hand holds it.
+	inline bool scripted_detonator(std::uint32_t token) noexcept
+	{
+		const auto index = token & 0x1ff;
+		if (!index) return false;
+		const auto* definition = game::weapon_defs[index];
+		const char* name{};
+		std::array<char, 4> text{};
+		return definition && utils::native_memory::read_bytes(&name, &definition->szInternalName, sizeof(name)) && name &&
+		       utils::native_memory::read_bytes(text.data(), name, 3) && std::string_view(text.data(), 3) == std::string_view("c4\0", 3);
+	}
+	// Native view-aimed fire: the gunship guns, lock launchers in their sight and
+	// the scripted C4 detonator.
+	inline bool weapon(std::uint32_t token) noexcept { return gunship_weapon(token) || lock_launcher(token) || scripted_detonator(token); }
 	// The local player's current native weapon (gentity weapon, +0x80) is an AC-130 gun.
 	inline bool gunship() noexcept
 	{

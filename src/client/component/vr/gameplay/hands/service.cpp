@@ -10,6 +10,7 @@
 #include "../campaign/scripted_sequences.hpp"
 #include "../vehicles/runtime.hpp"
 #include "../reload_item_runtime.hpp"
+#include "../c4_detonator.hpp"
 #include "../hand_interaction/runtime.hpp"
 #include "game/game.hpp"
 
@@ -118,6 +119,7 @@ namespace vr::gameplay::hands
 		    parts, r, input, targets, shoulders, axes, units, solved, posed_hands, visible_hands);
 		const auto tokens =
 		    reload_items::present(parts, r, input, targets, solved, posed_hands, visible_hands);
+		c4_detonator::present(parts, r, input, targets, solved, posed_hands, visible_hands);
 		return {.knife_revision = knife_state.knife.revision, .reload_item_tokens = tokens};
 	}
 }

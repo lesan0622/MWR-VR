@@ -267,6 +267,9 @@ namespace vr::gameplay::weapon_capture
 			// used by scripted-control admission (weapon flags, entity flags, life).
 			command::add("vr_capture_ps", []
 			{
+				// Weapon definitions are not valid while a map is still loading
+				// (a mock crashed here reading weapon_defs during loadgame).
+				if (!game::CL_IsCgameInitialized()) { console::info("[VR capture] ps: cgame not initialized\n"); return; }
 				const auto dump = [](const char* label, const void* ps)
 				{
 					if (!ps) { console::info("[VR capture] %s ps=null\n", label); return; }
