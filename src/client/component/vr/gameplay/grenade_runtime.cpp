@@ -2,6 +2,7 @@
 #include "render_origin_rebase.hpp"
 #include "weapon_render_pose.hpp"
 #include "grenade_runtime.hpp"
+#include "held_item_pose.hpp"
 #include "grenade_profile.hpp"
 #include "grenade_contact.hpp"
 #include "part_hand_constraint.hpp"
@@ -306,11 +307,19 @@ namespace vr::gameplay::grenades
 			{
 				const auto& item=s.items[slot];if(!item.value.held() || item.value.stage==phase::release_pending)continue;
 				auto a=s.assets[unsigned(item.value.type)];if(!a)continue;
+				// MWR: held throwables follow the latest tracked wrist (no render-time hand record).
+				auto root=item.root;
+				if(vr::valid_hand(item.value.holder))
+				{
+					const auto h=unsigned(item.value.holder);anchor wrist;
+					if(held_item::visual_wrist(int(h),wrist))
+						root=compose({wrist.position,normalize(multiply(wrist.rotation,s.basis[h]))},authored::attachment(item.value.type,s.mirror[h],h==0));
+				}
 				for(unsigned b=0;b<a->count;++b)
 				{
 					if(!a->pieces[b] || (item.value.spent && (a->pin_mask&(1u<<b))) || (item.value.stage==phase::cooking && (a->lever_mask&(1u<<b))))continue;
 					auto local=a->local[b];if(a->pin_mask&(1u<<b))local.position=add(local.position,item.pull_delta);
-					const auto world=compose(item.root,local);game::GfxScaledPlacement placement{};placement.scale=1;
+					const auto world=compose(root,local);game::GfxScaledPlacement placement{};placement.scale=1;
 					std::copy(world.position.begin(),world.position.end(),placement.base.origin);std::copy(world.rotation.begin(),world.rotation.end(),placement.base.quat);
 					float color[4]{1,1,1,1};scene_models::submit(a->pieces[b]->model(),&placement,scene_models::no_cast_shadow,&lighting[slot][b],color,color,color,8.f);
 				}
@@ -354,7 +363,7 @@ namespace vr::gameplay::grenades
 					if(!fresh(live.at) || item.value.revision!=current_item.value.revision || item.value.stage!=current_item.value.stage ||
 						item.value.reference!=live.reference || item.value.holder!=current_item.value.holder)return result::omit;
 					// MWR: no render-time skeleton record; follow the arm's current placement origin.
-					if(!weapon_render_pose::available())return render_origin_rebase::apply(p.record,current,previous);
+					if(!weapon_render_pose::available())return result::unchanged; // Submitted at the tracked wrist.
 					std::array<float,12> camera{};vec origin{};attachments::solved pose;
 					if(!utils::native_memory::read_bytes(camera.data(),static_cast<const std::byte*>(p.record)+engine_stereo_view::h2_view_origin_offset,sizeof(camera)) ||
 						!attachments::for_record(p.record,camera,pose) || pose.reference!=item.value.reference ||

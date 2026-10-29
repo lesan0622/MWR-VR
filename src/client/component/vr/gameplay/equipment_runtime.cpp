@@ -5,6 +5,7 @@
 #include "shield_geometry.hpp"
 #include "hand_interaction/runtime.hpp"
 #include "equipment_runtime.hpp"
+#include "held_item_pose.hpp"
 #include "carry_interaction.hpp"
 #include "knife_profile.hpp"
 #include "official_cheats.hpp"
@@ -140,6 +141,12 @@ namespace vr::gameplay::equipment
 				if (!head_pose_bridge::get_spatial_frame(body) || body.generation!=s.reference || !fresh(body.captured_at,clock::now())) return;
 				const auto chest=locate_chest(body);if (!chest.valid) return;s.world=knife_profile::stowed(chest,s.bayonet);
 			}
+			else
+			{
+				// MWR: the held knife follows the latest tracked wrist (no render-time hand record).
+				const auto h=unsigned(s.knife.holder);anchor wrist;
+				if(held_item::visual_wrist(int(h),wrist))s.world=compose({wrist.position,normalize(multiply(wrist.rotation,s.basis[h]))},in_hand(s,h));
+			}
 			game::GfxScaledPlacement placement{};placement.scale=1;
 			std::copy(s.world.position.begin(),s.world.position.end(),placement.base.origin);
 			std::copy(s.world.rotation.begin(),s.world.rotation.end(),placement.base.quat);
@@ -158,7 +165,7 @@ namespace vr::gameplay::equipment
 			const bool held=vr::valid_hand(s.knife.holder);
 			if(!held && !sequences::chest_equipment_visible())return result::omit;
 			// MWR: no render-time skeleton record; follow the arm's current placement origin.
-			if(!weapon_render_pose::available())return render_origin_rebase::apply(p.record,current,previous);
+			if(!weapon_render_pose::available())return held?result::unchanged:render_origin_rebase::apply(p.record,current,previous);
 			std::array<float,12> camera{};vec origin{};hands::attachments::solved pose;
 			if (!utils::native_memory::read_bytes(camera.data(),static_cast<const std::byte*>(p.record)+engine_stereo_view::h2_view_origin_offset,sizeof(camera)) ||
 				!hands::attachments::for_record(p.record,camera,pose) || pose.reference!=s.reference || pose.lease!=s.knife.revision ||

@@ -28,6 +28,8 @@
 #include "native_magazine_assets.hpp"
 #include "native_partition_assets.hpp"
 #include "chamber_cartridge.hpp"
+#include "held_item_pose.hpp"
+#include "weapon_carry_profiles.hpp"
 #include "chambering_guide.hpp"
 #include "chambering_guide_presenter.hpp"
 #include "charging_handle_fold_motion.hpp"
@@ -63,6 +65,8 @@ namespace vr::gameplay::weapons::physical_reload
 			anchor inserted_model{};vec inserted_origin{};bool counted_inserted{};
 			anchor chamber_model{};bool live_chamber{};
 			anchor attached_model{};
+			// MWR: a pistol magazine in hand, relative to the tracked visual wrist.
+			int hand{-1};anchor in_tracked{};bool tracked{};
 		};
 		std::array<held_frame,15> held_frames{};
 		std::array<vec,15> submitted_view{}; // MWR: view origin each slot's parts were submitted with
@@ -112,6 +116,7 @@ namespace vr::gameplay::weapons::physical_reload
 				// its counted rounds) by the same origin change; drops stay in world.
 				const auto part=index>=round_lighting_base?index-round_lighting_base:index;
 				if(part>=15 && part<23)return result::unchanged;
+				if(part<15){const std::lock_guard lock(mutex);if(held_frames[part].tracked)return result::unchanged;} // Submitted at the tracked wrist.
 				const bool chamber_part=part>=68,inserted_part=part>=53 && !chamber_part,partition_part=part>=23 && part<53;
 				const auto part_slot=chamber_part?part-68:inserted_part?part-53:partition_part?(part-23)/2:part;
 				if(part_slot>=submitted_view.size())return result::unchanged;
@@ -186,6 +191,13 @@ namespace vr::gameplay::weapons::physical_reload
 			std::span<const joint_pose> fingers, int off, std::span<bone> pose)
 		{
 			hands::pose_mirror::fingers(r,library,grip,fingers,off,pose,off==1);
+		}
+		bool pistol_magazine(std::uint32_t token) noexcept
+		{
+			const auto index=token&0x1ff;const auto* definition=index?game::weapon_defs[index]:nullptr;
+			const char* name{};
+			return definition && utils::native_memory::read_bytes(&name,&definition->szInternalName,sizeof(name)) && name &&
+				carry::profile_for(std::string_view(name,strnlen_s(name,128))).waist;
 		}
 		void submit_models()
 		{
@@ -277,8 +289,10 @@ namespace vr::gameplay::weapons::physical_reload
 				}
 			}
 
+			auto held_world=hand_frame.world;
+			if (hand_frame.tracked) {anchor wrist;if (held_item::visual_wrist(hand_frame.hand,wrist)) held_world=compose(wrist,hand_frame.in_tracked);}
 			if (eligible(attachment_kind::held_magazine))
-				draw(hand_frame.world,hand_frame.slot,hand_frame.definition,hand_frame.units,frozen.ammo.held_rounds);
+				draw(held_world,hand_frame.slot,hand_frame.definition,hand_frame.units,frozen.ammo.held_rounds);
 			if(hand_frame.counted_inserted && eligible(attachment_kind::inserted_magazine))
 			{
 				auto world=hand_frame.inserted_model;world.position=add(world.position,hand_frame.inserted_origin);
@@ -798,6 +812,14 @@ namespace vr::gameplay::weapons::physical_reload
 		held.epoch = epoch; held.model = mag;
 		held.attached_model=attached;
 		held.units = units;
+		// MWR: a pistol's held magazine follows the latest tracked wrist at submit
+		// time (no render-time hand record); rifle magazines keep the solve pose.
+		if (state.active && state.ammo.magazine_hand!=hand::none && !state.magazine_seated && pistol_magazine(owner.weapon))
+		{
+			anchor tracked_wrist;
+			if (held_item::visual_wrist(input,off,tracked_wrist))
+			{held.hand=off;held.in_tracked=compose(inverse(tracked_wrist),next.held_world);held.tracked=true;}
+		}
 		held.definition = profile;held.view.owner=owner;
 		held.inserted_origin=view_offset;
 		{const std::lock_guard debug_lock(debug_mutex);debug_valid=state.ammo.magazine_hand==hand(off);if(debug_valid){debug_mag=mag;debug_wrist=as_anchor(solved[r.arms[off].wrist]);}}

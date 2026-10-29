@@ -5,9 +5,7 @@
 #include "weapon_carry_runtime.hpp"
 #include "carry_interaction.hpp"
 #include "hands/pose_math.hpp"
-#include "hands/position_offset.hpp"
-#include "../settings.hpp"
-#include "../head_pose_bridge.hpp"
+#include "held_item_pose.hpp"
 #include "hands/service.hpp"
 #include "hands/native_schema.hpp"
 #include "hands/pose_mirror.hpp"
@@ -199,21 +197,8 @@ namespace vr::gameplay::c4_detonator
 			// MWR has no render-time hand record (as for held magazines): place the
 			// detonator at the tracked visual wrist with the hand's wrist basis.
 			const auto h = unsigned(s.holder);
-			const auto input = controller_input::latest_interaction();
-			head_pose_bridge::spatial_frame body;
-			position_offsets offsets;
-			const auto setting = [](const char* key, float fallback)
-			{
-				const auto* d = game::Dvar_FindVar(key);
-				return d ? d->current.value : fallback;
-			};
-			offsets = {setting(vr::settings::active_hand_alignment()[0].name, offsets.inward_meters),
-			           setting(vr::settings::active_hand_alignment()[1].name, offsets.back_meters),
-			           setting(vr::settings::active_hand_alignment()[2].name, offsets.up_meters)};
 			anchor wrist;
-			if (!head_pose_bridge::get_spatial_frame(body) || body.generation != input.reference_generation ||
-				!tracked_wrist(input, body, {}, int(h), offsets, wrist))
-				return;
+			if (!held_item::visual_wrist(int(h), wrist)) return;
 			wrist.rotation = normalize(multiply(wrist.rotation, s.basis[h]));
 			const auto at = placement(wrist, h, s, mesh);
 			game::GfxScaledPlacement p{};
