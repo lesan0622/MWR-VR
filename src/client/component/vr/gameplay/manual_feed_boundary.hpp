@@ -8,6 +8,7 @@
 #include "independent_fire_runtime.hpp"
 #include "underbarrel_runtime.hpp"
 #include "official_cheats.hpp"
+#include "view_aimed_weapon.hpp"
 
 namespace vr::gameplay::weapons::manual_feed
 {
@@ -22,7 +23,10 @@ namespace vr::gameplay::weapons::manual_feed
 		if(cheats::transitioning() && native_ammunition::local_role(ps)>=0)return false;
 		if(underbarrel::blocks_native(ps))return false;
 		if (independent_fire::owns_native(ps)) return false; // Both simulation and prediction, including mouse attack.
-		if (carry::active() && native_ammunition::local_role(ps)>=0)
+		// View-aimed guns (AC-130, lock launchers, the C4 detonator) are never a VR
+		// hold. A carry hold left from the player's own weapons refused them
+		// ("carry hold") whenever its token differed (headset: only 40 mm fired).
+		if (carry::active() && native_ammunition::local_role(ps)>=0 && !view_aimed::weapon(native_ammunition::observe(ps).weapon))
 		{
 			const auto owner=carry::current_hold();
 			if (side || !owner.can_fire() || native_ammunition::observe(ps).weapon!=owner.weapon) return false;
@@ -35,7 +39,7 @@ namespace vr::gameplay::weapons::manual_feed
 		if(cheats::transitioning() && native_ammunition::local_role(ps)>=0)return "cheat transition";
 		if(underbarrel::blocks_native(ps))return "underbarrel";
 		if(independent_fire::owns_native(ps))return "independent fire";
-		if(carry::active() && native_ammunition::local_role(ps)>=0)
+		if(carry::active() && native_ammunition::local_role(ps)>=0 && !view_aimed::weapon(native_ammunition::observe(ps).weapon))
 		{
 			const auto owner=carry::current_hold();
 			if(side || !owner.can_fire() || native_ammunition::observe(ps).weapon!=owner.weapon)return "carry hold";
