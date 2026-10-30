@@ -75,21 +75,24 @@ namespace vr::gameplay::weapons::underbarrel
 			// j_trigger); attach_h1_launcher_m203_vm's same-named bones ride on
 			// them. Drive the receiver bones; its tag_m203 is H2's tag_m203 frame
 			// (the trigger sits 1.4 in behind it, as on the H2 attachment).
+			// viewmodel_ak47 + attach_h1_launcher_gp25_vm use the same tag_m203 and
+			// j_grenade (no slide; muzzle-loaded), in H2's tag_gp25 frame.
 			for(const auto& m:models)
 			{
-				if(m.name!="attach_h1_launcher_m203_vm" || m.begin<=r.gun || m.begin+m.count>r.count)continue;
+				const auto k=m.name=="attach_h1_launcher_m203_vm" ? kind::m203 : m.name=="attach_h1_launcher_gp25_vm" ? kind::gp25 : kind::none;
+				if(k==kind::none || m.begin<=r.gun || m.begin+m.count>r.count)continue;
 				const int tag=r.parent[m.begin];
 				if(tag<0 || tag>=m.begin || bones[tag].name!="tag_m203" || !hands::descendant(tag,r.gun,r))return {};
 				const auto child=[&](int parent,std::string_view name){for(int i=0;i<m.begin;++i)if(r.parent[i]==parent && bones[i].name==name)return i;return -1;};
 				const int slide=child(tag,"j_m203_slide"),round=child(tag,"j_grenade");
-				if(slide<0 || round<0)return {};
-				for(int b:{tag,slide,round})for(float f:bones[b].bind.position)if(!std::isfinite(f)||std::abs(f)>10000)return {};
+				if((k==kind::m203 && slide<0) || round<0)return {};
+				for(int b:{tag,slide,round})if(b>=0)for(float f:bones[b].bind.position)if(!std::isfinite(f)||std::abs(f)>10000)return {};
 				const auto gun=inverse(as_anchor(bones[r.gun].bind));
-				out.type=kind::m203;out.root=m.begin;out.motion=slide;out.round=round;
+				out.type=k;out.root=m.begin;out.motion=k==kind::m203?slide:-1;out.round=round;
 				out.mount=compose(gun,as_anchor(bones[tag].bind));
-				out.motion_rest=compose(gun,as_anchor(bones[slide].bind));
+				if(k==kind::m203)out.motion_rest=compose(gun,as_anchor(bones[slide].bind));
 				out.round_rest=compose(gun,as_anchor(bones[round].bind));
-				out.muzzle=compose(out.mount,authored::m203_muzzle);
+				out.muzzle=compose(out.mount,k==kind::m203?authored::m203_muzzle:authored::gp25_muzzle);
 				const std::array<std::string_view,2> parts{"j_grenade_main","j_grenade_shell"};
 				for(int n=0;n<2;++n)
 				{
