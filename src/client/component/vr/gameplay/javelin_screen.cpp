@@ -356,6 +356,55 @@ namespace vr::gameplay::weapons::javelin_screen
 				return {};
 			}
 		}
+		// The Stinger has no native lock box (maps/_stinger only plays tones), so
+		// its display gets a ring at the lock circle: white idle, yellow flashing
+		// while acquiring, red when locked. Premultiplied encoded ink, full canvas.
+		struct stinger_ink
+		{
+			Microsoft::WRL::ComPtr<ID3D11Device> device;
+			std::array<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>, 3> views;
+		};
+		thread_local stinger_ink stinger_reticle;
+		ID3D11ShaderResourceView* stinger_view(ID3D11DeviceContext* context, int state) noexcept
+		{
+			Microsoft::WRL::ComPtr<ID3D11Device> device;
+			context->GetDevice(&device);
+			if (!device || state < 0 || state > 2) return nullptr;
+			if (stinger_reticle.device != device)
+			{
+				stinger_reticle = {};
+				stinger_reticle.device = device;
+				constexpr unsigned w = 640, h = 360;
+				constexpr std::array<std::array<float, 4>, 3> colors{{{1, 1, 1, .55f}, {1, .85f, 0, .95f}, {1, .12f, .08f, 1}}};
+				std::vector<std::uint32_t> pixels(w * h);
+				for (unsigned n = 0; n < 3; ++n)
+				{
+					const float ring = .125f, half = n == 2 ? .008f : .005f, edge = 1.5f / h;
+					for (unsigned y = 0; y < h; ++y)
+						for (unsigned x = 0; x < w; ++x)
+						{
+							const float pdx = (x + .5f - w * .5f) / h, dy = (y + .5f - h * .5f) / h;
+							const float r = std::sqrt(pdx * pdx + dy * dy);
+							float a = std::clamp(1.f - (std::abs(r - ring) - half) / edge, 0.f, 1.f);
+							a = std::max(a, std::clamp(1.f - (r - .004f) / edge, 0.f, 1.f)); // Centre dot.
+							a *= colors[n][3];
+							const auto channel = [&](float v) {return std::uint32_t(std::lround(std::clamp(v * a, 0.f, 1.f) * 255));};
+							pixels[y * w + x] = channel(colors[n][0]) | channel(colors[n][1]) << 8 | channel(colors[n][2]) << 16 |
+								std::uint32_t(std::lround(a * 255)) << 24;
+						}
+					D3D11_TEXTURE2D_DESC desc{w, h, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, {1, 0}, D3D11_USAGE_IMMUTABLE, D3D11_BIND_SHADER_RESOURCE, 0, 0};
+					const D3D11_SUBRESOURCE_DATA data{pixels.data(), w * 4, 0};
+					Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
+					if (FAILED(device->CreateTexture2D(&desc, &data, &texture)) ||
+						FAILED(device->CreateShaderResourceView(texture.Get(), nullptr, &stinger_reticle.views[n])))
+					{
+						stinger_reticle.views = {};
+						return nullptr;
+					}
+				}
+			}
+			return stinger_reticle.views[state].Get();
+		}
 		void compose(const eye_composition::event& event,
 		             ID3D11DeviceContext* context,
 		             ID3D11ShaderResourceView* source,
@@ -398,9 +447,16 @@ namespace vr::gameplay::weapons::javelin_screen
 					fail();
 					return;
 				}
+				auto* ink = pair.ink ? pair.ink->view.Get() : nullptr;
+				if (const auto shown = current(); shown.owner.weapon && !shown.javelin)
+				{
+					int lock = stinger_lock.load();
+					if (lock == 1 && (GetTickCount64() / 250) % 2) lock = 0;
+					ink = stinger_view(context, lock);
+				}
 				if (!renderer.draw_screen_scope(context,
 				                                source,
-				                                pair.ink ? pair.ink->view.Get() : nullptr,
+				                                ink,
 				                                target,
 				                                pair.canvas[event.eye],
 				                                event.width,

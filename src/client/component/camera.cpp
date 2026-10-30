@@ -14,6 +14,7 @@
 #include "vr/gameplay/javelin_screen.hpp"
 #include "vr/gameplay/fixed_sniper.hpp"
 #include "vr/gameplay/barrett_gun.hpp"
+#include "vr/gameplay/view_aimed_weapon.hpp"
 #include "vr/engine_stereo_renderer.hpp"
 #include "vr/head_pose_bridge.hpp"
 
@@ -204,12 +205,22 @@ namespace camera
 			// Story rigs that throw the body around (rope descents, crashes): the
 			// authored eye with no room-scale offset, centring the player.
 			vr::game_view::camera_request request{};
+			const bool gunship = vr::gameplay::view_aimed::gunship();
+			static bool was_gunship{};
+			static std::uint64_t gunship_epoch{};
+			if (gunship && !was_gunship) ++gunship_epoch;
+			was_gunship = gunship;
 			if (vr::gameplay::scripted_motion::active())
 				request.policy.translation = vr::game_view::head_translation::fixed;
 			// Fixed sniper (flat scope view): the native turret camera, no head pose
 			// (original Overlord thermal_scope camera request).
 			if (const auto sniper = vr::gameplay::fixed_sniper::current(ps).epoch)
 				request = {vr::game_view::camera_profiles::fixed_scope, sniper | (1ull << 63)};
+			// AC-130: the flat native frame is the gunship monitor, aimed by the right
+			// stick. Composing the HMD rotation into it made the head steer the
+			// picture (and the crosshair) away from where the guns point.
+			else if (gunship)
+				request = {vr::game_view::camera_profiles::fixed_scope, gunship_epoch | (1ull << 59)};
 			// Stinger on the Javelin display steers the native view with its tube:
 			// hold the entry heading as for the Barrett.
 			else if (const auto stinger = vr::gameplay::weapons::javelin_screen::stinger_view_epoch())

@@ -477,7 +477,12 @@ namespace vr::native_menu
 		const auto* fullscreen=game::Dvar_FindVar("cg_cinematicFullscreen");
 		// MWR AC-130: the gunship monitor is presented flat. The native (non-stereo)
 		// frame with its own HUD goes to the theater surface or the cabin screen.
-		if(gameplay::view_aimed::active())return {true,frontend_active(),true,true,true};
+		// A pause/options menu over the gunship is an ordinary VR menu panel:
+		// the theater would show it flat with no pointer to select its items.
+		bool menu_open{};
+		{const std::lock_guard lock(mutex);const auto now=GetTickCount64();
+			menu_open=published.count && now>=published.timestamp && now-published.timestamp<=250;}
+		if(gameplay::view_aimed::active() && !menu_open)return {true,frontend_active(),true,true,true};
 		return {true,frontend_active(),game::CL_IsCgameInitialized(),
 			video_playing(),fullscreen && fullscreen->current.enabled};
 	}

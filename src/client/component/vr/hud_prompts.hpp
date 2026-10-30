@@ -74,6 +74,9 @@ namespace vr::hud_prompts
 		definition{key::m203_reload,control::none},
 		definition{key::c4_draw,control::none},
 		definition{key::c4_detonate,control::none},
+		definition{key::ac130_thermal,control::none},
+		definition{key::ac130_cycle,control::none},
+		definition{key::ac130_zoom_fire,control::none},
 
 	};
 	constexpr const definition* describe(key id) noexcept
@@ -90,6 +93,11 @@ namespace vr::hud_prompts
 		native_rule{source::script_hud,"SCRIPT_PLATFORM_OILRIG_HINT_STEALTH_KILL",key::story_melee,"oilrig"},
 		native_rule{source::script_hud,"OILRIG_HINT_C4_SWITCH",key::c4_draw,"oilrig",feature::special},
 		native_rule{source::script_hud,"OILRIG_HINT_C4_DETONATE",key::c4_detonate,"oilrig",feature::special},
+		// MWR ac130 (maps/ac130 hintprint): thermal (+usereload/+activate -> right B),
+		// weapnext (right A / left Y), alternate-controls zoom and fire.
+		native_rule{source::script_hud,"SCRIPT_PLATFORM_AC130_HINT_TOGGLE_THERMAL",key::ac130_thermal,"ac130"},
+		native_rule{source::script_hud,"AC130_HINT_CYCLE_WEAPONS",key::ac130_cycle,"ac130"},
+		native_rule{source::script_hud,"SCRIPT_PLATFORM_AC130_HINT_ZOOM_AND_FIRE",key::ac130_zoom_fire,"ac130"},
 		native_rule{source::script_hud,"ESTATE_LEARN_PRONE",key::mine_prone,"estate"},
 		native_rule{source::script_hud,"ESTATE_LEARN_PRONE_TOGGLE",key::mine_prone,"estate"},
 		native_rule{source::script_hud,"ESTATE_LEARN_PRONE_HOLDDOWN",key::mine_prone,"estate"},
