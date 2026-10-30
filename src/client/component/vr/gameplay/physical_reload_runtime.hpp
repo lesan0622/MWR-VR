@@ -72,6 +72,7 @@ namespace vr::gameplay::weapons::physical_reload
 		geometry examined{};
 		const char* decision{"not examined"};
 		bool well_contact{}, requires_withdrawal{};
+		bool rock_engaged{}; // Rock-in hook held by the simulation (sampling hysteresis).
 		bool magazine_grabbed{};
 		hands::vec magazine_grab_start{};
 		float handle_amount{};

@@ -14,8 +14,9 @@ namespace vr::gameplay::weapons::physical_reload
 		return hands::pose_math::compose(magazine, {hands::add(top, {r.lug_forward, 0, 0}), {0, 0, 0, 1}}).position;
 	}
 	// Tilt: the magazine's up axis leaning rearward (bottom forward) about gun Y.
+	// `engaged`: hooked on the previous simulation sample; a wider band keeps it.
 	inline rock_sample sample_rock(const rock_in& r, const hands::anchor& rest, const hands::anchor& raw,
-		hands::vec top, float units) noexcept
+		hands::vec top, float units, bool engaged = false) noexcept
 	{
 		constexpr float degrees = 57.2957795f;
 		rock_sample out;
@@ -27,8 +28,11 @@ namespace vr::gameplay::weapons::physical_reload
 		const float tilt = (std::atan2(-up[0], up[2]) - std::atan2(-rest_up[0], rest_up[2])) * degrees;
 		const float lateral = std::asin(std::clamp(up[1], -1.f, 1.f)) * degrees;
 		out.tilt = tilt;
-		out.hooked = std::isfinite(distance) && std::isfinite(tilt) && distance < r.hook_radius && tilt >= -2.f &&
-			tilt <= r.max_degrees && std::abs(lateral) <= r.lateral_degrees;
+		out.hooked = engaged ?
+			std::isfinite(distance) && std::isfinite(tilt) && distance < r.hold_radius && tilt >= -2.f - r.hold_extra_degrees &&
+				tilt <= r.max_degrees + r.hold_extra_degrees && std::abs(lateral) <= r.hold_lateral_degrees :
+			std::isfinite(distance) && std::isfinite(tilt) && distance < r.hook_radius && tilt >= -2.f &&
+				tilt <= r.max_degrees && std::abs(lateral) <= r.lateral_degrees;
 		return out;
 	}
 	// The seated magazine rotated rearward-up about its lug by tilt degrees.

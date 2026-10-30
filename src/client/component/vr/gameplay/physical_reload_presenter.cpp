@@ -539,7 +539,7 @@ namespace vr::gameplay::weapons::physical_reload
 		rock_sample rock{};
 		if (const auto* rule=definition.interaction.rock)
 		{
-			rock=sample_rock(*rule,definition.magazine_rest,compose(inverse(gun),raw_mag),definition.magazine_top,units);
+			rock=sample_rock(*rule,definition.magazine_rest,compose(inverse(gun),raw_mag),definition.magazine_top,units,state.rock_engaged);
 			next.contact.rock_hooked=rock.hooked;next.contact.rock_tilt=rock.tilt;
 		}
 		next.contact.magazine_pose=magazine_pose.index;

@@ -143,6 +143,7 @@ namespace vr::gameplay::weapons::physical_reload
 		slide_constraint slide_grip() const noexcept { return {slide_start_,start_travel_,slide_pose_}; }
 		const char* decision() const noexcept { return decision_; }
 		bool well_contact() const noexcept { return well_contact_; }
+		bool rock_engaged() const noexcept { return rock_engaged_; }
 		bool requires_withdrawal() const noexcept { return require_withdrawal_; }
 		clock::time_point insertion_after()const noexcept{return insert_after_;}
 		const geometry& examined() const noexcept { return examined_; }
@@ -465,6 +466,7 @@ namespace vr::gameplay::weapons::physical_reload
 				if (p.rock)
 				{
 					// Hook the front lug tilted, then rock rearward into the latch.
+					rock_engaged_=g.rock_hooked;
 					if (!g.rock_hooked) rock_armed_=false;
 					else if (g.rock_tilt>=p.rock->arm_degrees) rock_armed_=true;
 					previous_tip_=g.magazine_top_in_well;
@@ -475,7 +477,7 @@ namespace vr::gameplay::weapons::physical_reload
 						decision_=!g.rock_hooked ? "rock-in: hook the front lug" : rock_armed_ ? "rock-in: rotate rearward" : "rock-in: tilt the bottom forward";
 						return;
 					}
-					rock_armed_=false;
+					rock_armed_=rock_engaged_=false;
 					magazine_seated_ = apply(mechanics::operation::insert_magazine, offhand);
 					if(magazine_seated_){magazine_pose_=g.attached_magazine_pose;previous_hand_=g.hand_in_gun;}
 					decision_ = magazine_seated_ ? "magazine rocked in" : "insert transaction rejected";
@@ -674,7 +676,7 @@ namespace vr::gameplay::weapons::physical_reload
 			slide_pose_ = 0;
 			latch_contact_.reset();
 			slap_.reset();receiver_slap_.reset(); slap_trace_={}; catch_grip_={}; catch_amount_=0;
-			slide_held_ = forward_armed_ = magazine_seated_ = magazine_grabbed_ = require_withdrawal_ = well_contact_ = rock_armed_ = false; travel_ = start_travel_ = 0;
+			slide_held_ = forward_armed_ = magazine_seated_ = magazine_grabbed_ = require_withdrawal_ = well_contact_ = rock_armed_ = rock_engaged_ = false; travel_ = start_travel_ = 0;
 		}
 		controller_input::digital_press_gate trigger_{}, release_{}, fire_{};
 		std::uint32_t weapon_{};
@@ -684,6 +686,7 @@ namespace vr::gameplay::weapons::physical_reload
 		controller_input::consumer_continuity continuity_;
 		bool slide_held_{}, forward_armed_{}, magazine_seated_{}, magazine_grabbed_{}, require_withdrawal_{}, well_contact_{};
 		bool rock_armed_{}; // Rock-in: hooked while tilted at least arm_degrees.
+		bool rock_engaged_{}; // Rock-in: hooked on the last sample (wider hold band).
 		bool knife_magazine_grasp_{}; // Frozen until release: returning the knife cannot move a held magazine.
 		std::uint8_t magazine_pose_{};
 		bool knife_slide_grasp_{}; // Likewise, returning the knife cannot reselect the held slide style.

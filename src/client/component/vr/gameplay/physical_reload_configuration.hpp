@@ -54,6 +54,8 @@ namespace vr::gameplay::weapons::physical_reload
 		float lug_forward{};      // Native units along magazine +X from magazine_top.
 		float hook_radius{.035f}; // Metres, raw lug to its seated position.
 		float arm_degrees{10}, seat_degrees{3}, max_degrees{40}, lateral_degrees{15};
+		// Once hooked (user, headset: the hook let go at the slightest drift).
+		float hold_radius{.08f}, hold_lateral_degrees{30}, hold_extra_degrees{15};
 	};
 	// Immutable interaction configuration. Distances are metres; cosine values
 	// and pose indices are dimensionless. Hardware geometry stays weapon-local.

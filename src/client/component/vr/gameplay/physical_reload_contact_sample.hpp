@@ -62,7 +62,7 @@ namespace vr::gameplay::weapons::physical_reload
 		if(d.interaction.rock)
 		{
 			// The gesture consumes this reconstruction, not the presenter's sample.
-			const auto rock=sample_rock(*d.interaction.rock,d.magazine_rest,compose(inverse(gun),mag),d.magazine_top,units);
+			const auto rock=sample_rock(*d.interaction.rock,d.magazine_rest,compose(inverse(gun),mag),d.magazine_top,units,v.rock_engaged);
 			g.rock_hooked=rock.hooked;g.rock_tilt=rock.tilt;
 		}
 		sample_attached_magazine(d,g,gun,wrist,f.wrists[off].rotation,basis,attached_pose,mag,units,knife_mag);
