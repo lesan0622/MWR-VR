@@ -72,6 +72,7 @@ namespace vr::controllers
 		game::dvar_t* turn_speed{};
 		game::dvar_t* turn_deadzone{};
 		game::dvar_t* auto_ads{};
+		game::dvar_t* turret_hand_aim{};
 		gameplay::weapons::ads_policy ads;
 		std::array<controller_input::digital_press_gate,2> attack_notifications{};
 		std::array<gameplay::weapons::hold,2> notified_owners{};
@@ -202,6 +203,20 @@ namespace vr::controllers
 						const auto input = controller_input::latest_interaction();
 						(void)gameplay::fixed_sniper::command(input, gameplay_allowed(input), cmd, angles,
 							deadzone->current.value, turn_speed->current.value);
+					}
+					else if (gameplay::view_aimed::mounted() && turret_hand_aim && turret_hand_aim->current.enabled &&
+						[&] {
+							// Turret/vehicle gun (airlift Mk19): the right controller points
+							// the native view the gun follows, not the head (user request).
+							const auto input = controller_input::latest_interaction();
+							const int hand = input.aim[1].valid ? 1 : input.aim[0].valid ? 0 : -1;
+							return input.focused && hand >= 0 &&
+								head_pose_bridge::apply_game_view_aim(angles, ps->delta_angles, input.aim[hand].tracking);
+						}())
+					{
+						gunship_aim_at = {};
+						tracked_view_applied = true;
+						++view_count;
 					}
 					else
 					{
@@ -587,6 +602,8 @@ namespace vr::controllers
 			command::add("vr_input_status", print_status);
 			auto_ads=dvars::register_bool("vr_autoAds",true,game::DVAR_FLAG_SAVED,
 				"Request native ADS while a supported physical weapon is raised to the sights");
+			turret_hand_aim=dvars::register_bool("vr_turretHandAim",true,game::DVAR_FLAG_SAVED,
+				"Mounted and vehicle guns follow the right controller instead of the head");
 			// MWR CL_KeyMove sets/clears usercmd bit 11 before FinishMove.
 			ads_verified=check(0x1401AA0C2,{0x81,0x4b,0x04,0x00,0x08,0x00,0x00}) &&
 				check(0x1401AA0B9,{0x81,0x63,0x04,0xff,0xf7,0xff,0xff});

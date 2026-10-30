@@ -524,6 +524,26 @@ namespace vr::head_pose_bridge
 		return true;
 	}
 
+	bool apply_game_view_aim(float* const native_angles, const float* const delta_angles, const tracking_pose& aim) noexcept
+	{
+		if (!native_angles || !delta_angles || !finite_vector(aim.position_meters) || !valid_rotation(aim.orientation)) return false;
+		const std::lock_guard lock(state_mutex);
+		const auto now = std::chrono::steady_clock::now();
+		if (!target_matched || !enabled || !pose_available || recenter_pending || remote_view_state.active() ||
+			pose_sampled_at > now || now - pose_sampled_at > std::chrono::milliseconds(150)) return false;
+		const auto forward = h2_orientation(multiply(transpose(reference_pose.orientation), aim.orientation))[0];
+		const float horizontal = std::hypot(forward[0], forward[1]);
+		if (!(horizontal > .05f)) return false; // Straight up/down has no heading.
+		const float pitch = std::atan2(forward[2], horizontal) * 57.29577951308232f;
+		const float yaw = std::atan2(forward[1], forward[0]) * 57.29577951308232f;
+		if (scripted_camera.restore_command(0,recenter_count,native_angles[1],delta_angles[1],local_heading.yaw,local_angles.yaw,local_orientation))
+			game_view_state.rebase(recenter_count,local_angles.yaw,local_heading.yaw);
+		if (!game_view_state.apply(native_angles[0], native_angles[1], delta_angles[0],
+			pitch, yaw, recenter_count, yaw)) return false;
+		++game_view_applications;
+		return true;
+	}
+
 	void suspend_remote_view()noexcept
 	{const std::lock_guard lock(state_mutex);remote_view_state.suspend();}
 	bool apply_remote_control(std::array<std::int8_t,2>& command,std::array<float,2> rates,

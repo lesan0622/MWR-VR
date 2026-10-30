@@ -139,6 +139,11 @@ namespace vr::head_pose_bridge
 	// angles. No runtime/engine calls are made while holding the bridge mutex.
 	[[nodiscard]] bool apply_game_view(float* native_angles, const float* delta_angles,
 		std::uint64_t scripted_epoch = 0, bool remote = false) noexcept;
+	// Mounted guns: a controller's pointing pose (same tracking space as the
+	// HMD) takes the head's place in the native view. The ordinary camera
+	// removes that same contribution, so it still follows the head.
+	[[nodiscard]] bool apply_game_view_aim(float* native_angles, const float* delta_angles,
+		const tracking_pose& aim) noexcept;
 	[[nodiscard]] bool apply_remote_control(std::array<std::int8_t,2>& command,std::array<float,2> rates,
 		std::array<float,2> stick,int command_time,std::uint64_t epoch)noexcept;
 	void suspend_remote_view()noexcept;
