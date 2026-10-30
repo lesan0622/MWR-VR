@@ -13,6 +13,8 @@ namespace vr::gameplay::weapons::dragunov
 	    .plus_one = true,
 	};
 	inline constexpr auto manual_magazine = physical_reload::rocking_magazine();
+	// AK-style rock-in; the front lug sits ~1.25 in ahead of the magazine top centre.
+	inline constexpr physical_reload::rock_in rock{.lug_forward = 1.25f};
 	// Match the AK side boundary: the raw wrist must stay outside the right
 	// receiver wall, so assisted hook contact cannot reach through the magazine.
 	inline constexpr part_capture_halfspace handle_capture{{0, 1, 0}, action_grab_high[1]};
@@ -32,6 +34,7 @@ namespace vr::gameplay::weapons::dragunov
 	    .slide_pose_count = 2,
 	    .motion = physical_reload::action_motion::reciprocating_slide,
 	    .manual_magazine = &manual_magazine,
+	    .rock = &rock,
 	};
 	inline const char* sound_key(mechanics::effect kind) noexcept
 	{

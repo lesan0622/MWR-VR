@@ -3,6 +3,7 @@
 #include "component/vr/gameplay/hands/pose_mirror.hpp"
 #include "belt_presentation.hpp"
 #include "magazine_grip_selection.hpp"
+#include "rock_in_magazine.hpp"
 
 namespace vr::gameplay::weapons::physical_reload
 {
@@ -58,6 +59,12 @@ namespace vr::gameplay::weapons::physical_reload
 		g.knife_held=knife;g.bolt_hand=bolt_style<source.size()?
 			scale(compose(raw,{grips[bolt_style].contact_in_wrist,{0,0,0,1}}).position,1/units):hand_local;
 		g.magazine_pose=magazine_pose.index;
+		if(d.interaction.rock)
+		{
+			// The gesture consumes this reconstruction, not the presenter's sample.
+			const auto rock=sample_rock(*d.interaction.rock,d.magazine_rest,compose(inverse(gun),mag),d.magazine_top,units);
+			g.rock_hooked=rock.hooked;g.rock_tilt=rock.tilt;
+		}
 		sample_attached_magazine(d,g,gun,wrist,f.wrists[off].rotation,basis,attached_pose,mag,units,knife_mag);
 		if(d.interaction.manual_magazine && d.interaction.manual_magazine->prefer_grasp_facing && chosen.pose<source.size())
 			g.magazine_facing=closer_grasp_facing(raw.rotation,compose(d.magazine_rest,inverse(attached_pose.in_wrist)).rotation,grips[chosen.pose].wrist.rotation);

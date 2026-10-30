@@ -38,6 +38,7 @@
 #include "component/scene_model_record.hpp"
 #include "component/fastfiles.hpp"
 #include "component/scheduler.hpp"
+#include "rock_in_magazine.hpp"
 #include "game/game.hpp"
 #include "loader/component_loader.hpp"
 #include <mutex>
@@ -535,6 +536,12 @@ namespace vr::gameplay::weapons::physical_reload
 			scale(compose(wrist_in_gun,{slide_grips[slide_candidate.pose].contact_in_wrist,{0,0,0,1}}).position,1/units):bolt_hand;
 		next.binding={ordinary_wrist,basis,true,paired_wrist.value_or(ordinary_wrist),paired_wrist.has_value()};
 		next.contact.knife_held=knife_held;
+		rock_sample rock{};
+		if (const auto* rule=definition.interaction.rock)
+		{
+			rock=sample_rock(*rule,definition.magazine_rest,compose(inverse(gun),raw_mag),definition.magazine_top,units);
+			next.contact.rock_hooked=rock.hooked;next.contact.rock_tilt=rock.tilt;
+		}
 		next.contact.magazine_pose=magazine_pose.index;
 		sample_attached_magazine(definition,next.contact,gun,wrist,targets[off].rotation,ordinary_basis,attached_pose,raw_mag,units,knife_grasp);
 		if (definition.interaction.manual_magazine && definition.interaction.manual_magazine->prefer_grasp_facing &&
@@ -793,6 +800,12 @@ namespace vr::gameplay::weapons::physical_reload
 				state.ammo.magazine_hand!=hand::none ? magazine : free;
 			hand_motion->apply(off,attachment);
 			mag=compose(as_anchor(solved[r.arms[off].wrist]),in_wrist);
+			next.held_world=mag;next.held_world.position=add(mag.position,view_offset);
+		}
+		// Rock-in: a hooked magazine turns about its lug instead of following the hand.
+		if (rock.hooked && state.active && !state.fault && int(state.ammo.magazine_hand)==int(off) && !state.ammo.magazine_inserted)
+		{
+			mag=compose(gun,rocked(*definition.interaction.rock,definition.magazine_rest,definition.magazine_top,rock.tilt));
 			next.held_world=mag;next.held_world.position=add(mag.position,view_offset);
 		}
 		publish_scene(next);

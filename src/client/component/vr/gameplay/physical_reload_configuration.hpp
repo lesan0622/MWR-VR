@@ -46,6 +46,15 @@ namespace vr::gameplay::weapons::physical_reload
 		bool latch_impulse{};
 	};
 
+	// AK-family rock-in (AK, Dragunov): the magazine's top-front lug hooks the
+	// front of the well while tilted (bottom forward), then rotates rearward
+	// about that lug into the rear latch. Straight insertion is not accepted.
+	struct rock_in
+	{
+		float lug_forward{};      // Native units along magazine +X from magazine_top.
+		float hook_radius{.035f}; // Metres, raw lug to its seated position.
+		float arm_degrees{10}, seat_degrees{3}, max_degrees{40}, lateral_degrees{15};
+	};
 	// Immutable interaction configuration. Distances are metres; cosine values
 	// and pose indices are dimensionless. Hardware geometry stays weapon-local.
 	// No game types, addresses, asset lookup or host lifecycle belong here.
@@ -78,6 +87,7 @@ namespace vr::gameplay::weapons::physical_reload
 		float button_magazine_radius{.05f};
 		bool support_magazine_catch{};     // Grip support may transfer to a Trigger-held magazine.
 		float well_withdraw_margin{.015f}; // Exit/reentry gate, separate from contact hysteresis.
+		const rock_in* rock{};
 	};
 	inline constexpr bool native_action_recoil(const profile& p) noexcept
 	{

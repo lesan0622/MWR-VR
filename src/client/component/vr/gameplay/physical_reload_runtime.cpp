@@ -772,6 +772,7 @@ namespace vr::gameplay::weapons::physical_reload
 							<< " tip_in_well=" << i.view.examined.magazine_top_in_well[0] << ',' << i.view.examined.magazine_top_in_well[1]
 							<< ',' << i.view.examined.magazine_top_in_well[2] << " alignment=" << i.view.examined.insertion_alignment
 							<< " slide_distance=" << i.view.examined.slide_distance
+							<< " rock_hooked=" << i.view.examined.rock_hooked << " rock_tilt=" << i.view.examined.rock_tilt
 							<< " waist_distance=" << i.view.examined.waist_distance 
 							<< " fire=" << fire_reason.load() << '\n';
 						out << "knife_magazine_capable=" << bool(i.view.definition->knife_magazine_in_wrist)

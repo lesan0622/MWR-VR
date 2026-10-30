@@ -38,6 +38,8 @@ namespace vr::gameplay::weapons::physical_reload
 		bool knife_held{}; // Knife occupancy; only explicitly authored part co-grasps are allowed.
 		std::uint8_t magazine_pose{};
 		std::uint8_t attached_magazine_pose{};
+		bool rock_hooked{}; // Rock-in lug at the front of the well (rock_in_magazine.hpp).
+		float rock_tilt{};  // Degrees rearward about that lug; 0 = seated.
 	};
 	// Explicit opt-in for the reviewed box-magazine families. Acquisition grows
 	// by 1 cm per boundary; alignment, retention and discontinuity rules retain
@@ -460,6 +462,27 @@ namespace vr::gameplay::weapons::physical_reload
 					}
 				}
 				else latch_contact_.reset();
+				if (p.rock)
+				{
+					// Hook the front lug tilted, then rock rearward into the latch.
+					if (!g.rock_hooked) rock_armed_=false;
+					else if (g.rock_tilt>=p.rock->arm_degrees) rock_armed_=true;
+					previous_tip_=g.magazine_top_in_well;
+					if (s.magazine_inserted) {decision_="well occupied";return;}
+					if (now<insert_after_) {decision_="post-strike insertion delay";return;}
+					if (!(rock_armed_ && g.rock_hooked && g.rock_tilt<=p.rock->seat_degrees))
+					{
+						decision_=!g.rock_hooked ? "rock-in: hook the front lug" : rock_armed_ ? "rock-in: rotate rearward" : "rock-in: tilt the bottom forward";
+						return;
+					}
+					rock_armed_=false;
+					magazine_seated_ = apply(mechanics::operation::insert_magazine, offhand);
+					if(magazine_seated_){magazine_pose_=g.attached_magazine_pose;previous_hand_=g.hand_in_gun;}
+					decision_ = magazine_seated_ ? "magazine rocked in" : "insert transaction rejected";
+					well_contact_ = false;
+					require_withdrawal_ = !magazine_seated_;
+					return;
+				}
 				const auto tip = g.magazine_top_in_well;
 				well_motion motion{previous_tip_,well_contact_,require_withdrawal_};
 				const auto contact=advance_well(p,motion,tip,g.insertion_alignment,s.magazine_inserted,now<insert_after_);
@@ -651,7 +674,7 @@ namespace vr::gameplay::weapons::physical_reload
 			slide_pose_ = 0;
 			latch_contact_.reset();
 			slap_.reset();receiver_slap_.reset(); slap_trace_={}; catch_grip_={}; catch_amount_=0;
-			slide_held_ = forward_armed_ = magazine_seated_ = magazine_grabbed_ = require_withdrawal_ = well_contact_ = false; travel_ = start_travel_ = 0;
+			slide_held_ = forward_armed_ = magazine_seated_ = magazine_grabbed_ = require_withdrawal_ = well_contact_ = rock_armed_ = false; travel_ = start_travel_ = 0;
 		}
 		controller_input::digital_press_gate trigger_{}, release_{}, fire_{};
 		std::uint32_t weapon_{};
@@ -660,6 +683,7 @@ namespace vr::gameplay::weapons::physical_reload
 		clock::time_point last_time_{},insert_after_{};
 		controller_input::consumer_continuity continuity_;
 		bool slide_held_{}, forward_armed_{}, magazine_seated_{}, magazine_grabbed_{}, require_withdrawal_{}, well_contact_{};
+		bool rock_armed_{}; // Rock-in: hooked while tilted at least arm_degrees.
 		bool knife_magazine_grasp_{}; // Frozen until release: returning the knife cannot move a held magazine.
 		std::uint8_t magazine_pose_{};
 		bool knife_slide_grasp_{}; // Likewise, returning the knife cannot reselect the held slide style.

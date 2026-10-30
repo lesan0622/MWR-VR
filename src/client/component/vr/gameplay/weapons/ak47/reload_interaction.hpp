@@ -8,14 +8,18 @@ namespace vr::gameplay::weapons::ak47
 	// Metres. Pull follows the initial native forward/downward exit. A new
 	// magazine approaches the rear latch toward +X; proximity alone cannot eject.
 	inline constexpr auto manual_magazine = physical_reload::rocking_magazine({.35f, 0, -.93674970f});
-	// j_bolt2 travels 9.35 cm on pullout_first. It reciprocates on firing and
-	// always returns forward after release, including over an empty magazine.
+	// Rock-in: the front lug sits ~1.1 in ahead of the magazine top centre.
+	inline constexpr physical_reload::rock_in rock{.lug_forward = 1.1f};
+	// j_bolt2 travels 9.35 cm on pullout_first. User (headset, 2026-10-30): the
+	// handle should retreat to the rear of the receiver cover cut-out, ~12.5 cm
+	// on a real AKM. It reciprocates on firing and always returns forward after
+	// release, including over an empty magazine.
 	inline constexpr physical_reload::profile reload_interaction{
 	    .waist_radius = physical_reload::defaults::waist_radius_m,
 	    .slide_radius = part_grip_capture::radius_m,
-	    .slide_stroke = .094f,
+	    .slide_stroke = .125f,
 	    .locked_travel = 0.f,
-	    .full_stroke = .087f,
+	    .full_stroke = .118f,
 	    .slide_lateral_limit = physical_reload::defaults::slide_lateral_limit_m,
 	    .well_radius = physical_reload::defaults::well_radius_m,
 	    .well_contact_depth = physical_reload::defaults::well_contact_depth_m,
@@ -26,5 +30,6 @@ namespace vr::gameplay::weapons::ak47
 	    .slide_pose_count = 2,
 	    .motion = physical_reload::action_motion::reciprocating_slide,
 	    .manual_magazine = &manual_magazine,
+	    .rock = &rock,
 	};
 }
