@@ -57,6 +57,7 @@
 // Trigger delivery and native fire gate lines for the status report.
 namespace vr::controllers {std::string fire_input_status();}
 namespace vr::gameplay::weapons::reload_boundary {std::string fire_gate_status();}
+namespace vr::gameplay::weapons::underbarrel {std::string report_status();}
 
 namespace vr::diagnostics
 {
@@ -426,6 +427,7 @@ namespace vr::diagnostics
 		std::string screen_displays_status()
 		{
 			return vr::controllers::fire_input_status()+gameplay::weapons::reload_boundary::fire_gate_status()+
+				gameplay::weapons::underbarrel::report_status()+
 				gameplay::fixed_sniper::format_input_status()+gameplay::fixed_sniper::format_render_status()+
 				gameplay::weapons::javelin_screen::format_status()+screen::auxiliary.format("auxiliary display scene",GetTickCount64());
 		}

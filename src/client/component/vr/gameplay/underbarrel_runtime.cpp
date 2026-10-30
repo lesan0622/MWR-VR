@@ -919,6 +919,21 @@ namespace vr::gameplay::weapons::underbarrel
 		const auto axis=hands::rotate(parts.mount.rotation,parts.type==kind::shotgun?authored::shotgun_axis:authored::m203_axis);
 		result.position=hands::add(result.position,hands::scale(axis,v.travel*units));return result;
 	}
+	// Records snapshot for the console command (server thread). The status
+	// report reads the copy refreshed on the server every 500 ms.
+	std::mutex status_mutex;
+	std::string status_copy;
+	std::string format_status()
+	{
+		std::ostringstream out;out<<"ready="<<enabled()<<" smart_ammo="<<smart_supply_enabled()<<" shots="<<shots<<" commits="<<commits<<" rejected="<<rejected<<" reason="<<reason<<'\n';
+		for(const auto& e:records.entries())if(e.id){const auto& r=e.value;const auto& v=r.view;out<<"host="<<e.id.weapon<<" generation="<<e.id.generation<<" module="<<v.ammo.id.definition<<" kind="<<int(v.ammo.id.type)
+			<<" loaded="<<v.ammo.loaded<<" reserve="<<v.ammo.reserve<<" held="<<v.ammo.held<<" chamber="<<v.ammo.chamber<<" open="<<v.ammo.open<<" spent="<<v.ammo.spent<<" travel="<<v.travel<<" grip="<<int(v.grip)<<" fault="<<v.fault
+			<<" input="<<r.sequence<<" same_hand_chords="<<r.same_hand_chords<<" native_reductions="<<r.native_reductions<<" last_native="<<r.last_native_before<<"->"<<r.last_native_after
+			<<" decision="<<r.decision<<" fire_distance/up/inward/waist="<<r.contact[0]<<'/'<<r.contact[1]<<'/'<<r.contact[2]<<'/'<<r.contact[3]<<'\n';}
+		return out.str();
+	}
+	std::string report_status()
+	{const std::lock_guard lock(status_mutex);return "[VR underbarrel] "+status_copy;}
 	class component final:public component_interface
 	{
 		void post_unpack()override
@@ -926,13 +941,9 @@ namespace vr::gameplay::weapons::underbarrel
 			smart_ammo_selection=dvars::register_bool(settings::smart_ammo_selection.name,settings::smart_ammo_selection.default_value,
 				game::DVAR_FLAG_SAVED,"Automatically choose underbarrel ammunition at the waist when it needs loading; prioritize an absent or empty primary magazine");
 			installed=native::initialize();
+			scheduler::loop([]{auto text=format_status();const std::lock_guard lock(status_mutex);status_copy=std::move(text);},scheduler::pipeline::server,500ms);
 			command::add("vr_underbarrel_status",[]{scheduler::once([]{
-				std::ostringstream out;out<<"ready="<<enabled()<<" smart_ammo="<<smart_supply_enabled()<<" shots="<<shots<<" commits="<<commits<<" rejected="<<rejected<<" reason="<<reason<<'\n';
-				for(const auto& e:records.entries())if(e.id){const auto& r=e.value;const auto& v=r.view;out<<"host="<<e.id.weapon<<" generation="<<e.id.generation<<" module="<<v.ammo.id.definition<<" kind="<<int(v.ammo.id.type)
-					<<" loaded="<<v.ammo.loaded<<" reserve="<<v.ammo.reserve<<" held="<<v.ammo.held<<" chamber="<<v.ammo.chamber<<" open="<<v.ammo.open<<" spent="<<v.ammo.spent<<" travel="<<v.travel<<" grip="<<int(v.grip)<<" fault="<<v.fault
-					<<" input="<<r.sequence<<" same_hand_chords="<<r.same_hand_chords<<" native_reductions="<<r.native_reductions<<" last_native="<<r.last_native_before<<"->"<<r.last_native_after
-					<<" decision="<<r.decision<<" fire_distance/up/inward/waist="<<r.contact[0]<<'/'<<r.contact[1]<<'/'<<r.contact[2]<<'/'<<r.contact[3]<<'\n';}
-				const auto text=out.str();console::info("[VR underbarrel] %s",text.c_str());scheduler::once([text]{utils::io::write_file_atomic("minidumps/overlord-underbarrel.txt",text);},scheduler::pipeline::async);
+				const auto text=format_status();console::info("[VR underbarrel] %s",text.c_str());scheduler::once([text]{utils::io::write_file_atomic("minidumps/overlord-underbarrel.txt",text);},scheduler::pipeline::async);
 			},scheduler::pipeline::server);});
 		}
 		void pre_destroy()override{alive=false;}
