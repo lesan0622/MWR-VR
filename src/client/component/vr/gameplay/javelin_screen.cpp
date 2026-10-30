@@ -130,24 +130,28 @@ namespace vr::gameplay::weapons::javelin_screen
 				console::warn("[VR Javelin] native lock ADS script contract rejected\n");
 				return;
 			}
+			// The PlayerADS detour is created at startup (install_player_ads): by a
+			// level start MinHook finds no free trampoline page near the image
+			// (MinHook 9, MH_ERROR_MEMORY_ALLOC, on the bog_a save load).
 			if (!player_ads_hook.is_enabled())
-			{
-				const auto method = scripting::find_function("playerads", false);
-				constexpr std::uint8_t entry[]{
-				    0x48, 0x83, 0xec, 0x28, 0x8b, 0xc1, 0xc1, 0xe8, 0x10, 0x66, 0x85, 0xc0};
-				std::array<std::uint8_t, sizeof(entry)> mask{};
-				mask.fill(255);
-				// MWR PlayerADS 0x14028FCC0 (H2 0x1404B4DB0); identical entry bytes.
-				if (reinterpret_cast<std::uintptr_t>(method) != 0x14028FCC0 ||
-				    !utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(method),
-				                                                 {entry, mask.data(), mask.size()}))
-				{
-					console::error("[VR Javelin] native playerads method contract rejected\n");
-					return;
-				}
-				player_ads_hook.create(reinterpret_cast<void*>(method), player_ads);
-			}
+				return;
 			lock_ads_call = file->bytecode + *call;
+		}
+		void install_player_ads()
+		{
+			constexpr std::uint8_t entry[]{
+			    0x48, 0x83, 0xec, 0x28, 0x8b, 0xc1, 0xc1, 0xe8, 0x10, 0x66, 0x85, 0xc0};
+			std::array<std::uint8_t, sizeof(entry)> mask{};
+			mask.fill(255);
+			// MWR PlayerADS 0x14028FCC0 (H2 0x1404B4DB0); identical entry bytes.
+			// Without a bound lock call the detour only forwards to native.
+			if (!utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(0x14028FCC0),
+			                                                 {entry, mask.data(), mask.size()}))
+			{
+				console::error("[VR Javelin] native playerads method contract rejected\n");
+				return;
+			}
+			player_ads_hook.create(0x14028FCC0, player_ads);
 		}
 		bool hud_active(int local_client)
 		{
@@ -525,6 +529,7 @@ namespace vr::gameplay::weapons::javelin_screen
 			else
 				console::error(
 				    "[VR Javelin display] HUD watch contract rejected; native HUD timing retained\n");
+			install_player_ads();
 			scripting::on_level_start(bind_lock_gate);
 			scripting::on_shutdown(
 			    [](bool, bool after)

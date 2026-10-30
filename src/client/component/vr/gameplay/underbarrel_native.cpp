@@ -23,11 +23,11 @@ namespace vr::gameplay::weapons::underbarrel::native
 		template<class T>bool read(const void* p,std::size_t offset,T& value)noexcept
 		{return p && utils::native_memory::read_bytes(&value,static_cast<const std::byte*>(p)+offset,sizeof(value));}
 		const game::WeaponDef* definition(std::uint32_t token)noexcept
-		{const game::WeaponDef* out{};return token && token<512 && read(reinterpret_cast<const void*>(0x14CE01580),token*8,out) ? out : nullptr;}
+		{const game::WeaponDef* out{};return token && token<512 && read(reinterpret_cast<const void*>(0x14D750C40),token*8,out) ? out : nullptr;}
 		std::string_view name(const game::WeaponDef* d,std::array<char,128>& buffer)noexcept
 		{const char* text{};if(!read(d,0,text)||!utils::native_memory::read_bytes(buffer.data(),text,buffer.size()))return {};auto n=strnlen_s(buffer.data(),buffer.size());return n<buffer.size() ? std::string_view(buffer.data(),n) : std::string_view{};}
 		std::uint64_t key(std::uint32_t host,bool clip,bool alternate=true)
-		{return utils::hook::invoke<std::uint64_t>(clip?0x14069D250:0x14069D0B0,host,alternate)&(clip?0xffffffffffull:0xffffffffffffull);}
+		{return utils::hook::invoke<std::uint64_t>(clip?0x1404AE450:0x1404AE2B0,host,alternate) /* MWR clip/ammo keys (H2 0x14069D250/0x14069D0B0) */&(clip?0xffffffffffull:0xffffffffffffull);}
 		bool scope()noexcept{return verified && scheduler::is_executing(scheduler::pipeline::server) && game::CL_IsCgameInitialized();}
 		template<std::size_t N>bool match(std::uintptr_t at,const std::uint8_t(&bytes)[N])
 		{std::array<std::uint8_t,N> mask{};mask.fill(255);return bool(utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(at),{bytes,mask.data(),N}));}
@@ -36,10 +36,12 @@ namespace vr::gameplay::weapons::underbarrel::native
 	{
 		// Witnessed class-6 G_FireWeapon path: entity, resolved launcher token,
 		// 0x50-byte fire packet. Helper retains native speed, fuse and attacker.
+		// MWR: helper 0x1402F3B10 (H2 0x14051CD40), packet reads +0x44/+0x3C at
+		// +0x29, called from FireWeapon 0x1402EFB66 (H2 0x140518C9C).
 		constexpr std::uint8_t launcher[]{0x40,0x53,0x56,0x57,0x48,0x83,0xec,0x50};
 		constexpr std::uint8_t packet[]{0x0f,0xb6,0x57,0x44,0x8b,0x4f,0x3c};
-		constexpr std::uint8_t call[]{0xe8,0x9f,0x40,0x00,0x00};
-		verified=native_ballistics::initialize() && match(0x14051CD40,launcher) && match(0x14051CD69,packet) && match(0x140518C9C,call);
+		constexpr std::uint8_t call[]{0xe8,0xa5,0x3f,0x00,0x00};
+		verified=native_ballistics::initialize() && match(0x1402F3B10,launcher) && match(0x1402F3B39,packet) && match(0x1402EFB66,call);
 		return verified;
 	}
 	binding resolve(weapon_identity host)noexcept
@@ -74,7 +76,7 @@ namespace vr::gameplay::weapons::underbarrel::native
 		unsigned hosts{};
 		for(unsigned i=0;i<15;++i)
 		{
-			std::uint32_t other{};std::uint8_t dual{};if(!read(ps,0x2f8+i*4,other)||!read(ps,0x335+i*8,dual))return {};
+			std::uint32_t other{};std::uint8_t dual{};if(!read(ps,0x2cc+i*4,other)||!read(ps,0x309+i*8,dual))return {}; // MWR list +0x2CC, per-weapon +0x308 (H2 +0x2F8/+0x334)
 			if(!other)continue;if(other>=512 || dual)return {};
 			if(other==host.weapon){++hosts;continue;}
 			if(key(other,true,false)==ck)return {};
@@ -137,7 +139,7 @@ namespace vr::gameplay::weapons::underbarrel::native
 		settle(context);firing=true;const auto release=gsl::finally([]{firing=false;});
 		if(expected.module.id.type==kind::shotgun)
 			utils::hook::invoke<void>(native_ballistics::bullet_address,entity,spread,&packet,entity,command,-1.f);
-		else utils::hook::invoke<game::gentity_s*>(0x14051CD40,entity,packet.weapon,&packet);
+		else utils::hook::invoke<game::gentity_s*>(0x1402F3B10,entity,packet.weapon,&packet); // MWR (H2 0x14051CD40)
 		return true; // Never refund after entering native damage/scripts.
 	}
 }

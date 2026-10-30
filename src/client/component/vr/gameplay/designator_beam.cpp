@@ -7,6 +7,7 @@
 #include "weapon_render_pose.hpp"
 #include "weapon_render_owner.hpp"
 #include "native_scripted_control.hpp"
+#include "render_origin_rebase.hpp"
 #include <utils/native_memory.hpp>
 #include "../eye_composition.hpp"
 #include "component/command.hpp"
@@ -57,13 +58,18 @@ namespace vr::gameplay::weapon_laser
 			bool valid{};
 		};
 		thread_local pair_snapshot pair;
+		// MWR bring-up: the last projected beam (world start/end, centre eye, color).
+		struct beam_diagnostic {vec start{},end{},eye{},color{};bool hit{};};
+		std::mutex diagnostic_mutex;
+		beam_diagnostic last_beam;
 		thread_local world_beam::renderer renderer;
 		bool trace_surface(vec origin,vec forward,float reach,unsigned short skip,int mask,
 			designator_visual::surface& surface)
 		{
 			const auto end=add(origin,scale(forward,reach));
 			game::trace_t hit{};game::Bounds point{};unsigned trace_flags{};
-			utils::hook::invoke<void>(0x1403C70D0,&hit,origin.data(),end.data(),&point,skip,mask,&trace_flags);
+			// MWR CG_Trace (H2 0x1403C70D0): same (trace, start, end, bounds, skip, mask, flags*) call.
+			utils::hook::invoke<void>(0x1401A0380,&hit,origin.data(),end.data(),&point,skip,mask,&trace_flags);
 			if(hit.startsolid || hit.allsolid || !std::isfinite(hit.fraction) || hit.fraction<0 || hit.fraction>1)return false;
 			const vec normal{hit.normal[0],hit.normal[1],hit.normal[2]};const bool contact=hit.fraction<1;
 			if(contact && (!std::isfinite(length(normal)) || std::abs(length(normal)-1)>.01f))return false;
@@ -75,6 +81,10 @@ namespace vr::gameplay::weapon_laser
 		{
 			vec end;if(!designator_visual::endpoint(start,forward,surface,units,end))return false;
 			const auto eye=scale(add(event.model_origins.eyes[0],event.model_origins.eyes[1]),.5f);
+			{
+				const std::lock_guard lock(diagnostic_mutex);
+				last_beam={start,end,eye,{color[0],color[1],color[2]},surface.hit};
+			}
 			const auto world=designator_visual::geometry(start,end,surface.normal,eye,units);
 			for(unsigned i=0;i<2;++i)
 			{
@@ -84,6 +94,28 @@ namespace vr::gameplay::weapon_laser
 				pair.eyes[i].color=color;
 			}
 			pair.valid=true;++pairs;return true;
+		}
+		// MWR (H1) LaserDef: color and its HDR scale are separate vec4s, so range and
+		// the flags move (0x140159560 reads +0x28 tag, +0x2C*+0x3C color, +0x6C range,
+		// +0x91 nightvisionOnly, +0x95 laserSightLaser).
+		struct mwr_laser
+		{
+			game::scr_string_t tag{};
+			std::array<float, 3> color{};
+			float range{};
+			bool nightvision_only{}, sight_laser{};
+		};
+		bool read_laser(const void* definition, mwr_laser& out) noexcept
+		{
+			std::array<std::byte, 0x98> raw{};
+			if (!definition || !utils::native_memory::read_bytes(raw.data(), definition, raw.size())) return false;
+			const auto f = [&](std::size_t o) {float v{};std::memcpy(&v, raw.data() + o, sizeof(v));return v;};
+			std::memcpy(&out.tag, raw.data() + 0x28, sizeof(out.tag));
+			for (unsigned c = 0; c < 3; ++c) out.color[c] = f(0x2c + c * 4) * f(0x3c + c * 4);
+			out.range = f(0x6c);
+			out.nightvision_only = raw[0x91] != std::byte{};
+			out.sight_laser = raw[0x95] != std::byte{};
+			return true;
 		}
 		void draw(int client,
 		          const void* context,
@@ -102,23 +134,18 @@ namespace vr::gameplay::weapon_laser
 				return;
 			}
 			unsigned short owner{};
+			// MWR centity +0x1B2: entity number, also the native trace skip (H2 +0x1B4 owner).
 			if (!utils::native_memory::read_bytes(
-			        &owner, static_cast<const std::byte*>(entity) + 0x1b4, sizeof(owner)) ||
+			        &owner, static_cast<const std::byte*>(entity) + 0x1b2, sizeof(owner)) ||
 			    owner != 0)
 			{
 				original();
 				return;
 			}
-			const auto* ps = game::CG_GetPredictedPlayerState(0);
-			unsigned token{};
-			if (!ps || !utils::native_memory::read_bytes(
-			               &token, reinterpret_cast<const std::byte*>(ps) + 0x3bc, sizeof(token)))
-			{
-				original();
-				return;
-			}
-			token &= 511;
-			const auto* def = game::weapon_defs[token];
+			// MWR: the held native weapon is the laser's owner (H2 read ps+0x3BC).
+			const auto held = weapons::sample_native_equipped();
+			const unsigned token = unsigned(held.weapon) & 511;
+			const auto* def = token ? game::weapon_defs[token] : nullptr;
 			if (!token || !def || !def->szInternalName)
 			{
 				original();
@@ -126,14 +153,8 @@ namespace vr::gameplay::weapon_laser
 			}
 			const bool designator = std::string_view(def->szInternalName) == "usp_laserdesignator";
 			auto pose = weapons::current_muzzle();
-			const auto held = weapons::sample_native_equipped();
 			const auto tracking = controller_input::latest();
 			const auto now = controller_input::clock::now();
-			if (token != held.weapon)
-			{
-				original();
-				return;
-			}
 			if (!scripted_control::predicted_allowed())
 			{
 				if (designator)
@@ -142,9 +163,8 @@ namespace vr::gameplay::weapon_laser
 					original();
 				return;
 			}
-			game::LaserDef laser{};
-			if (!weapons::pose_ready(pose, held, tracking.reference_generation, now) ||
-			    !utils::native_memory::read_bytes(&laser, definition, sizeof(laser)))
+			mwr_laser laser{};
+			if (!weapons::pose_ready(pose, held, tracking.reference_generation, now) || !read_laser(definition, laser))
 			{
 				++suppressed;
 				return;
@@ -155,10 +175,10 @@ namespace vr::gameplay::weapon_laser
 				++suppressed;
 				return;
 			}
-			if (!designator && laser.laserTag)
+			if (!designator && laser.tag)
 			{
 				const auto* tag =
-				    unsigned(laser.laserTag) < 0x40000 ? game::SL_ConvertToString(laser.laserTag) : nullptr;
+				    unsigned(laser.tag) < 0x40000 ? game::SL_ConvertToString(laser.tag) : nullptr;
 				if (tag && std::string_view(tag) == "tag_flash")
 					receiver_tag = false;
 				else if (!tag || std::string_view(tag) != "tag_laser")
@@ -167,16 +187,14 @@ namespace vr::gameplay::weapon_laser
 					return;
 				}
 			}
+			// MWR: a receiver without a solved tag_laser keeps the muzzle axis.
 			if (receiver_tag && !weapons::laser_pose(pose, pose))
-			{
-				++suppressed;
-				return;
-			}
+				receiver_tag = false;
 			spatial_panel::vec4 color{1, .002f, .001f, 1};
 			if (!designator)
 				for (unsigned c = 0; c < 3; ++c)
 				{
-					const auto value = laser.hdrColorScale[c];
+					const auto value = laser.color[c];
 					if (!std::isfinite(value) || value < 0 || value > 64)
 					{
 						++suppressed;
@@ -184,8 +202,15 @@ namespace vr::gameplay::weapon_laser
 					}
 					color[c] = value;
 				}
+			// MWR IR lasers (PEQ-6, nightvisionOnly) are dim grey (0.2) for the native
+			// scene, which the NVG post effect then brightens. This beam composes after
+			// it, so present the intensified look directly.
+			// The bog_a PEQ-6 does not set nightvisionOnly; use the native NVG state
+			// (0x14018AE50(local client), the same query the laser callers make).
+			if (!designator && (laser.nightvision_only || utils::hook::invoke<bool>(0x14018AE50, 0)))
+				color = {.75f, 1.f, .75f, 1};
 			const float reach =
-			    laser.laserSightLaser && std::isfinite(range) && range > 0 ? range : laser.range;
+			    laser.sight_laser && std::isfinite(range) && range > 0 ? range : laser.range;
 			if (!std::isfinite(reach) || reach <= 0 || reach > 20000)
 			{
 				++suppressed;
@@ -203,7 +228,7 @@ namespace vr::gameplay::weapon_laser
 			                   now,
 			                   color,
 			                   receiver_tag,
-			                   laser.nightvisionOnly};
+			                   laser.nightvision_only};
 			{
 				const std::lock_guard lock(mutex);
 				samples[cursor++ % samples.size()] = value;
@@ -232,39 +257,27 @@ namespace vr::gameplay::weapon_laser
 			}
 			if(!weapons::carry::active())return;
 			const auto held = weapons::carry::current_hold();
-			weapon_render_pose::snapshot rendered;
-			if (!event.model_origins.valid || !valid_hand(held.holding_hand()) ||
-			    !weapon_render_pose::for_scene(event.views, rendered, held.id()))
+			if (!valid_hand(held.holding_hand()))
 				return;
-			auto pose = rendered.muzzle;
-			if (pose.owner.id() != held.id() || pose.owner.rear_revision != held.rear_revision ||
-			    !weapons::valid_model_anchor(pose.model))
-				return;
+			// MWR: the H2 render-pose hooks are not rebound. Use the pose traced at
+			// the native laser draw (already on tag_laser), placed like the gun:
+			// skinned placement plus the arm placement lag (as optics do).
 			sample trace;
 			{
 				const std::lock_guard lock(mutex);
 				for (const auto& value : samples)
-					if (weapons::same_render_carrier(value.pose.owner, held) &&
-					    value.pose.reference_generation == pose.reference_generation &&
-					    value.pose.input_sequence <= pose.input_sequence && now >= value.at &&
+					if (weapons::same_render_carrier(value.pose.owner, held) && now >= value.at &&
 					    now - value.at < 150ms && value.at > trace.at)
 						trace = value;
 			}
-			if (!trace.pose.valid)
+			if (!trace.pose.valid || !weapons::valid_model_anchor(trace.pose.model))
 				return;
-			if (trace.receiver_tag && !weapons::laser_pose(pose, pose))
-				return;
-			if (trace.nightvision_only)
-			{
-				const auto* ps = game::CG_GetPredictedPlayerState(0);
-				unsigned flags{};
-				if (!ps ||
-				    !utils::native_memory::read_bytes(
-				        &flags, reinterpret_cast<const std::byte*>(ps) + 0x3c0, sizeof(flags)) ||
-				    !(flags & 0x40))
-					return;
-			}
-			const auto start = weapons::place_model_anchor(pose.model, event.model_origins.placement);
+			// Native draws (and so samples) only while a night-vision-only laser is visible.
+			const auto& pose = trace.pose;
+			auto placement = event.model_origins.placement;
+			const auto lag = render_origin_rebase::solve_lag();
+			for (int i = 0; i < 3; ++i) placement[i] += lag[i];
+			const auto start = weapons::place_model_anchor(pose.model, placement);
 			project(event,start,pose.axis[0],trace.surface,pose.units_per_meter,trace.color);
 		}
 		void compose(const eye_composition::event& event,
@@ -323,12 +336,12 @@ namespace vr::gameplay::weapon_laser
 			mask.fill(255);
 			constexpr std::array<unsigned char, 4> trace{0x48, 0x83, 0xec, 0x68},
 			    trace_mask{255, 255, 255, 255};
-			if (utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(0x14037D470),
+			if (utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(0x140159560), // MWR laser draw (H2 0x14037D470)
 			                                                {bytes.data(), mask.data(), bytes.size()}) &&
-			    utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(0x1403C70D0),
+			    utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(0x1401A0380),
 			                                                {trace.data(), trace_mask.data(), trace.size()}))
 			{
-				draw_hook.create(0x14037D470, draw);
+				draw_hook.create(0x140159560, draw);
 				installed = true;
 			}
 			composition_registration =
@@ -357,6 +370,10 @@ namespace vr::gameplay::weapon_laser
 				    pairs.load(),
 				    drawn.load(),
 				    missed.load());
+				beam_diagnostic b;
+				{const std::lock_guard lock(diagnostic_mutex);b=last_beam;}
+				console::info("[VR weapon laser] last start=(%.1f,%.1f,%.1f) end=(%.1f,%.1f,%.1f) eye=(%.1f,%.1f,%.1f) color=(%.3f,%.3f,%.3f) hit=%d\n",
+					b.start[0],b.start[1],b.start[2],b.end[0],b.end[1],b.end[2],b.eye[0],b.eye[1],b.eye[2],b.color[0],b.color[1],b.color[2],b.hit);
 			};
 			command::add("vr_weapon_laser_status", status);
 			command::add("vr_designator_beam_status", status);

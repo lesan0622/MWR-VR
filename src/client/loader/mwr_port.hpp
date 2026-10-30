@@ -80,6 +80,8 @@ namespace mwr_port
 		"vr::gameplay::weapons::launcher::native_component", // Javelin lock projection from the launcher (Target_IsInRect).
 		"vr::gameplay::fixed_sniper", // sniperescape Barrett: hand-drag/stick aim, flat native scope view.
 		"vr::gameplay::barrett_gun", // sniperescape Barrett held as a VR rifle (physical scope); replaces fixed_sniper there.
+		"vr::gameplay::weapon_laser", // Weapon lasers (NVG IR) from the VR muzzle; native beam 0x140159560 replaced.
+		"vr::gameplay::weapons::underbarrel", // M203 (MWR viewmodel j_m203_slide/j_grenade): grip, slide, load, fire (FireWeapon launcher 0x1402F3B10).
 		"vr::gameplay::c4_detonator", // maps/_c4 detonator: trigger press sends the player's "detonate".
 	};
 

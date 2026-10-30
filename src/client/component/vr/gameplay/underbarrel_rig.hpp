@@ -68,6 +68,37 @@ namespace vr::gameplay::weapons::underbarrel
 				out.round_parts_local[n]=compose(inverse(as_anchor(bones[out.round].bind)),as_anchor(bones[child].bind));
 			}
 		}
+		if(out.type==kind::none)
+		{
+			// MWR (H1) composite: viewmodel_m4a1_sp carries tag_m203 and the animated
+			// launcher bones (j_m203_slide, j_grenade with j_grenade_main/shell,
+			// j_trigger); attach_h1_launcher_m203_vm's same-named bones ride on
+			// them. Drive the receiver bones; its tag_m203 is H2's tag_m203 frame
+			// (the trigger sits 1.4 in behind it, as on the H2 attachment).
+			for(const auto& m:models)
+			{
+				if(m.name!="attach_h1_launcher_m203_vm" || m.begin<=r.gun || m.begin+m.count>r.count)continue;
+				const int tag=r.parent[m.begin];
+				if(tag<0 || tag>=m.begin || bones[tag].name!="tag_m203" || !hands::descendant(tag,r.gun,r))return {};
+				const auto child=[&](int parent,std::string_view name){for(int i=0;i<m.begin;++i)if(r.parent[i]==parent && bones[i].name==name)return i;return -1;};
+				const int slide=child(tag,"j_m203_slide"),round=child(tag,"j_grenade");
+				if(slide<0 || round<0)return {};
+				for(int b:{tag,slide,round})for(float f:bones[b].bind.position)if(!std::isfinite(f)||std::abs(f)>10000)return {};
+				const auto gun=inverse(as_anchor(bones[r.gun].bind));
+				out.type=kind::m203;out.root=m.begin;out.motion=slide;out.round=round;
+				out.mount=compose(gun,as_anchor(bones[tag].bind));
+				out.motion_rest=compose(gun,as_anchor(bones[slide].bind));
+				out.round_rest=compose(gun,as_anchor(bones[round].bind));
+				out.muzzle=compose(out.mount,authored::m203_muzzle);
+				const std::array<std::string_view,2> parts{"j_grenade_main","j_grenade_shell"};
+				for(int n=0;n<2;++n)
+				{
+					const int part=child(round,parts[n]);if(part<0)continue;out.round_parts[n]=part;
+					out.round_parts_local[n]=compose(inverse(as_anchor(bones[round].bind)),as_anchor(bones[part].bind));
+				}
+				break;
+			}
+		}
 		if(out.type==kind::m203)for(const auto& model:models)if(model.begin==r.gun)
 		{
 			if(model.name=="h2_viewmodel_scar_h_base"){out.firing_pose=authored::scar_fire_grip;out.firing_fingers=authored::scar_fire_fingers;}

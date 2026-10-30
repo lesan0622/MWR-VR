@@ -41,8 +41,10 @@ namespace vr::gameplay::weapons::underbarrel
 		if(((module_family(host,"m4") || module_family(host,"m4m203")) && module_family(child,"m203_m4")) ||
 			(module_family(host,"m16") && module_family(child,"m203_m16")) ||
 			(module_family(host,"scar_h") && module_family(child,"scar_h_m203")) ||
-			(module_family(host,"masada") && module_family(child,"gl_masada")))k=kind::m203;
-		else if(module_family(host,"ak47") && module_family(child,"gl_ak47"))k=kind::gp25;
+			(module_family(host,"masada") && module_family(child,"gl_masada")) ||
+			// MWR: m16_grenadier links the bare "m203".
+			(module_family(host,"m16") && child=="m203"))k=kind::m203;
+		else if(module_family(host,"ak47") && (module_family(child,"gl_ak47") || child=="gp25"))k=kind::gp25; // MWR ak47_grenadier -> gp25.
 		else if(shotgun_pair(host,child))k=kind::shotgun;
 		return k!=kind::none && count==capacity(k) && type==(k==kind::shotgun?1:3) && weapon_class==(k==kind::shotgun?4:6) ? k : kind::none;
 	}
