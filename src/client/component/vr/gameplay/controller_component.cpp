@@ -155,6 +155,8 @@ namespace vr::controllers
 				angles[0] = std::remainder(pitch - axis(input.turn[1]) * rate * dt, 360.f); // The link/turret clamps.
 			}
 		}
+		// Lock-launcher sight diagnostics (vr_input_status).
+		std::atomic<float> launcher_hand{-1}, launcher_along{}, launcher_lateral{}, launcher_facing{};
 		void finish_move_stub(const int local_client, game::usercmd_s* const cmd)
 		{
 			// The native pitch clamp and other input sources run after the
@@ -434,7 +436,26 @@ namespace vr::controllers
 						float d2{};for (int i=0;i<3;++i) d2+=(hand[i]-reference.head_position_meters[i])*(hand[i]-reference.head_position_meters[i]);
 						nearest=std::min(nearest,std::sqrt(d2));
 					}
-					sight=nearest<=(gameplay::view_aimed::launcher_sight ? .35f : .25f);
+					// Shouldered: the eye sits beside the tube, behind its muzzle, looking
+					// along it. A Stinger's rear grip is often 30 cm from the head, so the
+					// hand distance alone left the lock view (and with it lock-on) closed.
+					bool shouldered=false;
+					const auto muzzle=gameplay::weapons::current_muzzle();
+					if (muzzle.valid && muzzle.reference_generation==input.reference_generation && muzzle.units_per_meter>0 &&
+						now>=muzzle.sampled_at && now-muzzle.sampled_at<=std::chrono::milliseconds(150))
+					{
+						const auto& f=muzzle.axis[0];
+						float along{},lateral2{},facing{};
+						std::array<float,3> d{};
+						for (int i=0;i<3;++i) d[i]=(muzzle.head_position[i]-muzzle.position[i])/muzzle.units_per_meter;
+						for (int i=0;i<3;++i) {along-=d[i]*f[i];facing+=muzzle.head_forward[i]*f[i];}
+						for (int i=0;i<3;++i) {const float r=d[i]+f[i]*along;lateral2+=r*r;}
+						const bool open=gameplay::view_aimed::launcher_sight;
+						shouldered=along>.15f && along<1.8f && std::sqrt(lateral2)<(open ? .22f : .16f) && facing>(open ? .8f : .87f);
+						launcher_along=along;launcher_lateral=std::sqrt(lateral2);launcher_facing=facing;
+					}
+					launcher_hand=nearest;
+					sight=shouldered || nearest<=(gameplay::view_aimed::launcher_sight ? .55f : .25f);
 				}
 				if (sight!=gameplay::view_aimed::launcher_sight.load() && binding_verified)
 					utils::hook::invoke<void>(notify_command_address,local_client,sight ? 17 : 18,0);
@@ -459,6 +480,9 @@ namespace vr::controllers
 
 		void print_status()
 		{
+			console::info("[VR input] launcher sight=%d hand_m=%.3f along_m=%.3f lateral_m=%.3f facing=%.3f\n",
+				gameplay::view_aimed::launcher_sight.load(), launcher_hand.load(), launcher_along.load(),
+				launcher_lateral.load(), launcher_facing.load());
 			const auto input = controller_input::latest_interaction();
 			const auto head = head_pose_bridge::get_status();
 			console::info("[VR input] game_view=hmd pitch_yaw_commands=%llu view_applied=%llu history_misses=%llu "
