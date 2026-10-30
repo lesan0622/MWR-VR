@@ -168,6 +168,21 @@ namespace vr::controllers
 				{
 					auto* angles = reinterpret_cast<float*>(client_angles_address);
 					if (gameplay::view_aimed::gunship()) aim_flat_screen(angles, ps);
+					else if (gameplay::weapons::javelin_screen::stinger_view_epoch())
+					{
+						// Stinger on the Javelin display: the tube is the native view, so the
+						// script's clearance traces and the launch follow it, not the head.
+						gunship_aim_at = {};
+						const auto muzzle = gameplay::weapons::current_muzzle();
+						const auto& f = muzzle.axis[0];
+						const float pitch = -std::asin(std::clamp(f[2], -1.f, 1.f)) * 57.295779513f;
+						const float yaw = std::atan2(f[1], f[0]) * 57.295779513f;
+						if (muzzle.valid && std::isfinite(pitch) && std::isfinite(yaw))
+						{
+							angles[0] = std::remainder(pitch - ps->delta_angles[0], 360.f);
+							angles[1] = std::remainder(yaw - ps->delta_angles[1], 360.f);
+						}
+					}
 					else if (gameplay::barrett_gun::epoch())
 					{
 						// Held Barrett: the barrel sets the native view the script fires along.
@@ -410,8 +425,10 @@ namespace vr::controllers
 				// independent display and holds native ADS; the camera follows the launcher.
 				gameplay::weapons::javelin_screen::input(input,owner,gameplay_allowed(input) && normal_input_seen &&
 					gameplay::scripted_control::predicted_allowed());
+				// The Stinger shares the Javelin display (launcher-aimed camera and lock).
+				const auto display_profile=gameplay::weapons::current_muzzle().profile_id;
 				const bool javelin=gameplay::weapons::javelin_screen::enabled() &&
-					gameplay::weapons::current_muzzle().profile_id=="javelin";
+					(display_profile=="javelin" || display_profile=="stinger");
 				if (javelin)
 				{
 					const bool open=gameplay::weapons::javelin_screen::requested(owner);

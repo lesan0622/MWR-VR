@@ -210,6 +210,11 @@ namespace camera
 			// (original Overlord thermal_scope camera request).
 			if (const auto sniper = vr::gameplay::fixed_sniper::current(ps).epoch)
 				request = {vr::game_view::camera_profiles::fixed_scope, sniper | (1ull << 63)};
+			// Stinger on the Javelin display steers the native view with its tube:
+			// hold the entry heading as for the Barrett.
+			else if (const auto stinger = vr::gameplay::weapons::javelin_screen::stinger_view_epoch())
+				request = {{vr::game_view::camera_owner::script, vr::game_view::head_rotation::free,
+					vr::game_view::head_translation::tracked}, stinger | (1ull << 60)};
 			// Held Barrett: the barrel steers the native angles, so the camera holds
 			// its entry heading and the head turns and moves freely.
 			else if (const auto barrett = vr::gameplay::barrett_gun::epoch())
@@ -226,8 +231,10 @@ namespace camera
 				camera_origin[2] = game::refdef->org[2];
 				// Javelin CLU at the eye: only the scene/HUD camera moves to the
 				// launcher (tracking and hand space stay HMD-owned), as on H2.
+				// The Stinger's held heading is ours, not a script camera: keep the display.
 				vr::gameplay::weapons::javelin_screen::apply_camera(game::refdef->org, game::refdef->axis,
-					!request.policy.owns_rotation(), &game::refdef->fovX);
+					!request.policy.owns_rotation() || vr::gameplay::weapons::javelin_screen::stinger_view_epoch(),
+					&game::refdef->fovX);
 				// MWR: CG_CalcViewValues copies the view origin into refdef.viewOffset
 				// (+0x58, the origin viewmodel DObj matrices and tag queries are relative
 				// to) before this hook applies the HMD pose. H2 recomputed it after the

@@ -3,6 +3,7 @@
 #include "launcher_targeting.hpp"
 #include "launcher_aim_bridge.hpp"
 #include "javelin_screen.hpp"
+#include "javelin_display_geometry.hpp"
 #include "weapon_carry_runtime.hpp"
 #include "native_scripted_control.hpp"
 #include "component/console.hpp"
@@ -26,7 +27,8 @@ namespace vr::gameplay::weapons::launcher
 			auto muzzle=current_muzzle();
 			// MWR: only the Javelin display is ported (the launcher presenter and
 			// disposal boundaries are not), so require its open, current camera.
-			if(actor!=&game::g_entities[0] || muzzle.profile_id!="javelin" || !javelin_screen::requested(owner))
+			// The Stinger's Target_IsInCircle shares this projection (maps/_stinger).
+			if(actor!=&game::g_entities[0] || !javelin_screen::display_profile(muzzle.profile_id) || !javelin_screen::requested(owner))
 				{++javelin_rejected;return utils::hook::invoke<bool>(target_projection,actor,fov,delta,screen);}
 			const auto input=controller_input::latest();
 			if(!javelin_screen::lock_aim(owner,muzzle)){++javelin_rejected;return false;}

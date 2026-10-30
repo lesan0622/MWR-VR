@@ -14,6 +14,9 @@ namespace vr::gameplay::weapons::javelin_screen
 	bool allows_fire(const hold&) noexcept;
 	bool lock_aim(const hold&,muzzle_frame&) noexcept;
 	std::uint64_t camera_epoch() noexcept;
+	// Nonzero while the Stinger shares this display: its tube is then the native
+	// view (maps/_stinger clearance traces use getplayerangles; the launch follows it).
+	std::uint64_t stinger_view_epoch() noexcept;
 	void apply_camera(float* origin,float (*axis)[3],bool allowed,float* tan_half) noexcept;
 	inline bool overlay_material(std::string_view name) noexcept
 	{

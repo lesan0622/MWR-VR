@@ -496,6 +496,28 @@ namespace vr::gameplay::weapon_capture
 					console::info("%s", out.empty() ? "[VR capture] damageable: none\n" : out.c_str());
 				}, scheduler::pipeline::server);
 			});
+			// Dev: loaded material names containing a filter, to the console and
+			// captures/_models/materials_<filter>.txt. vr_list_materials <filter>.
+			command::add("vr_list_materials", [](const command::params& params)
+			{
+				if (params.size() < 2) return;
+				const std::string filter = params.get(1);
+				scheduler::once([filter]
+				{
+					struct context { std::string filter; std::string out; unsigned count{}; } ctx{filter, {}, 0};
+					game::DB_EnumXAssets_Internal(game::ASSET_TYPE_MATERIAL, [](game::XAssetHeader header, void* data)
+					{
+						auto* c = static_cast<context*>(data);
+						if (!header.material || !header.material->info.name || c->count >= 512) return;
+						const std::string_view name{header.material->info.name, strnlen_s(header.material->info.name, 256)};
+						if (name.find(c->filter) == std::string_view::npos) return;
+						c->out.append(name).append("\n");
+						++c->count;
+					}, &ctx, false);
+					utils::io::write_file(directory("_models") + "/materials_" + filter + ".txt", ctx.out);
+					console::info("[VR capture] materials matching %s: %u\n%s", filter.c_str(), ctx.count, ctx.out.c_str());
+				}, scheduler::pipeline::main);
+			});
 			// Dev: dump loaded script assets matching a filter (bytecode + decompressed
 			// stack) to captures/_scripts for offline decompilation. vr_dump_scripts <filter>.
 			command::add("vr_dump_scripts", [](const command::params& params)

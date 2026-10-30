@@ -17,10 +17,13 @@
 #include "component/scheduler.hpp"
 #include "game/scripting/execution.hpp"
 #include "game/scripting/functions.hpp"
+#include "game/scripting/array.hpp"
+#include "../controller_haptics.hpp"
 #include "game/dvars.hpp"
 #include "game/game.hpp"
 #include "loader/component_loader.hpp"
 #include <utils/io.hpp>
+#include <utils/native_memory.hpp>
 #include <utils/hook.hpp>
 #include <utils/hook_validation.hpp>
 
@@ -40,6 +43,7 @@ namespace vr::gameplay::weapons::javelin_screen
 			std::uint64_t epoch{}, reference{};
 			controller_input::clock::time_point at{};
 			bool loaded{};
+			bool javelin{}; // The LUI JavelinActive watch override is Javelin-only.
 		};
 		struct camera_state
 		{
@@ -53,6 +57,10 @@ namespace vr::gameplay::weapons::javelin_screen
 		std::uint64_t next_epoch{};
 		std::atomic_uint64_t planned{}, drawn{}, missing{};
 		std::atomic<const char*> reason{"inactive"};
+		// maps/_stinger lock state (self.stinger): 0 none, 1 acquiring, 2 locked.
+		std::atomic_int stinger_lock{};
+		std::atomic_uint32_t native_lock_flags{};
+		unsigned stinger_ticks{};
 		bool hud_watch_ready{};
 		std::atomic_uint64_t hud_watch_calls{},hud_watch_overrides{};
 		std::atomic_uint32_t hud_watch_result{};
@@ -166,10 +174,49 @@ namespace vr::gameplay::weapons::javelin_screen
 			// This selection exists only for the admitted Javelin. Use its near-eye
 			// intent directly, before the native ADS fraction reaches one. This is
 			// only the LUI watch read; it does not change native player-state ADS.
-			if (!value.owner.weapon || value.owner.id() != owner.id() ||
+			if (!value.javelin || !value.owner.weapon || value.owner.id() != owner.id() ||
 			    value.owner.rear_revision != owner.rear_revision)
 				return finish(native);
 			return finish(value.control.open,true);
+		}
+		// The Stinger has no native lock box: its lock is audio (stinger_clu_aquiring_lock,
+		// stinger_clu_lock) and rumble. Read the script's own state for status and
+		// pulse the rear controller like the native rumble.
+		void observe_stinger_lock()
+		{
+			selection value;
+			{const std::lock_guard lock(mutex);value = selected;}
+			int state{};
+			if (value.control.open && value.owner.weapon && !value.javelin && game::CL_IsCgameInitialized())
+				try
+				{
+					const scripting::entity player{game::scr_entref_t{0, 0}};
+					const auto stinger = player.get("stinger");
+					if (stinger.is<std::map<std::string, scripting::script_value>>())
+					{
+						const scripting::array fields(stinger.get_raw().u.uintValue);
+						const auto flag = [&](const char* name)
+						{const auto v = fields.get(std::string(name));return v.is<int>() && v.as<int>() != 0;};
+						state = flag("stingerlockfinalized") ? 2 : flag("stingerlockstarted") ? 1 : 0;
+					}
+				}
+				catch (...) {state = 0;}
+			// weaponlockfinalize sets the native lock: MWR playerState weapLockFlags
+			// +0x5D8 bit 1, the bit FireWeapon tests at 0x1402EFB70 (h1-mod MP +0x710).
+			const auto* ps = reinterpret_cast<const std::byte*>(game::g_entities[0].client);
+			std::uint32_t lock_flags{};
+			if (value.control.open && !value.javelin && ps && utils::native_memory::read_bytes(&lock_flags, ps + 0x5d8, sizeof(lock_flags)) &&
+				(lock_flags & 2))
+				state = 2;
+			native_lock_flags = lock_flags;
+			stinger_lock = state;
+			++stinger_ticks;
+			if (state && (state == 2 || stinger_ticks % 6 == 0))
+			{
+				const auto input = controller_input::latest_interaction();
+				controller_haptics::request(int(value.owner.rear), {.06f, state == 2 ? 160.f : 90.f, state == 2 ? .7f : .35f,
+					input.reference_generation, input.sampled_at});
+			}
 		}
 		auxiliary_scene::request plan(const eye_composition::event& event) noexcept
 		{
@@ -393,8 +440,8 @@ namespace vr::gameplay::weapons::javelin_screen
 		const auto now=controller_input::clock::now();
 		const auto watch_result=hud_watch_result.load();
 		const auto age=[&](auto at)->std::int64_t{return at.time_since_epoch().count()&&now>=at?std::chrono::duration_cast<std::chrono::milliseconds>(now-at).count():-1;};
-		return std::format("[VR Javelin display] enabled={} hud_watch={} lock_gate={} lock_queries={} open={} armed={} loaded={} selection_age_ms={} epoch={} reference={} weapon={} instance={} grip_revision={} camera_epoch={} camera_age_ms={} aim={} planner_registered={} planned={} eyes={} missing={} reason={}\norigin={},{},{} forward={},{},{}\n",
-			enabled(),hud_watch_ready,lock_ads_call.load()!=nullptr,lock_ads_overrides.load(),state.control.open,state.control.fire_ready,state.loaded,
+		return std::format("[VR Javelin display] enabled={} stinger_lock={} lock_flags={:#x} hud_watch={} lock_gate={} lock_queries={} open={} armed={} loaded={} selection_age_ms={} epoch={} reference={} weapon={} instance={} grip_revision={} camera_epoch={} camera_age_ms={} aim={} planner_registered={} planned={} eyes={} missing={} reason={}\norigin={},{},{} forward={},{},{}\n",
+			enabled(),stinger_lock.load(),native_lock_flags.load(),hud_watch_ready,lock_ads_call.load()!=nullptr,lock_ads_overrides.load(),state.control.open,state.control.fire_ready,state.loaded,
 			age(state.at),state.epoch,state.reference,state.owner.weapon,state.owner.instance_generation,state.owner.rear_revision,view.epoch,age(view.at),view.aim.valid,
 			auxiliary_scene::weapon_display_plan.load()!=nullptr,planned.load(),drawn.load(),missing.load(),reason.load(),
 			view.aim.position[0],view.aim.position[1],view.aim.position[2],view.aim.axis[0][0],view.aim.axis[0][1],view.aim.axis[0][2])+
@@ -410,7 +457,7 @@ namespace vr::gameplay::weapons::javelin_screen
 	{
 		const auto muzzle = current_muzzle();
 		const auto now = controller_input::clock::now();
-		const bool valid = enabled() && allowed && muzzle.profile_id == "javelin" &&
+		const bool valid = enabled() && allowed && display_profile(muzzle.profile_id) &&
 		                   ready(muzzle, owner, frame.reference_generation, now);
 		// MWR: no launcher runtime; the native clip is the loaded state.
 		const auto* ps = game::g_entities[0].client;
@@ -420,12 +467,13 @@ namespace vr::gameplay::weapons::javelin_screen
 		// Button entry/exit is temporarily disabled for the near-eye ADS trial.
 		// static controls buttons; const auto next=buttons.consume(frame,owner,valid,now);
 		const auto next = proximity.consume(frame, owner, valid, muzzle, now);
-		input_gate=!allowed?"gameplay_gate":muzzle.profile_id!="javelin"?"not_javelin":!valid?"setting_muzzle_or_owner_not_ready":
+		input_gate=!allowed?"gameplay_gate":!display_profile(muzzle.profile_id)?"not_javelin_or_stinger":!valid?"setting_muzzle_or_owner_not_ready":
 			next.open?"open":"near_eye_not_entered";
 		if (next.open && (!selected.control.open || selected.owner.id() != owner.id() ||
 		                  selected.reference != frame.reference_generation))
 			selected.epoch = ++next_epoch;
-		selected.owner = muzzle.profile_id == "javelin" ? owner : hold{};
+		selected.owner = display_profile(muzzle.profile_id) ? owner : hold{};
+		selected.javelin = muzzle.profile_id == "javelin";
 		selected.control = next;
 		selected.reference = frame.reference_generation;
 		selected.at = now;
@@ -473,6 +521,11 @@ namespace vr::gameplay::weapons::javelin_screen
 		muzzle_frame aim;
 		return value.control.open && lock_aim(value.owner, aim) ? value.owner : hold{};
 	}
+	std::uint64_t stinger_view_epoch() noexcept
+	{
+		const auto value = current();
+		return value.control.open && value.owner.weapon && !value.javelin ? value.epoch : 0;
+	}
 	std::uint64_t camera_epoch() noexcept
 	{
 		const std::lock_guard lock(mutex);
@@ -489,7 +542,7 @@ namespace vr::gameplay::weapons::javelin_screen
 		static_assert(offsetof(game::WeaponDef, adsZoomFov) == 0x8e0);
 		const float half_y = definition ? optical_half_y(definition->adsZoomFov) : 0;
 		if (allowed && origin && axis && tan_half && half_y > 0 && value.control.open &&
-		    muzzle.profile_id == "javelin" &&
+		    display_profile(muzzle.profile_id) &&
 		    ready(muzzle, value.owner, frame.reference_generation, controller_input::clock::now()))
 		{
 			next = {muzzle, value.epoch, controller_input::clock::now()};
@@ -511,6 +564,7 @@ namespace vr::gameplay::weapons::javelin_screen
 		eye_composition::consumer_registration composition_registration;
 		void post_unpack() override
 		{
+			scheduler::loop(observe_stinger_lock, scheduler::pipeline::server, 100ms);
 			option = dvars::register_bool(
 			    "vr_javelinDisplay",
 			    true,

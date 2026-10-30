@@ -15,8 +15,25 @@ namespace vr::gameplay::weapons::javelin_screen
 		return std::isfinite(native_ads_fov) && native_ads_fov>1 && native_ads_fov<179 ?
 			std::tan(native_ads_fov*.00872664626f)*.75f : 0.f;
 	}
+	// MWR: the Stinger (maps/_stinger) locks through the same Target_IsInCircle
+	// projection as the Javelin's Target_IsInRect, so it shares this display.
+	inline bool display_profile(std::string_view profile) noexcept {return profile=="javelin" || profile=="stinger";}
+	// Stinger: no CLU eyepiece. Shouldered = the eye beside the tube (lateral),
+	// behind its muzzle, looking along it.
+	inline bool shouldered(const muzzle_frame& muzzle,bool active) noexcept
+	{
+		using namespace hands;
+		if(!valid_geometry(muzzle) || !std::isfinite(muzzle.units_per_meter) || muzzle.units_per_meter<=0 || muzzle.units_per_meter>10000)return false;
+		const auto& f=muzzle.axis[0];
+		const auto d=scale(sub(muzzle.head_position,muzzle.position),1.f/muzzle.units_per_meter);
+		const float along=-dot(d,f),facing=dot(muzzle.head_forward,f);
+		const float lateral=length(add(d,scale(f,along)));
+		return std::isfinite(lateral) && std::isfinite(facing) && along>.15f && along<1.8f &&
+			lateral<(active?.22f:.16f) && facing>(active?.6427876f:.8660254f);
+	}
 	inline bool near_eyepiece(const muzzle_frame& muzzle,bool active) noexcept
 	{
+		if(muzzle.profile_id=="stinger")return shouldered(muzzle,active);
 		using namespace hands;
 		if(!valid_geometry(muzzle) || !std::isfinite(muzzle.units_per_meter) || muzzle.units_per_meter<=0 || muzzle.units_per_meter>10000)return false;
 		const auto* contract=reviewed_muzzle("viewmodel_javelin") /* MWR model; H2 h2_viewmodel_javelin_base */;
