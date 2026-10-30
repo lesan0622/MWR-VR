@@ -664,11 +664,15 @@ namespace vr::gameplay::weapons::underbarrel
 	}
 	bool blocks_native(const void* ps)noexcept
 	{
-		if(!enabled() || native_ammunition::local_role(ps)<0)return false;
+		// Only a launcher on a gun the VR hands carry can own native fire. Views
+		// survive level changes, so a stale record from another map (same token)
+		// must never block an unrelated weapon such as the AC-130 guns.
+		if(!enabled() || !carry::active() || native_ammunition::local_role(ps)<0)return false;
 		// MWR playerState weapon +0x38C, weapFlags +0x390 (H2 +0x3BC/+0x3C0, which on
 		// MWR are reserve-ammo cells: that misread blocked AC-130 105/40 mm fire).
 		std::uint32_t token{},flags{};std::memcpy(&token,static_cast<const std::byte*>(ps)+0x38c,4);std::memcpy(&flags,static_cast<const std::byte*>(ps)+0x390,4);
-		return flags&0x4000 && current(carry::native_identity(token)).active;
+		const auto id=carry::native_identity(token);
+		return flags&0x4000 && carry::held(id).can_fire() && current(id).active;
 	}
 	bool ordinary_support_allowed(const carry::scene& weapon,const hands::anchor& wrist,hand actor,bool retaining)noexcept
 	{
