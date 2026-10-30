@@ -155,6 +155,9 @@ namespace vr::controllers
 				angles[0] = std::remainder(pitch - axis(input.turn[1]) * rate * dt, 360.f); // The link/turret clamps.
 			}
 		}
+		// Right-trigger delivery (status report): frames held, refused by the
+		// gameplay gate or by the Javelin/Stinger display gate.
+		std::atomic_uint64_t trigger_frames{}, trigger_blocked_gameplay{}, trigger_blocked_display{};
 		// Lock-launcher sight diagnostics (vr_input_status).
 		std::atomic<float> launcher_hand{-1}, launcher_along{}, launcher_lateral{}, launcher_facing{};
 		void finish_move_stub(const int local_client, game::usercmd_s* const cmd)
@@ -297,8 +300,15 @@ namespace vr::controllers
 			// Right trigger fires, right B reloads (+usereload). Native weapon
 			// state, ammunition and fire rate keep authority over the request.
 			// Javelin fires only from an open display, after a fresh trigger press.
-			if (gameplay && input.trigger[1].active && input.trigger[1].down &&
-				gameplay::weapons::javelin_screen::allows_fire(gameplay::weapons::sample_native_equipped()))
+			const bool trigger_down = input.trigger[1].active && input.trigger[1].down;
+			const bool display_allows = gameplay::weapons::javelin_screen::allows_fire(gameplay::weapons::sample_native_equipped());
+			if (trigger_down)
+			{
+				++trigger_frames;
+				if (!gameplay) ++trigger_blocked_gameplay;
+				else if (!display_allows) ++trigger_blocked_display;
+			}
+			if (gameplay && trigger_down && display_allows)
 			{
 				cmd->buttons |= attack_button;
 				++attack_count;
@@ -628,6 +638,14 @@ namespace vr::controllers
 			alive.store(false, std::memory_order_relaxed);
 		}
 	};
+	std::string fire_input_status()
+	{
+		const auto* ps = game::CL_IsCgameInitialized() ? game::CG_GetPredictedPlayerState(0) : nullptr;
+		return std::format("[VR trigger] frames={} blocked_gameplay={} blocked_display={} attack_commands={} normal_gameplay={} gunship={} view_aimed={} pm_flags={:#x} e_flags={:#x}\n",
+			trigger_frames.load(), trigger_blocked_gameplay.load(), trigger_blocked_display.load(), attack_count.load(),
+			normal_gameplay(), gameplay::view_aimed::gunship(), gameplay::view_aimed::active(),
+			ps ? ps->pm_flags : 0, ps ? ps->e_flags : 0);
+	}
 } // namespace vr::controllers
 
 REGISTER_COMPONENT(vr::controllers::component)

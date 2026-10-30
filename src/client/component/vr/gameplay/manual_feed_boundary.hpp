@@ -29,6 +29,24 @@ namespace vr::gameplay::weapons::manual_feed
 		}
 		return physical_reload::allow_fire(ps,command,side) && cylinder::allow_fire(ps,command,side) && tube::allow_fire(ps,command,side) && break_action::allow_fire(ps,command,side) && launcher::allow_fire(ps,command,side);
 	}
+	// Diagnostics only: the first gate allow_fire would refuse with.
+	inline const char* deny_reason(const void* ps,int command,int side) noexcept
+	{
+		if(cheats::transitioning() && native_ammunition::local_role(ps)>=0)return "cheat transition";
+		if(underbarrel::blocks_native(ps))return "underbarrel";
+		if(independent_fire::owns_native(ps))return "independent fire";
+		if(carry::active() && native_ammunition::local_role(ps)>=0)
+		{
+			const auto owner=carry::current_hold();
+			if(side || !owner.can_fire() || native_ammunition::observe(ps).weapon!=owner.weapon)return "carry hold";
+		}
+		if(!physical_reload::allow_fire(ps,command,side))return "physical reload";
+		if(!cylinder::allow_fire(ps,command,side))return "cylinder";
+		if(!tube::allow_fire(ps,command,side))return "tube";
+		if(!break_action::allow_fire(ps,command,side))return "break action";
+		if(!launcher::allow_fire(ps,command,side))return "launcher";
+		return "allowed";
+	}
 	inline void consumed(const void* ps,int command,std::uint32_t weapon,bool alternate,int amount,int side,
 		const native_ammunition::snapshot& before,const native_ammunition::snapshot& after,bool sustained=false) noexcept
 	{

@@ -38,6 +38,9 @@ namespace vr::gameplay::weapons::reload_boundary
 		std::array<std::array<std::uint64_t, 3>, 2> counts{};
 		native_ammunition::snapshot latest;
 		bool recorded_enabled{}, recorded_gameplay{};
+		// Native PM fire gate (status report): calls, refusals, last refusing gate.
+		std::atomic_uint64_t native_fire_calls{}, native_fire_denials{};
+		std::atomic<const char*> last_denial{"none"};
 		thread_local int shot_time{};
 		thread_local bool inside_fire{};
 		bool observing() noexcept
@@ -64,7 +67,12 @@ namespace vr::gameplay::weapons::reload_boundary
 			shot_time = pm ? pm->cmd.serverTime : 0;
 			inside_fire = true;
 			const auto restore = gsl::finally([&] { shot_time = previous; inside_fire = previous_inside; });
-			if (!manual_feed::allow_fire(ps, shot_time, side)) return;
+			++native_fire_calls;
+			if (!manual_feed::allow_fire(ps, shot_time, side))
+			{
+				++native_fire_denials;last_denial=manual_feed::deny_reason(ps,shot_time,side);
+				return;
+			}
 			fire_hook.invoke<void>(pm, unknown, native_context, side);
 			if (role >= 0)
 				append({"fire", role, shot_time, 0, side, before, native_ammunition::observe(ps)}, 0);
@@ -186,6 +194,17 @@ namespace vr::gameplay::weapons::reload_boundary
 				reinterpret_cast<void*>(address), {bytes, mask.data(), N}));
 		}
 	} // namespace
+	std::string fire_gate_status()
+	{
+		const auto* ps = game::CL_IsCgameInitialized() ? reinterpret_cast<const std::byte*>(game::g_entities[0].client) : nullptr;
+		std::uint32_t weapon{}, flags{};
+		if (ps) {std::memcpy(&weapon, ps + 0x38c, 4);std::memcpy(&flags, ps + 0x390, 4);} // MWR weapon/weapFlags
+		const auto ammo = ps ? native_ammunition::observe(ps) : native_ammunition::snapshot{};
+		const auto* def = (weapon & 511) ? game::weapon_defs[weapon & 511] : nullptr;
+		return std::format("[VR native fire gate] calls={} denials={} last_denial={} ps_weapon={} name={} weap_flags={:#x} ammo_valid={} loaded={} reserve={}\n",
+			native_fire_calls.load(), native_fire_denials.load(), last_denial.load(), weapon & 511,
+			def && def->szInternalName ? def->szInternalName : "", flags, ammo.valid, ammo.loaded, ammo.reserve);
+	}
 	class component final : public component_interface
 	{
 	  public:
