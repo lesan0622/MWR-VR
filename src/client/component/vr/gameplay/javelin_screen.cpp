@@ -550,7 +550,9 @@ namespace vr::gameplay::weapons::javelin_screen
 			const std::lock_guard lock(mutex);
 			value = selected;
 		}
-		if (value.owner.id() != owner.id())
+		// No display selection gates nothing. Comparing two empty holds made every
+		// weapon without a VR hold (AC-130 105/40 mm) wait for a display.
+		if (!value.owner.weapon || value.owner.id() != owner.id())
 			return true;
 		const auto now = controller_input::clock::now();
 		return now >= value.at && now - value.at <= 150ms && value.control.open && value.control.fire_ready;
