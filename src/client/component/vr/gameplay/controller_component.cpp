@@ -22,6 +22,7 @@
 #include "javelin_screen.hpp"
 #include "fixed_sniper.hpp"
 #include "barrett_gun.hpp"
+#include "mounted_hand_aim.hpp"
 #include "ladder_runtime.hpp"
 #include "game/dvars.hpp"
 #include "game/game.hpp"
@@ -73,6 +74,7 @@ namespace vr::controllers
 		game::dvar_t* turn_deadzone{};
 		game::dvar_t* auto_ads{};
 		game::dvar_t* turret_hand_aim{};
+		gameplay::mounted_hand_aim::state turret_hands; // Command thread (FinishMove).
 		gameplay::weapons::ads_policy ads;
 		std::array<controller_input::digital_press_gate,2> attack_notifications{};
 		std::array<gameplay::weapons::hold,2> notified_owners{};
@@ -171,6 +173,7 @@ namespace vr::controllers
 				if (const auto* const ps = game::CG_GetPredictedPlayerState(0))
 				{
 					auto* angles = reinterpret_cast<float*>(client_angles_address);
+					if (!gameplay::view_aimed::mounted()) turret_hands = {};
 					if (gameplay::view_aimed::gunship()) aim_flat_screen(angles, ps);
 					else if (gameplay::weapons::javelin_screen::stinger_view_epoch())
 					{
@@ -206,12 +209,14 @@ namespace vr::controllers
 					}
 					else if (gameplay::view_aimed::mounted() && turret_hand_aim && turret_hand_aim->current.enabled &&
 						[&] {
-							// Turret/vehicle gun (airlift Mk19): the right controller points
-							// the native view the gun follows, not the head (user request).
-							const auto input = controller_input::latest_interaction();
-							const int hand = input.aim[1].valid ? 1 : input.aim[0].valid ? 0 : -1;
-							return input.focused && hand >= 0 &&
-								head_pose_bridge::apply_game_view_aim(angles, ps->delta_angles, input.aim[hand].tracking);
+							// Turret/vehicle gun (airlift Mk19): the Grip buttons hold its
+							// handles and the arms swing it about its pintle (user request).
+							std::array<float, 2> aim{};
+							const float pitch = angles[0];
+							if (!turret_hands.update(controller_input::latest_interaction(), true, aim) ||
+								!head_pose_bridge::apply_game_view_local(angles, ps->delta_angles, aim[0], aim[1])) return false;
+							angles[0] = turret_hands.pitch_step(pitch, aim[0]);
+							return true;
 						}())
 					{
 						gunship_aim_at = {};
@@ -394,14 +399,16 @@ namespace vr::controllers
 				// The world-use lease that mounted the gun ends with the mount, one
 				// command before the predicted turret flag appears; a grip still held
 				// from that press must not become a second edge. Require a release.
-				const bool down = input.squeeze[1].active && input.squeeze[1].down;
+				// With hand aim the grips hold the gun's handles: B is the use key.
+				const auto& use = turret_hand_aim && turret_hand_aim->current.enabled ? input.secondary[1] : input.squeeze[1];
+				const bool down = use.active && use.down;
 				if (!down) turret_use_armed = true;
-				if (turret_use_armed && input.squeeze[1].presses != turret_use_presses)
+				if (turret_use_armed && use.presses != turret_use_presses)
 					utils::hook::invoke<void>(notify_command_address, building_client, 73, 0);
 				if (turret_use_armed && down) cmd->buttons |= 0x8;
 			}
 			else turret_use_armed = false;
-			turret_use_presses = input.squeeze[1].presses;
+			turret_use_presses = (turret_hand_aim && turret_hand_aim->current.enabled ? input.secondary[1] : input.squeeze[1]).presses;
 		}
 
 		game::usercmd_s* create_command_stub(game::usercmd_s* output, const int local_client)
@@ -603,7 +610,7 @@ namespace vr::controllers
 			auto_ads=dvars::register_bool("vr_autoAds",true,game::DVAR_FLAG_SAVED,
 				"Request native ADS while a supported physical weapon is raised to the sights");
 			turret_hand_aim=dvars::register_bool("vr_turretHandAim",true,game::DVAR_FLAG_SAVED,
-				"Mounted and vehicle guns follow the right controller instead of the head");
+				"Mounted and vehicle guns: Grip holds the handles and the arms swing the gun (B uses/dismounts)");
 			// MWR CL_KeyMove sets/clears usercmd bit 11 before FinishMove.
 			ads_verified=check(0x1401AA0C2,{0x81,0x4b,0x04,0x00,0x08,0x00,0x00}) &&
 				check(0x1401AA0B9,{0x81,0x63,0x04,0xff,0xf7,0xff,0xff});
