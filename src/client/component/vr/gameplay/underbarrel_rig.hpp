@@ -92,6 +92,11 @@ namespace vr::gameplay::weapons::underbarrel
 				out.mount=compose(gun,as_anchor(bones[tag].bind));
 				if(k==kind::m203)out.motion_rest=compose(gun,as_anchor(bones[slide].bind));
 				out.round_rest=compose(gun,as_anchor(bones[round].bind));
+				// The H1 M203 j_grenade bind is its reload-animation start, 16.5 in ahead of
+				// tag_m203, past the muzzle: loading went in at the muzzle (user, headset).
+				// The round seats at the breech, 1.8 in into the tube, where the opened
+				// tube (j_m203_slide forward by the stroke) exposes it.
+				if(k==kind::m203)out.round_rest.position=compose(out.mount,{{1.8f,0,0},{0,0,0,1}}).position;
 				out.muzzle=compose(out.mount,k==kind::m203?authored::m203_muzzle:authored::gp25_muzzle);
 				const std::array<std::string_view,2> parts{"j_grenade_main","j_grenade_shell"};
 				for(int n=0;n<2;++n)
