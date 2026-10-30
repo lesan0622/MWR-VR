@@ -24,7 +24,7 @@
 // Mounted on sniperescape turret2 the script hides the turret and fires its
 // simulated round from geteye() along getplayerangles() while the attack
 // button is held (sniperescape_exchange::exchange_trace_converter). The barrel
-// of the held M82 sets those angles; the native turret clamps them to its arcs.
+// of the bipod-rested M82 sets those angles, already inside the turret arcs.
 namespace vr::gameplay::barrett_gun
 {
 	namespace
@@ -45,14 +45,15 @@ namespace vr::gameplay::barrett_gun
 		{
 			std::uint64_t epoch{};
 			int entity{-1};
-			bool support{};
+			bool support{}, gripping{};
 			clock::time_point at{};
 		};
 		std::mutex mutex;
 		snapshot published;
 		std::uint64_t next_epoch{};
 		int last_entity{-1};
-		bool support_down{};
+		bool support_down{}, grip_down{};
+		controller_input::clock::time_point mounted_at{};
 		std::atomic<float> magnification{8.f};
 		// Main owner: native assets, lens geometry from the scope's rear rim.
 		struct assets
@@ -90,24 +91,86 @@ namespace vr::gameplay::barrett_gun
 			return w;
 		}
 		struct gun_pose {anchor gun{};std::array<anchor, 2> wrists{};};
-		// grip_presenter: the gun takes the rear controller rotation, its rear
-		// wrist on the authored grip; a support grip swings the authored span.
-		gun_pose solve(const anchor& rear, const anchor& front, bool support) noexcept
+		// Bipod: the gun turns about its tag_bipods on a fixed rest point, inside
+		// the turret's own arcs, so the scope never shows where the round cannot go.
+		constexpr vec bipod_tag{6.992f, 0.f, -1.287f}; // weapon_m82a1_sp bind.
+		constexpr vec measured_lens{-11.12f, 0.f, 3.58f}; // measure_lens on attach_h1_scope_m82a1_npc.
+		constexpr float eye_to_lens = 3.f; // Rest pose: scope 3 in ahead of the native eye.
+		constexpr float grip_acquire_meters = .2f;
+		struct rest
 		{
-			const auto back = wrist_in_gun(1), fore = wrist_in_gun(0);
-			const auto rotation = weapons::aimed_rotation(support ? weapons::aim_rule::two_hand : weapons::aim_rule::rear_hand,
-				normalize(rear.rotation), rear.position, front.position, sub(fore.position, back.position));
+			std::uint64_t epoch{};
+			vec pivot{};
+			float base_yaw{};
+			std::array<float, 2> pitch{}, yaw{}; // Relative arcs: turretInfo +0x0C/+0x14, +0x10/+0x18.
+			std::array<float, 2> aim{}; // Native view pitch/yaw in degrees.
+			std::array<float, 2> grab{}; // Aim minus the hand's raw aim when the grip took the gun.
+			bool valid{};
+		};
+		struct eye_sample {std::uint64_t epoch{};vec eye{}, current{};}; // First and latest native eye of the mount.
+		rest bipod;           // Guarded by mutex.
+		eye_sample native_eye; // Guarded by mutex.
+		quat view_rotation(float pitch, float yaw) noexcept
+		{
+			const float p = pitch * .5f / degrees, y = yaw * .5f / degrees;
+			return normalize(multiply(quat{0, 0, std::sin(y), std::cos(y)}, quat{0, std::sin(p), 0, std::cos(p)}));
+		}
+		std::array<float, 2> clamp_aim(const rest& b, std::array<float, 2> aim) noexcept
+		{
+			const float relative = std::clamp(std::remainder(aim[1] - b.base_yaw, 360.f), b.yaw[0], b.yaw[1]);
+			return {std::clamp(aim[0], b.pitch[0], b.pitch[1]), std::remainder(b.base_yaw + relative, 360.f)};
+		}
+		gun_pose rested(const rest& b, std::array<float, 2> aim) noexcept
+		{
 			gun_pose p;
-			p.gun = {sub(rear.position, rotate(rotation, back.position)), rotation};
-			p.wrists = {compose(p.gun, fore), compose(p.gun, back)};
+			p.gun.rotation = view_rotation(aim[0], aim[1]);
+			p.gun.position = sub(b.pivot, rotate(p.gun.rotation, bipod_tag));
+			p.wrists = {compose(p.gun, wrist_in_gun(0)), compose(p.gun, wrist_in_gun(1))};
 			return p;
 		}
-		bool world_pose(gun_pose& out, bool support) noexcept
+		// The rear hand steers the butt: point the grip-to-bipod span from the hand at the rest.
+		bool aim_from_hand(const rest& b, vec hand, std::array<float, 2>& aim) noexcept
 		{
-			anchor rear, front;
-			if (!held_item::visual_wrist(1, rear)) return false;
-			if (!held_item::visual_wrist(0, front)) {front = rear;support = false;}
-			out = solve(rear, front, support);
+			const auto local = sub(bipod_tag, wrist_in_gun(1).position);
+			const auto world = sub(b.pivot, hand);
+			if (!(length(world) > 4.f) || !std::isfinite(length(world))) return false;
+			const float yaw = (std::atan2(world[1], world[0]) - std::atan2(local[1], local[0])) * degrees;
+			const float pitch = -(std::atan2(world[2], std::hypot(world[0], world[1])) -
+				std::atan2(local[2], std::hypot(local[0], local[1]))) * degrees;
+			if (!std::isfinite(pitch) || !std::isfinite(yaw)) return false;
+			aim = {pitch, yaw}; // Raw: the grab offset is added before the arc clamp.
+			return true;
+		}
+		// Any thread: the gripping hand steers (and stores) the aim; otherwise the
+		// gun stays where it was left.
+		// The native turret eye orbits the turret pivot as the view turns, and the
+		// HMD camera and hands ride on it. A world-fixed rest would feed that orbit
+		// back into the hand-steered aim (runaway to the arc limits), so the rest
+		// moves with the eye: rigid in the player's frame, like the gun on the turret.
+		rest riding() noexcept
+		{
+			const std::lock_guard lock(mutex);
+			auto b = bipod;
+			if (native_eye.epoch == b.epoch) b.pivot = add(b.pivot, sub(native_eye.current, native_eye.eye));
+			return b;
+		}
+		bool current_pose(gun_pose& out, const snapshot& s, const vec* hand = nullptr, std::array<float, 2>* aimed = nullptr) noexcept
+		{
+			const auto b = riding();
+			if (!b.valid || !s.epoch || b.epoch != s.epoch) return false;
+			auto aim = b.aim;
+			anchor wrist;
+			const bool steering = s.gripping && (hand || held_item::visual_wrist(1, wrist));
+			std::array<float, 2> raw{};
+			if (steering && aim_from_hand(b, hand ? *hand : wrist.position, raw))
+			{
+				// Relative to the grab: taking the gun never makes it jump.
+				aim = clamp_aim(b, {raw[0] + b.grab[0], raw[1] + b.grab[1]});
+				const std::lock_guard lock(mutex);
+				if (bipod.epoch == b.epoch) bipod.aim = aim;
+			}
+			out = rested(b, aim);
+			if (aimed) *aimed = aim;
 			return true;
 		}
 		bool mounted_barrett(int& entity) noexcept
@@ -128,33 +191,101 @@ namespace vr::gameplay::barrett_gun
 			entity = e;
 			return true;
 		}
+		// The rest point, once per mount: the scope eyepiece just ahead of the native
+		// turret eye at the arc centre, so leaning in finds the scope.
+		bool place_rest(int entity, std::uint64_t epoch, rest& out) noexcept
+		{
+			eye_sample eye;
+			{const std::lock_guard lock(mutex);eye = native_eye;}
+			const auto* ent = &game::g_entities[entity];
+			const auto* info = read<const std::byte*>(ent, 0x138);
+			if (eye.epoch != epoch || !info) return false;
+			std::array<float, 4> arcs{};
+			if (!utils::native_memory::read_bytes(arcs.data(), info + 0xc, sizeof(arcs))) return false;
+			out = {};
+			out.epoch = epoch;
+			out.base_yaw = read<float>(ent, 0x104); // Entity angles +0x100 (turret_probe).
+			out.pitch = {std::min(arcs[0], arcs[2]), std::max(arcs[0], arcs[2])};
+			out.yaw = {std::min(arcs[1], arcs[3]), std::max(arcs[1], arcs[3])};
+			for (float x : {out.base_yaw, arcs[0], arcs[1], arcs[2], arcs[3]})
+				if (!std::isfinite(x) || std::abs(x) > 360.f) return false;
+			out.aim = clamp_aim(out, {.5f * (out.pitch[0] + out.pitch[1]), out.base_yaw + .5f * (out.yaw[0] + out.yaw[1])});
+			assets a;
+			{const std::lock_guard lock(asset_mutex);a = loaded;}
+			const auto lens = a.radius > 0 ? a.lens : measured_lens;
+			const auto rotation = view_rotation(out.aim[0], out.aim[1]);
+			const auto eyepiece = add(eye.eye, rotate(rotation, {eye_to_lens, 0, 0}));
+			out.pivot = sub(eyepiece, rotate(rotation, sub(lens, bipod_tag)));
+			out.valid = true;
+			return true;
+		}
 		void update()
 		{
 			int entity{};
 			snapshot next;
+			const auto now = clock::now();
 			if (!mounted_barrett(entity))
 			{
-				last_entity = -1;support_down = false;
+				// A server frame without the mount flag (seen while gripping in a
+				// mock) must not start a new mount: hold the rest for 0.5 s.
+				if (last_entity > 0 && now - mounted_at < 500ms && enabled())
+				{
+					next = latest();
+					next.at = controller_input::latest_interaction().sampled_at;
+					const std::lock_guard lock(mutex);
+					published = next;
+					return;
+				}
+				last_entity = -1;support_down = grip_down = false;
 				reason = enabled() ? "not mounted" : "disabled";
 			}
 			else
 			{
+				mounted_at = now;
 				const auto input = controller_input::latest_interaction();
-				if (entity != last_entity) {++next_epoch;last_entity = entity;support_down = false;}
+				if (entity != last_entity) {++next_epoch;last_entity = entity;support_down = grip_down = false;}
 				next.epoch = next_epoch;next.entity = entity;next.at = input.sampled_at;
-				// Left grip on the handguard holds the support; release lets go.
-				const bool down = input.focused && input.squeeze[0].active && input.squeeze[0].down && input.grip[0].valid;
-				bool support = latest().support && down;
-				if (down && !support_down && !support)
 				{
-					gun_pose one;anchor front;
-					head_pose_bridge::spatial_frame body;
-					if (world_pose(one, false) && held_item::visual_wrist(0, front) && head_pose_bridge::get_spatial_frame(body) &&
-						body.units_per_meter > 0 && length(sub(front.position, one.wrists[0].position)) / body.units_per_meter < support_acquire_meters)
-					{support = true;++supports;}
+					rest b;
+					{const std::lock_guard lock(mutex);b = bipod;}
+					if (b.epoch != next.epoch || !b.valid)
+					{
+						rest placed;
+						if (place_rest(entity, next.epoch, placed)) {const std::lock_guard lock(mutex);bipod = placed;}
+					}
 				}
+				const auto previous = latest();
+				gun_pose at;
+				const bool rested_now = current_pose(at, {next.epoch, entity, false, false, next.at});
+				head_pose_bridge::spatial_frame body;
+				const bool frame = head_pose_bridge::get_spatial_frame(body) && body.units_per_meter > 0;
+				const auto close_to = [&](int h, const anchor& target)
+				{
+					anchor hand;
+					return rested_now && frame && held_item::visual_wrist(h, hand) &&
+						length(sub(hand.position, target.position)) / body.units_per_meter <
+							(h ? grip_acquire_meters : support_acquire_meters);
+				};
+				// Right grip takes the gun on its pistol grip; the left the handguard.
+				const bool grip = input.focused && input.squeeze[1].active && input.squeeze[1].down && input.grip[1].valid;
+				bool gripping = previous.epoch == next.epoch && previous.gripping && grip;
+				if (grip && !grip_down && !gripping && close_to(1, at.wrists[1]))
+				{
+					anchor hand;std::array<float, 2> raw{};
+					const auto ridden = riding();
+					const std::lock_guard lock(mutex);
+					if (held_item::visual_wrist(1, hand) && aim_from_hand(ridden, hand.position, raw))
+					{
+						bipod.grab = {bipod.aim[0] - raw[0], std::remainder(bipod.aim[1] - raw[1], 360.f)};
+						gripping = true;
+					}
+				}
+				grip_down = grip;next.gripping = gripping;
+				const bool down = input.focused && input.squeeze[0].active && input.squeeze[0].down && input.grip[0].valid;
+				bool support = previous.epoch == next.epoch && previous.support && down;
+				if (down && !support_down && !support && close_to(0, at.wrists[0])) {support = true;++supports;}
 				support_down = down;next.support = support;
-				reason = "held";
+				reason = !rested_now ? "waiting for the native eye" : gripping ? "held on bipod" : "rested on bipod";
 			}
 			// The turret eye is ~280 units below the player's skinned placement.
 			engine_stereo_view::allow_far_placement(next.epoch != 0);
@@ -244,7 +375,7 @@ namespace vr::gameplay::barrett_gun
 			assets a;
 			{const std::lock_guard lock(asset_mutex);a = loaded;}
 			gun_pose pose;
-			if (!s.epoch || !fresh(s.at) || !a.body || !world_pose(pose, s.support)) return;
+			if (!s.epoch || !fresh(s.at) || !a.body || !current_pose(pose, s)) return;
 			const auto place = [](game::XModel* model, const anchor& at, unsigned short* light)
 			{
 				game::GfxScaledPlacement p{};
@@ -300,12 +431,11 @@ namespace vr::gameplay::barrett_gun
 			magnification = std::clamp(magnification.load() * std::exp(stick * 1.2f * dt), 4.f, 20.f);
 			cmd->forwardmove = static_cast<char>(std::lround(stick * 32.f));
 		}
-		gun_pose pose;
-		if (live && world_pose(pose, s.support))
+		// The rested barrel (clamped to the turret arcs) is the native view.
+		gun_pose pose;std::array<float, 2> aim{};
+		if (current_pose(pose, s, nullptr, &aim))
 		{
-			const auto forward = rotate(pose.gun.rotation, {1, 0, 0});
-			const float pitch = -std::asin(std::clamp(forward[2], -1.f, 1.f)) * degrees;
-			const float yaw = std::atan2(forward[1], forward[0]) * degrees;
+			const float pitch = aim[0], yaw = aim[1];
 			if (std::isfinite(pitch) && std::isfinite(yaw))
 			{
 				angles[0] = std::remainder(pitch - ps->delta_angles[0], 360.f);
@@ -313,7 +443,10 @@ namespace vr::gameplay::barrett_gun
 				last_pitch = pitch;last_yaw = yaw;
 			}
 		}
-		if (live && input.grip[1].valid && fire.consume(input.trigger[1])) {cmd->buttons |= game::BUTTON_ATTACK;++shots;}
+		// The gate tracks the trigger while released too, so a press made before
+		// the grab never fires on it.
+		const bool pulled = live && fire.consume(input.trigger[1]);
+		if (pulled && s.gripping && input.grip[1].valid) {cmd->buttons |= game::BUTTON_ATTACK;++shots;}
 		else if (!live) fire = {};
 		for (unsigned h = 0; h < 2; ++h)
 			if (live && leave[h].consume(input.secondary[h])) cmd->buttons |= game::BUTTON_USE_RELOAD;
@@ -322,20 +455,40 @@ namespace vr::gameplay::barrett_gun
 	}
 	void constrain_hands(std::array<anchor, 2>& targets, const std::array<quat, 2>& basis, vec, std::uint64_t reference) noexcept
 	{
-		const auto s = latest();
+		auto s = latest();
 		const auto input = controller_input::latest_interaction();
 		if (!epoch() || input.reference_generation != reference) return;
-		const auto pose = solve(targets[1], targets[0], s.support);
+		// The aim is steered only from the world visual wrist (server, command and
+		// scene submission). On the turret the solver origin is not the camera,
+		// so place the grips relative to that same visual wrist, not via the offset.
+		anchor wrist;
+		if (!held_item::visual_wrist(1, wrist)) return;
+		const bool gripping = s.gripping;
+		s.gripping = false;
+		gun_pose pose;
+		if (!current_pose(pose, s)) return;
+		const auto tracked = targets[1].position; // The right visual wrist in solver space.
 		for (unsigned h = 0; h < 2; ++h)
-			if (h == 1 || s.support)
-				targets[h] = {pose.wrists[h].position, normalize(multiply(pose.wrists[h].rotation, conjugate(basis[h])))};
+			if (h == 1 ? gripping : s.support)
+				targets[h] = {add(tracked, sub(pose.wrists[h].position, wrist.position)),
+					normalize(multiply(pose.wrists[h].rotation, conjugate(basis[h])))};
+	}
+	void observe_native_eye(const float* origin) noexcept
+	{
+		const auto s = latest();
+		if (!origin || !s.epoch) return;
+		const vec eye{origin[0], origin[1], origin[2]};
+		for (float x : eye) if (!std::isfinite(x) || std::abs(x) > 1e7f) return;
+		const std::lock_guard lock(mutex);
+		if (native_eye.epoch != s.epoch) native_eye = {s.epoch, eye, eye};
+		else native_eye.current = eye;
 	}
 	void present(const interaction_rig& parts, const rig& r, std::span<bone> solved, unsigned visible) noexcept
 	{
 		if (!epoch() || !parts.valid || r.count <= 0 || solved.size() < std::size_t(r.count)) return;
 		const auto s = latest();
 		for (unsigned h = 0; h < 2; ++h)
-			if ((visible & (1u << h)) && (h == 1 || s.support))
+			if ((visible & (1u << h)) && (h == 1 ? s.gripping : s.support))
 				pose_math::fingers(r, parts.library, native_hand_schema::definition, weapons::m82::idle_fingers, int(h), solved);
 	}
 	class component final : public component_interface
@@ -343,7 +496,7 @@ namespace vr::gameplay::barrett_gun
 		void post_unpack() override
 		{
 			enabled_dvar = dvars::register_bool("vr_barrettFreeGun", true, game::DVAR_FLAG_SAVED,
-				"sniperescape Barrett: hold the M82 like a VR rifle with a physical scope (0: flat native scope)");
+				"sniperescape Barrett: the M82 rests on its bipod, aimed by hand, with a physical scope (0: flat native scope)");
 			const char* names[3]{"vr_barrettGripForward", "vr_barrettGripLeft", "vr_barrettGripUp"};
 			for (unsigned i = 0; i < 3; ++i)
 				grip_dvars[i] = dvars::register_float(names[i], 0.f, -12.f, 12.f, game::DVAR_FLAG_SAVED,
@@ -364,6 +517,11 @@ namespace vr::gameplay::barrett_gun
 					static_cast<unsigned long long>(submissions.load()), static_cast<unsigned long long>(lenses.load()),
 					magnification.load(), last_pitch.load(), last_yaw.load(), a.body != nullptr, a.scope != nullptr, a.reticle != 0,
 					a.lens[0], a.lens[1], a.lens[2], a.radius, a.clearance);
+				rest b;eye_sample eye;
+				{const std::lock_guard lock(mutex);b = bipod;eye = native_eye;}
+				console::info("[VR Barrett] bipod valid=%d gripping=%d pivot=(%.1f,%.1f,%.1f) native_eye=(%.1f,%.1f,%.1f) base_yaw=%.1f pitch=%.1f..%.1f yaw=%.1f..%.1f aim=%.2f,%.2f\n",
+					b.valid, s.gripping, b.pivot[0], b.pivot[1], b.pivot[2], eye.current[0], eye.current[1], eye.current[2],
+					b.base_yaw, b.pitch[0], b.pitch[1], b.yaw[0], b.yaw[1], b.aim[0], b.aim[1]);
 			});
 		}
 	};

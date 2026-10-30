@@ -213,8 +213,11 @@ namespace camera
 			// Held Barrett: the barrel steers the native angles, so the camera holds
 			// its entry heading and the head turns and moves freely.
 			else if (const auto barrett = vr::gameplay::barrett_gun::epoch())
+			{
+				vr::gameplay::barrett_gun::observe_native_eye(game::refdef->org);
 				request = {{vr::game_view::camera_owner::script, vr::game_view::head_rotation::free,
 					vr::game_view::head_translation::tracked}, barrett | (1ull << 61)};
+			}
 			if (ps && vr::head_pose_bridge::apply_camera(game::refdef->org, game::refdef->axis,
 				ps->commandTime, game::cgs->refdefViewAngles, request))
 			{

@@ -8,10 +8,11 @@ namespace game {struct playerState_s;struct usercmd_s;}
 namespace vr::gameplay::hands {struct interaction_rig;}
 
 // MWR sniperescape Barrett (turret2, weapon m14_bipod_stand, hidden by the
-// script). Instead of the flat native scope (fixed_sniper), the player holds
-// the native M82 world model like any VR rifle: right hand on the grip, left
-// hand on the handguard, a physical scope lens. The barrel direction becomes
-// the native view angles the script fires along (getplayerangles/geteye).
+// script). Instead of the flat native scope (fixed_sniper), the native M82
+// world model rests on its bipod in front of the turret eye: the right grip
+// steers it about the bipod within the turret arcs, the left grip may hold the
+// handguard, and a physical scope lens magnifies. The rested barrel is the
+// native view the script fires along (getplayerangles/geteye).
 namespace vr::gameplay::barrett_gun
 {
 	bool enabled() noexcept; // vr_barrettFreeGun; off falls back to fixed_sniper.
@@ -25,4 +26,6 @@ namespace vr::gameplay::barrett_gun
 		hands::vec offset, std::uint64_t reference) noexcept;
 	void present(const hands::interaction_rig&, const hands::rig&, std::span<hands::bone> solved,
 		unsigned visible) noexcept;
+	// Camera, before the HMD pose: the native turret eye places the bipod rest once per mount.
+	void observe_native_eye(const float* origin) noexcept;
 }
