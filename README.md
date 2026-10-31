@@ -74,7 +74,7 @@ The launcher's Help page is inherited from Overlord and does not yet describe ev
 
 ## Known Issues
 
-- Headset confirmation is still pending for several Beta 1 features (Barrett bipod, Stinger display, AC-130 controls, Mk19 aim, grenade launcher loading, Cobra air support, Aftermath crawl).
+- Headset confirmation is still pending for several Beta 1 features (Barrett bipod).
 - A left-right flipped view has been reported in a cutscene; it has not been reproduced yet.
 - From Overlord: a `Create2DTexture` error may be avoided by disabling Shader Preloading in the graphics settings; MSI Afterburner may prevent startup.
 
