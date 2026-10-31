@@ -74,7 +74,7 @@ The launcher's Help page is inherited from Overlord and does not yet describe ev
 
 ## Known Issues
 
-- Headset confirmation is still pending for several Beta 1 features (Barrett bipod, Stinger display, AC-130 controls, Mk19 aim, grenade launcher loading, Cobra air support, Aftermath crawl).
+- Headset confirmation is still pending for several Beta 1 features (Barrett bipod).
 - A left-right flipped view has been reported in a cutscene; it has not been reproduced yet.
 - From Overlord: a `Create2DTexture` error may be avoided by disabling Shader Preloading in the graphics settings; MSI Afterburner may prevent startup.
 
@@ -105,3 +105,5 @@ The code is licensed under [GNU GPLv3](LICENSE). Third-party code, fonts and oth
 This port is built on [Overlord](https://github.com/Aeka0/Overlord) by [Aeka0](https://github.com/Aeka0), and on the client foundations of H2-Mod, h1-mod (MWR addresses and structures), [IW6x](https://git.alterware.dev/alterware/iw6-mod) and [S1x](https://git.alterware.dev/alterware/s1-mod). Thanks also to [momo5502](https://github.com/momo5502), [xensik](https://github.com/xensik/gsc-tool), [JariKCoding](https://github.com/JariKCoding/CoDLuaDecompiler), [ZoneTool](https://github.com/ZoneTool/zonetool), [quaK](https://github.com/Joelrau), and the related work of Valve, Khronos and REFramework.
 
 This port is maintained separately and is not affiliated with or endorsed by Overlord's author; please send problems with this port here, not to the Overlord project. It is an independent community mod, not an official game release. Game names and trademarks belong to their respective owners. It must not be used for piracy or to circumvent copy protection.
+
+
