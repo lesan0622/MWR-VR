@@ -48,7 +48,7 @@ def main() -> None:
     zip_path = DIST / "payload.zip"
     payload(zip_path)
     setup = DIST / "OverlordMWR-VR-Setup.exe"
-    subprocess.run([str(CSC), "/nologo", "/target:winexe", "/optimize+", "/platform:anycpu",
+    subprocess.run([str(CSC), "/nologo", "/codepage:65001", "/target:winexe", "/optimize+", "/platform:anycpu",
                     f"/out:{setup}", f"/win32icon:{ROOT / 'assets/icon/Icon.ico'}",
                     f"/resource:{zip_path},payload.zip",
                     "/reference:System.IO.Compression.dll", "/reference:System.IO.Compression.FileSystem.dll",

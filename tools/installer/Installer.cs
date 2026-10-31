@@ -25,25 +25,40 @@ static class Installer
 	static int Main(string[] args)
 	{
 		Application.EnableVisualStyles();
+		// /list <file>: write the detected installs (store<TAB>folder), install nothing.
+		if (args.Length > 1 && args[0].Equals("/list", StringComparison.OrdinalIgnoreCase))
+		{
+			var lines = new List<string>();
+			foreach (var i in FindGames()) lines.Add(i.Store + "\t" + i.Folder);
+			File.WriteAllLines(args[1], lines.ToArray());
+			return 0;
+		}
 		// /silent: install into the detected folder without dialogs (scripted installs and tests).
 		if (args.Length > 0 && args[0].Equals("/silent", StringComparison.OrdinalIgnoreCase))
 		{
 			try
 			{
-				var found = FindGame();
-				if (found == null || Running("h1_sp64_ship") || Running("overlord")) return 2;
-				Extract(found);
+				var found = FindGames();
+				if (found.Count == 0 || Running("h1_sp64_ship") || Running("overlord")) return 2;
+				Extract(found[0].Folder);
 				return 0;
 			}
 			catch { return 1; }
 		}
 		try
 		{
-			string game = FindGame();
-			if (game == null || MessageBox.Show(T("다음 폴더에 설치합니다:\n\n", "Install into:\n\n") + game +
-				T("\n\n다른 폴더를 고르려면 '아니요'를 누르세요.", "\n\nChoose 'No' to pick another folder."),
-				Title, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
-				game = PickGame();
+			var found = FindGames();
+			string game = null;
+			if (found.Count == 1)
+			{
+				if (MessageBox.Show(T("다음 폴더에 설치합니다 (", "Install into (") + found[0].Store + "):\n\n" + found[0].Folder +
+					T("\n\n다른 폴더를 고르려면 '아니요'를 누르세요.", "\n\nChoose 'No' to pick another folder."),
+					Title, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+					game = found[0].Folder;
+				else game = PickGame();
+			}
+			else if (found.Count > 1) game = Choose(found);
+			else game = PickGame();
 			if (game == null) return 1;
 			while (Running("h1_sp64_ship") || Running("overlord"))
 				if (MessageBox.Show(T("게임이 실행 중입니다. 게임을 끄고 '다시 시도'를 누르세요.", "The game is running. Close it and press Retry."),
@@ -62,10 +77,103 @@ static class Installer
 		}
 	}
 
-	static bool IsGame(string folder) { return folder != null && File.Exists(Path.Combine(folder, GameExe)); }
+	static bool IsGame(string folder)
+	{
+		try { return !string.IsNullOrEmpty(folder) && File.Exists(Path.Combine(folder, GameExe)); }
+		catch { return false; } // Paths scraped from product.db may be malformed.
+	}
+
+	struct Install { public string Store, Folder; }
+
+	// Steam first, then Battle.net; one entry per distinct folder.
+	static List<Install> FindGames()
+	{
+		var result = new List<Install>();
+		Action<string, string> add = (store, folder) =>
+		{
+			if (!IsGame(folder)) return;
+			var full = Path.GetFullPath(folder).TrimEnd('\\');
+			foreach (var i in result) if (string.Equals(i.Folder, full, StringComparison.OrdinalIgnoreCase)) return;
+			result.Add(new Install { Store = store, Folder = full });
+		};
+		foreach (var folder in SteamFolders()) add("Steam", folder);
+		foreach (var folder in BattleNetFolders()) add("Battle.net", folder);
+		return result;
+	}
+
+	// Battle.net: the uninstall entry Blizzard writes, the agent's product.db
+	// install paths, then the default and common library folders on every drive.
+	static IEnumerable<string> BattleNetFolders()
+	{
+		var folders = new List<string>();
+		foreach (var hive in new[] { Registry.LocalMachine, Registry.CurrentUser })
+			foreach (var key in new[] { @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall" })
+				using (var root = hive.OpenSubKey(key))
+				{
+					if (root == null) continue;
+					foreach (var name in root.GetSubKeyNames())
+						using (var app = root.OpenSubKey(name))
+						{
+							var display = app == null ? null : app.GetValue("DisplayName") as string;
+							var location = app == null ? null : app.GetValue("InstallLocation") as string;
+							if (display != null && location != null && display.IndexOf("Modern Warfare Remastered", StringComparison.OrdinalIgnoreCase) >= 0)
+								folders.Add(location.Trim('"'));
+						}
+				}
+		try
+		{
+			var db = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), @"Battle.net\Agent\product.db");
+			if (File.Exists(db))
+			{
+				var text = System.Text.Encoding.UTF8.GetString(File.ReadAllBytes(db));
+				foreach (Match m in Regex.Matches(text, @"[A-Za-z]:[\\/][^\x00-\x1f""<>|*?]*?" + Regex.Escape(GameFolder).Replace("\\ ", "[ _]")))
+					folders.Add(m.Value.Replace('/', '\\'));
+			}
+		}
+		catch { } // An unreadable agent database only skips this source.
+		foreach (var drive in DriveInfo.GetDrives())
+		{
+			if (drive.DriveType != DriveType.Fixed) continue;
+			var d = drive.RootDirectory.FullName;
+			foreach (var parent in new[] { @"Program Files (x86)", @"Program Files", @"Games", @"Battle.net", @"Battle.net\Games", @"Blizzard", "" })
+				folders.Add(Path.Combine(d, parent, GameFolder));
+		}
+		return folders;
+	}
+
+	// Install folder picked from several detected copies.
+	static string Choose(List<Install> found)
+	{
+		using (var form = new Form())
+		{
+			form.Text = Title;form.FormBorderStyle = FormBorderStyle.FixedDialog;form.MaximizeBox = form.MinimizeBox = false;
+			form.StartPosition = FormStartPosition.CenterScreen;form.AutoSize = true;form.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+			form.Padding = new Padding(12);
+			var layout = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, AutoSize = true, Dock = DockStyle.Fill };
+			layout.Controls.Add(new Label { Text = T("설치할 게임을 고르세요:", "Choose the game to install into:"), AutoSize = true });
+			var choices = new List<RadioButton>();
+			foreach (var i in found)
+			{
+				var r = new RadioButton { Text = i.Store + "  —  " + i.Folder, AutoSize = true, Checked = choices.Count == 0 };
+				choices.Add(r);layout.Controls.Add(r);
+			}
+			var buttons = new FlowLayoutPanel { AutoSize = true };
+			var ok = new Button { Text = T("설치", "Install"), DialogResult = DialogResult.OK, AutoSize = true };
+			var other = new Button { Text = T("다른 폴더...", "Other folder..."), DialogResult = DialogResult.Retry, AutoSize = true };
+			var cancel = new Button { Text = T("취소", "Cancel"), DialogResult = DialogResult.Cancel, AutoSize = true };
+			buttons.Controls.AddRange(new Control[] { ok, other, cancel });
+			layout.Controls.Add(buttons);
+			form.Controls.Add(layout);form.AcceptButton = ok;form.CancelButton = cancel;
+			var answer = form.ShowDialog();
+			if (answer == DialogResult.Retry) return PickGame();
+			if (answer != DialogResult.OK) return null;
+			for (int n = 0; n < choices.Count; ++n) if (choices[n].Checked) return found[n].Folder;
+			return null;
+		}
+	}
 
 	// Steam install path from the registry, then every library in libraryfolders.vdf.
-	static string FindGame()
+	static IEnumerable<string> SteamFolders()
 	{
 		var roots = new List<string>();
 		foreach (var key in new[] { @"SOFTWARE\WOW6432Node\Valve\Steam", @"SOFTWARE\Valve\Steam" })
@@ -87,12 +195,9 @@ static class Installer
 			foreach (Match m in Regex.Matches(File.ReadAllText(vdf), "\"path\"\\s*\"([^\"]+)\""))
 				libraries.Add(m.Groups[1].Value.Replace(@"\\", @"\"));
 		}
-		foreach (var library in libraries)
-		{
-			var folder = Path.Combine(library, @"steamapps\common", GameFolder);
-			if (IsGame(folder)) return folder;
-		}
-		return null;
+		var folders = new List<string>();
+		foreach (var library in libraries) folders.Add(Path.Combine(library, @"steamapps\common", GameFolder));
+		return folders;
 	}
 
 	static string PickGame()
