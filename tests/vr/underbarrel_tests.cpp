@@ -41,8 +41,8 @@ int main()
 	{
 		auto ammo=u::import_native({{53,7},54,u::kind::m203},0,9);ammo.open=true;
 		const float threshold=.1f*u::action_open_fraction;
-		check(!u::prefer_secondary_supply(ammo,std::nextafter(threshold,0.f),.1f,false) &&
-			u::prefer_secondary_supply(ammo,threshold,.1f,false),"M203 needs the actual opening threshold, including a partially closing action");
+		check(u::prefer_secondary_supply(ammo,std::nextafter(threshold,0.f),.1f,false) &&
+			u::prefer_secondary_supply(ammo,0.f,.1f,false),"an opened M203 latch prefers a grenade even after the barrel slid back");
 		ammo.open=false;
 		check(!u::prefer_secondary_supply(ammo,.1f,.1f,false),"empty closed M203 keeps primary selection");
 		ammo.open=true;

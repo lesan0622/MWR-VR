@@ -12,11 +12,12 @@ namespace vr::gameplay::weapons::underbarrel
 		switch(ammo.id.type)
 		{
 		case kind::m203:
-			// The open latch survives partial closing. Check actual travel against
-			// the same threshold that admits opening, rather than the latch alone.
+			// Empty and opened (the open latch holds until the barrel is back within
+			// 10% of closed, and insertion only needs the latch). Requiring 90% travel
+			// gave the rifle magazine whenever the barrel slid back a little on
+			// release (user, headset: "the empty launcher is not detected").
 			return !ammo.loaded && ammo.open && !ammo.spent && std::isfinite(travel) &&
-				std::isfinite(stroke) && stroke>0 && stroke<=.5f && travel<=stroke &&
-				travel>=stroke*action_open_fraction;
+				std::isfinite(stroke) && stroke>0 && stroke<=.5f && travel>=0 && travel<=stroke;
 		case kind::gp25:return !ammo.loaded;
 		case kind::shotgun:return ammo.loaded-int(ammo.chamber)<shotgun_tube_capacity;
 		default:return false;
