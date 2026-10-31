@@ -14,6 +14,8 @@ namespace product
 #endif
 	inline constexpr auto repository_url = "https://github.com/Aeka0/Overlord";
 	inline constexpr auto releases_url = "https://github.com/Aeka0/Overlord/releases";
+	// MWR port: problem reports go to its maintainer by email.
+	inline constexpr auto issues_url = "mailto:lesan00622@gmail.com?subject=Overlord%20MWR%20VR%20issue";
 
 	constexpr std::string_view localization_key(std::string_view key) noexcept
 	{

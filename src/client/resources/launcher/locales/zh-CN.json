@@ -277,7 +277,7 @@
   "notice.maintenance": "Overlord 仅由一人独立维护，当前为{version}，而非稳定版本。项目正经历基于反馈的高强度兼容性修补，许多特性仅在作者本人的机器上测试过，仍有大量适配工作需要完成，稳定性预期很差。版本更迭也可能破坏游戏存档和进度。",
   "notice.expectations": "请放低预期，将当前版本视为参与测试，而不是完整的成熟产品。目前已收到在许多机器上出现崩溃、无画面等问题的报告，相关问题仍在持续追踪、调查和尝试修复。",
   "notice.feedback": "如果希望能较为顺利地开始游玩，请等待稳定版本发布。如果愿意帮助提升稳定性，通过 Issue 反馈遇到的问题，请附上详细的vr_diagnose记录或minidump。感谢关注与支持。",
-  "notice.issues": "通过 Issue 反馈",
+  "notice.issues": "通过邮件报告",
   "notice.close": "我已了解",
   "settings.calibration": "校准",
   "settings.calibrationHint": "先选择姿态方案和预置，再调整对齐。下方指令对应当前选择的方案；游戏内可用 vr_input_status 确认正在使用的方案。姿态方案切换需重启游戏。",
