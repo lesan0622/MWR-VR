@@ -1,0 +1,105 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Windows x64 / ${{ matrix.configuration }}
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [RelWithDebInfo, Debug, Release]
+    steps:
+      - name: Check out source and dependencies
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: src/launcher-ui/package-lock.json
+
+      - name: Validate controller bindings
+        run: python -m unittest discover -s tests/vr -p 'test_*binding.py'
+
+      - name: Generate projects
+        run: tools/premake5.exe vs2022 --with-vr-tests
+
+      - name: Build client
+        run: msbuild build/overlord.sln /t:client /m:2 /v:minimal /p:Configuration=${{ matrix.configuration }} /p:Platform=x64 /p:PreferredToolArchitecture=x64 /p:CL_MPCount=4
+
+      - name: Build no-loader smoke test
+        run: msbuild build/vr-runtime-no-loader-smoke.vcxproj /m:2 /v:minimal /p:Configuration=${{ matrix.configuration }} /p:Platform=x64 /p:PreferredToolArchitecture=x64 /p:CL_MPCount=4
+
+      - name: Run no-loader smoke test
+        run: build/bin/x64/${{ matrix.configuration }}/vr-tests/no-loader/vr-runtime-no-loader-smoke.exe
+
+      - name: Build aggregate publication qualification
+        run: msbuild build/vr-aggregate-publication-tests.vcxproj /m:2 /v:minimal /p:Configuration=${{ matrix.configuration }} /p:Platform=x64 /p:PreferredToolArchitecture=x64 /p:CL_MPCount=4
+
+      - name: Run aggregate publication qualification
+        run: build/bin/x64/${{ matrix.configuration }}/vr-tests/aggregate-publication/vr-aggregate-publication-tests.exe
+
+      - name: Validate React launcher
+        if: matrix.configuration == 'Debug'
+        working-directory: src/launcher-ui
+        run: npm test
+
+      - name: Build HUD draw regression probe
+        run: msbuild build/vr-d3d11-draw-indexed-probe.vcxproj /m:2 /v:minimal /p:Configuration=${{ matrix.configuration }} /p:Platform=x64 /p:PreferredToolArchitecture=x64 /p:CL_MPCount=4
+
+      - name: Run HUD draw regression probe
+        run: build/bin/x64/${{ matrix.configuration }}/vr-tests/draw-indexed/vr-d3d11-draw-indexed-probe.exe
+
+      - name: Build Knuckles instruction tests
+        if: matrix.configuration != 'Release'
+        run: msbuild build/vr-spatial-panel-tests.vcxproj /m:2 /v:minimal /p:Configuration=${{ matrix.configuration }} /p:Platform=x64 /p:PreferredToolArchitecture=x64 /p:CL_MPCount=4
+
+      - name: Run Knuckles instruction tests
+        if: matrix.configuration != 'Release'
+        run: build/bin/x64/${{ matrix.configuration }}/vr-tests/spatial-panel/vr-spatial-panel-tests.exe
+
+      - name: Build controller input regression tests
+        if: matrix.configuration != 'Release'
+        run: msbuild build/vr-controller-input-tests.vcxproj /m:2 /v:minimal /p:Configuration=${{ matrix.configuration }} /p:Platform=x64 /p:PreferredToolArchitecture=x64 /p:CL_MPCount=4
+
+      - name: Run controller input regression tests
+        if: matrix.configuration != 'Release'
+        run: build/bin/x64/${{ matrix.configuration }}/vr-tests/controller-input/vr-controller-input-tests.exe
+
+      - name: Build OpenXR input regression tests
+        run: msbuild build/vr-runtime-mock-smoke.vcxproj /m:2 /v:minimal /p:Configuration=${{ matrix.configuration }} /p:Platform=x64 /p:PreferredToolArchitecture=x64 /p:CL_MPCount=4
+
+      - name: Run OpenXR input regression tests
+        run: build/bin/x64/${{ matrix.configuration }}/vr-tests/mock/vr-runtime-mock-smoke.exe
+
+      - name: Package client overlay
+        run: python tools/package_client.py --configuration ${{ matrix.configuration }}
+
+      - name: Upload client overlay
+        uses: actions/upload-artifact@v4
+        with:
+          name: overlord-${{ matrix.configuration }}-${{ github.sha }}
+          path: output/packages/**/*.zip
+          if-no-files-found: error
+          retention-days: 14

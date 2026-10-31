@@ -1,0 +1,125 @@
+{
+  "name": "H2 VR knuckles",
+  "description": "Left thumbstick moves/clicks to sprint; right thumbstick turns/clicks to jump. Left A pauses or holds to recenter; right A shows weapon HUD. Grip pressure holds; trigger pull fires; B releases weapon parts.",
+  "controller_type": "knuckles",
+  "bindings": {
+    "/actions/gameplay": {
+      "haptics": [
+        { "output": "/actions/gameplay/out/left_haptic", "path": "/user/hand/left/output/haptic" },
+        { "output": "/actions/gameplay/out/right_haptic", "path": "/user/hand/right/output/haptic" }
+      ],
+      "poses": [
+        {
+          "output": "/actions/gameplay/in/left_grip",
+          "path": "/user/hand/left/pose/raw"
+        },
+        {
+          "output": "/actions/gameplay/in/left_aim",
+          "path": "/user/hand/left/pose/tip"
+        },
+        {
+          "output": "/actions/gameplay/in/right_grip",
+          "path": "/user/hand/right/pose/raw"
+        },
+        {
+          "output": "/actions/gameplay/in/right_aim",
+          "path": "/user/hand/right/pose/tip"
+        }
+      ],
+      "sources": [
+        {
+          "path": "/user/hand/left/input/b", "mode": "button",
+          "inputs": { "click": { "output": "/actions/gameplay/in/left_secondary" } }
+        },
+        {
+          "path": "/user/hand/right/input/b", "mode": "button",
+          "inputs": { "click": { "output": "/actions/gameplay/in/right_secondary" } }
+        },
+        {
+          "path": "/user/hand/left/input/a", "mode": "button",
+          "inputs": { "click": { "output": "/actions/gameplay/in/menu_recenter" } }
+        },
+        {
+          "path": "/user/hand/right/input/a", "mode": "button",
+          "inputs": { "click": { "output": "/actions/gameplay/in/right_primary" } }
+        },
+        {
+          "path": "/user/hand/left/input/grip", "mode": "button",
+          "inputs": { "click": { "output": "/actions/gameplay/in/left_squeeze" } },
+          "parameters": {
+            "force_input": "force",
+            "click_activate_threshold": "0.08",
+            "click_deactivate_threshold": "0.02",
+            "haptic_amplitude": "0"
+          }
+        },
+        {
+          "path": "/user/hand/right/input/grip", "mode": "button",
+          "inputs": { "click": { "output": "/actions/gameplay/in/right_squeeze" } },
+          "parameters": {
+            "force_input": "force",
+            "click_activate_threshold": "0.08",
+            "click_deactivate_threshold": "0.02",
+            "haptic_amplitude": "0"
+          }
+        },
+        {
+          "path": "/user/hand/left/input/trigger",
+          "mode": "button",
+          "inputs": { "click": { "output": "/actions/gameplay/in/left_trigger" } },
+          "parameters": {
+            "force_input": "value",
+            "click_activate_threshold": "0.01",
+            "click_deactivate_threshold": "0.005",
+            "haptic_amplitude": "0"
+          }
+        },
+        {
+          "path": "/user/hand/right/input/trigger",
+          "mode": "button",
+          "inputs": { "click": { "output": "/actions/gameplay/in/right_trigger" } },
+          "parameters": {
+            "force_input": "value",
+            "click_activate_threshold": "0.01",
+            "click_deactivate_threshold": "0.005",
+            "haptic_amplitude": "0"
+          }
+        },
+        {
+          "path": "/user/hand/left/input/thumbstick",
+          "mode": "joystick",
+          "inputs": {
+            "position": {
+              "output": "/actions/gameplay/in/move"
+            },
+            "click": {
+              "output": "/actions/gameplay/in/sprint"
+            }
+          }
+        },
+        {
+          "path": "/user/hand/right/input/thumbstick",
+          "mode": "joystick",
+          "inputs": {
+            "position": {
+              "output": "/actions/gameplay/in/turn"
+            },
+            "click": {
+              "output": "/actions/gameplay/in/jump"
+            }
+          }
+        },
+        {
+          "path": "/user/hand/left/input/trigger", "mode": "button",
+          "parameters": { "haptic_amplitude": "0" },
+          "inputs": { "touch": { "output": "/actions/gameplay/in/left_trigger_touch" } }
+        },
+        {
+          "path": "/user/hand/right/input/trigger", "mode": "button",
+          "parameters": { "haptic_amplitude": "0" },
+          "inputs": { "touch": { "output": "/actions/gameplay/in/right_trigger_touch" } }
+        }
+      ]
+    }
+  }
+}

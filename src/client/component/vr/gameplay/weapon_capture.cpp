@@ -1,0 +1,742 @@
+#include <std_include.hpp>
+#include "weapon_capture.hpp"
+#include "native_animation_query.hpp"
+#include "hands/pose_math.hpp"
+#include "native_scripted_control.hpp"
+#include "native_carry.hpp"
+#include "weapon_carry_runtime.hpp"
+#include "native_weapon_sound_slice.hpp"
+#include "weapon_reload_profiles.hpp"
+#include "component/command.hpp"
+#include "component/console.hpp"
+#include "component/scheduler.hpp"
+#include "game/game.hpp"
+#include "game/scripting/execution.hpp"
+#include "loader/component_loader.hpp"
+
+#include <utils/io.hpp>
+#include <utils/compression.hpp>
+#include <utils/native_memory.hpp>
+#include <utils/hook.hpp>
+
+#include <format>
+#include <mutex>
+
+namespace vr::gameplay::weapon_capture
+{
+	namespace
+	{
+		using namespace hands;
+
+		std::mutex mutex;
+		bool snapshot_requested{};
+		bool recording{};
+		std::string record_header, record_body;
+		std::string record_weapon;
+		std::uint64_t record_frames{};
+		const void* last_tree{};
+		std::uint32_t record_index{};
+
+		std::string escape(std::string_view text)
+		{
+			std::string out;
+			for (const char c : text)
+			{
+				if (c == '"' || c == '\\') out.push_back('\\');
+				if (static_cast<unsigned char>(c) >= 0x20) out.push_back(c);
+			}
+			return out;
+		}
+
+		std::string scr_string(game::scr_string_t value)
+		{
+			if (!value) return {};
+			const char* text = game::SL_ConvertToString(value);
+			return text ? std::string(text) : std::string{};
+		}
+
+		std::string pose_json(const anchor& a)
+		{
+			return std::format("[{:.6f},{:.6f},{:.6f},{:.7f},{:.7f},{:.7f},{:.7f}]", a.position[0], a.position[1],
+				a.position[2], a.rotation[0], a.rotation[1], a.rotation[2], a.rotation[3]);
+		}
+
+		std::string weapon_name(std::uint32_t weapon)
+		{
+			const auto index = weapon & 0x1ff;
+			const auto* def = index ? game::weapon_defs[index] : nullptr;
+			return def && def->szInternalName ? std::string(def->szInternalName) : std::format("weapon_{}", index);
+		}
+
+		std::string directory(const std::string& name)
+		{
+			const auto dir = "overlord-mwr/captures/" + name;
+			utils::io::create_directory(dir);
+			return dir;
+		}
+
+		std::string anim_json(const game::XAnimParts* parts)
+		{
+			if (!parts || !parts->name) return "null";
+			std::string notifies;
+			if (parts->notify)
+				for (unsigned i = 0; i < parts->notifyCount; ++i)
+					notifies += std::format("{}{{\"name\":\"{}\",\"time\":{:.5f}}}", i ? "," : "",
+						escape(scr_string(parts->notify[i].name)), parts->notify[i].time);
+			return std::format("{{\"name\":\"{}\",\"frames\":{},\"framerate\":{:.4f},\"notify\":[{}]}}",
+				escape(parts->name), parts->numframes, parts->framerate, notifies);
+		}
+
+		// WeaponDef facts used by reload recipes (names, capacities, timers,
+		// animations and their notetracks, notetrack sound map).
+		std::string weapon_json(std::uint32_t weapon)
+		{
+			const auto index = weapon & 0x1ff;
+			const auto* def = index ? game::weapon_defs[index] : nullptr;
+			if (!def) return "null";
+			const auto model = [](const game::XModel* m) { return m && m->name ? escape(m->name) : std::string{}; };
+			std::string anims;
+			if (def->szXAnims)
+				for (int i = 0; i < 190; ++i)
+					if (def->szXAnims[i] && def->szXAnims[i]->name)
+						anims += std::format("{}\"{}\":{}", anims.empty() ? "" : ",", i, anim_json(def->szXAnims[i]));
+			std::string sounds;
+			if (def->notetrackSoundMapKeys && def->notetrackSoundMapValues)
+				for (int i = 0; i < 36; ++i)
+					if (def->notetrackSoundMapKeys[i])
+						sounds += std::format("{}\"{}\":\"{}\"", sounds.empty() ? "" : ",",
+							escape(scr_string(def->notetrackSoundMapKeys[i])),
+							escape(scr_string(def->notetrackSoundMapValues[i])));
+			const auto& t = def->stateTimers;
+			return std::format(
+				"{{\"token\":{},\"name\":\"{}\",\"gun_models\":[\"{}\",\"{}\"],\"hand_model\":\"{}\","
+				"\"world_clip_model\":\"{}\",\"weap_type\":{},\"weap_class\":{},\"clip_size\":{},"
+				"\"reload_ammo_add\":{},\"segmented_reload\":{},\"no_partial_reload\":{},"
+				"\"timers_ms\":{{\"reload\":{},\"reload_empty\":{},\"reload_add\":{},\"reload_start\":{},"
+				"\"reload_end\":{},\"rechamber\":{},\"raise\":{},\"drop\":{}}},"
+				"\"anims\":{{{}}},\"notetrack_sounds\":{{{}}}}}",
+				weapon, escape(def->szInternalName ? def->szInternalName : ""),
+				model(def->gunModel ? def->gunModel[0] : nullptr), model(def->gunModel ? def->gunModel[1] : nullptr),
+				model(def->handModel), model(def->worldClipModel), static_cast<int>(def->weapType),
+				static_cast<int>(def->weapClass), def->clipSize, def->reloadAmmoAdd, def->segmentedReload,
+				def->noPartialReload, t.reloadTime, t.reloadEmptyTime, t.reloadAddTime, t.reloadStartTime,
+				t.reloadEndTime, t.rechamberTime, t.raiseTime, t.dropTime, anims, sounds);
+		}
+
+		std::string assembly_json(std::uint32_t weapon, std::span<const model_definition> models, const rig& r,
+			std::span<const bone_definition> bones, std::span<const bone> native)
+		{
+			std::string model_list, bone_list;
+			for (const auto& m : models)
+				model_list += std::format("{}{{\"name\":\"{}\",\"begin\":{},\"count\":{}}}", model_list.empty() ? "" : ",",
+					escape(m.name), m.begin, m.count);
+			const auto gun = inverse(pose_math::as_anchor(native[r.gun]));
+			for (int i = 0; i < r.count; ++i)
+				bone_list += std::format("{}{{\"name\":\"{}\",\"parent\":{},\"weapon\":{},\"bind\":{},\"idle_gun_local\":{}}}",
+					i ? "," : "", escape(bones[i].name), bones[i].parent, r.weapon_bones[i] ? 1 : 0,
+					pose_json(pose_math::as_anchor(bones[i].bind)),
+					pose_json(compose(gun, pose_math::as_anchor(native[i]))));
+			return std::format(
+				"{{\"units\":\"native (inches)\",\"frame\":\"gun-local unless named bind\",\"rig\":{{\"gun\":{},"
+				"\"weapon_tag\":{},\"muzzle\":{},\"left_wrist\":{},\"right_wrist\":{}}},\"models\":[{}],"
+				"\"weapon\":{},\"bones\":[{}]}}\n",
+				r.gun, r.weapon_tag, r.muzzle, r.arms[0].wrist, r.arms[1].wrist, model_list, weapon_json(weapon),
+				bone_list);
+		}
+
+		void flush_recording()
+		{
+			if (record_weapon.empty() || !record_frames) return;
+			const auto dir = directory(record_weapon);
+			std::string file;
+			do file = std::format("{}/record_{:03}.jsonl", dir, ++record_index);
+			while (utils::io::file_exists(file)); // Never overwrite an earlier capture.
+			utils::io::write_file(file, record_header + record_body);
+			console::info("[VR capture] wrote %llu frames to %s\n", record_frames, file.c_str());
+		}
+	}
+
+	bool wants() noexcept
+	{
+		const std::lock_guard lock(mutex);
+		return snapshot_requested || recording;
+	}
+
+	void observe(const void* tree, std::uint32_t weapon, std::span<const model_definition> models, const rig& r,
+		std::span<const bone_definition> bones, std::span<const bone> native) noexcept
+	{
+		if (r.count <= 0 || r.gun < 0 || r.gun >= r.count || native.size() < static_cast<size_t>(r.count))
+			return;
+		const std::lock_guard lock(mutex);
+		last_tree = tree;
+		if (snapshot_requested)
+		{
+			snapshot_requested = false;
+			const auto name = weapon_name(weapon);
+			const auto file = directory(name) + "/assembly.json";
+			utils::io::write_file(file, assembly_json(weapon, models, r, bones, native));
+			console::info("[VR capture] wrote %s\n", file.c_str());
+		}
+		if (!recording) return;
+		if (record_weapon.empty())
+		{
+			record_weapon = weapon_name(weapon);
+			std::string names;
+			for (int i = 0; i < r.count; ++i)
+				names += std::format("{}\"{}\"", i ? "," : "", escape(bones[i].name));
+			record_header = std::format("{{\"bones\":[{}],\"gun\":{}}}\n", names, r.gun);
+		}
+		const auto clips = native_animation::sample(tree);
+		std::string clip_list;
+		for (const auto& c : clips.leaves())
+			clip_list += std::format("{}[\"{}\",{:.4f},{:.4f}]", clip_list.empty() ? "" : ",", escape(c.name), c.time,
+				c.weight);
+		const auto gun = inverse(pose_math::as_anchor(native[r.gun]));
+		std::string pose_list;
+		for (int i = 0; i < r.count; ++i)
+			pose_list += (i ? "," : "") + pose_json(compose(gun, pose_math::as_anchor(native[i])));
+		record_body += std::format("{{\"t\":{},\"clips\":[{}],\"gun_world\":{},\"poses\":[{}]}}\n",
+			std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count(),
+			clip_list, pose_json(pose_math::as_anchor(native[r.gun])), pose_list);
+		++record_frames;
+	}
+
+	// MWR port diagnostic: which PM_Weapon fire gate (0x1404A73B0) rejects a shot.
+	namespace fire_probe
+	{
+		utils::hook::detour gate, blocked_a, blocked_b, has_ammo, attack, fire, can_fire, start_fire, fire_ammo;
+		std::atomic<std::uint64_t> fires, can_fire_zero, can_fire_nonzero, starts, ammo_calls;
+		std::atomic<int> last_can_fire;
+		void fire_stub(std::int64_t* pm, int a2, std::int64_t a3, int a4) { ++fires; fire.invoke<void>(pm, a2, a3, a4); }
+		int can_fire_stub(std::int64_t ps, std::int64_t* pm, std::int64_t a3, int a4)
+		{ const int r = can_fire.invoke<int>(ps, pm, a3, a4); last_can_fire = r; if (r) ++can_fire_nonzero; else ++can_fire_zero; return r; }
+		void start_stub(std::int64_t ps, int a2, std::int64_t a3, int a4) { ++starts; start_fire.invoke<void>(ps, a2, a3, a4); }
+		int ammo_stub2(std::int64_t ps, int a2, int a3, int a4) { ++ammo_calls; return fire_ammo.invoke<int>(ps, a2, a3, a4); }
+		std::atomic<std::uint64_t> gates, buttons_attack, a_nonzero, b_nonzero, ammo_zero, attack_zero, attack_nonzero;
+		std::atomic<int> last_a, last_b, last_ammo, last_attack;
+		void gate_stub(std::int64_t* pm, std::int64_t a2, int a3, int a4)
+		{
+			++gates;
+			std::uint32_t buttons{};
+			std::memcpy(&buttons, reinterpret_cast<const std::byte*>(pm) + 0xc, 4);
+			if (buttons & 1) ++buttons_attack;
+			gate.invoke<void>(pm, a2, a3, a4);
+		}
+		int a_stub(std::int64_t* pm, int a2, int a3) { const int r = blocked_a.invoke<int>(pm, a2, a3); last_a = r; if (r) ++a_nonzero; return r; }
+		int b_stub(std::int64_t* pm, std::int64_t a2, int a3, int a4) { const int r = blocked_b.invoke<int>(pm, a2, a3, a4); last_b = r; if (r) ++b_nonzero; return r; }
+		int ammo_stub(std::int64_t* pm, int a2) { const int r = has_ammo.invoke<int>(pm, a2); last_ammo = r; if (!r) ++ammo_zero; return r; }
+		int attack_stub(std::int64_t* pm, int a2, int a3, int a4, int a5)
+		{ const int r = attack.invoke<int>(pm, a2, a3, a4, a5); last_attack = r; if (r) ++attack_nonzero; else ++attack_zero; return r; }
+		void install()
+		{
+			gate.create(0x1404A73B0, gate_stub);
+			blocked_a.create(0x1404A9260, a_stub);
+			blocked_b.create(0x1404A7860, b_stub);
+			has_ammo.create(0x14048F600, ammo_stub);
+			attack.create(0x1404ACDC0, attack_stub);
+			can_fire.create(0x1404A7F20, can_fire_stub);
+			start_fire.create(0x1404AD010, start_stub);
+			fire_ammo.create(0x1404A3600, ammo_stub2);
+		}
+	}
+
+	class component final : public component_interface
+	{
+	public:
+		void post_unpack() override
+		{
+			command::add("vr_capture_fire_probe", []
+			{
+				static bool installed{};
+				if (!installed) { fire_probe::install(); installed = true; console::info("[VR fire probe] installed\n"); return; }
+				using namespace fire_probe;
+				console::info("[VR fire probe] gates=%llu attack_buttons=%llu a_nonzero=%llu(last %d) b_nonzero=%llu(last %d) "
+					"ammo_zero=%llu(last %d) attack_check zero/nonzero=%llu/%llu(last %d)\n",
+					gates.load(), buttons_attack.load(), a_nonzero.load(), last_a.load(), b_nonzero.load(), last_b.load(),
+					ammo_zero.load(), last_ammo.load(), attack_zero.load(), attack_nonzero.load(), last_attack.load());
+				console::info("[VR fire probe] fire=%llu can_fire zero/nonzero=%llu/%llu(last %d) start=%llu ammo=%llu\n",
+					fires.load(), can_fire_zero.load(), can_fire_nonzero.load(), last_can_fire.load(), starts.load(), ammo_calls.load());
+			});
+			command::add("vr_capture_weapon", []
+			{
+				const std::lock_guard lock(mutex);
+				snapshot_requested = true;
+				console::info("[VR capture] assembly snapshot requested (next solved viewmodel frame)\n");
+			});
+			// MWR port diagnostic: compare the server and predicted player states
+			// used by scripted-control admission (weapon flags, entity flags, life).
+			command::add("vr_capture_ps", []
+			{
+				// Weapon definitions are not valid while a map is still loading
+				// (a mock crashed here reading weapon_defs during loadgame).
+				if (!game::CL_IsCgameInitialized()) { console::info("[VR capture] ps: cgame not initialized\n"); return; }
+				const auto dump = [](const char* label, const void* ps)
+				{
+					if (!ps) { console::info("[VR capture] %s ps=null\n", label); return; }
+					const auto* b = static_cast<const std::uint8_t*>(ps);
+					std::uint32_t flags{}, eflags{}, weapon{};
+					int health{};
+					std::memcpy(&flags, b + 0x390, 4);
+					std::memcpy(&eflags, b + 0x58, 4);
+					std::memcpy(&weapon, b + 0x38c, 4);
+					std::memcpy(&health, b + 0x1dc, 4);
+					console::info("[VR capture] %s ps=%p pm_type=%u weapflags=0x%08X eflags=0x%08X weapon=%u health=%d\n",
+						label, ps, b[2], flags, eflags, weapon, health);
+					std::string owned;
+					for (int i = 0; i < 15; ++i)
+					{
+						std::uint32_t token{};
+						std::memcpy(&token, b + 0x2cc + i * 4, 4);
+						if (token) owned += std::format(" {}:{}", token, weapon_name(token));
+					}
+					console::info("[VR capture] %s inventory:%s\n", label, owned.c_str());
+					// MWR port: locate offhand slot fields (offsets holding an owned offhand token).
+					std::string slots;
+					for (int off = 0x2c0; off < 0x420; off += 4)
+					{
+						std::uint32_t value{};
+						std::memcpy(&value, b + off, 4);
+						if (value && value < 512 && game::weapon_defs[value] &&
+							game::weapon_defs[value]->inventoryType == game::WEAPINVENTORY_OFFHAND)
+							slots += std::format(" +0x{:x}={}:{}", off, value, weapon_name(value));
+					}
+					console::info("[VR capture] %s offhand fields:%s\n", label, slots.c_str());
+				};
+				dump("server", game::g_entities[0].client);
+				bool dead{};
+				const void* server = game::g_entities[0].client;
+				console::info("[VR capture] server contract=%d life=%d dead=%d allowed=%d owns_body=%d owns_arms=%d airport=%d\n",
+					scripted_control::native_contract(), player_life::read(server, dead), dead,
+					scripted_control::allowed(server), sequences::owns_body(server), sequences::owns_arms(server),
+					sequences::airport::opening::active());
+				console::info("[VR capture] carry native=%s active=%d\n", weapons::native_carry::status(), weapons::carry::active());
+				dump("predicted", game::CL_IsCgameInitialized() ? game::CG_GetPredictedPlayerState(0) : nullptr);
+			});
+			// MWR port: bind poses of every loaded weapon receiver, used to rebase
+			// the original MW2 recipes onto the MWR viewmodels offline.
+			command::add("vr_capture_weapon_models", []
+			{
+				std::string out;
+				const auto model_json = [](const game::XModel* m)
+				{
+					if (!m || !m->name) return std::string("null");
+					std::string bones;
+					for (unsigned i = 0; i < m->numBones; ++i)
+					{
+						const auto parent = i < m->numRootBones || !m->parentList ? -1 :
+							static_cast<int>(i) - static_cast<int>(m->parentList[i - m->numRootBones]);
+						const auto& b = m->baseMat[i];
+						bones += std::format("{}[\"{}\",{},[{:.6f},{:.6f},{:.6f}],[{:.7f},{:.7f},{:.7f},{:.7f}]]", i ? "," : "",
+							escape(scr_string(m->boneNames[i])), parent, b.trans[0], b.trans[1], b.trans[2],
+							b.quat[0], b.quat[1], b.quat[2], b.quat[3]);
+					}
+					const auto& v = m->bounds;
+					return std::format("{{\"name\":\"{}\",\"bounds\":[[{:.4f},{:.4f},{:.4f}],[{:.4f},{:.4f},{:.4f}]],\"bones\":[{}]}}",
+						escape(m->name), v.midPoint[0], v.midPoint[1], v.midPoint[2], v.halfSize[0], v.halfSize[1], v.halfSize[2], bones);
+				};
+				int count{};
+				for (unsigned i = 1; i < 512; ++i)
+				{
+					const auto* def = game::weapon_defs[i];
+					if (!def) break; // Loaded definitions are contiguous; the table ends at the first gap.
+					game::WeaponDef copy{};
+					if (!utils::native_memory::read_bytes(&copy, def, sizeof(copy))) break;
+					if (!copy.szInternalName || !copy.gunModel || !copy.gunModel[0]) continue;
+					out += std::format("{{\"index\":{},\"name\":\"{}\",\"gun\":{},\"clip\":{}}}\n", i, escape(def->szInternalName),
+						model_json(def->gunModel[0]), model_json(def->worldClipModel));
+					++count;
+				}
+				const auto* map = game::Dvar_FindVar("mapname");
+				const auto file = directory("_models") + "/" + (map ? map->current.string : "unknown") + ".jsonl";
+				utils::io::write_file(file, out);
+				console::info("[VR capture] wrote %d weapon receivers to %s\n", count, file.c_str());
+			});
+			// Vertex extent of one bone of a weapon's gun model (rigid groups and first
+			// skin weight), model space: vr_capture_bone_mesh <xmodel> <bone>.
+			command::add("vr_capture_bone_mesh", [](const command::params& params)
+			{
+				if (params.size() < 3) return;
+				const std::string wanted = params.get(1), bone_name = params.get(2);
+				scheduler::once([wanted, bone_name]
+				{
+					{
+						const game::XModel* m = game::DB_FindXAssetHeader(game::ASSET_TYPE_XMODEL, wanted.c_str(), 0).model;
+						int bone = -1;
+						if (m && m->boneNames && m->lodInfo[0].surfs)
+							for (unsigned b = 0; b < m->numBones; ++b) if (bone_name == scr_string(m->boneNames[b])) bone = int(b);
+						if (bone < 0) { console::info("[VR capture] bone mesh: model/bone not found\n"); return; }
+						std::vector<std::array<float,3>> points;
+						for (unsigned n = 0; n < m->lodInfo[0].numsurfs; ++n)
+						{
+							const auto& surface = m->lodInfo[0].surfs[n];
+							const auto* verts = surface.verts0.packedVerts0;
+							if (!verts) continue;
+							if (surface.flags & 4u)
+							{
+								std::size_t at{}, vertex{};
+								for (unsigned extra = 0; extra < 8 && surface.blendVerts; ++extra)
+									for (int v = 0; v < surface.blendVertCounts[extra]; ++v, ++vertex)
+									{
+										const auto* words = reinterpret_cast<const unsigned short*>(surface.blendVerts);
+										if (words[at] / 64u == unsigned(bone) && vertex < surface.vertCount)
+											points.push_back({verts[vertex].xyz[0], verts[vertex].xyz[1], verts[vertex].xyz[2]});
+										at += 2 * extra + 1;
+									}
+								continue;
+							}
+							unsigned first{};
+							for (unsigned k = 0; k < surface.rigidVertListCount; ++k)
+							{
+								const auto& group = surface.rigidVertLists[k];
+								if (group.boneOffset / 64u == unsigned(bone))
+									for (unsigned v = first; v < first + group.vertCount && v < surface.vertCount; ++v)
+										points.push_back({verts[v].xyz[0], verts[v].xyz[1], verts[v].xyz[2]});
+								first += group.vertCount;
+							}
+						}
+						std::array<float,3> lo{1e9f,1e9f,1e9f}, hi{-1e9f,-1e9f,-1e9f};
+						for (const auto& p : points) for (int c = 0; c < 3; ++c) { lo[c] = std::min(lo[c], p[c]); hi[c] = std::max(hi[c], p[c]); }
+						const auto& b = m->baseMat[bone];
+						std::string out = std::format("[VR capture] bone mesh {} {} vertices={} bind=({:.3f},{:.3f},{:.3f}) min=({:.3f},{:.3f},{:.3f}) max=({:.3f},{:.3f},{:.3f})",
+							wanted, bone_name, points.size(), b.trans[0], b.trans[1], b.trans[2], lo[0], lo[1], lo[2], hi[0], hi[1], hi[2]);
+						// Extremity in the bone's local Y-Z plane (e.g. a bolt handle knob).
+						std::sort(points.begin(), points.end(), [&](const auto& x, const auto& y)
+						{ return std::hypot(x[1]-b.trans[1], x[2]-b.trans[2]) > std::hypot(y[1]-b.trans[1], y[2]-b.trans[2]); });
+						std::array<float,3> tip{};
+						const auto count = std::max<std::size_t>(1, points.size() / 20);
+						for (std::size_t k = 0; k < count && k < points.size(); ++k) for (int c = 0; c < 3; ++c) tip[c] += points[k][c] / float(count);
+						out += std::format(" radial_tip=({:.3f},{:.3f},{:.3f})\n", tip[0], tip[1], tip[2]);
+						console::info("%s", out.c_str());
+						return;
+					}
+									}, scheduler::pipeline::main);
+			});
+			// Interaction sound audit for every loaded reload profile: effect -> notetrack -> alias.
+			command::add("vr_sound_audit", []
+			{
+				scheduler::once([]
+				{
+					using namespace weapons;
+					using enum mechanics::effect;
+					constexpr std::array<std::pair<mechanics::effect, const char*>, 17> events{{
+						{magazine_out, "out"}, {magazine_take, "take"}, {magazine_draw, "draw"}, {magazine_in, "in"},
+						{action_grab, "grab"}, {action_rear, "rear"}, {action_close, "close"}, {action_latch, "latch"},
+						{action_unlatch, "unlatch"}, {dry_fire, "dry"}, {bolt_unlock, "unlock"}, {bolt_lock, "lock"},
+						{case_eject, "case"}, {live_eject, "live"}, {cover_open, "cover_open"}, {cover_close, "cover_close"},
+						{belt_laid, "belt"}}};
+					const auto map_of = [](const game::WeaponDef* def, std::string_view key) -> std::string
+					{
+						const unsigned *keys{}, *values{};
+						std::memcpy(&keys, reinterpret_cast<const std::byte*>(def) + 0x90, sizeof(keys));
+						std::memcpy(&values, reinterpret_cast<const std::byte*>(def) + 0x98, sizeof(values));
+						for (unsigned n = 0; keys && values && n < 36; ++n)
+							if (keys[n] && values[n] && key == game::SL_ConvertToString(keys[n])) return game::SL_ConvertToString(values[n]);
+						return {};
+					};
+					const auto find_def = [](auto&& accept) -> const game::WeaponDef*
+					{
+						for (unsigned i = 1; i < 512; ++i)
+						{
+							const auto* def = game::weapon_defs[i];
+							if (!def) break;
+							if (def->szInternalName && accept(std::string_view(def->szInternalName))) return def;
+						}
+						return nullptr;
+					};
+					std::string out;
+					for (const auto* p : reload_profiles)
+					{
+						const auto* def = find_def([&](std::string_view name) { return p->native_family ? p->native_family(name) : name == p->native_name; });
+						if (!def) continue;
+						out += std::format("[VR sound audit] {} ({}):", p->id, def->szInternalName);
+						for (const auto& [event, label] : events)
+						{
+							const auto sound = p->interaction_sound(event);
+							if (!sound.name) continue;
+							std::string resolved;
+							if (sound.kind == sound_reference_kind::alias) resolved = "alias";
+							else
+							{
+								const auto* source = sound.notetrack_weapon ? find_def([&](std::string_view n) { return n == sound.notetrack_weapon; }) : def;
+								resolved = source ? map_of(source, sound.name) : std::string{};
+								if (resolved.empty()) resolved = "MISSING";
+							}
+							out += std::format(" {}={}{}->{}", label, sound.name, sound.part == sound_part::first ? "[1]" : sound.part == sound_part::second ? "[2]" : sound.window ? "[w]" : "", resolved);
+						}
+						out += "\n";
+					}
+					console::info("%s", out.c_str());
+				}, scheduler::pipeline::main);
+			});
+			// Damageable entities near the player: vr_list_damageable [radius].
+			command::add("vr_list_damageable", [](const command::params& params)
+			{
+				const float radius = params.size() > 1 ? float(std::atof(params.get(1))) : 400.f;
+				scheduler::once([radius]
+				{
+					const auto* player = &game::g_entities[0];
+					std::string out;
+					for (int n = 1; n < 2048; ++n)
+					{
+						const auto* e = &game::g_entities[n];
+						std::uint8_t inuse{}, take{};int health{};
+						std::memcpy(&inuse, reinterpret_cast<const std::byte*>(e) + 0xbc, 1);
+						std::memcpy(&take, reinterpret_cast<const std::byte*>(e) + 0x149, 1);
+						std::memcpy(&health, reinterpret_cast<const std::byte*>(e) + 0x184, 4);
+						if (!inuse || !take) continue;
+						const float ox = e->origin[0] - player->origin[0], oy = e->origin[1] - player->origin[1], oz = e->origin[2] - player->origin[2];
+						if (std::sqrt(ox*ox + oy*oy + oz*oz) > radius) continue;
+						const char* classname = e->script_classname ? game::SL_ConvertToString(e->script_classname) : "?";
+						out += std::format("[VR capture] damageable {} {} origin=({:.0f},{:.0f},{:.0f}) dist={:.0f} health={} box=({:.1f},{:.1f},{:.1f})-({:.1f},{:.1f},{:.1f}) actor={} \n",
+							n, classname ? classname : "?", e->origin[0], e->origin[1], e->origin[2], std::sqrt(ox*ox + oy*oy + oz*oz), health,
+							e->box.midPoint[0]-e->box.halfSize[0], e->box.midPoint[1]-e->box.halfSize[1], e->box.midPoint[2]-e->box.halfSize[2],
+							e->box.midPoint[0]+e->box.halfSize[0], e->box.midPoint[1]+e->box.halfSize[1], e->box.midPoint[2]+e->box.halfSize[2],
+							*reinterpret_cast<void* const*>(reinterpret_cast<const std::byte*>(e) + 0x120) != nullptr);
+					}
+					console::info("%s", out.empty() ? "[VR capture] damageable: none\n" : out.c_str());
+				}, scheduler::pipeline::server);
+			});
+			// Dev: loaded material names containing a filter, to the console and
+			// captures/_models/materials_<filter>.txt. vr_list_materials <filter>.
+			command::add("vr_list_materials", [](const command::params& params)
+			{
+				if (params.size() < 2) return;
+				const std::string filter = params.get(1);
+				scheduler::once([filter]
+				{
+					struct context { std::string filter; std::string out; unsigned count{}; } ctx{filter, {}, 0};
+					game::DB_EnumXAssets_Internal(game::ASSET_TYPE_MATERIAL, [](game::XAssetHeader header, void* data)
+					{
+						auto* c = static_cast<context*>(data);
+						if (!header.material || !header.material->info.name || c->count >= 512) return;
+						const std::string_view name{header.material->info.name, strnlen_s(header.material->info.name, 256)};
+						if (name.find(c->filter) == std::string_view::npos) return;
+						c->out.append(name).append("\n");
+						++c->count;
+					}, &ctx, false);
+					utils::io::write_file(directory("_models") + "/materials_" + filter + ".txt", ctx.out);
+					console::info("[VR capture] materials matching %s: %u\n%s", filter.c_str(), ctx.count, ctx.out.c_str());
+				}, scheduler::pipeline::main);
+			});
+			// Dev: dump loaded script assets matching a filter (bytecode + decompressed
+			// stack) to captures/_scripts for offline decompilation. vr_dump_scripts <filter>.
+			command::add("vr_dump_scripts", [](const command::params& params)
+			{
+				if (params.size() < 2) return;
+				const std::string filter = params.get(1);
+				scheduler::once([filter]
+				{
+					struct context { std::string filter; std::vector<const game::ScriptFile*> found; } ctx{filter, {}};
+					game::DB_EnumXAssets_Internal(game::ASSET_TYPE_SCRIPTFILE, [](game::XAssetHeader header, void* data)
+					{
+						auto* c = static_cast<context*>(data);
+						if (header.scriptfile && header.scriptfile->name && std::string_view(header.scriptfile->name).find(c->filter) != std::string_view::npos && c->found.size() < 256)
+							c->found.push_back(header.scriptfile);
+					}, &ctx, false);
+					unsigned written{};
+					for (const auto* f : ctx.found)
+					{
+						if (!f->buffer || !f->bytecode || f->compressedLen <= 0 || f->bytecodeLen <= 0) continue;
+						std::string name = f->name;
+						for (auto& c : name) if (c == '/' || c == '\\' || c == ':') c = '_';
+						const auto stack = utils::compression::zlib::decompress(std::string{f->buffer, static_cast<size_t>(f->compressedLen)});
+						utils::io::write_file("overlord-mwr/captures/_scripts/" + name + ".cgsc", std::string{f->bytecode, static_cast<size_t>(f->bytecodeLen)});
+						utils::io::write_file("overlord-mwr/captures/_scripts/" + name + ".cgsc.stack", stack);
+						++written;
+					}
+					console::info("[VR capture] scripts: %u/%zu -> overlord-mwr/captures/_scripts\n", written, ctx.found.size());
+				}, scheduler::pipeline::main);
+			});
+			// Loaded XModels whose name contains a filter: per lod0 surface material,
+			// rigid bones and model-space vertex extents. vr_capture_surfaces <filter>.
+			command::add("vr_capture_surfaces", [](const command::params& params)
+			{
+				if (params.size() < 2) return;
+				const std::string filter = params.get(1);
+				scheduler::once([filter]
+				{
+					struct context { std::string filter; std::vector<const game::XModel*> found; } ctx{filter, {}};
+					game::DB_EnumXAssets_Internal(game::ASSET_TYPE_XMODEL, [](game::XAssetHeader header, void* data)
+					{
+						auto* c = static_cast<context*>(data);
+						if (header.model && header.model->name && std::string_view(header.model->name).find(c->filter) != std::string_view::npos && c->found.size() < 64)
+							c->found.push_back(header.model);
+					}, &ctx, false);
+					std::string out;
+					for (const auto* m : ctx.found)
+					{
+						out += std::format("model {} bones={} surfs={} lods={} root={}\n", m->name, m->numBones, m->numsurfs, int(m->numLods),
+							m->numBones && m->boneNames ? scr_string(m->boneNames[0]) : "");
+						for (unsigned b = 0; b < m->numBones && m->boneNames; ++b)
+						{
+							const auto& t = m->baseMat[b];
+							out += std::format("  bone {} {} bind=({:.3f},{:.3f},{:.3f})\n", b, scr_string(m->boneNames[b]), t.trans[0], t.trans[1], t.trans[2]);
+						}
+						const auto& lod = m->lodInfo[0];
+						for (unsigned n = 0; n < lod.numsurfs && lod.surfs; ++n)
+						{
+							const auto& surface = lod.surfs[n];
+							const auto* material = m->materialHandles ? m->materialHandles[lod.surfIndex + n] : nullptr;
+							std::array<float,3> lo{1e9f,1e9f,1e9f}, hi{-1e9f,-1e9f,-1e9f};
+							const auto* verts = surface.verts0.packedVerts0;
+							for (unsigned v = 0; verts && v < surface.vertCount; ++v)
+								for (int c = 0; c < 3; ++c) { lo[c] = std::min(lo[c], verts[v].xyz[c]); hi[c] = std::max(hi[c], verts[v].xyz[c]); }
+							std::string bones;
+							for (unsigned k = 0; k < surface.rigidVertListCount && surface.rigidVertLists; ++k)
+							{
+								const auto bone = surface.rigidVertLists[k].boneOffset / 64u;
+								bones += std::format("{}{}", k ? "," : "", bone < m->numBones ? scr_string(m->boneNames[bone]) : "?");
+							}
+							out += std::format("  surf {} material={} flags={} verts={} textures={} rigid=[{}] min=({:.3f},{:.3f},{:.3f}) max=({:.3f},{:.3f},{:.3f})\n",
+								n, material && material->info.name ? material->info.name : "?", surface.flags, surface.vertCount,
+								material ? int(material->textureCount) : -1, bones, lo[0], lo[1], lo[2], hi[0], hi[1], hi[2]);
+						}
+					}
+					const auto file = directory("_models") + "/surfaces_" + filter + ".txt";
+					utils::io::write_file(file, out);
+					console::info("[VR capture] surfaces: %zu models -> %s\n", ctx.found.size(), file.c_str());
+				}, scheduler::pipeline::main);
+			});
+			// In-use entities matching a classname/targetname/model filter: vr_list_entities [filter] [radius].
+			command::add("vr_list_entities", [](const command::params& params)
+			{
+				const std::string filter = params.size() > 1 ? params.get(1) : "";
+				const float radius = params.size() > 2 ? float(std::atof(params.get(2))) : 100000.f;
+				scheduler::once([filter, radius]
+				{
+					const auto* player = &game::g_entities[0];
+					std::string out = std::format("[VR capture] player origin=({:.0f},{:.0f},{:.0f})\n", player->origin[0], player->origin[1], player->origin[2]);
+					for (int n = 1; n < 2048; ++n)
+					{
+						const auto* e = &game::g_entities[n];
+						std::uint8_t inuse{};
+						std::memcpy(&inuse, reinterpret_cast<const std::byte*>(e) + 0xbc, 1);
+						if (!inuse) continue;
+						const float ox = e->origin[0] - player->origin[0], oy = e->origin[1] - player->origin[1], oz = e->origin[2] - player->origin[2];
+						const float dist = std::sqrt(ox*ox + oy*oy + oz*oz);
+						if (dist > radius) continue;
+						std::string fields[4];
+						try
+						{
+							const scripting::entity target{game::scr_entref_t{static_cast<unsigned short>(n), 0}};
+							const char* keys[4]{"classname", "targetname", "script_noteworthy", "model"};
+							for (int k = 0; k < 4; ++k)
+							{
+								const auto v = target.get(keys[k]);
+								if (v.is<std::string>()) fields[k] = v.as<std::string>();
+							}
+						}
+						catch (const std::exception& error) { fields[3] = std::string("!") + error.what(); }
+						if (fields[0].empty() && e->script_classname) fields[0] = game::SL_ConvertToString(e->script_classname);
+						const auto line = std::format("{} {} tn={} sn={} model={}", n, fields[0], fields[1], fields[2], fields[3]);
+						if (!filter.empty() && line.find(filter) == std::string::npos) continue;
+						out += std::format("[VR capture] entity {} origin=({:.0f},{:.0f},{:.0f}) dist={:.0f} box=({:.1f},{:.1f},{:.1f})-({:.1f},{:.1f},{:.1f})\n",
+							line, e->origin[0], e->origin[1], e->origin[2], dist,
+							e->box.midPoint[0]-e->box.halfSize[0], e->box.midPoint[1]-e->box.halfSize[1], e->box.midPoint[2]-e->box.halfSize[2],
+							e->box.midPoint[0]+e->box.halfSize[0], e->box.midPoint[1]+e->box.halfSize[1], e->box.midPoint[2]+e->box.halfSize[2]);
+					}
+					console::info("%s", out.c_str());
+				}, scheduler::pipeline::server);
+			});
+			// Select an owned weapon by name (after `give`), for capture sessions.
+			// Decode a loaded sound alias to captures/_sounds/<file>.wav (slice cue authoring).
+			command::add("vr_sound_dump", [](const command::params& params)
+			{
+				if (params.size() < 2) return;
+				const std::string alias = params.get(1);
+				scheduler::once([alias]
+				{
+					const auto entity = *reinterpret_cast<const signed char*>(0x1420E67A0);
+					const float* origin = game::g_entities[0].origin;
+					console::info("[VR audio] dump %s\n",
+						weapons::native_weapon_sound_slice::dump_alias(entity, origin, alias.c_str()).c_str());
+				}, scheduler::pipeline::main);
+			});
+			// Print a weapon's notetrack -> sound alias map: vr_sound_map <weapon>.
+			command::add("vr_sound_map", [](const command::params& params)
+			{
+				if (params.size() < 2) return;
+				const std::string wanted = params.get(1);
+				for (unsigned i = 1; i < 512; ++i)
+				{
+					const auto* def = game::weapon_defs[i];
+					if (!def) break;
+					if (!def->szInternalName || wanted != def->szInternalName) continue;
+					const unsigned *keys{}, *values{};
+					std::memcpy(&keys, reinterpret_cast<const std::byte*>(def) + 0x90, sizeof(keys));
+					std::memcpy(&values, reinterpret_cast<const std::byte*>(def) + 0x98, sizeof(values));
+					std::string out;
+					for (unsigned n = 0; keys && values && n < 36; ++n)
+						if (keys[n] && values[n])
+							out += std::format(" {}={}", game::SL_ConvertToString(keys[n]), game::SL_ConvertToString(values[n]));
+					const auto alias_name = [](const game::snd_alias_list_t* list) { return list && list->aliasName ? list->aliasName : "-"; };
+					out += std::format(" | pullback={} fire={} rechamber={} reload={} reload_start={} reload_end={}",
+						alias_name(def->pullbackSoundPlayer), alias_name(def->fireSoundPlayer), alias_name(def->rechamberSoundPlayer),
+						alias_name(def->reloadSoundPlayer), alias_name(def->reloadStartSoundPlayer), alias_name(def->reloadEndSoundPlayer));
+					console::info("[VR capture] sound map %s:%s\n", wanted.c_str(), out.c_str());
+					return;
+				}
+			});
+			// Play one part of a split alias: vr_sound_part <alias> first|second.
+			command::add("vr_sound_part", [](const command::params& params)
+			{
+				if (params.size() < 3) return;
+				const std::string alias = params.get(1), part = params.get(2);
+				scheduler::once([alias, part]
+				{
+					const auto entity = *reinterpret_cast<const signed char*>(0x1420E67A0);
+					const bool ok = weapons::native_weapon_sound_slice::play(entity, game::g_entities[0].origin, alias.c_str(),
+						part == "second" ? weapons::sound_part::second : weapons::sound_part::first);
+					console::info("[VR audio] part %s %s -> %d\n", alias.c_str(), part.c_str(), ok);
+				}, scheduler::pipeline::main);
+			});
+			command::add("vr_capture_select", [](const command::params& params)
+			{
+				if (params.size() < 2) return;
+				const std::string wanted = params.get(1);
+				for (unsigned i = 1; i < 512; ++i)
+				{
+					const auto* def = game::weapon_defs[i];
+					if (!def) break;
+					if (!def->szInternalName || wanted != def->szInternalName) continue;
+					scheduler::once([wanted, i]
+					{
+						// Console give is not admitted in MWR SP; grant the definition directly.
+						game::Weapon weapon{};
+						weapon.data = i;
+						auto* ps = game::g_entities[0].client;
+						if (ps && game::G_GivePlayerWeapon(ps, weapon, 0, 0, 0, 0))
+							game::G_InitializeAmmo(ps, weapon, 0);
+						const bool ok = weapons::native_carry::select(i);
+						console::info("[VR capture] select %s (%u) -> %d (%s)\n", wanted.c_str(), i, ok,
+							weapons::native_carry::status());
+					}, scheduler::pipeline::server);
+					return;
+				}
+				console::info("[VR capture] select %s: not loaded\n", wanted.c_str());
+			});
+			command::add("vr_capture_record", [](const command::params& params)
+			{
+				const bool on = params.size() < 2 || std::atoi(params.get(1)) != 0;
+				const std::lock_guard lock(mutex);
+				if (on)
+				{
+					recording = true;
+					record_weapon.clear();
+					record_header.clear();
+					record_body.clear();
+					record_frames = 0;
+					console::info("[VR capture] recording native skeleton frames\n");
+				}
+				else
+				{
+					recording = false;
+					flush_recording();
+					record_body.clear();
+				}
+			});
+		}
+	};
+}
+
+REGISTER_COMPONENT(vr::gameplay::weapon_capture::component)

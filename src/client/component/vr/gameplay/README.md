@@ -1,0 +1,78 @@
+# VR gameplay boundary
+
+New VR code that changes gameplay belongs in this directory: player-command
+adapters, locomotion/turning policies, independent hand/weapon control, and future
+weapon interactions. Keep runtime sampling, tracking-space math and stereo
+rendering in the parent infrastructure layer.
+
+Dependency direction is gameplay -> tracking/input snapshots and game adapters.
+The runtime must not call gameplay rules or include these headers. In particular,
+one runtime frame is published for all consumers; gameplay must not independently
+poll SteamVR. Command mutation happens before insertion into H2 command history,
+never when prediction reads that history.
+
+`interaction_coordinator.cpp` owns domain dispatch. `hand_interaction/runtime`
+owns arbitration/publication; `carry_interaction` exposes server-only carry
+operations and `weapon_scene.hpp` contains copied scene data without runtime
+calls. `hands/service` owns shared hand binding and presentation dispatch.
+
+`interaction_schedule.hpp` declares named phases without H2 types or scheduler
+calls. The coordinator binds their callbacks and retains the H2 server entry
+point. Support/magazine and secondary-module handoffs stay in their respective
+domain runtimes and commit through carry after arbitration; equipment owns the
+translation of knife grants into its typed settlement input. Keep mechanical
+rules out of dispatch and native ownership out of the phase declarations.
+
+Weapon recipes are registered in `weapon_registry.cpp`; consumers include the
+lightweight query/capability headers and explicitly include any concrete recipe
+they inspect. Common pose descriptors/math/mirroring, body-supply layout and
+falling trajectories are independent of a particular weapon or inventory ledger.
+See the [current module boundaries](../../../../../docs/vr-gameplay-interaction-architecture.md#current-implementation-boundaries).
+
+Asset extraction/auditing and third-party research tools remain local, outside
+production source and packaging. No exported models, animations or audio are
+required by the controller input layer.
+
+## Readability and host boundary
+
+The VR directory has its own `.clang-format`. Apply it to files being changed;
+do not reformat the surrounding H2-Mod infrastructure as part of a VR change.
+Use named request fields for input flags and targets, and keep state changes,
+lock scopes and native commit order visible in the control flow.
+
+Carry decisions in `weapon_carry_grip.hpp` operate on copied inputs, validated
+contacts and the VR inventory. `weapon_carry_runtime.cpp` and
+`carry_interaction.hpp` remain host adapters: they admit the H2 server frame,
+coordinate native selection and inventory commits, and publish presentation
+snapshots. Keep game types, addresses, script calls and scheduler ownership out
+of the decision headers. This boundary describes dependencies; it does not
+establish independent source provenance or change the applicable licenses.
+
+Weapon configuration fields, units, shared defaults and verification boundaries
+are documented in [the weapon configuration guide](weapons/README.md).
+
+Shared native queries use the [H2 SP typed entry points](../h2/README.md).
+Gameplay policies consume copied values; existing native adapters keep their
+executable, thread, object-generation and layout guards. A native selection
+request never replaces observation of the actual equipped player-state weapon.
+
+Campaign classifiers consume copied, named observations; VM reads and live
+entity witnesses remain in the native adapters. Hand presentation accepts a
+`hands::presentation_input` and returns a `presentation_result` containing the
+knife revision and reload-item tokens. These values are presentation metadata,
+not native ownership acknowledgements.
+
+Rigid vectors, quaternions and transforms live in `../spatial_math.hpp`. Hand
+solving consumes those primitives; bone hierarchy and finger posing remain in
+`hands/pose_solver.hpp` and `hands/pose_math.hpp`. Generic renderers include the
+spatial primitives directly and do not depend on a hand rig or weapon schema.
+
+## Module navigation
+
+- [Hands](hands/README.md): rig binding, solving and presentation dispatch.
+- [Campaign](campaign/README.md): map classifiers, scripted context and mission interactions.
+- [Vehicles](vehicles/README.md): native controls, policies and presentation.
+- [Weapons](weapons/README.md): registered recipes, measured geometry and mechanics.
+
+Shared hand arbitration remains in `hand_interaction/`. Mechanical feed domains
+retain their separate runtimes and the coordinator owns their named phase order.

@@ -1,0 +1,559 @@
+[
+  {
+    "name": "vr_runtimeBackend",
+    "category": "basics",
+    "group": "settings.runtimeBackend",
+    "label": "settings.runtimeBackend",
+    "type": "choice",
+    "description": "settings.runtimeBackendHint"
+  },
+  {
+    "name": "vr_turnMode",
+    "category": "basics",
+    "group": "settings.turning",
+    "label": "settings.turnStyle",
+    "type": "choice"
+  },
+  {
+    "name": "vr_turnSpeed",
+    "category": "basics",
+    "group": "settings.turning",
+    "label": "settings.turnSpeed",
+    "type": "number",
+    "visibleWhen": [
+      "vr_turnMode",
+      "smooth"
+    ]
+  },
+  {
+    "name": "vr_snapAngle",
+    "category": "basics",
+    "group": "settings.turning",
+    "label": "settings.snapAngle",
+    "type": "number",
+    "visibleWhen": [
+      "vr_turnMode",
+      "snap"
+    ]
+  },
+  {
+    "name": "vr_desktopStabilization",
+    "category": "basics",
+    "group": "settings.stabilization",
+    "label": "settings.desktopStabilization",
+    "type": "toggle",
+    "description": "settings.desktopStabilizationHint"
+  },
+  {
+    "name": "vr_desktopStabilizationStrength",
+    "category": "basics",
+    "group": "settings.stabilization",
+    "label": "settings.desktopStabilizationStrength",
+    "type": "number",
+    "visibleWhen": [
+      "vr_desktopStabilization",
+      true
+    ]
+  },
+  {
+    "name": "vr_headStabilization",
+    "category": "basics",
+    "group": "settings.stabilization",
+    "label": "settings.headStabilization",
+    "type": "toggle",
+    "description": "settings.headStabilizationHint"
+  },
+  {
+    "name": "vr_headStabilizationStrength",
+    "category": "basics",
+    "group": "settings.stabilization",
+    "label": "settings.headStabilizationStrength",
+    "type": "number",
+    "visibleWhen": [
+      "vr_headStabilization",
+      true
+    ]
+  },
+  {
+    "name": "vr_handStabilization",
+    "category": "basics",
+    "group": "settings.stabilization",
+    "label": "settings.handStabilization",
+    "type": "toggle",
+    "description": "settings.handStabilizationHint"
+  },
+  {
+    "name": "vr_handStabilizationStrength",
+    "category": "basics",
+    "group": "settings.stabilization",
+    "label": "settings.handStabilizationStrength",
+    "type": "number",
+    "visibleWhen": [
+      "vr_handStabilization",
+      true
+    ]
+  },
+  {
+    "name": "vr_disableBlur",
+    "category": "basics",
+    "group": "settings.comfort",
+    "label": "settings.disableBlur",
+    "type": "toggle",
+    "description": "settings.disableBlurHint"
+  },
+  {
+    "name": "r_dof_limit",
+    "category": "basics",
+    "group": "settings.comfort",
+    "label": "settings.depthOfField",
+    "type": "toggle",
+    "description": "settings.depthOfFieldHint"
+  },
+  {
+    "name": "vr_disableLensFlare",
+    "category": "basics",
+    "group": "settings.comfort",
+    "label": "settings.disableFlares",
+    "type": "toggle",
+    "description": "settings.disableFlaresHint"
+  },
+  {
+    "name": "vr_cameraBob",
+    "category": "basics",
+    "group": "settings.comfort",
+    "label": "settings.cameraBob",
+    "type": "toggle",
+    "description": "settings.cameraBobHint"
+  },
+  {
+    "name": "vr_controllerPoseMode",
+    "category": "calibration",
+    "group": "settings.controllerCompatibility",
+    "label": "settings.controllerPoseMode",
+    "type": "choice",
+    "description": "settings.controllerPoseModeHint"
+  },
+  {
+    "name": "vr_standardHandOffsetInward",
+    "category": "calibration",
+    "group": "settings.alignment",
+    "label": "settings.inward",
+    "type": "number",
+    "unit": "unit.meters",
+    "visibleWhen": [
+      "vr_controllerPoseMode",
+      "standard"
+    ],
+    "row": "settings.positionOffsets"
+  },
+  {
+    "name": "vr_handOffsetInward",
+    "category": "calibration",
+    "group": "settings.alignment",
+    "label": "settings.inward",
+    "type": "number",
+    "unit": "unit.meters",
+    "visibleWhen": [
+      "vr_controllerPoseMode",
+      "legacy"
+    ],
+    "row": "settings.positionOffsets"
+  },
+  {
+    "name": "vr_standardHandOffsetBack",
+    "category": "calibration",
+    "group": "settings.alignment",
+    "label": "settings.backward",
+    "type": "number",
+    "unit": "unit.meters",
+    "visibleWhen": [
+      "vr_controllerPoseMode",
+      "standard"
+    ],
+    "row": "settings.positionOffsets"
+  },
+  {
+    "name": "vr_handOffsetBack",
+    "category": "calibration",
+    "group": "settings.alignment",
+    "label": "settings.backward",
+    "type": "number",
+    "unit": "unit.meters",
+    "visibleWhen": [
+      "vr_controllerPoseMode",
+      "legacy"
+    ],
+    "row": "settings.positionOffsets"
+  },
+  {
+    "name": "vr_standardHandOffsetUp",
+    "category": "calibration",
+    "group": "settings.alignment",
+    "label": "settings.upward",
+    "type": "number",
+    "unit": "unit.meters",
+    "visibleWhen": [
+      "vr_controllerPoseMode",
+      "standard"
+    ],
+    "row": "settings.positionOffsets"
+  },
+  {
+    "name": "vr_handOffsetUp",
+    "category": "calibration",
+    "group": "settings.alignment",
+    "label": "settings.upward",
+    "type": "number",
+    "unit": "unit.meters",
+    "visibleWhen": [
+      "vr_controllerPoseMode",
+      "legacy"
+    ],
+    "row": "settings.positionOffsets"
+  },
+  {
+    "name": "vr_standardHandAnglePitch",
+    "category": "calibration",
+    "group": "settings.alignment",
+    "label": "settings.pitch",
+    "type": "number",
+    "unit": "unit.degrees",
+    "visibleWhen": [
+      "vr_controllerPoseMode",
+      "standard"
+    ],
+    "row": "settings.angleOffsets"
+  },
+  {
+    "name": "vr_handAnglePitch",
+    "category": "calibration",
+    "group": "settings.alignment",
+    "label": "settings.pitch",
+    "type": "number",
+    "unit": "unit.degrees",
+    "visibleWhen": [
+      "vr_controllerPoseMode",
+      "legacy"
+    ],
+    "row": "settings.angleOffsets"
+  },
+  {
+    "name": "vr_standardHandAngleYaw",
+    "category": "calibration",
+    "group": "settings.alignment",
+    "label": "settings.yaw",
+    "type": "number",
+    "unit": "unit.degrees",
+    "visibleWhen": [
+      "vr_controllerPoseMode",
+      "standard"
+    ],
+    "row": "settings.angleOffsets"
+  },
+  {
+    "name": "vr_handAngleYaw",
+    "category": "calibration",
+    "group": "settings.alignment",
+    "label": "settings.yaw",
+    "type": "number",
+    "unit": "unit.degrees",
+    "visibleWhen": [
+      "vr_controllerPoseMode",
+      "legacy"
+    ],
+    "row": "settings.angleOffsets"
+  },
+  {
+    "name": "vr_standardHandAngleRoll",
+    "category": "calibration",
+    "group": "settings.alignment",
+    "label": "settings.roll",
+    "type": "number",
+    "unit": "unit.degrees",
+    "visibleWhen": [
+      "vr_controllerPoseMode",
+      "standard"
+    ],
+    "row": "settings.angleOffsets"
+  },
+  {
+    "name": "vr_handAngleRoll",
+    "category": "calibration",
+    "group": "settings.alignment",
+    "label": "settings.roll",
+    "type": "number",
+    "unit": "unit.degrees",
+    "visibleWhen": [
+      "vr_controllerPoseMode",
+      "legacy"
+    ],
+    "row": "settings.angleOffsets"
+  },
+  {
+    "name": "vr_adsComfort",
+    "category": "gameplay",
+    "group": "settings.aiming",
+    "label": "settings.adsComfort",
+    "type": "toggle",
+    "description": "settings.adsComfortHint"
+  },
+  {
+    "name": "vr_adsSprint",
+    "category": "gameplay",
+    "group": "settings.aiming",
+    "label": "settings.adsSprint",
+    "type": "toggle",
+    "description": "settings.adsSprintHint"
+  },
+  {
+    "name": "vr_aimAssistStrength",
+    "category": "gameplay",
+    "group": "settings.aiming",
+    "label": "settings.aimStrength",
+    "type": "number"
+  },
+  {
+    "name": "vr_enemyMeleeDamageScale",
+    "category": "gameplay",
+    "group": "settings.enemyCombat",
+    "label": "settings.enemyMeleeDamage",
+    "type": "number",
+    "description": "settings.enemyMeleeDamageHint"
+  },
+  {
+    "name": "vr_disableDogPounce",
+    "category": "gameplay",
+    "group": "settings.enemyCombat",
+    "label": "settings.disableDogPounce",
+    "type": "toggle",
+    "description": "settings.disableDogPounceHint"
+  },
+  {
+    "name": "vr_grenadeThrowSpeedScale",
+    "category": "gameplay",
+    "group": "settings.throwables",
+    "label": "settings.throwSpeed",
+    "type": "number"
+  },
+  {
+    "name": "vr_recoilPenalty",
+    "category": "gameplay",
+    "group": "settings.challenge",
+    "label": "settings.applyTo",
+    "type": "choice",
+    "description": "settings.recoilHint"
+  },
+  {
+    "name": "vr_discardAmmoPenalty",
+    "category": "gameplay",
+    "group": "settings.challenge",
+    "label": "settings.ammoDrop",
+    "type": "toggle",
+    "description": "settings.ammoDropHint"
+  },
+  {
+    "name": "vr_physicalLadders",
+    "category": "gameplay",
+    "group": "settings.climbing",
+    "label": "settings.physicalLadders",
+    "type": "toggle",
+    "description": "settings.physicalLaddersHint"
+  },
+  {
+    "name": "vr_quickReload",
+    "category": "gameplay",
+    "group": "settings.weaponInteraction",
+    "label": "settings.quickReloadEnabled",
+    "type": "toggle",
+    "description": "settings.quickReloadHint"
+  },
+  {
+    "name": "vr_chamberingGuide",
+    "category": "gameplay",
+    "group": "settings.weaponInteraction",
+    "label": "settings.chamberingGuide",
+    "type": "toggle",
+    "description": "settings.chamberingGuideHint"
+  },
+  {
+    "name": "vr_ammoCounter",
+    "category": "gameplay",
+    "group": "settings.weaponInteraction",
+    "label": "settings.ammoCounter",
+    "type": "toggle",
+    "description": "settings.ammoCounterHint"
+  },
+  {
+    "name": "vr_smartAmmoSelection",
+    "category": "gameplay",
+    "group": "settings.weaponInteraction",
+    "label": "settings.smartAmmoSelection",
+    "type": "toggle",
+    "description": "settings.smartAmmoSelectionHint"
+  },
+  {
+    "name": "vr_recoil",
+    "category": "cheats",
+    "group": "settings.noRecoil",
+    "label": "settings.noRecoil",
+    "type": "toggle",
+    "description": "settings.noRecoilHint",
+    "inverted": true
+  },
+  {
+    "name": "vr_cheatHealth",
+    "category": "cheats",
+    "group": "settings.cheatHealth",
+    "label": "settings.cheatHealth",
+    "type": "choice",
+    "description": "settings.cheatHealthHint"
+  },
+  {
+    "name": "vr_cheatNotarget",
+    "category": "cheats",
+    "group": "settings.cheatNotarget",
+    "label": "settings.cheatNotarget",
+    "type": "choice",
+    "description": "settings.cheatNotargetHint"
+  },
+  {
+    "name": "vr_cheatAmmo",
+    "category": "cheats",
+    "group": "settings.cheatAmmo",
+    "label": "settings.cheatAmmo",
+    "type": "choice",
+    "description": "settings.cheatAmmoHint"
+  },
+  {
+    "name": "vr_exoPunch",
+    "category": "cheats",
+    "group": "settings.funFeatures",
+    "label": "settings.exoPunch",
+    "type": "toggle",
+    "description": "settings.exoPunchHint"
+  },
+  {
+    "name": "vr_killfeedStyle",
+    "category": "other",
+    "group": "settings.weaponFeedback",
+    "label": "settings.killfeedStyle",
+    "type": "choice",
+    "description": "settings.killfeedStyleHint"
+  },
+  {
+    "name": "vr_subtitles",
+    "category": "other",
+    "group": "settings.subtitles",
+    "label": "settings.subtitles",
+    "type": "toggle",
+    "description": "settings.subtitlesHint"
+  },
+  {
+    "name": "vr_recordingMode",
+    "category": "other",
+    "group": "settings.recordingMode",
+    "label": "settings.recordingMode",
+    "type": "toggle",
+    "description": "settings.recordingModeHint"
+  },
+  {
+    "name": "vr_recordingDim",
+    "category": "other",
+    "group": "settings.recordingMode",
+    "label": "settings.recordingDim",
+    "type": "number",
+    "description": "settings.recordingDimHint"
+  },
+  {
+    "name": "vr_hideHud",
+    "category": "other",
+    "group": "settings.hideHud",
+    "label": "settings.hideHud",
+    "type": "toggle",
+    "description": "settings.hideHudHint"
+  },
+  {
+    "name": "vr_debugViewProbes",
+    "category": "debug",
+    "group": "settings.debugProbes",
+    "label": "settings.debugView",
+    "type": "toggle"
+  },
+  {
+    "name": "vr_debugAutoSnapshots",
+    "category": "debug",
+    "group": "settings.debugProbes",
+    "label": "settings.debugSnapshots",
+    "type": "toggle"
+  },
+  {
+    "name": "vr_debugPerfCapture",
+    "category": "debug",
+    "group": "settings.debugProbes",
+    "label": "settings.debugPerf",
+    "type": "toggle"
+  },
+  {
+    "name": "vr_debugSceneModels",
+    "category": "debug",
+    "group": "settings.debugProbes",
+    "label": "settings.debugSceneModels",
+    "type": "toggle"
+  },
+  {
+    "name": "vr_debugMenuInput",
+    "category": "debug",
+    "group": "settings.debugEvents",
+    "label": "settings.debugMenuInput",
+    "type": "toggle",
+    "description": "settings.debugMenuInputHint"
+  },
+  {
+    "name": "vr_debugWeaponEvents",
+    "category": "debug",
+    "group": "settings.debugEvents",
+    "label": "settings.debugWeaponEvents",
+    "type": "toggle",
+    "description": "settings.debugWeaponEventsHint"
+  },
+  {
+    "name": "vr_debugVehicle",
+    "category": "debug",
+    "group": "settings.debugEvents",
+    "label": "settings.debugVehicle",
+    "type": "toggle",
+    "description": "settings.debugVehicleHint"
+  },
+  {
+    "name": "vr_reloadWellDebug",
+    "category": "debug",
+    "group": "settings.debugGeometry",
+    "label": "settings.debugReloadWell",
+    "type": "toggle",
+    "description": "settings.debugReloadWellHint"
+  },
+  {
+    "name": "vr_hkSlapDebug",
+    "category": "debug",
+    "group": "settings.debugGeometry",
+    "label": "settings.debugHkSlap",
+    "type": "toggle",
+    "description": "settings.debugHkSlapHint"
+  },
+  {
+    "name": "vr_boltDebug",
+    "category": "debug",
+    "group": "settings.debugGeometry",
+    "label": "settings.debugBolt",
+    "type": "toggle",
+    "description": "settings.debugBoltHint"
+  },
+  {
+    "name": "vr_coverPushDebug",
+    "category": "debug",
+    "group": "settings.debugGeometry",
+    "label": "settings.debugCover",
+    "type": "toggle",
+    "description": "settings.debugCoverHint"
+  }
+]

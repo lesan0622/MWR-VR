@@ -1,0 +1,698 @@
+#include <std_include.hpp>
+#include "javelin_screen.hpp"
+#include "javelin_display_control.hpp"
+#include "javelin_lock_gate.hpp"
+#include "weapon_carry_runtime.hpp"
+#include "launcher_runtime.hpp"
+#include "fixed_sniper.hpp"
+#include "../eye_composition.hpp"
+#include "../native_hud_capture.hpp"
+#include "../screen_scope_layout.hpp"
+#include "../spatial_panel_renderer.hpp"
+#include "../diagnostics/screen_display.hpp"
+#include "../diagnostics/report_paths.hpp"
+#include "component/command.hpp"
+#include "component/console.hpp"
+#include "component/scripting.hpp"
+#include "component/scheduler.hpp"
+#include "game/scripting/execution.hpp"
+#include "game/scripting/functions.hpp"
+#include "game/scripting/array.hpp"
+#include "../controller_haptics.hpp"
+#include "game/dvars.hpp"
+#include "game/game.hpp"
+#include "loader/component_loader.hpp"
+#include <utils/io.hpp>
+#include <utils/native_memory.hpp>
+#include <utils/hook.hpp>
+#include <utils/hook_validation.hpp>
+
+namespace vr::gameplay::weapons::javelin_screen
+{
+	namespace
+	{
+		namespace probe=diagnostics::screen;
+		game::dvar_t* option{};
+		std::atomic_bool alive{true};
+		std::mutex mutex;
+		proximity_controls proximity;
+		struct selection
+		{
+			hold owner{};
+			control_state control{};
+			std::uint64_t epoch{}, reference{};
+			controller_input::clock::time_point at{};
+			bool loaded{};
+			bool javelin{}; // The LUI JavelinActive watch override is Javelin-only.
+		};
+		struct camera_state
+		{
+			muzzle_frame aim{};
+			std::uint64_t epoch{};
+			controller_input::clock::time_point at{};
+		};
+		selection selected;
+		const char* input_gate{"not_observed"};
+		camera_state camera;
+		std::uint64_t next_epoch{};
+		std::atomic_uint64_t planned{}, drawn{}, missing{};
+		std::atomic<const char*> reason{"inactive"};
+		// maps/_stinger lock state (self.stinger): 0 none, 1 acquiring, 2 locked.
+		std::atomic_int stinger_lock{};
+		std::atomic_uint32_t native_lock_flags{};
+		unsigned stinger_ticks{};
+		bool hud_watch_ready{};
+		std::atomic_uint64_t hud_watch_calls{},hud_watch_overrides{};
+		std::atomic_uint32_t hud_watch_result{};
+		utils::hook::detour player_ads_hook;
+		std::atomic<const char*> lock_ads_call{};
+		std::atomic_uint64_t lock_ads_overrides{};
+		// Diagnostics: last lock-gate inputs and camera FOV (MWR bring-up).
+		std::atomic_uint32_t gate_bits{};std::atomic_int gate_loaded{},gate_state{},gate_time{};
+		std::atomic<float> fov_in_x{},fov_in_y{},fov_out_y{},plan_half_y{};
+		struct pair_state
+		{
+			std::uint64_t pair{}, publication{}, device{}, epoch{};
+			std::shared_ptr<const native_hud_capture::frame> ink;
+			std::array<spatial_panel::projected_quad, 2> canvas{};
+			auxiliary_scene::request request{};
+			std::array<std::array<float, 4>, 2> windows{}; // MWR: per-eye crop of the eye image.
+		};
+		thread_local pair_state pair;
+		thread_local spatial_panel::renderer renderer;
+		thread_local screen_scope::anchored_plane plane;
+		thread_local std::shared_ptr<const native_hud_capture::frame> retained_ink;
+		selection current() noexcept
+		{
+			selection value;
+			{
+				const std::lock_guard lock(mutex);
+				value = selected;
+			}
+			const auto now = controller_input::clock::now();
+			if (!enabled() || now < value.at || now - value.at > 150ms)
+				return {};
+			return value;
+		}
+		void player_ads(game::scr_entref_t self)
+		{
+			const auto* site = lock_ads_call.load();
+			const bool scoped =
+			    site && game::scr_function_stack->pos == site && !self.classnum && !self.entnum;
+			// Keep native validation, stack allocation and return typing intact.
+			player_ads_hook.invoke<void>(self);
+			if (!scoped || !enabled() || !carry::active() || game::scr_VmPub->outparamcount ||
+			    game::scr_VmPub->inparamcount != 1 || game::scr_VmPub->top->type != game::SCRIPT_FLOAT)
+				return;
+			const auto value = current();
+			const auto owner = current_hold();
+			const auto* ps = game::g_entities[0].client;
+			const auto ammo = ps ? native_ammunition::observe(ps) : native_ammunition::snapshot{};
+			const bool near_eye = value.control.open && value.owner.id() == owner.id() &&
+			                      value.owner.rear_revision == owner.rear_revision;
+			const bool ready = ammo.valid && ammo.id() == owner.id() &&
+			                   lock_gate_ready(near_eye, ammo.loaded, ammo.weapon_state, ammo.weapon_time);
+			game::scr_VmPub->top->u.floatValue = ready ? 1.f : 0.f;
+			++lock_ads_overrides;
+			gate_bits = unsigned(near_eye) | unsigned(ammo.valid) << 1 | unsigned(ammo.id() == owner.id()) << 2 | unsigned(ready) << 3;
+			gate_loaded = ammo.loaded; gate_state = ammo.weapon_state; gate_time = ammo.weapon_time;
+		}
+		void bind_lock_gate()
+		{
+			lock_ads_call = nullptr;
+			// MWR: no GSC thread-position table (H2 read file 44133 / function 0xBCBD).
+			// The VM runs maps/_javelin straight from its ScriptFile bytecode.
+			struct context { const game::ScriptFile* file{}; } found;
+			game::DB_EnumXAssets_Internal(game::ASSET_TYPE_SCRIPTFILE, [](game::XAssetHeader header, void* data)
+			{
+				if (header.scriptfile && header.scriptfile->name && std::string_view(header.scriptfile->name) == "maps/_javelin")
+					static_cast<context*>(data)->file = header.scriptfile;
+			}, &found, false);
+			const auto* file = found.file;
+			if (!file || !file->bytecode || file->bytecodeLen <= 0)
+				return;
+			const auto call = single_full_ads_call(
+			    {reinterpret_cast<const std::uint8_t*>(file->bytecode), std::size_t(file->bytecodeLen)}, 0x833d);
+			if (!call)
+			{
+				console::warn("[VR Javelin] native lock ADS script contract rejected\n");
+				return;
+			}
+			// The PlayerADS detour is created at startup (install_player_ads): by a
+			// level start MinHook finds no free trampoline page near the image
+			// (MinHook 9, MH_ERROR_MEMORY_ALLOC, on the bog_a save load).
+			if (!player_ads_hook.is_enabled())
+				return;
+			lock_ads_call = file->bytecode + *call;
+		}
+		void install_player_ads()
+		{
+			constexpr std::uint8_t entry[]{
+			    0x48, 0x83, 0xec, 0x28, 0x8b, 0xc1, 0xc1, 0xe8, 0x10, 0x66, 0x85, 0xc0};
+			std::array<std::uint8_t, sizeof(entry)> mask{};
+			mask.fill(255);
+			// MWR PlayerADS 0x14028FCC0 (H2 0x1404B4DB0); identical entry bytes.
+			// Without a bound lock call the detour only forwards to native.
+			if (!utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(0x14028FCC0),
+			                                                 {entry, mask.data(), mask.size()}))
+			{
+				console::error("[VR Javelin] native playerads method contract rejected\n");
+				return;
+			}
+			player_ads_hook.create(0x14028FCC0, player_ads);
+		}
+		bool hud_active(int local_client)
+		{
+			const bool native = utils::hook::invoke<bool>(0x140193490, local_client); // H2 0x1403B9780
+			++hud_watch_calls;
+			const auto finish=[&](bool result,bool overridden=false)
+			{hud_watch_result=(native?1u:0u)|(result?2u:0u)|(overridden?4u:0u);if(overridden)++hud_watch_overrides;return result;};
+			if (local_client != 0 || !enabled() || !carry::active())
+				return finish(native);
+			const auto value = current();
+			const auto owner = current_hold();
+			// This selection exists only for the admitted Javelin. Use its near-eye
+			// intent directly, before the native ADS fraction reaches one. This is
+			// only the LUI watch read; it does not change native player-state ADS.
+			if (!value.javelin || !value.owner.weapon || value.owner.id() != owner.id() ||
+			    value.owner.rear_revision != owner.rear_revision)
+				return finish(native);
+			return finish(value.control.open,true);
+		}
+		// The Stinger has no native lock box: its lock is audio (stinger_clu_aquiring_lock,
+		// stinger_clu_lock) and rumble. Read the script's own state for status and
+		// pulse the rear controller like the native rumble.
+		void observe_stinger_lock()
+		{
+			selection value;
+			{const std::lock_guard lock(mutex);value = selected;}
+			int state{};
+			if (value.control.open && value.owner.weapon && !value.javelin && game::CL_IsCgameInitialized())
+				try
+				{
+					const scripting::entity player{game::scr_entref_t{0, 0}};
+					const auto stinger = player.get("stinger");
+					if (stinger.is<std::map<std::string, scripting::script_value>>())
+					{
+						const scripting::array fields(stinger.get_raw().u.uintValue);
+						const auto flag = [&](const char* name)
+						{const auto v = fields.get(std::string(name));return v.is<int>() && v.as<int>() != 0;};
+						state = flag("stingerlockfinalized") ? 2 : flag("stingerlockstarted") ? 1 : 0;
+					}
+				}
+				catch (...) {state = 0;}
+			// weaponlockfinalize sets the native lock: MWR playerState weapLockFlags
+			// +0x5D8 bit 1, the bit FireWeapon tests at 0x1402EFB70 (h1-mod MP +0x710).
+			const auto* ps = reinterpret_cast<const std::byte*>(game::g_entities[0].client);
+			std::uint32_t lock_flags{};
+			if (value.control.open && !value.javelin && ps && utils::native_memory::read_bytes(&lock_flags, ps + 0x5d8, sizeof(lock_flags)) &&
+				(lock_flags & 2))
+				state = 2;
+			native_lock_flags = lock_flags;
+			stinger_lock = state;
+			++stinger_ticks;
+			if (state && (state == 2 || stinger_ticks % 6 == 0))
+			{
+				const auto input = controller_input::latest_interaction();
+				controller_haptics::request(int(value.owner.rear), {.06f, state == 2 ? 160.f : 90.f, state == 2 ? .7f : .35f,
+					input.reference_generation, input.sampled_at});
+			}
+		}
+		auxiliary_scene::request plan(const eye_composition::event& event) noexcept
+		{
+			pair = {};
+			pair.pair = event.pair_id;
+			pair.publication = event.views.eyes[0].publication;
+			pair.device = event.device_generation;
+			pair.epoch = event.views.weapon_display_epoch;
+			auto observed=probe::observation(event,pair.epoch,GetTickCount64());observed.stage="plan_owner";
+			observed.active=pair.epoch&&!event.views.screen_scope_epoch;
+			const auto record=gsl::finally([&]{probe::javelin_scope.record(observed);});
+			if (!pair.epoch || event.views.screen_scope_epoch)
+			{
+				plane = {};
+				retained_ink.reset();
+				return {};
+			}
+			try
+			{
+				const auto state = current();
+				const auto capture = native_hud_capture::latest_screen_scope();
+				const auto head = head_pose_bridge::get_status();
+				const auto now = GetTickCount64();
+				observed.owner_epoch=state.epoch;observed.reference_id=state.reference;
+				observed.owner_id=state.owner.weapon;observed.owner_generation=state.owner.instance_generation;observed.owner_revision=state.owner.rear_revision;
+				probe::hud(observed,capture.ink.get());
+				probe::check(observed.rejected,state.control.open,probe::owner);
+				probe::check(observed.rejected,state.epoch==pair.epoch,probe::epoch);
+				probe::check(observed.rejected,event.model_origins.valid,probe::origins);
+				probe::check(observed.rejected,head.enabled&&head.pose_available,probe::tracking);
+				probe::check(observed.rejected,!head.recenter_pending,probe::recenter);
+				probe::check(observed.rejected,head.recenter_count==state.reference,probe::reference);
+				probe::check(observed.rejected,std::isfinite(head.world_scale)&&head.world_scale>0,probe::world_scale);
+				if (!state.control.open || state.epoch != pair.epoch || !event.model_origins.valid ||
+				    !head.enabled || !head.pose_available || head.recenter_pending ||
+				    head.recenter_count != state.reference || !std::isfinite(head.world_scale) ||
+				    head.world_scale <= 0)
+				{
+					retained_ink.reset();
+					reason = "waiting for matching screen camera";
+					return {};
+				}
+				const auto matches = [&](const auto& ink, unsigned age)
+				{
+					return ink && ink->view && ink->height && !ink->screen_scope_epoch &&
+					       ink->weapon_display_epoch == pair.epoch && ink->id() == state.owner.id() &&
+					       ink->rear_revision == state.owner.rear_revision &&
+					       ink->reference_generation == state.reference && ink->generation == pair.device &&
+					       ink->timestamp <= now && now - ink->timestamp <= age;
+				};
+				observed.stage="plan_hud";
+				probe::check(observed.hud_rejected,bool(capture.ink),probe::hud_missing);
+				if(const auto& ink=capture.ink)
+				{
+					probe::check(observed.hud_rejected,ink->view&&ink->height,probe::hud_view);
+					probe::check(observed.hud_rejected,!ink->screen_scope_epoch,probe::hud_scope_epoch);
+					probe::check(observed.hud_rejected,ink->weapon_display_epoch==pair.epoch,probe::hud_display_epoch);
+					probe::check(observed.hud_rejected,ink->id()==state.owner.id(),probe::hud_weapon);
+					probe::check(observed.hud_rejected,ink->rear_revision==state.owner.rear_revision,probe::hud_revision);
+					probe::check(observed.hud_rejected,ink->reference_generation==state.reference,probe::hud_reference);
+					probe::check(observed.hud_rejected,ink->generation==pair.device,probe::hud_device);
+					probe::check(observed.hud_rejected,ink->timestamp<=now&&now-ink->timestamp<=100,probe::hud_age);
+				}
+				// Native HUD intentionally disappears during reload/ADS transitions.
+				// It must never gate the live camera. Bridge only brief loaded-state
+				// publication gaps; discard old lock ink as soon as the shot empties it.
+				if (!state.loaded || !matches(retained_ink, 100))
+					retained_ink.reset();
+				if (matches(capture.ink, 100))
+					pair.ink = capture.ink;
+				else if (state.loaded)
+					pair.ink = retained_ink;
+				if (state.loaded && pair.ink)
+					retained_ink = pair.ink;
+				observed.hud_retained=pair.ink&&pair.ink!=capture.ink;observed.layer_mask=pair.ink?1:0;
+				observed.stage="plan_geometry";
+				spatial_panel::vec3 position{};
+				float separation{};
+				for (unsigned i = 0; i < 3; ++i)
+				{
+					position[i] = head.local_position_units[i] / head.world_scale;
+					const float d = event.model_origins.eyes[0][i] - event.model_origins.eyes[1][i];
+					separation += d * d;
+				}
+				const float half_ipd = .5f * std::sqrt(separation) / head.world_scale;
+				if (!plane.update(pair.epoch,
+				                  state.reference,
+				                  position,
+				                  head.local_orientation,
+				                  fixed_sniper::head_gain()))
+				{observed.rejected|=probe::plane;return {};}
+				std::array<engine_stereo_bridge::eye_projection, 2> sources;
+				for (unsigned eye = 0; eye < 2; ++eye)
+				{
+					engine_stereo_bridge::eye_projection projection;
+					if (!engine_stereo_view::read_projection(event.views.eyes[eye], projection) ||
+					    !plane.project(projection,
+					                   event.views.eyes[eye].view_eye == 0 ? half_ipd : -half_ipd,
+					                   canvas_width,
+					                   canvas_height,
+					                   pair.canvas[eye]))
+					{observed.rejected|=probe::projection;return {};}
+					sources[eye] = projection;
+				}
+				auxiliary_scene::request request;
+				const float half_y = event.views.native_tan_half[1];
+				plan_half_y = half_y;
+				observed.stage="plan_crop";
+				// MWR: the auxiliary scene view renders black, so each eye's own
+				// image (already at the muzzle camera) supplies its central crop.
+				for (unsigned eye = 0; eye < 2; ++eye)
+					if (!screen_scope::window(sources[eye], half_y * canvas_aspect, half_y, pair.windows[eye]) ||
+					    !auxiliary_scene::valid_window(pair.windows[eye]))
+					{
+						reason = "native Javelin FOV rejected";
+						observed.rejected|=probe::window;observed.crop=pair.windows[eye];
+						return {};
+					}
+				request.window = pair.windows[0];
+				request.eye = 0;
+				request.owner = state.owner.weapon;
+				request.generation = state.owner.instance_generation;
+				request.reference = state.reference;
+				request.revision = pair.epoch;
+				request.native_center = true;
+				request.valid = true;
+				// Remove source-eye IPD: scene, native HUD and lock projection share the center camera.
+				pair.request = request;
+				observed.stage="planned";observed.crop=request.window;observed.success=true;
+				++planned;
+				return {};
+			}
+			catch (...)
+			{
+				reason = "display planning rejected";
+				observed.rejected|=probe::exception;
+				return {};
+			}
+		}
+		// The Stinger has no native lock box (maps/_stinger only plays tones), so
+		// its display gets a ring at the lock circle: white idle, yellow flashing
+		// while acquiring, red when locked. Premultiplied encoded ink, full canvas.
+		struct stinger_ink
+		{
+			Microsoft::WRL::ComPtr<ID3D11Device> device;
+			std::array<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>, 3> views;
+		};
+		thread_local stinger_ink stinger_reticle;
+		ID3D11ShaderResourceView* stinger_view(ID3D11DeviceContext* context, int state) noexcept
+		{
+			Microsoft::WRL::ComPtr<ID3D11Device> device;
+			context->GetDevice(&device);
+			if (!device || state < 0 || state > 2) return nullptr;
+			if (stinger_reticle.device != device)
+			{
+				stinger_reticle = {};
+				stinger_reticle.device = device;
+				constexpr unsigned w = 640, h = 360;
+				constexpr std::array<std::array<float, 4>, 3> colors{{{1, 1, 1, .55f}, {1, .85f, 0, .95f}, {1, .12f, .08f, 1}}};
+				std::vector<std::uint32_t> pixels(w * h);
+				for (unsigned n = 0; n < 3; ++n)
+				{
+					const float ring = .125f, half = n == 2 ? .008f : .005f, edge = 1.5f / h;
+					for (unsigned y = 0; y < h; ++y)
+						for (unsigned x = 0; x < w; ++x)
+						{
+							const float pdx = (x + .5f - w * .5f) / h, dy = (y + .5f - h * .5f) / h;
+							const float r = std::sqrt(pdx * pdx + dy * dy);
+							float a = std::clamp(1.f - (std::abs(r - ring) - half) / edge, 0.f, 1.f);
+							a = std::max(a, std::clamp(1.f - (r - .004f) / edge, 0.f, 1.f)); // Centre dot.
+							a *= colors[n][3];
+							const auto channel = [&](float v) {return std::uint32_t(std::lround(std::clamp(v * a, 0.f, 1.f) * 255));};
+							pixels[y * w + x] = channel(colors[n][0]) | channel(colors[n][1]) << 8 | channel(colors[n][2]) << 16 |
+								std::uint32_t(std::lround(a * 255)) << 24;
+						}
+					D3D11_TEXTURE2D_DESC desc{w, h, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, {1, 0}, D3D11_USAGE_IMMUTABLE, D3D11_BIND_SHADER_RESOURCE, 0, 0};
+					const D3D11_SUBRESOURCE_DATA data{pixels.data(), w * 4, 0};
+					Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
+					if (FAILED(device->CreateTexture2D(&desc, &data, &texture)) ||
+						FAILED(device->CreateShaderResourceView(texture.Get(), nullptr, &stinger_reticle.views[n])))
+					{
+						stinger_reticle.views = {};
+						return nullptr;
+					}
+				}
+			}
+			return stinger_reticle.views[state].Get();
+		}
+		void compose(const eye_composition::event& event,
+		             ID3D11DeviceContext* context,
+		             ID3D11ShaderResourceView* source,
+		             ID3D11RenderTargetView* target) noexcept
+		{
+			auto observed=probe::observation(event,event.views.weapon_display_epoch,GetTickCount64());observed.stage="compose";
+			observed.active=event.views.weapon_display_epoch&&!event.views.screen_scope_epoch;
+			observed.expected_pair=pair.pair;observed.expected_publication=pair.publication;observed.expected_device=pair.device;
+			observed.owner_epoch=pair.epoch;observed.owner_id=pair.request.owner;observed.owner_generation=pair.request.generation;
+			observed.owner_revision=pair.request.revision;observed.reference_id=pair.request.reference;
+			observed.context=reinterpret_cast<std::uintptr_t>(context);probe::hud(observed,pair.ink.get());observed.layer_mask=pair.ink?1:0;
+			const auto record=gsl::finally([&]{probe::javelin_scope.record(observed);});
+			probe::check(observed.rejected,event.eye<2&&context&&target,probe::composition);
+			if (!event.views.weapon_display_epoch || event.views.screen_scope_epoch || event.eye > 1 ||
+			    !context || !target)
+				return;
+			const auto fail = [&]
+			{
+				const float black[4]{0, 0, 0, 1};
+				context->ClearRenderTargetView(target, black);
+				++missing;
+			};
+			try
+			{
+				probe::check(observed.rejected,pair.pair==event.pair_id,probe::pair);
+				probe::check(observed.rejected,pair.publication==event.views.eyes[event.eye].publication,probe::publication);
+				probe::check(observed.rejected,pair.device==event.device_generation,probe::device);
+				probe::check(observed.rejected,pair.epoch==event.views.weapon_display_epoch,probe::epoch);
+				if(pair.ink)probe::check(observed.rejected,pair.ink->context==observed.context,probe::hud_context);
+				probe::check(observed.rejected,source!=nullptr,probe::auxiliary_image);
+				observed.canvas_min_w=observed.canvas_max_w=pair.canvas[event.eye][0][3];
+				for(const auto& corner:pair.canvas[event.eye]){observed.canvas_min_w=(std::min)(observed.canvas_min_w,corner[3]);observed.canvas_max_w=(std::max)(observed.canvas_max_w,corner[3]);}
+				if (pair.pair != event.pair_id ||
+				    pair.publication != event.views.eyes[event.eye].publication ||
+				    pair.device != event.device_generation ||
+				    pair.epoch != event.views.weapon_display_epoch || !pair.request.valid ||
+				    (pair.ink && pair.ink->context != reinterpret_cast<std::uintptr_t>(context)) || !source)
+				{
+					reason = "display frame unavailable";
+					fail();
+					return;
+				}
+				auto* ink = pair.ink ? pair.ink->view.Get() : nullptr;
+				if (const auto shown = current(); shown.owner.weapon && !shown.javelin)
+				{
+					int lock = stinger_lock.load();
+					if (lock == 1 && (GetTickCount64() / 250) % 2) lock = 0;
+					ink = stinger_view(context, lock);
+				}
+				if (!renderer.draw_screen_scope(context,
+				                                source,
+				                                ink,
+				                                target,
+				                                pair.canvas[event.eye],
+				                                event.width,
+				                                event.height,
+				                                nullptr,
+				                                nullptr,
+				                                pair.windows[event.eye]))
+				{
+					reason = "display composition rejected";
+					probe::draw_result(observed,renderer.last_scope_draw());
+					observed.rejected|=probe::composition;
+					fail();
+					return;
+				}
+				++drawn;
+				probe::draw_result(observed,renderer.last_scope_draw());
+				observed.stage="composed";observed.success=true;
+				reason = pair.ink ? "native Javelin camera and HUD on independent screen"
+				                  : "live Javelin camera; native HUD temporarily absent";
+			}
+			catch (...)
+			{
+				reason = "display composition exception";
+				observed.rejected|=probe::exception;
+				fail();
+			}
+		}
+	}
+	bool enabled() noexcept
+	{
+		return alive && option && option->current.enabled;
+	}
+	std::string format_status()
+	{
+		selection state;camera_state view;const char* gate{};
+		{const std::unique_lock lock(mutex,std::try_to_lock);if(!lock.owns_lock())return "[VR Javelin display] snapshot_busy=yes\n";state=selected;view=camera;gate=input_gate;}
+		const auto now=controller_input::clock::now();
+		const auto watch_result=hud_watch_result.load();
+		const auto age=[&](auto at)->std::int64_t{return at.time_since_epoch().count()&&now>=at?std::chrono::duration_cast<std::chrono::milliseconds>(now-at).count():-1;};
+		return std::format("[VR Javelin display] enabled={} stinger_lock={} lock_flags={:#x} hud_watch={} lock_gate={} lock_queries={} open={} armed={} loaded={} selection_age_ms={} epoch={} reference={} weapon={} instance={} grip_revision={} camera_epoch={} camera_age_ms={} aim={} planner_registered={} planned={} eyes={} missing={} reason={}\norigin={},{},{} forward={},{},{}\n",
+			enabled(),stinger_lock.load(),native_lock_flags.load(),hud_watch_ready,lock_ads_call.load()!=nullptr,lock_ads_overrides.load(),state.control.open,state.control.fire_ready,state.loaded,
+			age(state.at),state.epoch,state.reference,state.owner.weapon,state.owner.instance_generation,state.owner.rear_revision,view.epoch,age(view.at),view.aim.valid,
+			auxiliary_scene::weapon_display_plan.load()!=nullptr,planned.load(),drawn.load(),missing.load(),reason.load(),
+			view.aim.position[0],view.aim.position[1],view.aim.position[2],view.aim.axis[0][0],view.aim.axis[0][1],view.aim.axis[0][2])+
+			std::format("  gate near/valid/id/ready={}/{}/{}/{} loaded={} state={} time={} fov_in={},{} fov_out_y={} plan_half_y={} projection calls/rejected/projected={}/{}/{}\n",
+				bool(gate_bits&1),bool(gate_bits&2),bool(gate_bits&4),bool(gate_bits&8),gate_loaded.load(),gate_state.load(),gate_time.load(),
+				fov_in_x.load(),fov_in_y.load(),fov_out_y.load(),plan_half_y.load(),
+				launcher::native_statistics()[1],launcher::native_statistics()[2],launcher::native_statistics()[0])+
+			std::format("  input_gate={} hud_watch_calls={} overrides={} last_native/returned/override={}/{}/{}\n",gate,
+				hud_watch_calls.load(),hud_watch_overrides.load(),bool(watch_result&1),bool(watch_result&2),bool(watch_result&4))+
+			probe::javelin_scope.format("Javelin display stages",GetTickCount64());
+	}
+	void input(const controller_input::frame& frame, const hold& owner, bool allowed) noexcept
+	{
+		const auto muzzle = current_muzzle();
+		const auto now = controller_input::clock::now();
+		const bool valid = enabled() && allowed && display_profile(muzzle.profile_id) &&
+		                   ready(muzzle, owner, frame.reference_generation, now);
+		// MWR: no launcher runtime; the native clip is the loaded state.
+		const auto* ps = game::g_entities[0].client;
+		const auto ammo = valid && ps ? native_ammunition::observe(ps) : native_ammunition::snapshot{};
+		const bool loaded = ammo.valid && ammo.id() == owner.id() && ammo.loaded > 0;
+		const std::lock_guard lock(mutex);
+		// Button entry/exit is temporarily disabled for the near-eye ADS trial.
+		// static controls buttons; const auto next=buttons.consume(frame,owner,valid,now);
+		const auto next = proximity.consume(frame, owner, valid, muzzle, now);
+		input_gate=!allowed?"gameplay_gate":!display_profile(muzzle.profile_id)?"not_javelin_or_stinger":!valid?"setting_muzzle_or_owner_not_ready":
+			next.open?"open":"near_eye_not_entered";
+		if (next.open && (!selected.control.open || selected.owner.id() != owner.id() ||
+		                  selected.reference != frame.reference_generation))
+			selected.epoch = ++next_epoch;
+		selected.owner = display_profile(muzzle.profile_id) ? owner : hold{};
+		selected.javelin = muzzle.profile_id == "javelin";
+		selected.control = next;
+		selected.reference = frame.reference_generation;
+		selected.at = now;
+		selected.loaded = loaded;
+	}
+	bool requested(const hold& owner) noexcept
+	{
+		const auto value = current();
+		return value.owner.id() == owner.id() && value.owner.rear_revision == owner.rear_revision &&
+		       value.control.open;
+	}
+	bool allows_fire(const hold& owner) noexcept
+	{
+		if (!enabled())
+			return true;
+		selection value;
+		{
+			const std::lock_guard lock(mutex);
+			value = selected;
+		}
+		// No display selection gates nothing. Comparing two empty holds made every
+		// weapon without a VR hold (AC-130 105/40 mm) wait for a display.
+		if (!value.owner.weapon || value.owner.id() != owner.id())
+			return true;
+		const auto now = controller_input::clock::now();
+		return now >= value.at && now - value.at <= 150ms && value.control.open && value.control.fire_ready;
+	}
+	bool lock_aim(const hold& owner, muzzle_frame& aim) noexcept
+	{
+		const auto value = current();
+		camera_state captured;
+		{
+			const std::lock_guard lock(mutex);
+			captured = camera;
+		}
+		const auto now = controller_input::clock::now();
+		if (!value.control.open || value.owner.id() != owner.id() || captured.epoch != value.epoch ||
+		    now < captured.at || now - captured.at > 150ms || captured.aim.owner.id() != owner.id() ||
+		    captured.aim.owner.rear_revision != owner.rear_revision)
+			return false;
+		aim = captured.aim;
+		return true;
+	}
+	hold capture_owner() noexcept
+	{
+		const auto value = current();
+		muzzle_frame aim;
+		return value.control.open && lock_aim(value.owner, aim) ? value.owner : hold{};
+	}
+	std::uint64_t stinger_view_epoch() noexcept
+	{
+		const auto value = current();
+		return value.control.open && value.owner.weapon && !value.javelin ? value.epoch : 0;
+	}
+	std::uint64_t camera_epoch() noexcept
+	{
+		const std::lock_guard lock(mutex);
+		return camera.epoch;
+	}
+	void apply_camera(float* origin, float (*axis)[3], bool allowed, float* tan_half) noexcept
+	{
+		const auto value = current();
+		const auto muzzle = current_muzzle();
+		const auto frame = controller_input::latest();
+		camera_state next;
+		const auto* definition =
+		    value.owner.weapon && value.owner.weapon < 512 ? game::weapon_defs[value.owner.weapon] : nullptr;
+		static_assert(offsetof(game::WeaponDef, adsZoomFov) == 0x8e0);
+		const float half_y = definition ? optical_half_y(definition->adsZoomFov) : 0;
+		if (allowed && origin && axis && tan_half && half_y > 0 && value.control.open &&
+		    display_profile(muzzle.profile_id) &&
+		    ready(muzzle, value.owner, frame.reference_generation, controller_input::clock::now()))
+		{
+			next = {muzzle, value.epoch, controller_input::clock::now()};
+			std::copy(muzzle.position.begin(), muzzle.position.end(), origin);
+			for (unsigned i = 0; i < 3; ++i)
+				std::copy(muzzle.axis[i].begin(), muzzle.axis[i].end(), axis[i]);
+			// Preserve optical framing during native reload and ADS interpolation.
+			// HUD projection sees this same corrected widescreen camera.
+			fov_in_x = tan_half[0]; fov_in_y = tan_half[1];
+			tan_half[0] = half_y * canvas_aspect;
+			tan_half[1] = half_y;
+			fov_out_y = half_y;
+		}
+		const std::lock_guard lock(mutex);
+		camera = next;
+	}
+	class component final : public component_interface
+	{
+		eye_composition::consumer_registration composition_registration;
+		void post_unpack() override
+		{
+			scheduler::loop(observe_stinger_lock, scheduler::pipeline::server, 100ms);
+			option = dvars::register_bool(
+			    "vr_javelinDisplay",
+			    true,
+			    game::DVAR_FLAG_SAVED,
+			    "Independent Javelin display while the actual eyepiece is close to the eyes");
+			// UIIntWatch's JavelinActive case: CALL followed by TEST AL,AL and
+			// SETNE into its integer result. Do not detour the shared getter: its
+			// other callers include target drawing and non-UI native code.
+			constexpr std::uint8_t watch[]{0xe8, 0x46, 0x1c, 0x06, 0x00, 0x84, 0xc0, 0xb0, 0x01};
+			std::array<std::uint8_t, sizeof(watch)> mask{};
+			mask.fill(255);
+			hud_watch_ready = bool(utils::hook_validation::verify_masked_bytes(
+			    reinterpret_cast<void*>(0x140131845), {watch, mask.data(), mask.size()})); // H2 0x140356205
+			if (hud_watch_ready)
+				utils::hook::call(0x140131845, hud_active);
+			else
+				console::error(
+				    "[VR Javelin display] HUD watch contract rejected; native HUD timing retained\n");
+			install_player_ads();
+			scripting::on_level_start(bind_lock_gate);
+			scripting::on_shutdown(
+			    [](bool, bool after)
+			    {
+				    if (!after)
+					    lock_ads_call = nullptr;
+			    });
+			auxiliary_scene::weapon_display_plan = plan;
+			auxiliary_scene::weapon_display_epoch = camera_epoch;
+			composition_registration =
+			    eye_composition::register_consumer(compose, eye_composition::layer::weapon_display);
+			::command::add(
+			    "vr_javelinDisplay_status",
+			    []
+			    {
+				    const auto report=format_status();console::print_text(console::con_type_info,report);
+				    const auto path=diagnostics::save_named_report("overlord-javelin-display.txt",report);
+				    if(path.empty())console::error("[VR Javelin display] Report save failed\n");
+				    else console::info("[VR Javelin display] Saved %s\n",diagnostics::report_path_text(path).c_str());
+			    });
+			// Test aid: vr_javelin_target <entnum> registers a native Javelin target
+			// (target_set) and prints the target array size.
+			::command::add(
+			    "vr_javelin_target",
+			    [](const ::command::params& params)
+			    {
+				    const int entnum = params.size() > 1 ? std::atoi(params.get(1)) : -1;
+				    scheduler::once([entnum]
+				    {
+					    try
+					    {
+						    if (entnum >= 0)
+							    scripting::call("target_set", {scripting::call("getentbynum", {entnum})});
+						    const auto targets = scripting::call("target_getarray", {}).as<scripting::array>();
+						    console::info("[VR Javelin] target %d set; targets=%u\n", entnum, unsigned(targets.size()));
+					    }
+					    catch (const std::exception& error)
+					    {
+						    console::error("[VR Javelin] target command failed: %s\n", error.what());
+					    }
+				    }, scheduler::pipeline::server);
+			    });
+		}
+		void pre_destroy() override
+		{
+			alive = false;
+			lock_ads_call = nullptr;
+			auxiliary_scene::weapon_display_plan = nullptr;
+			auxiliary_scene::weapon_display_epoch = nullptr;
+			composition_registration.reset();
+		}
+	};
+}
+REGISTER_COMPONENT(vr::gameplay::weapons::javelin_screen::component)

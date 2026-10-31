@@ -1,0 +1,202 @@
+#include <std_include.hpp>
+#include "game_language.hpp"
+#include "game_language_catalog.hpp"
+#include "component/game_data.hpp"
+#include <utils/io.hpp>
+#include <utils/properties.hpp>
+#include <CascLib.h>
+#include <chrono>
+#include <fstream>
+#include <regex>
+
+namespace launcher_game_language
+{
+	namespace
+	{
+		using nlohmann::json;
+		constexpr size_t max_config_bytes = 1024 * 1024;
+		constexpr size_t max_files = 100000;
+		constexpr DWORD max_spans = 4096;
+		constexpr auto pending = R"({"pending":true})";
+		std::string failure(const char* key) { return json{{"ok", false}, {"errorKey", key}}.dump(); }
+
+		json read_preferences(const std::filesystem::path& path)
+		{
+			if (!std::filesystem::exists(path)) return json::object();
+			std::ifstream file(path, std::ios::binary);
+			std::string bytes(max_config_bytes + 1, '\0');
+			if (!file) throw std::runtime_error("read");
+			file.read(bytes.data(), static_cast<std::streamsize>(bytes.size()));
+			if (file.bad() || file.gcount() > max_config_bytes) throw std::runtime_error("read");
+			bytes.resize(static_cast<size_t>(file.gcount()));
+			auto value = json::parse(bytes);
+			if (!value.is_object()) throw std::runtime_error("object");
+			return value;
+		}
+
+		bool readable(HANDLE storage, const CASC_FIND_DATA& entry, const std::atomic<bool>& cancelled)
+		{
+			if (!entry.bFileAvailable || !entry.FileSize || !entry.dwSpanCount || entry.dwSpanCount > max_spans) return false;
+			HANDLE file{};
+			if (!CascOpenFile(storage, entry.szFileName, CASC_LOCALE_ALL, CASC_OPEN_BY_NAME, &file)) return false;
+			const auto close = gsl::finally([&] { CascCloseFile(file); });
+			std::vector<CASC_FILE_SPAN_INFO> spans(entry.dwSpanCount);
+			if (!CascGetFileInfo(file, CascFileSpanInfo, spans.data(), spans.size() * sizeof(spans[0]), nullptr)) return false;
+			// Resolve every span against local data archives, including its tail.
+			// Metadata or a shared startup zone alone is not an installed language.
+			for (const auto& span : spans)
+			{
+				if (cancelled.load()) throw std::runtime_error("cancelled");
+				if (span.EndOffset <= span.StartOffset || span.EndOffset > entry.FileSize) return false;
+				for (const auto position : {span.StartOffset, span.EndOffset - 1})
+				{
+					char byte{}; DWORD read{};
+					if (!CascSetFilePointer64(file, static_cast<LONGLONG>(position), nullptr, FILE_BEGIN) ||
+						!CascReadFile(file, &byte, 1, &read) || read != 1) return false;
+				}
+			}
+			return true;
+		}
+
+		json installed(const std::filesystem::path& root, const std::atomic<bool>& cancelled)
+		{
+			HANDLE storage{};
+			CASC_OPEN_STORAGE_ARGS args{};
+			args.Size = sizeof(args);
+			args.dwLocaleMask = CASC_LOCALE_ALL;
+			// Neither ONLINE nor ALLOW_DOWNLOAD is set. Never consult a CDN.
+			if (!CascOpenStorageEx(root.c_str(), &args, false, &storage)) throw std::runtime_error("storage");
+			const auto close = gsl::finally([&] { CascCloseStorage(storage); });
+			json choices = json::array();
+			size_t total{};
+			for (const auto& language : languages)
+			{
+				if (cancelled.load()) throw std::runtime_error("cancelled");
+				const auto prefix = std::string(language.name) + "\\" + language.code + "_";
+				CASC_FIND_DATA entry{};
+				const auto search = CascFindFirstFile(storage, (prefix + "*").c_str(), &entry, nullptr);
+				if (search == INVALID_HANDLE_VALUE || !search) continue;
+				const auto close_search = gsl::finally([&] { CascFindClose(search); });
+				bool complete = true, startup = false, common = false, audio = false;
+				do
+				{
+					if (++total > max_files) throw std::runtime_error("inventory");
+					const std::string_view name(entry.szFileName);
+					startup |= name == prefix + "code_post_gfx.ff";
+					common |= name == prefix + "common.ff";
+					audio |= name.ends_with(".pak");
+					if (!readable(storage, entry, cancelled)) { complete = false; break; }
+				} while (CascFindNextFile(search, &entry));
+				if (complete && startup && common && audio)
+					choices.push_back({{"value", language.name}, {"label", language.label}});
+			}
+			return choices;
+		}
+
+		// MWR (Steam) is a plain folder, not CASC storage: each installed language
+		// is a <name>/ folder with <code>_common.ff and its sound packs. The game
+		// takes its language from Steam (appmanifest_393080.acf "language").
+		bool folder_layout(const std::filesystem::path& root)
+		{
+			std::error_code error;
+			return std::filesystem::exists(root / "h1_sp64_ship.exe", error) && !std::filesystem::exists(root / ".build.info", error);
+		}
+		json installed_folders(const std::filesystem::path& root)
+		{
+			json choices = json::array();
+			for (const auto& language : languages)
+			{
+				std::error_code error;
+				const auto folder = root / language.name;
+				const auto prefix = std::string(language.code) + "_";
+				bool audio{};
+				if (!std::filesystem::exists(folder / (prefix + "common.ff"), error) ||
+					!std::filesystem::exists(folder / (prefix + "code_post_gfx.ff"), error)) continue;
+				for (const auto& entry : std::filesystem::directory_iterator(folder, error))
+					if (entry.path().extension() == ".pak") {audio = true;break;}
+				if (audio) choices.push_back({{"value", language.name}, {"label", language.label}});
+			}
+			return choices;
+		}
+		std::string steam_language(const std::filesystem::path& root)
+		{
+			// <library>/steamapps/common/<game> -> <library>/steamapps/appmanifest_393080.acf
+			std::ifstream file(root.parent_path().parent_path() / "appmanifest_393080.acf", std::ios::binary);
+			std::string text((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+			std::smatch match;
+			if (!std::regex_search(text, match, std::regex("\"language\"\\s*\"([^\"]+)\""))) return {};
+			static const std::pair<std::string_view, const char*> steam[]{
+				{"english", "english"}, {"french", "french"}, {"german", "german"}, {"italian", "italian"},
+				{"spanish", "spanish"}, {"latam", "spanishna"}, {"russian", "russian"}, {"polish", "polish"},
+				{"brazilian", "portuguese"}, {"japanese", "japanese_full"}, {"tchinese", "traditional_chinese"},
+				{"schinese", "simplified_chinese"}, {"arabic", "arabic"}, {"koreana", "korean"}, {"korean", "korean"}};
+			for (const auto& [name, language] : steam) if (match[1].str() == name) return language;
+			return {};
+		}
+
+		std::string execute(const std::filesystem::path& root, const std::string& requested, const std::atomic<bool>& cancelled)
+		{
+			if (folder_layout(root))
+			{
+				// The launcher cannot switch it: Steam's per-game language setting does.
+				if (!requested.empty()) return failure("language.gameSteam");
+				try
+				{
+					const auto choices = installed_folders(root);
+					auto selected = steam_language(root);
+					if (selected.empty() && choices.size() == 1) selected = choices[0].at("value").get<std::string>();
+					return json{{"ok", true}, {"language", selected.empty() ? "english" : selected}, {"choices", choices}, {"saved", false}}.dump();
+				}
+				catch (...) { return failure("language.gameLoadError"); }
+			}
+			json choices;
+			try { choices = installed(root, cancelled); }
+			catch (...) { return failure("language.gameLoadError"); }
+			if (!requested.empty() && std::none_of(choices.begin(), choices.end(), [&](const auto& c) { return c.at("value") == requested; }))
+				return failure("language.gameUnavailable");
+			try
+			{
+				if (cancelled.load()) return failure("language.gameLoadError");
+				const auto path = utils::properties::get_appdata_path() / "config.json";
+				auto config = read_preferences(path);
+				if (!requested.empty())
+				{
+					config["language"] = requested;
+					if (!utils::io::write_file_atomic(path, config.dump(4)))
+						return failure("language.gameSaveError");
+				}
+				const auto selected = config.contains("language") && config["language"].is_string()
+					? config["language"].get<std::string>() : "english";
+				return json{{"ok", true}, {"language", selected}, {"choices", choices}, {"saved", !requested.empty()}}.dump();
+			}
+			catch (...) { return failure(requested.empty() ? "language.gameLoadError" : "language.gameSaveError"); }
+		}
+	}
+
+	std::string service::start(const std::string& language)
+	{
+		if (worker_.valid()) return pending;
+		if (!game_data::is_game_directory_available()) return failure("error.gameDirectory");
+		try
+		{
+			const auto root = std::filesystem::current_path();
+			cancelled_->store(false);
+			worker_ = std::async(std::launch::async, [root, language, cancelled = cancelled_] { return execute(root, language, *cancelled); });
+			return pending;
+		}
+		catch (...) { return failure("language.gameLoadError"); }
+	}
+	std::string service::scan() { return start({}); }
+	std::string service::save(const std::string& language)
+	{
+		if (!official(language)) return failure("language.gameUnavailable");
+		return start(language);
+	}
+	std::string service::poll()
+	{
+		if (!worker_.valid()) return failure("language.gameLoadError");
+		if (worker_.wait_for(std::chrono::seconds(0)) != std::future_status::ready) return pending;
+		try { return worker_.get(); }
+		catch (...) { return failure("language.gameLoadError"); }
+	}
+}
