@@ -84,6 +84,7 @@ namespace mwr_port
 		"vr::gameplay::weapons::underbarrel", // M203 (MWR viewmodel j_m203_slide/j_grenade): grip, slide, load, fire (FireWeapon launcher 0x1402F3B10).
 		"vr::gameplay::c4_detonator", // maps/_c4 detonator: trigger press sends the player's "detonate".
 		"vr::gameplay::aftermath_crawl", // aftermath prone crawl pulled by planted hands (Grip).
+		"vr::gameplay::air_support", // village_assault Cobra designator: hand at the ear + Grip, point, Trigger.
 	};
 
 	// typeid names look like "class vr::gameplay::foo::component".

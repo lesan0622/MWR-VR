@@ -26,7 +26,7 @@ namespace vr::gameplay::weapons::manual_feed
 		// View-aimed guns (AC-130, lock launchers, the C4 detonator) are never a VR
 		// hold. A carry hold left from the player's own weapons refused them
 		// ("carry hold") whenever its token differed (headset: only 40 mm fired).
-		if (carry::active() && native_ammunition::local_role(ps)>=0 && !view_aimed::weapon(native_ammunition::observe(ps).weapon))
+		if (carry::active() && native_ammunition::local_role(ps)>=0 && !view_aimed::weapon(view_aimed::native_weapon(ps)))
 		{
 			const auto owner=carry::current_hold();
 			if (side || !owner.can_fire() || native_ammunition::observe(ps).weapon!=owner.weapon) return false;
@@ -39,7 +39,7 @@ namespace vr::gameplay::weapons::manual_feed
 		if(cheats::transitioning() && native_ammunition::local_role(ps)>=0)return "cheat transition";
 		if(underbarrel::blocks_native(ps))return "underbarrel";
 		if(independent_fire::owns_native(ps))return "independent fire";
-		if(carry::active() && native_ammunition::local_role(ps)>=0 && !view_aimed::weapon(native_ammunition::observe(ps).weapon))
+		if(carry::active() && native_ammunition::local_role(ps)>=0 && !view_aimed::weapon(view_aimed::native_weapon(ps)))
 		{
 			const auto owner=carry::current_hold();
 			if(side || !owner.can_fire() || native_ammunition::observe(ps).weapon!=owner.weapon)return "carry hold";

@@ -72,6 +72,8 @@ namespace game_text::locales
 		{key::ac130_thermal,u8"Press <em>right B</em> to switch the thermal polarity"},
 		{key::ac130_cycle,u8"Press <em>right A</em> or <em>left Y</em> to cycle weapons"},
 		{key::ac130_zoom_fire,u8"Aim with the <em>right stick</em>, fire with the <em>Trigger</em>"},
+		{key::air_support_call,u8"Raise a hand to your <em>ear</em> and press <em>Grip</em> to call Cobra support"},
+		{key::air_support_mark,u8"Point that hand at the target and press <em>Trigger</em> to send the coordinates"},
 		{key::knuckles_trainer_menu,u8"Press <em>A on the left controller</em> to open the menu and set vertical look inversion"},
 		{key::knuckles_fixed_sniper_controls,u8"Use the <em>left stick</em> to aim; press <em>B</em> to leave the sniper position"},
 		{key::knuckles_vehicle_reload,u8"Press the <em>weapon hand's B</em> to eject the magazine; hold <em>Trigger</em> with the other hand at your <em>chest</em> to draw a fresh magazine and insert it into the <em>weapon</em>"},

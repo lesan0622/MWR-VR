@@ -45,7 +45,12 @@ namespace vr::gameplay::view_aimed
 	}
 	// Native view-aimed fire: the gunship guns, lock launchers in their sight and
 	// the scripted C4 detonator.
-	inline bool weapon(std::uint32_t token) noexcept { return gunship_weapon(token) || lock_launcher(token) || scripted_detonator(token); }
+	// village_assault Cobra designator (air_support): no VR hand holds it either.
+	inline bool air_support_designator(std::uint32_t token) noexcept { return weapon_name_starts(token, "cobra_a"); }
+	// MWR playerState weapon +0x38C. The ammunition view is invalid for these devices.
+	inline std::uint32_t native_weapon(const void* ps) noexcept
+	{std::uint32_t token{};return ps && utils::native_memory::read_bytes(&token, static_cast<const std::byte*>(ps) + 0x38c, sizeof(token)) ? token : 0;}
+	inline bool weapon(std::uint32_t token) noexcept { return gunship_weapon(token) || lock_launcher(token) || scripted_detonator(token) || air_support_designator(token); }
 	// The local player's current native weapon (gentity weapon, +0x80) is an AC-130 gun.
 	inline bool gunship() noexcept
 	{

@@ -23,6 +23,7 @@
 #include "fixed_sniper.hpp"
 #include "barrett_gun.hpp"
 #include "mounted_hand_aim.hpp"
+#include "air_support.hpp"
 #include "ladder_runtime.hpp"
 #include "game/dvars.hpp"
 #include "game/game.hpp"
@@ -207,6 +208,14 @@ namespace vr::controllers
 						(void)gameplay::fixed_sniper::command(input, gameplay_allowed(input), cmd, angles,
 							deadzone->current.value, turn_speed->current.value);
 					}
+					else if (gameplay::air_support::pointing_hand() >= 0 &&
+						gameplay::air_support::apply_view(controller_input::latest_interaction(), angles, ps->delta_angles))
+					{
+						// Cobra designator: the pointing hand aims the native mark.
+						gunship_aim_at = {};
+						tracked_view_applied = true;
+						++view_count;
+					}
 					else if (gameplay::view_aimed::mounted() && turret_hand_aim && turret_hand_aim->current.enabled &&
 						[&] {
 							// Turret/vehicle gun (airlift Mk19): the hands always hold its
@@ -320,7 +329,9 @@ namespace vr::controllers
 			// Right trigger fires, right B reloads (+usereload). Native weapon
 			// state, ammunition and fire rate keep authority over the request.
 			// Javelin fires only from an open display, after a fresh trigger press.
-			const bool trigger_down = input.trigger[1].active && input.trigger[1].down;
+			const int designator_hand = gameplay::air_support::pointing_hand(); // Its own trigger marks too.
+			const bool trigger_down = (input.trigger[1].active && input.trigger[1].down) ||
+				(designator_hand == 0 && input.trigger[0].active && input.trigger[0].down);
 			const bool display_allows = gameplay::weapons::javelin_screen::allows_fire(gameplay::weapons::sample_native_equipped());
 			if (trigger_down)
 			{

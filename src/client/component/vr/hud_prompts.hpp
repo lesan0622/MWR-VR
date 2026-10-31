@@ -77,6 +77,8 @@ namespace vr::hud_prompts
 		definition{key::ac130_thermal,control::none},
 		definition{key::ac130_cycle,control::none},
 		definition{key::ac130_zoom_fire,control::none},
+		definition{key::air_support_call,control::none},
+		definition{key::air_support_mark,control::none},
 
 	};
 	constexpr const definition* describe(key id) noexcept
@@ -98,6 +100,14 @@ namespace vr::hud_prompts
 		native_rule{source::script_hud,"SCRIPT_PLATFORM_AC130_HINT_TOGGLE_THERMAL",key::ac130_thermal,"ac130"},
 		native_rule{source::script_hud,"AC130_HINT_CYCLE_WEAPONS",key::ac130_cycle,"ac130"},
 		native_rule{source::script_hud,"SCRIPT_PLATFORM_AC130_HINT_ZOOM_AND_FIRE",key::ac130_zoom_fire,"ac130"},
+		// MWR village_assault Cobra support (maps/village_assault_code): select the
+		// designator (VR: hand at the ear + Grip), then mark (point + Trigger).
+		native_rule{source::script_hud,"SCRIPT_LEARN_CHOPPER_AIR_SUPPORT1",key::air_support_call,"village_assault"},
+		native_rule{source::script_hud,"SCRIPT_LEARN_CHOPPER_AIR_SUPPORT1_PC",key::air_support_call,"village_assault"},
+		native_rule{source::script_hud,"LEARN_CHOPPER_AIR_SUPPORT1",key::air_support_call,"village_assault"},
+		native_rule{source::script_hud,"LEARN_CHOPPER_AIR_SUPPORT1_PC",key::air_support_call,"village_assault"},
+		native_rule{source::script_hud,"SCRIPT_PLATFORM_LEARN_CHOPPER_AIR_SUPPORT2",key::air_support_mark,"village_assault"},
+		native_rule{source::script_hud,"PLATFORM_LEARN_CHOPPER_AIR_SUPPORT2",key::air_support_mark,"village_assault"},
 		native_rule{source::script_hud,"ESTATE_LEARN_PRONE",key::mine_prone,"estate"},
 		native_rule{source::script_hud,"ESTATE_LEARN_PRONE_TOGGLE",key::mine_prone,"estate"},
 		native_rule{source::script_hud,"ESTATE_LEARN_PRONE_HOLDDOWN",key::mine_prone,"estate"},

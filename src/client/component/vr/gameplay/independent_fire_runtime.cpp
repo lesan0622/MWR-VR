@@ -69,6 +69,9 @@ namespace vr::gameplay::weapons::independent_fire
 		if (mounted::attached(static_cast<const game::playerState_s*>(ps)->e_flags) || !independent()) return false;
 		// The AC-130 and a lock launcher's ADS view fire natively along the view.
 		if (view_aimed::active()) return false;
+		// Native view-aimed devices (Cobra designator, C4 detonator) are never the
+		// held VR gun, whose independent clock would otherwise refuse their attack.
+		if (view_aimed::weapon(view_aimed::native_weapon(ps))) return false;
 		// Owned DObjs do not imply an independent ballistic implementation. The
 		// projected launcher needs native +attack for automatic ADS and lock-on;
 		// a bullet weapon in the other hand can still use its independent clock.
