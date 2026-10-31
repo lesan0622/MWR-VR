@@ -83,7 +83,15 @@ namespace vr::gameplay::c4_detonator
 			}
 			return 0;
 		}
-		bool owns_detonator() noexcept {return detonator_token() != 0;}
+		// Held only while the script has selected it (bog_a switches to the empty
+		// detonator). village_assault carries "c4" as placeable equipment in an
+		// action slot: owning it must not put a detonator in the hand (user: it
+		// appeared after every respawn there and took the GP25 loading hand).
+		bool owns_detonator() noexcept
+		{
+			const auto token = detonator_token();
+			return token && (view_aimed::native_weapon(game::g_entities[0].client) & 0x1ff) == token;
+		}
 		anchor attachment(unsigned h, const snapshot& s) noexcept
 		{
 			return h ? authored::detonator_attachment : pose_mirror::object_in_wrist({}, authored::detonator_attachment, s.mirror[h]);
