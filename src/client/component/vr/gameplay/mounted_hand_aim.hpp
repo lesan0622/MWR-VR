@@ -7,10 +7,10 @@
 #include <cstdint>
 
 // Mounted and vehicle guns (airlift Mk19, MG turrets): the native viewmodel hands
-// hold the spade grips, so the Grip buttons are the handles. While gripped, the
-// gun swings about a pintle ahead of the hands like the real mount: hands left
-// turn the barrel right, hands down raise it. Released, the gun stays where it
-// was left. All in the HMD tracking reference (H2 axes: forward, left, up), so
+// always hold the spade grips (user: no grab step). The gun swings about a pintle
+// ahead of the tracked hands like the real mount: hands left turn the barrel
+// right, hands down raise it. A hand losing tracking re-anchors without a jump.
+// All in the HMD tracking reference (H2 axes: forward, left, up), so
 // the gun's native view never feeds back into the hands.
 namespace vr::gameplay::mounted_hand_aim
 {
@@ -51,7 +51,7 @@ namespace vr::gameplay::mounted_hand_aim
 			unsigned held{};vec center{};
 			for (int h = 0; h < 2; ++h)
 			{
-				if (!input.squeeze[h].active || !input.squeeze[h].down || !input.grip[h].valid) continue;
+				if (!input.grip[h].valid) continue;
 				const auto p = local_position(frame.reference, input.grip[h].tracking.position_meters);
 				if (!std::isfinite(p[0] + p[1] + p[2])) continue;
 				held |= 1u << h;
@@ -61,7 +61,7 @@ namespace vr::gameplay::mounted_hand_aim
 			if (count) for (auto& x : center) x /= float(count);
 			if (held != held_)
 			{
-				// A hand taken or released re-anchors the pintle on the current aim.
+				// A hand gaining or losing tracking re-anchors the pintle on the current aim.
 				held_ = held;
 				if (count)
 				{

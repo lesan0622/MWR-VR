@@ -209,7 +209,7 @@ namespace vr::controllers
 					}
 					else if (gameplay::view_aimed::mounted() && turret_hand_aim && turret_hand_aim->current.enabled &&
 						[&] {
-							// Turret/vehicle gun (airlift Mk19): the Grip buttons hold its
+							// Turret/vehicle gun (airlift Mk19): the hands always hold its
 							// handles and the arms swing it about its pintle (user request).
 							std::array<float, 2> aim{};
 							const float pitch = angles[0];
@@ -399,8 +399,7 @@ namespace vr::controllers
 				// The world-use lease that mounted the gun ends with the mount, one
 				// command before the predicted turret flag appears; a grip still held
 				// from that press must not become a second edge. Require a release.
-				// With hand aim the grips hold the gun's handles: B is the use key.
-				const auto& use = turret_hand_aim && turret_hand_aim->current.enabled ? input.secondary[1] : input.squeeze[1];
+				const auto& use = input.squeeze[1];
 				const bool down = use.active && use.down;
 				if (!down) turret_use_armed = true;
 				if (turret_use_armed && use.presses != turret_use_presses)
@@ -408,7 +407,7 @@ namespace vr::controllers
 				if (turret_use_armed && down) cmd->buttons |= 0x8;
 			}
 			else turret_use_armed = false;
-			turret_use_presses = (turret_hand_aim && turret_hand_aim->current.enabled ? input.secondary[1] : input.squeeze[1]).presses;
+			turret_use_presses = input.squeeze[1].presses;
 		}
 
 		game::usercmd_s* create_command_stub(game::usercmd_s* output, const int local_client)
@@ -610,7 +609,7 @@ namespace vr::controllers
 			auto_ads=dvars::register_bool("vr_autoAds",true,game::DVAR_FLAG_SAVED,
 				"Request native ADS while a supported physical weapon is raised to the sights");
 			turret_hand_aim=dvars::register_bool("vr_turretHandAim",true,game::DVAR_FLAG_SAVED,
-				"Mounted and vehicle guns: Grip holds the handles and the arms swing the gun (B uses/dismounts)");
+				"Mounted and vehicle guns: the hands hold the handles and the arms swing the gun");
 			// MWR CL_KeyMove sets/clears usercmd bit 11 before FinishMove.
 			ads_verified=check(0x1401AA0C2,{0x81,0x4b,0x04,0x00,0x08,0x00,0x00}) &&
 				check(0x1401AA0B9,{0x81,0x63,0x04,0xff,0xf7,0xff,0xff});
