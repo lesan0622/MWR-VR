@@ -96,8 +96,12 @@ namespace vr::gameplay::weapons::underbarrel
 				// tag_m203, past the muzzle: loading went in at the muzzle (user, headset).
 				// The round seats at the breech, 1.8 in into the tube, where the opened
 				// tube (j_m203_slide forward by the stroke) exposes it.
-				if(k==kind::m203)out.round_rest.position=compose(out.mount,{{1.8f,0,0},{0,0,0,1}}).position;
-				out.muzzle=compose(out.mount,k==kind::m203?authored::m203_muzzle:authored::gp25_muzzle);
+				// The H1 tubes' bore is 1.26 in below tag_m203 (the launcher j_grenade
+				// and the GP25 body extents), where H2's authored points sat 1.3-1.5 in
+				// higher: a round aimed at the visible bore missed the 4.5 cm load radius.
+				if(k==kind::m203)out.round_rest.position=compose(out.mount,{{1.8f,.059f,-1.262f},{0,0,0,1}}).position;
+				out.muzzle=k==kind::m203?compose(out.mount,authored::m203_muzzle):
+					compose(out.mount,{{10.841f,.059f,-1.262f},{0,0,0,1}}); // GP25 body front, on the bore.
 				const std::array<std::string_view,2> parts{"j_grenade_main","j_grenade_shell"};
 				for(int n=0;n<2;++n)
 				{

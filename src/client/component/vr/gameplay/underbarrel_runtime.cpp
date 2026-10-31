@@ -57,6 +57,7 @@ namespace vr::gameplay::weapons::underbarrel
 			int last_fire{};
 			const char* decision{"waiting for fresh input"};
 			std::array<float, 4> contact{};
+			std::array<float, 2> load{10, 0}; // Held round: distance to the loading point (m), alignment.
 			std::uint64_t same_hand_chords{};
 			std::uint64_t native_reductions{};
 			int last_native_before{}, last_native_after{};
@@ -418,12 +419,19 @@ namespace vr::gameplay::weapons::underbarrel
 					runtime.decision = "support hand occupied";
 				runtime.view.grip = lease::none;
 				if (runtime.view.ammo.held)
+				{
+					for (const auto& s : hand_interaction::current())
+						if (s && s.actor == hand(off))
+							console::info("[VR underbarrel] held round lost: hand %d taken by domain=%u role=%u button=%u settling=%d\n",
+								off, unsigned(s.held.destination.provider), unsigned(s.held.purpose), unsigned(s.held.maintained), int(s.settling));
 					(void)apply(runtime, operation::cleanup);
+				}
 				publish(runtime);
 				return;
 			}
 			if (runtime.view.ammo.held)
 			{
+				runtime.load = {contact.load_distance, contact.load_alignment};
 				if (!pinch.active || !pinch.down || !input.trigger[off].active || !input.trigger[off].down ||
 				    input.trigger[off].generation != pinch.generation)
 				{
@@ -934,7 +942,7 @@ namespace vr::gameplay::weapons::underbarrel
 		for(const auto& e:records.entries())if(e.id){const auto& r=e.value;const auto& v=r.view;out<<"host="<<e.id.weapon<<" generation="<<e.id.generation<<" module="<<v.ammo.id.definition<<" kind="<<int(v.ammo.id.type)
 			<<" loaded="<<v.ammo.loaded<<" reserve="<<v.ammo.reserve<<" held="<<v.ammo.held<<" chamber="<<v.ammo.chamber<<" open="<<v.ammo.open<<" spent="<<v.ammo.spent<<" travel="<<v.travel<<" grip="<<int(v.grip)<<" fault="<<v.fault
 			<<" input="<<r.sequence<<" same_hand_chords="<<r.same_hand_chords<<" native_reductions="<<r.native_reductions<<" last_native="<<r.last_native_before<<"->"<<r.last_native_after
-			<<" decision="<<r.decision<<" fire_distance/up/inward/waist="<<r.contact[0]<<'/'<<r.contact[1]<<'/'<<r.contact[2]<<'/'<<r.contact[3]<<'\n';}
+			<<" decision="<<r.decision<<" fire_distance/up/inward/waist="<<r.contact[0]<<'/'<<r.contact[1]<<'/'<<r.contact[2]<<'/'<<r.contact[3]<<" load_distance/alignment="<<r.load[0]<<'/'<<r.load[1]<<'\n';}
 		return out.str();
 	}
 	std::string report_status()
