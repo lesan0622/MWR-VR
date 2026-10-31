@@ -21,6 +21,7 @@
   "language.gameSaving": "正在检查并保存游戏语言…",
   "language.gameSaved": "游戏语言已保存，将在下次启动时生效。",
   "language.gameLoadError": "无法读取语言包或游戏语言设置，请刷新重试。",
+  "language.gameSteam": "MWR takes its game language from Steam. Change it in the Steam library: right-click the game > Properties > Language.",
   "language.gameSaveError": "无法保存游戏语言，请检查文件夹权限及磁盘空间。",
   "language.gameUnavailable": "此官方语言包尚未完整安装，请安装后刷新列表。",
   "language.gameCurrentUnavailable": "当前保存的游戏语言未完整安装，请选择可用语言。",

@@ -7,6 +7,7 @@
 #include <CascLib.h>
 #include <chrono>
 #include <fstream>
+#include <regex>
 
 namespace launcher_game_language
 {
@@ -92,8 +93,62 @@ namespace launcher_game_language
 			return choices;
 		}
 
+		// MWR (Steam) is a plain folder, not CASC storage: each installed language
+		// is a <name>/ folder with <code>_common.ff and its sound packs. The game
+		// takes its language from Steam (appmanifest_393080.acf "language").
+		bool folder_layout(const std::filesystem::path& root)
+		{
+			std::error_code error;
+			return std::filesystem::exists(root / "h1_sp64_ship.exe", error) && !std::filesystem::exists(root / ".build.info", error);
+		}
+		json installed_folders(const std::filesystem::path& root)
+		{
+			json choices = json::array();
+			for (const auto& language : languages)
+			{
+				std::error_code error;
+				const auto folder = root / language.name;
+				const auto prefix = std::string(language.code) + "_";
+				bool audio{};
+				if (!std::filesystem::exists(folder / (prefix + "common.ff"), error) ||
+					!std::filesystem::exists(folder / (prefix + "code_post_gfx.ff"), error)) continue;
+				for (const auto& entry : std::filesystem::directory_iterator(folder, error))
+					if (entry.path().extension() == ".pak") {audio = true;break;}
+				if (audio) choices.push_back({{"value", language.name}, {"label", language.label}});
+			}
+			return choices;
+		}
+		std::string steam_language(const std::filesystem::path& root)
+		{
+			// <library>/steamapps/common/<game> -> <library>/steamapps/appmanifest_393080.acf
+			std::ifstream file(root.parent_path().parent_path() / "appmanifest_393080.acf", std::ios::binary);
+			std::string text((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+			std::smatch match;
+			if (!std::regex_search(text, match, std::regex("\"language\"\\s*\"([^\"]+)\""))) return {};
+			static const std::pair<std::string_view, const char*> steam[]{
+				{"english", "english"}, {"french", "french"}, {"german", "german"}, {"italian", "italian"},
+				{"spanish", "spanish"}, {"latam", "spanishna"}, {"russian", "russian"}, {"polish", "polish"},
+				{"brazilian", "portuguese"}, {"japanese", "japanese_full"}, {"tchinese", "traditional_chinese"},
+				{"schinese", "simplified_chinese"}, {"arabic", "arabic"}, {"koreana", "korean"}, {"korean", "korean"}};
+			for (const auto& [name, language] : steam) if (match[1].str() == name) return language;
+			return {};
+		}
+
 		std::string execute(const std::filesystem::path& root, const std::string& requested, const std::atomic<bool>& cancelled)
 		{
+			if (folder_layout(root))
+			{
+				// The launcher cannot switch it: Steam's per-game language setting does.
+				if (!requested.empty()) return failure("language.gameSteam");
+				try
+				{
+					const auto choices = installed_folders(root);
+					auto selected = steam_language(root);
+					if (selected.empty() && choices.size() == 1) selected = choices[0].at("value").get<std::string>();
+					return json{{"ok", true}, {"language", selected.empty() ? "english" : selected}, {"choices", choices}, {"saved", false}}.dump();
+				}
+				catch (...) { return failure("language.gameLoadError"); }
+			}
 			json choices;
 			try { choices = installed(root, cancelled); }
 			catch (...) { return failure("language.gameLoadError"); }

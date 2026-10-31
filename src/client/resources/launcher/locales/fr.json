@@ -21,6 +21,7 @@
   "language.gameSaving": "Vérification et enregistrement de la langue du jeu…",
   "language.gameSaved": "Langue du jeu enregistrée. Elle sera appliquée au prochain lancement.",
   "language.gameLoadError": "Impossible de lire les packs ou la préférence de langue. Actualisez pour réessayer.",
+  "language.gameSteam": "MWR takes its game language from Steam. Change it in the Steam library: right-click the game > Properties > Language.",
   "language.gameSaveError": "Impossible d’enregistrer la langue. Vérifiez les droits du dossier et l’espace disque.",
   "language.gameUnavailable": "Ce pack officiel n’est pas entièrement installé. Actualisez la liste après l’installation.",
   "language.gameCurrentUnavailable": "La langue enregistrée n’est pas entièrement installée. Choisissez une langue disponible.",

@@ -21,6 +21,7 @@
   "language.gameSaving": "Comprobando y guardando el idioma del juego…",
   "language.gameSaved": "Idioma guardado. Se aplicará al volver a iniciar el juego.",
   "language.gameLoadError": "No se pudieron leer los paquetes o el ajuste de idioma. Actualiza para reintentar.",
+  "language.gameSteam": "MWR takes its game language from Steam. Change it in the Steam library: right-click the game > Properties > Language.",
   "language.gameSaveError": "No se pudo guardar el idioma. Comprueba los permisos de la carpeta y el espacio libre.",
   "language.gameUnavailable": "Este paquete oficial no está instalado por completo. Actualiza la lista después de instalarlo.",
   "language.gameCurrentUnavailable": "El idioma guardado no está instalado por completo. Elige uno disponible.",

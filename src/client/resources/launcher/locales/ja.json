@@ -21,6 +21,7 @@
   "language.gameSaving": "ゲームの言語を確認して保存中…",
   "language.gameSaved": "ゲームの言語を保存しました。次回起動時に反映されます。",
   "language.gameLoadError": "言語パックまたは言語設定を読み込めませんでした。再読み込みしてください。",
+  "language.gameSteam": "MWR takes its game language from Steam. Change it in the Steam library: right-click the game > Properties > Language.",
   "language.gameSaveError": "ゲームの言語を保存できませんでした。フォルダーの権限と空き容量を確認してください。",
   "language.gameUnavailable": "この公式言語パックは完全にインストールされていません。インストール後に再読み込みしてください。",
   "language.gameCurrentUnavailable": "保存されたゲーム言語は完全にインストールされていません。利用可能な言語を選んでください。",

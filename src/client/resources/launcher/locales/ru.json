@@ -21,6 +21,7 @@
   "language.gameSaving": "Проверка и сохранение языка игры…",
   "language.gameSaved": "Язык игры сохранён и будет применён при следующем запуске.",
   "language.gameLoadError": "Не удалось прочитать языковые пакеты или настройку языка. Обновите список.",
+  "language.gameSteam": "MWR takes its game language from Steam. Change it in the Steam library: right-click the game > Properties > Language.",
   "language.gameSaveError": "Не удалось сохранить язык игры. Проверьте права доступа к папке и свободное место.",
   "language.gameUnavailable": "Этот официальный языковой пакет установлен не полностью. Обновите список после установки.",
   "language.gameCurrentUnavailable": "Сохранённый язык игры установлен не полностью. Выберите доступный язык.",
