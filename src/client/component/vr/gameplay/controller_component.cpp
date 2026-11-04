@@ -24,6 +24,7 @@
 #include "barrett_gun.hpp"
 #include "mounted_hand_aim.hpp"
 #include "air_support.hpp"
+#include "dog_escape.hpp"
 #include "ladder_runtime.hpp"
 #include "game/dvars.hpp"
 #include "game/game.hpp"
@@ -344,6 +345,11 @@ namespace vr::controllers
 				cmd->buttons |= attack_button;
 				++attack_count;
 			}
+			// Claymore plant gesture: one native attack once the claymore is raised.
+			if (gameplay && gameplay::air_support::plant_attack_requested()) cmd->buttons |= attack_button;
+			// Dog attack (animscripts/dog/dog_combat player_attacked): a fresh Grip or
+			// Trigger press is the native melee press that snaps the dog's neck.
+			if (gameplay::dog_escape::melee(input, now)) cmd->buttons |= game::BUTTON_MELEE;
 			// usercmd attack bits and weapon_fired do not deliver notifyoncommand
 			// waits. Use the same reliable binding notification as a native key,
 			// once per deliberate trigger press, without firing a second bullet.

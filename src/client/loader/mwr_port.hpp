@@ -85,6 +85,7 @@ namespace mwr_port
 		"vr::gameplay::c4_detonator", // maps/_c4 detonator: trigger press sends the player's "detonate".
 		"vr::gameplay::aftermath_crawl", // aftermath prone crawl pulled by planted hands (Grip).
 		"vr::gameplay::air_support", // village_assault Cobra designator: hand at the ear + Grip, point, Trigger.
+		"vr::gameplay::dog_escape", // Dog jump: Grip/Trigger is the native melee press that snaps its neck.
 	};
 
 	// typeid names look like "class vr::gameplay::foo::component".
