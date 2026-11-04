@@ -12,8 +12,8 @@ namespace product
 	inline constexpr auto application_key = "overlord";
 	inline constexpr auto application_manifest = L"overlord.vrmanifest";
 #endif
-	inline constexpr auto repository_url = "https://github.com/Aeka0/Overlord";
-	inline constexpr auto releases_url = "https://github.com/Aeka0/Overlord/releases";
+	inline constexpr auto repository_url = "https://github.com/lesan0622/Overlord-MWR-VR";
+	inline constexpr auto releases_url = "https://github.com/lesan0622/Overlord-MWR-VR/releases";
 	// MWR port: problem reports go to its maintainer by email.
 	inline constexpr auto issues_url = "mailto:lesan00622@gmail.com?subject=Overlord%20MWR%20VR%20issue";
 

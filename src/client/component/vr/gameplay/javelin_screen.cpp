@@ -33,6 +33,7 @@ namespace vr::gameplay::weapons::javelin_screen
 	{
 		namespace probe=diagnostics::screen;
 		game::dvar_t* option{};
+		game::dvar_t* head_aim_option{};
 		std::atomic_bool alive{true};
 		std::mutex mutex;
 		proximity_controls proximity;
@@ -589,6 +590,7 @@ namespace vr::gameplay::weapons::javelin_screen
 		const std::lock_guard lock(mutex);
 		return camera.epoch;
 	}
+	bool head_aim() noexcept {return head_aim_option && head_aim_option->current.enabled;}
 	void apply_camera(float* origin, float (*axis)[3], bool allowed, float* tan_half) noexcept
 	{
 		const auto value = current();
@@ -603,10 +605,22 @@ namespace vr::gameplay::weapons::javelin_screen
 		    display_profile(muzzle.profile_id) &&
 		    ready(muzzle, value.owner, frame.reference_generation, controller_input::clock::now()))
 		{
-			next = {muzzle, value.epoch, controller_input::clock::now()};
-			std::copy(muzzle.position.begin(), muzzle.position.end(), origin);
-			for (unsigned i = 0; i < 3; ++i)
-				std::copy(muzzle.axis[i].begin(), muzzle.axis[i].end(), axis[i]);
+			if (head_aim())
+			{
+				// Head aim (vr_launcherHeadAim): the display and the lock view stay
+				// on the head camera; the launcher only has to be at the shoulder.
+				auto head = muzzle;
+				std::copy(origin, origin + 3, head.position.begin());
+				for (unsigned i = 0; i < 3; ++i) std::copy(axis[i], axis[i] + 3, head.axis[i].begin());
+				next = {head, value.epoch, controller_input::clock::now()};
+			}
+			else
+			{
+				next = {muzzle, value.epoch, controller_input::clock::now()};
+				std::copy(muzzle.position.begin(), muzzle.position.end(), origin);
+				for (unsigned i = 0; i < 3; ++i)
+					std::copy(muzzle.axis[i].begin(), muzzle.axis[i].end(), axis[i]);
+			}
 			// Preserve optical framing during native reload and ADS interpolation.
 			// HUD projection sees this same corrected widescreen camera.
 			fov_in_x = tan_half[0]; fov_in_y = tan_half[1];
@@ -623,6 +637,8 @@ namespace vr::gameplay::weapons::javelin_screen
 		void post_unpack() override
 		{
 			scheduler::loop(observe_stinger_lock, scheduler::pipeline::server, 100ms);
+			head_aim_option = dvars::register_bool("vr_launcherHeadAim", false, game::DVAR_FLAG_SAVED,
+			    "Javelin/Stinger: aim and lock with the head instead of the launcher tube");
 			option = dvars::register_bool(
 			    "vr_javelinDisplay",
 			    true,

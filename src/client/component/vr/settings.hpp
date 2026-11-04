@@ -109,6 +109,7 @@ namespace vr::settings
 	inline constexpr boolean_setting physical_ladders{"vr_physicalLadders", true};
 	inline constexpr boolean_setting ammo_counter{"vr_ammoCounter", true};
 	inline constexpr boolean_setting smart_ammo_selection{"vr_smartAmmoSelection", true};
+	inline constexpr boolean_setting launcher_head_aim{"vr_launcherHeadAim", false};
 	inline constexpr boolean_setting discard_ammo_penalty{"vr_discardAmmoPenalty", false};
 	inline constexpr boolean_setting hide_hud{"vr_hideHud", false};
 	inline constexpr boolean_setting disable_blur{"vr_disableBlur", false};
@@ -129,6 +130,7 @@ namespace vr::settings
 		                              physical_ladders,
 		                              ammo_counter,
 		                              smart_ammo_selection,
+		                              launcher_head_aim,
 		                              discard_ammo_penalty,
 		                              hide_hud,
 		                              disable_blur,

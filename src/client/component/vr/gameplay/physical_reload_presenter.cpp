@@ -802,12 +802,10 @@ namespace vr::gameplay::weapons::physical_reload
 			mag=compose(as_anchor(solved[r.arms[off].wrist]),in_wrist);
 			next.held_world=mag;next.held_world.position=add(mag.position,view_offset);
 		}
-		// Rock-in: a hooked magazine turns about its lug instead of following the hand.
-		if (rock.hooked && state.active && !state.fault && int(state.ammo.magazine_hand)==int(off) && !state.ammo.magazine_inserted)
-		{
-			mag=compose(gun,rocked(*definition.interaction.rock,definition.magazine_rest,definition.magazine_top,rock.tilt));
-			next.held_world=mag;next.held_world.position=add(mag.position,view_offset);
-		}
+		// Rock-in: the hooked magazine stays in the hand (user, headset: it must be
+		// fully attached to the hand). Turning it about its lug drew it away from the
+		// palm; the hook and tilt still gate the insertion from the same pose.
+		(void)rock;
 		publish_scene(next);
 		if (slap_diagnostic.definition)
 		{

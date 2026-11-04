@@ -50,7 +50,9 @@ namespace vr::gameplay::view_aimed
 	// MWR playerState weapon +0x38C. The ammunition view is invalid for these devices.
 	inline std::uint32_t native_weapon(const void* ps) noexcept
 	{std::uint32_t token{};return ps && utils::native_memory::read_bytes(&token, static_cast<const std::byte*>(ps) + 0x38c, sizeof(token)) ? token : 0;}
-	inline bool weapon(std::uint32_t token) noexcept { return gunship_weapon(token) || lock_launcher(token) || scripted_detonator(token) || air_support_designator(token); }
+	// sniperescape claymore planted by the hand-to-floor gesture (air_support).
+	inline bool claymore(std::uint32_t token) noexcept { return weapon_name_starts(token, "claymor"); }
+	inline bool weapon(std::uint32_t token) noexcept { return gunship_weapon(token) || lock_launcher(token) || scripted_detonator(token) || air_support_designator(token) || claymore(token); }
 	// The local player's current native weapon (gentity weapon, +0x80) is an AC-130 gun.
 	inline bool gunship() noexcept
 	{

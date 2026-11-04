@@ -299,6 +299,7 @@ namespace vr::gameplay::weapons::physical_reload
 				if(g.attached_magazine_pose>=p.magazine_pose_count){decision_="magazine grip unavailable";return false;}
 				magazine_grabbed_=true;magazine_pose_=g.attached_magazine_pose;
 				knife_magazine_grasp_=g.knife_held;magazine_start_=previous_hand_=g.hand_in_gun;
+				rock_start_tilt_=g.rock_tilt;rock_engaged_=p.rock!=nullptr; // Rock-out keeps the wide hold band.
 				feedback_=mechanics::effect::action_grab;decision_="seated magazine acquired";return true;
 			};
 			// A centrally granted pinch and rear release may share one tracked
@@ -405,6 +406,32 @@ namespace vr::gameplay::weapons::physical_reload
 				{
 					previous_hand_=g.hand_in_gun;
 					decision_="magazine locked; waiting for release button";
+					return;
+				}
+				if (p.rock)
+				{
+					// AK rock-out (user): the latch frees the magazine only when it is
+					// rocked forward about its front lug, the reverse of the rock-in.
+					const float turn=g.rock_tilt-rock_start_tilt_;
+					if (!trigger.down || !s.magazine_inserted || !std::isfinite(turn) ||
+						hands::length(hands::sub(g.hand_in_gun,previous_hand_))>p.max_contact_step ||
+						hands::length(hands::sub(g.hand_in_gun,magazine_start_))>p.rock->hold_radius)
+					{
+						magazine_grabbed_=rock_engaged_=false;
+						decision_="magazine rock-out released or tracking separated";
+						return;
+					}
+					previous_hand_=g.hand_in_gun;
+					decision_="magazine held; rock it forward to unlatch";
+					if (turn>=p.rock->arm_degrees+2.f)
+					{
+						const bool taken=apply(mechanics::operation::pull_magazine,offhand);
+						magazine_grabbed_=rock_engaged_=false;
+						decision_=taken ? "magazine rocked out into hand" : "magazine pull transaction rejected";
+						previous_tip_=g.magazine_top_in_well;
+						well_contact_=false; require_withdrawal_=taken;
+						latch_contact_.reset();
+					}
 					return;
 				}
 				const auto delta=hands::sub(g.hand_in_gun,magazine_start_);
@@ -687,6 +714,7 @@ namespace vr::gameplay::weapons::physical_reload
 		bool slide_held_{}, forward_armed_{}, magazine_seated_{}, magazine_grabbed_{}, require_withdrawal_{}, well_contact_{};
 		bool rock_armed_{}; // Rock-in: hooked while tilted at least arm_degrees.
 		bool rock_engaged_{}; // Rock-in: hooked on the last sample (wider hold band).
+		float rock_start_tilt_{}; // Rock-out: magazine tilt when the seated magazine was taken.
 		bool knife_magazine_grasp_{}; // Frozen until release: returning the knife cannot move a held magazine.
 		std::uint8_t magazine_pose_{};
 		bool knife_slide_grasp_{}; // Likewise, returning the knife cannot reselect the held slide style.

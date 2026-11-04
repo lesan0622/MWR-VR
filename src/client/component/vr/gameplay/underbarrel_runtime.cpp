@@ -419,13 +419,7 @@ namespace vr::gameplay::weapons::underbarrel
 					runtime.decision = "support hand occupied";
 				runtime.view.grip = lease::none;
 				if (runtime.view.ammo.held)
-				{
-					for (const auto& s : hand_interaction::current())
-						if (s && s.actor == hand(off))
-							console::info("[VR underbarrel] held round lost: hand %d taken by domain=%u role=%u button=%u settling=%d\n",
-								off, unsigned(s.held.destination.provider), unsigned(s.held.purpose), unsigned(s.held.maintained), int(s.settling));
 					(void)apply(runtime, operation::cleanup);
-				}
 				publish(runtime);
 				return;
 			}
@@ -583,8 +577,7 @@ namespace vr::gameplay::weapons::underbarrel
 				const auto binding=native::resolve(s.owner.id());if(!binding || binding.id!=ammo.id)continue;
 				const auto observed=native::observe(binding);if(!observed.valid)continue;
 				const auto sync=reconcile(ammo,binding.id,observed.ammo);
-				if(!sync || sync.native_after!=observed.ammo)
-				{console::info("[VR underbarrel] pinch skipped: native ammo out of sync (native %d/%d)\n",int(observed.ammo.loaded),int(observed.ammo.reserve));continue;}
+				if(!sync || sync.native_after!=observed.ammo)continue;
 				ammo=sync.next;
 			}
 			s=sample_contact(s,input.input,live->owner,live->gun,input.wrists[s.contact_hand],input.body.head_position,input.body.head_yaw_axis,input.body.units_per_meter,view.travel);
@@ -597,10 +590,6 @@ namespace vr::gameplay::weapons::underbarrel
 			{
 				const bool preferred=smart && !view.fault && prefer_secondary_supply(ammo,view.travel,s.stroke,physical_reload::primary_supply_needed(s.owner.id()));
 				const bool secondary=select_secondary_supply(smart,preferred,grip.down);
-				// Headset diagnosis (user cannot reach Ctrl+Shift+F8): every waist draw decision.
-				console::info("[VR underbarrel] waist pinch hand=%d grip=%d free=%d smart=%d preferred=%d secondary=%d loaded=%d reserve=%d open=%d spent=%d held=%d travel=%.3f stroke=%.3f fault=%d\n",
-					int(s.contact_hand),int(grip.down),int(hi::free(actor)),int(smart),int(preferred),int(secondary),int(ammo.loaded),int(ammo.reserve),
-					int(ammo.open),int(ammo.spent),int(ammo.held),view.travel,s.stroke,int(view.fault));
 				if(hi::free(actor))hi::select_supply(actor,secondary?hi::domain::underbarrel:hi::domain::magazine,s.owner.id());
 				if(secondary)hi::offer({actor,{hi::object(hi::domain::underbarrel,s.owner.id(),0,s.assembly),hi::role::supply,hi::button::trigger,hi::recipe::single,{}},pinch.event,30,s.waist_distance/s.waist_radius,1,true,true});
 			}

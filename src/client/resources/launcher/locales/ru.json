@@ -141,6 +141,8 @@
   "settings.ammoDrop": "Потеря выброшенных патронов",
   "settings.smartAmmoSelection": "Умный выбор боеприпасов",
   "settings.smartAmmoSelectionHint": "У пояса основной магазин имеет приоритет, если он снят или заряженные патроны закончились. Иначе выбирается граната для пустого и достаточно открытого M203 или пустого ГП-25, либо патрон, если в трубчатом магазине подствольного дробовика есть место. Удерживайте Grip для выбора другого типа. По умолчанию включено.",
+  "settings.launcherHeadAim": "Javelin/Stinger head aim",
+  "settings.launcherHeadAimHint": "With the launcher shouldered and its display open, aim and lock with your head instead of the launcher tube. Off by default.",
   "settings.ammoDropHint": "Оставшиеся патроны в выброшенных магазинах теряются. Отпустите удерживаемый магазин у пояса, чтобы вернуть патроны. По умолчанию выключено.",
   "about.stage": "{version}",
   "about.github": "Страница GitHub",

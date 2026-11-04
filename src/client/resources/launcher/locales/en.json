@@ -143,6 +143,8 @@
   "settings.ammoDrop": "Discard ammo penalty",
   "settings.smartAmmoSelection": "Smart ammo selection",
   "settings.smartAmmoSelectionHint": "At your waist, prioritize a missing primary magazine or an empty primary feed; otherwise choose a grenade for an empty, sufficiently open M203 or empty GP-25, or a shell when the underbarrel shotgun tube has room. Hold Grip for the other ammo type. On by default.",
+  "settings.launcherHeadAim": "Javelin/Stinger head aim",
+  "settings.launcherHeadAimHint": "With the launcher shouldered and its display open, aim and lock with your head instead of the launcher tube. Off by default.",
   "settings.ammoDropHint": "Lose all remaining rounds in discarded magazines. Release held magazines at your waist to recover their rounds. Off by default.",
   "about.stage": "{version}",
   "about.github": "GitHub Page",

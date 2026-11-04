@@ -392,6 +392,14 @@
     "description": "settings.smartAmmoSelectionHint"
   },
   {
+    "name": "vr_launcherHeadAim",
+    "category": "gameplay",
+    "group": "settings.weaponInteraction",
+    "label": "settings.launcherHeadAim",
+    "type": "toggle",
+    "description": "settings.launcherHeadAimHint"
+  },
+  {
     "name": "vr_recoil",
     "category": "cheats",
     "group": "settings.noRecoil",
