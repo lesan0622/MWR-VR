@@ -224,7 +224,7 @@ namespace camera
 				request = {vr::game_view::camera_profiles::fixed_scope, gunship_epoch | (1ull << 59)};
 			// Stinger on the Javelin display steers the native view with its tube:
 			// hold the entry heading as for the Barrett.
-			else if (const auto stinger = vr::gameplay::weapons::javelin_screen::stinger_view_epoch())
+			else if (const auto stinger = vr::gameplay::weapons::javelin_screen::head_aim() ? 0 : vr::gameplay::weapons::javelin_screen::stinger_view_epoch())
 				request = {{vr::game_view::camera_owner::script, vr::game_view::head_rotation::free,
 					vr::game_view::head_translation::tracked}, stinger | (1ull << 60)};
 			// Held Barrett: the barrel steers the native angles, so the camera holds

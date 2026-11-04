@@ -180,7 +180,7 @@ namespace vr::controllers
 					auto* angles = reinterpret_cast<float*>(client_angles_address);
 					if (!gameplay::view_aimed::mounted()) turret_hands = {};
 					if (gameplay::view_aimed::gunship()) aim_flat_screen(angles, ps);
-					else if (gameplay::weapons::javelin_screen::stinger_view_epoch())
+					else if (!gameplay::weapons::javelin_screen::head_aim() && gameplay::weapons::javelin_screen::stinger_view_epoch())
 					{
 						// Stinger on the Javelin display: the tube is the native view, so the
 						// script's clearance traces and the launch follow it, not the head.
