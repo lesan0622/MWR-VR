@@ -27,6 +27,9 @@ Overlord MWR VR은 *콜 오브 듀티: 모던 워페어 리마스터*(2016) 캠�
   - *Safehouse*: 코브라 공중 지원. 손을 귀에 대고 그립을 누르고, 목표를 가리킨 뒤 트리거를 누릅니다.
   - *Aftermath*: 손으로 바닥을 짚고 당겨서 헬기 잔해 밖으로 기어 나갑니다.
   - 사다리는 손을 번갈아 잡으며 오릅니다.
+  - 클레이모어는 손을 바닥에 대고 설치하고, 덮친 개는 신호에 맞춰 그립·트리거로 떨쳐냅니다.
+- **실제로 웅크리거나 엎드리면** 게임 자세도 바뀝니다(스틱도 됩니다).
+- **재블린·스팅어 머리 조준** 옵션: 발사관 대신 머리 방향으로 조준하고 록온합니다.
 - **데스크톱 런처**: 처음 설정 안내, VR 설정, 편의·보조 옵션, 조작 도움말을 제공합니다.
 
 ## 요구 사항
@@ -42,7 +45,7 @@ Overlord MWR VR은 *콜 오브 듀티: 모던 워페어 리마스터*(2016) 캠�
 
 ## 설치
 
-이 저장소의 Releases 페이지에서 최신 버전을 받으세요.
+[Releases 페이지](https://github.com/lesan0622/Overlord-MWR-VR/releases)에서 최신 버전을 받으세요.
 
 **설치 프로그램(권장)**: `OverlordMWR-VR-Setup.exe`를 실행합니다.
 - Steam(과 Battle.net)에서 게임 폴더를 찾고, 설치 전에 한 번 묻습니다.
@@ -109,8 +112,8 @@ Call of Duty Modern Warfare Remastered/
 그다음 개발자 명령 프롬프트에서 실행합니다.
 
 ~~~bat
-git clone --recurse-submodules https://github.com/<계정>/overlord-mwr-vr.git
-cd overlord-mwr-vr
+git clone --recurse-submodules https://github.com/lesan0622/Overlord-MWR-VR.git
+cd Overlord-MWR-VR
 generate.bat
 msbuild build\overlord.sln /m /p:Configuration=Release /p:Platform=x64
 python tools\build_installer.py Release

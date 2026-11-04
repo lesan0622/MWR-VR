@@ -14,8 +14,6 @@
 #include "loader/component_loader.hpp"
 #include <utils/native_memory.hpp>
 
-namespace vr::gameplay::weapons::reload_boundary {std::string fire_gate_status();}
-namespace vr::controllers {std::string fire_input_status();}
 namespace vr::gameplay::air_support
 {
 	namespace
@@ -286,8 +284,6 @@ namespace vr::gameplay::air_support
 				const auto c = claymore_slot();
 				const auto ammo = c.weapon ? weapons::native_ammunition::observe_carried(game::g_entities[0].client, c.weapon) : weapons::native_ammunition::snapshot{};
 				console::info("[VR claymore] valid=%d loaded=%d reserve=%d\n", int(ammo.valid), int(ammo.loaded), int(ammo.reserve));
-				const auto gate = weapons::reload_boundary::fire_gate_status() + controllers::fire_input_status();
-				console::info("%s", gate.c_str());
 			});
 		}
 		void pre_destroy() override {running = false;}

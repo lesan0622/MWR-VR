@@ -831,94 +831,24 @@
       "id": "stance",
       "category": "movement",
       "text": {
-        "zh-CN": {
-          "title": "蹲下、趴下与跳跃",
-          "intro": "右摇杆上下改变游戏中的姿态，按下右摇杆用于起身或跳跃。",
-          "steps": [
-            "明确向下推右摇杆：站立变蹲姿，再推一次变趴姿。明确向上推则反向逐级起身。",
-            "每次操作后让摇杆上下方向回中；持续推住一段时间也会继续变换一档。",
-            "蹲着或趴着时，按下右摇杆先起身。这一次持续按住不会紧接着跳；站稳后重新按下才请求跳跃。",
-            "低矮空间、梯子和部分剧情阶段会限制姿态变化。现实中弯腰不等于发出游戏蹲姿指令。"
-          ]
-        },
         "en": {
           "title": "Crouching, going prone and jumping",
-          "intro": "The right stick’s vertical axis changes stance. Clicking it stands you up or jumps.",
+          "intro": "Crouch or lie down for real, or use the right stick's vertical axis.",
           "steps": [
-            "Push the right stick firmly down to crouch from standing, then again to go prone. Firm upward pushes step back toward standing.",
-            "Return the vertical axis to centre between pushes. Holding a direction briefly can continue one more stance step.",
-            "Clicking while crouched or prone requests standing. That held click does not then jump; click again once standing to request a jump.",
-            "Low ceilings, ladders and some scripted sequences restrict stance. Bending physically is separate from issuing an in-game crouch command."
-          ]
-        },
-        "zh-TW": {
-          "title": "蹲下、趴下與跳躍",
-          "intro": "右搖桿上下改變游戲中的姿態，按下右搖桿用于起身或跳躍。",
-          "steps": [
-            "明確向下推右搖桿：站立變蹲姿，再推一次變趴姿。明確向上推則反向逐級起身。",
-            "每次操作后讓搖桿上下方向回中；持續推住一段時間也會繼續變換一檔。",
-            "蹲著或趴著時，按下右搖桿先起身。這一次持續按住不會緊接著跳；站穩后重新按下才請求跳躍。",
-            "低矮空間、梯子和部分劇情階段會限制姿態變化。現實中彎腰不等于發出游戲蹲姿指令。"
-          ]
-        },
-        "fr": {
-          "title": "S’accroupir, se coucher et sauter",
-          "intro": "L’axe vertical du stick droit change la posture. Un clic relève ou fait sauter.",
-          "steps": [
-            "Poussez franchement vers le bas pour vous accroupir, puis encore pour vous coucher. Vers le haut, remontez d’une posture à la fois.",
-            "Recentrez entre deux poussées. Maintenir brièvement une direction peut franchir une étape supplémentaire.",
-            "Un clic accroupi ou couché demande de se relever. Le maintenir ne fait pas ensuite sauter ; cliquez de nouveau une fois debout.",
-            "Plafonds bas, échelles et séquences peuvent limiter la posture. Se baisser physiquement ne remplace pas la commande d’accroupissement."
-          ]
-        },
-        "de": {
-          "title": "Ducken, Hinlegen und Springen",
-          "intro": "Rechter Stick vertikal wechselt die Haltung. Einklicken richtet auf oder springt.",
-          "steps": [
-            "Kräftig nach unten drücken: aus dem Stand ducken, nochmals hinlegen. Nach oben schrittweise aufrichten.",
-            "Zwischen Bewegungen zentrieren. Kurzes Halten kann einen weiteren Haltungsschritt auslösen.",
-            "Im Ducken oder Liegen richtet ein Klick auf. Gehaltenes Einklicken springt danach nicht; im Stand erneut klicken.",
-            "Niedrige Decken, Leitern und Skriptsequenzen können die Haltung begrenzen. Körperliches Bücken ist unabhängig vom Hockbefehl."
-          ]
-        },
-        "es": {
-          "title": "Agacharse, tumbarse y saltar",
-          "intro": "El eje vertical del stick derecho cambia la postura. Pulsarlo te levanta o hace saltar.",
-          "steps": [
-            "Empuja con firmeza abajo para agacharte y de nuevo para tumbarte. Arriba vuelve por pasos a estar de pie.",
-            "Devuelve el eje al centro entre movimientos. Mantener una dirección brevemente puede cambiar un paso más.",
-            "Pulsar agachado o tumbado pide levantarse. Mantener la pulsación no salta después; vuelve a pulsar ya de pie.",
-            "Techos bajos, escaleras y secuencias pueden limitar la postura. Agacharte físicamente es distinto de dar la orden de agacharse."
-          ]
-        },
-        "ru": {
-          "title": "Приседание, положение лёжа и прыжок",
-          "intro": "Вертикальная ось правого стика меняет стойку. Нажатие поднимает или вызывает прыжок.",
-          "steps": [
-            "Уверенно отклоните вниз, чтобы присесть, затем ещё раз — лечь. Отклонения вверх поэтапно возвращают в стойку.",
-            "Между отклонениями возвращайте стик в центр. Короткое удержание может переключить ещё на одну стойку.",
-            "Нажатие сидя или лёжа поднимает. Удержание не превращается в прыжок; стоя нажмите снова.",
-            "Низкие потолки, лестницы и сцены могут ограничивать стойку. Физический наклон отличается от игровой команды присесть."
-          ]
-        },
-        "ja": {
-          "title": "しゃがむ・伏せる・跳ぶ",
-          "intro": "右スティックの上下で姿勢を変え、押し込みで立つかジャンプします。",
-          "steps": [
-            "下に大きく倒すと立ち姿勢からしゃがみ、もう一度で伏せます。上に倒すと段階的に立ち姿勢へ戻ります。",
-            "倒す操作の間は中央へ戻します。同じ方向にしばらく倒すと、さらに一段階姿勢が変わる場合があります。",
-            "しゃがみ・伏せ中の押し込みは立ち上がりです。押し続けてもその後ジャンプしません。立ってから改めて押してください。",
-            "低い天井、はしご、一部イベントでは姿勢が制限されます。実際に身体を曲げることとゲーム内のしゃがみ指示は別です。"
+            "Physical stance: lowering your head about 35 cm below your standing height crouches; about 85 cm goes prone. Rising back stands you up. The standing height is the highest head position since the last recenter, so recenter while standing.",
+            "Stick: push the right stick firmly down to crouch, then again to go prone; firm upward pushes step back toward standing. Return to centre between pushes.",
+            "Clicking while crouched or prone stands you up; click again once standing to jump.",
+            "If you play seated, turn physical stance off (console vr_physicalStance 0). Low ceilings, ladders and scripted scenes can restrict stance."
           ]
         },
         "ko": {
-          "title": "앉기, 엎드리기 및 점프",
-          "intro": "오른쪽 스틱의 수직축으로 자세를 바꾸며 누르면 일어서거나 점프합니다.",
+          "title": "앉기, 엎드리기, 점프",
+          "intro": "실제로 웅크리거나 엎드리면 자세가 바뀝니다. 오른쪽 스틱 위아래로도 바꿀 수 있습니다.",
           "steps": [
-            "아래로 확실히 기울이면 앉고 다시 기울이면 엎드립니다. 위로 기울이면 한 단계씩 일어섭니다.",
-            "동작 사이에 스틱을 중앙으로 돌리세요. 잠시 방향을 유지하면 자세가 한 단계 더 바뀔 수 있습니다.",
-            "앉거나 엎드린 상태에서 누르면 일어섭니다. 계속 눌러도 점프로 이어지지 않으므로 선 뒤 다시 누르세요.",
-            "낮은 천장, 사다리 및 일부 연출은 자세를 제한합니다. 몸을 실제로 숙이는 것은 게임의 앉기 명령과 별개입니다."
+            "실제 자세: 서 있을 때보다 머리가 약 35cm 내려가면 앉고, 약 85cm 내려가면 엎드립니다. 다시 일어나면 섭니다. 서 있는 높이는 마지막 리센터 뒤 가장 높았던 머리 위치이니, 선 채로 리센터하세요.",
+            "스틱: 오른쪽 스틱을 아래로 확실히 밀면 앉고, 한 번 더 밀면 엎드립니다. 위로 밀면 한 단계씩 일어납니다. 밀 때마다 스틱을 가운데로 돌려놓으세요.",
+            "앉거나 엎드린 상태에서 스틱을 누르면 일어납니다. 선 뒤에 다시 누르면 점프합니다.",
+            "앉아서 플레이한다면 콘솔에서 vr_physicalStance 0으로 실제 자세 인식을 끄세요. 낮은 천장, 사다리, 일부 장면에서는 자세가 제한됩니다."
           ]
         }
       },
@@ -1931,103 +1861,22 @@
       "id": "claymore",
       "category": "equipment",
       "text": {
-        "zh-CN": {
-          "title": "阔剑地雷与腹部装备",
-          "intro": "特殊装备通常放在胸前下方的腹部位置；能否拿取由任务提供的装备决定。",
-          "steps": [
-            "空闲手靠近腹部物品，用 Grip 取出阔剑。另一只手 Grip 可以握住它的另一把手。",
-            "让地雷前方朝向要放置的地面，新按住主手 Trigger 查看黄色放置预览；松开 Trigger 确认。",
-            "不合适的坡面、遮挡或空间不足会取消放置，不消耗这一枚地雷。放置前松开最后一只手 Grip 可收回。",
-            "用空闲手指向自己已放置的阔剑，按 Grip 可回收；要在交互范围内且还有库存空间。",
-            "其他腹部道具各有自己的操作，激光指示器、导弹电脑和信号弹请看剧情提示。"
-          ]
-        },
         "en": {
-          "title": "Claymores and abdominal equipment",
-          "intro": "Special equipment usually sits below the chest at the abdomen. Availability follows the mission loadout.",
+          "title": "Claymores",
+          "intro": "Claymores sit in an equipment slot when the mission gives them (e.g. One Shot, One Kill).",
           "steps": [
-            "Grip the abdominal claymore with a free hand. The other hand can Grip its second handle.",
-            "Aim its front toward the intended ground, then newly hold the primary hand’s Trigger for a yellow placement preview. Release Trigger to confirm.",
-            "Unsuitable slopes, obstruction or insufficient space cancel placement without spending it. Release the last Grip before placement to stow.",
-            "Point a free hand at your own placed claymore and press Grip to recover it within interaction reach, if inventory has space.",
-            "Other abdominal items have their own controls. Read the story tips for the laser designator, missile notebook and signal flare."
-          ]
-        },
-        "zh-TW": {
-          "title": "闊劍地雷與腹部裝備",
-          "intro": "特殊裝備通常放在胸前下方的腹部位置；能否拿取由任務提供的裝備決定。",
-          "steps": [
-            "空閑手靠近腹部物品，用 Grip 取出闊劍。另一只手 Grip 可以握住它的另一把手。",
-            "讓地雷前方朝向要放置的地面，新按住主手 Trigger 查看黃色放置預覽；松開 Trigger 確認。",
-            "不合適的坡面、遮擋或空間不足會取消放置，不消耗這一枚地雷。放置前松開最后一只手 Grip 可收回。",
-            "用空閑手指向自己已放置的闊劍，按 Grip 可回收；要在交互范圍內且還有庫存空間。",
-            "其他腹部道具各有自己的操作，激光指示器、導彈電腦和信號彈請看劇情提示。"
-          ]
-        },
-        "fr": {
-          "title": "Claymores et équipement abdominal",
-          "intro": "L’équipement spécial se trouve généralement sous la poitrine, à l’abdomen. Il dépend de la mission.",
-          "steps": [
-            "Prenez la claymore abdominale avec Grip d’une main libre. L’autre main peut saisir la seconde poignée avec Grip.",
-            "Orientez l’avant vers le sol voulu, puis pressez à nouveau Trigger de la main principale pour l’aperçu jaune. Relâchez Trigger pour confirmer.",
-            "Pente inadéquate, obstacle ou espace insuffisant annulent sans consommation. Relâchez le dernier Grip avant placement pour ranger.",
-            "À portée, visez votre claymore posée d’une main libre et pressez Grip pour la récupérer si l’inventaire a de la place.",
-            "Les autres objets ont leurs propres commandes. Consultez les conseils sur désignateur laser, terminal de missile et fusée."
-          ]
-        },
-        "de": {
-          "title": "Claymores und Bauchausrüstung",
-          "intro": "Spezialausrüstung sitzt meist unter der Brust am Bauch. Verfügbarkeit richtet sich nach der Missionsausrüstung.",
-          "steps": [
-            "Claymore am Bauch mit freier Hand und Grip nehmen. Die andere Hand kann den zweiten Griff mit Grip halten.",
-            "Vorderseite auf den gewünschten Boden richten, Trigger der Haupthand neu drücken für gelbe Vorschau. Trigger zum Bestätigen lösen.",
-            "Ungeeigneter Hang, Hindernis oder Platzmangel bricht ohne Verbrauch ab. Vor Platzierung letzten Grip lösen zum Verstauen.",
-            "Eigene platzierte Claymore in Reichweite mit freier Hand anvisieren und Grip drücken, sofern Inventarplatz frei ist.",
-            "Andere Bauchgegenstände haben eigene Steuerungen. Siehe Story-Tipps zu Lasermarkierer, Raketen-Laptop und Leuchtfackel."
-          ]
-        },
-        "es": {
-          "title": "Claymores y equipo abdominal",
-          "intro": "El equipo especial suele ir bajo el pecho, en el abdomen. Depende del equipamiento de la misión.",
-          "steps": [
-            "Toma la claymore del abdomen con Grip de la mano libre. La otra puede agarrar su segundo mango con Grip.",
-            "Orienta el frontal al suelo deseado y pulsa de nuevo Trigger de la mano principal para ver la posición amarilla. Suéltalo para confirmar.",
-            "Pendientes inválidas, obstáculos o poco espacio cancelan sin gastar. Suelta el último Grip antes de colocar para guardar.",
-            "Apunta con una mano libre a tu claymore colocada y pulsa Grip dentro del alcance para recuperarla si hay espacio.",
-            "Los demás objetos abdominales tienen controles propios. Consulta las ayudas del láser, portátil de misiles y bengala."
-          ]
-        },
-        "ru": {
-          "title": "«Клейморы» и снаряжение на животе",
-          "intro": "Особое снаряжение обычно под грудью на животе. Наличие определяется миссией.",
-          "steps": [
-            "Возьмите «Клеймор» на животе свободной рукой с Grip. Другой рукой можно взять вторую рукоять с Grip.",
-            "Направьте переднюю сторону на нужное место земли, заново зажмите Trigger основной руки для жёлтого предпросмотра. Отпустите для установки.",
-            "Неподходящий склон, преграда или теснота отменяют установку без расхода. До установки отпустите последний Grip для уборки.",
-            "В пределах досягаемости наведите свободную руку на свою мину и нажмите Grip для возврата, если есть место в инвентаре.",
-            "Другие предметы на животе управляются отдельно. См. подсказки целеуказателя, ракетного ноутбука и фальшфейера."
-          ]
-        },
-        "ja": {
-          "title": "クレイモアと腹部装備",
-          "intro": "特殊装備は通常、胸の下の腹部にあります。利用できる装備はミッションに従います。",
-          "steps": [
-            "空いた手の Grip で腹部のクレイモアを取ります。反対の手は Grip で第二のハンドルを持てます。",
-            "前面を設置したい地面へ向け、主に持つ手で Trigger を新たに押すと黄色の位置表示が出ます。離すと確定します。",
-            "不適切な斜面、障害物、空間不足では消費せず中止します。設置前に最後の Grip を離すと収納します。",
-            "自分が置いたクレイモアは操作範囲内で空いた手を向け Grip を押すと回収できます。所持枠の空きが必要です。",
-            "他の腹部装備にはそれぞれの操作があります。レーザー照準器、ミサイル端末、発炎筒のストーリー項目を確認してください。"
+            "Reach one hand down to the floor (within about 35 cm of your feet) and press Grip.",
+            "A held gun is holstered for a moment, one claymore is planted at your feet facing where you look, and the gun returns to the same hand.",
+            "Repeat for each claymore. Plant where the enemy will pass in front of it."
           ]
         },
         "ko": {
-          "title": "클레이모어 및 복부 장비",
-          "intro": "특수 장비는 보통 가슴 아래 복부에 있습니다. 사용 가능 장비는 임무에 따릅니다.",
+          "title": "클레이모어",
+          "intro": "미션에서 주어지면 장비 슬롯에 들어 있습니다(예: One Shot, One Kill).",
           "steps": [
-            "빈손의 Grip으로 복부 클레이모어를 꺼냅니다. 다른 손도 Grip으로 두 번째 손잡이를 잡을 수 있습니다.",
-            "앞면을 원하는 지면으로 향하고 주 손의 Trigger를 새로 눌러 노란 위치 미리 보기를 표시합니다. 놓으면 확정됩니다.",
-            "부적절한 경사, 장애물 또는 공간 부족은 소모 없이 설치를 취소합니다. 설치 전에 마지막 Grip을 놓으면 보관됩니다.",
-            "상호작용 거리 안에서 자신이 설치한 클레이모어를 빈손으로 가리키고 Grip을 누르면 인벤토리에 여유가 있을 때 회수합니다.",
-            "다른 복부 물건은 별도 조작이 있습니다. 레이저 지시기, 미사일 노트북 및 신호탄의 스토리 안내를 보세요."
+            "한 손을 바닥 가까이(발밑 약 35cm 이내) 내리고 그립을 누릅니다.",
+            "들고 있던 총이 잠깐 홀스터에 들어가고, 바라보는 방향으로 발밑에 클레이모어 하나가 설치된 뒤 총이 같은 손으로 돌아옵니다.",
+            "개수만큼 반복하세요. 적이 앞을 지나갈 곳에 설치하세요."
           ]
         }
       },
@@ -2451,267 +2300,6 @@
       ]
     },
     {
-      "id": "g18",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "G18",
-          "intro": "全自动手枪，使用可拆弹匣。",
-          "steps": []
-        },
-        "en": {
-          "title": "G18",
-          "intro": "Automatic pistol with a detachable magazine.",
-          "steps": []
-        },
-        "zh-TW": {
-          "title": "G18",
-          "intro": "全自動手槍，使用可拆彈匣。",
-          "steps": []
-        },
-        "fr": {
-          "title": "G18",
-          "intro": "Pistolet automatique à chargeur amovible.",
-          "steps": []
-        },
-        "de": {
-          "title": "G18",
-          "intro": "Automatikpistole mit Wechselmagazin.",
-          "steps": []
-        },
-        "es": {
-          "title": "G18",
-          "intro": "Pistola automática con cargador extraíble.",
-          "steps": []
-        },
-        "ru": {
-          "title": "G18",
-          "intro": "Автоматический пистолет со съёмным магазином.",
-          "steps": []
-        },
-        "ja": {
-          "title": "G18",
-          "intro": "着脱式マガジンのフルオートピストル。",
-          "steps": []
-        },
-        "ko": {
-          "title": "G18",
-          "intro": "분리식 탄창을 사용하는 자동권총입니다.",
-          "steps": []
-        }
-      },
-      "recipe": "button-lock",
-      "related": [
-        "reload",
-        "quick-load"
-      ],
-      "sources": [
-        "src/client/component/vr/gameplay/weapons/g18/mechanics.hpp"
-      ]
-    },
-    {
-      "id": "m93r",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "M93 Raffica",
-          "intro": "三发点射，不需要每发拉机柄。",
-          "steps": []
-        },
-        "en": {
-          "title": "M93 Raffica",
-          "intro": "Three-round burst; no manual cycle between shots.",
-          "steps": []
-        },
-        "zh-TW": {
-          "title": "M93 Raffica",
-          "intro": "三發點射，不需要每發拉機柄。",
-          "steps": []
-        },
-        "fr": {
-          "title": "M93 Raffica",
-          "intro": "Rafales de trois coups ; aucun cycle manuel entre les tirs.",
-          "steps": []
-        },
-        "de": {
-          "title": "M93 Raffica",
-          "intro": "Dreischussfeuer; kein manuelles Durchladen zwischen Schüssen.",
-          "steps": []
-        },
-        "es": {
-          "title": "M93 Raffica",
-          "intro": "Ráfagas de tres; sin ciclo manual entre disparos.",
-          "steps": []
-        },
-        "ru": {
-          "title": "M93 Raffica",
-          "intro": "Очередь по три; ручной цикл между выстрелами не нужен.",
-          "steps": []
-        },
-        "ja": {
-          "title": "M93 Raffica",
-          "intro": "3 点バースト。発射ごとの手動操作は不要です。",
-          "steps": []
-        },
-        "ko": {
-          "title": "M93 Raffica",
-          "intro": "3점사이며 발사 사이 수동 왕복 조작이 필요 없습니다.",
-          "steps": []
-        }
-      },
-      "recipe": "button-lock",
-      "related": [
-        "reload"
-      ],
-      "sources": [
-        "src/client/component/vr/gameplay/weapons/m93r/mechanics.hpp"
-      ]
-    },
-    {
-      "id": "tmp",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "TMP / MP9",
-          "intro": "全自动机动武器，使用可拆弹匣。",
-          "steps": []
-        },
-        "en": {
-          "title": "TMP / MP9",
-          "intro": "Automatic compact weapon with a detachable magazine.",
-          "steps": []
-        },
-        "zh-TW": {
-          "title": "TMP / MP9",
-          "intro": "全自動機動武器，使用可拆彈匣。",
-          "steps": []
-        },
-        "fr": {
-          "title": "TMP / MP9",
-          "intro": "Arme automatique compacte à chargeur amovible.",
-          "steps": []
-        },
-        "de": {
-          "title": "TMP / MP9",
-          "intro": "Kompakte automatische Waffe mit Wechselmagazin.",
-          "steps": []
-        },
-        "es": {
-          "title": "TMP / MP9",
-          "intro": "Arma automática compacta con cargador extraíble.",
-          "steps": []
-        },
-        "ru": {
-          "title": "TMP / MP9",
-          "intro": "Компактное автоматическое оружие со съёмным магазином.",
-          "steps": []
-        },
-        "ja": {
-          "title": "TMP / MP9",
-          "intro": "着脱式マガジンの小型フルオート武器。",
-          "steps": []
-        },
-        "ko": {
-          "title": "TMP / MP9",
-          "intro": "분리식 탄창을 사용하는 소형 자동화기입니다.",
-          "steps": []
-        }
-      },
-      "recipe": "button-lock",
-      "related": [
-        "reload",
-        "quick-load"
-      ],
-      "sources": [
-        "src/client/component/vr/gameplay/weapons/tmp/mechanics.hpp"
-      ]
-    },
-    {
-      "id": "pp2000",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "PP2000",
-          "intro": "可按键退弹匣，打空后手动拉机柄上膛。",
-          "steps": [
-            "持枪手按 B/Y 退弹匣。空闲手用 Trigger 在腰侧取新弹匣，对齐插入并松开。",
-            "打空后用 Trigger 完整拉动机柄并让它回位。B/Y 没有单独的空仓挂机释放功能。"
-          ]
-        },
-        "en": {
-          "title": "PP2000",
-          "intro": "Button magazine release; manually charge after an empty reload.",
-          "steps": [
-            "Press B/Y in the firing hand to eject. Use the free hand’s Trigger to draw a waist magazine, align, insert and release.",
-            "After running empty, fully pull and return the handle with Trigger. B/Y has no separate hold-open release."
-          ]
-        },
-        "zh-TW": {
-          "title": "PP2000",
-          "intro": "可按鍵退彈匣，打空后手動拉機柄上膛。",
-          "steps": [
-            "持槍手按 B/Y 退彈匣。空閑手用 Trigger 在腰側取新彈匣，對齊插入并松開。",
-            "打空后用 Trigger 完整拉動機柄并讓它回位。B/Y 沒有單獨的空倉掛機釋放功能。"
-          ]
-        },
-        "fr": {
-          "title": "PP2000",
-          "intro": "Éjection par bouton ; armement manuel après rechargement à vide.",
-          "steps": [
-            "B/Y de la main armée éjecte. Avec Trigger de l’autre main, prenez un chargeur à la taille, alignez, insérez et relâchez.",
-            "À vide, tirez le levier à fond avec Trigger puis ramenez-le. B/Y n’a pas de fonction séparée de libération de culasse."
-          ]
-        },
-        "de": {
-          "title": "PP2000",
-          "intro": "Magazinauswurf per Taste; nach Leerschießen manuell durchladen.",
-          "steps": [
-            "B/Y der Schusshand wirft aus. Mit Trigger der freien Hand Hüftmagazin nehmen, ausrichten, einsetzen und loslassen.",
-            "Nach Leerschießen Hebel mit Trigger ganz zurück- und vorziehen. B/Y bietet keinen separaten Verschlussfanglöser."
-          ]
-        },
-        "es": {
-          "title": "PP2000",
-          "intro": "Expulsión por botón; monta manualmente tras recargar en vacío.",
-          "steps": [
-            "B/Y de la mano del arma expulsa. Con Trigger de la otra, toma un cargador de cintura, alinea, inserta y suelta.",
-            "En vacío, tira de la palanca a fondo con Trigger y devuélvela. B/Y no libera un retén separado."
-          ]
-        },
-        "ru": {
-          "title": "PP2000",
-          "intro": "Сброс магазина кнопкой; после пустой перезарядки взводите вручную.",
-          "steps": [
-            "B/Y руки с оружием сбрасывает магазин. Свободной рукой с Trigger возьмите поясной магазин, совместите, вставьте и отпустите.",
-            "После опустошения полностью передёрните рукоятку с Trigger. Отдельного снятия задержки через B/Y нет."
-          ]
-        },
-        "ja": {
-          "title": "PP2000",
-          "intro": "ボタンでマガジンを排出。撃ち切り後は手動で装填します。",
-          "steps": [
-            "持つ手の B／Y で排出し、空いた手の Trigger で腰のマガジンを取って合わせ、挿入して離します。",
-            "撃ち切り後は Trigger でハンドルを最後まで引いて戻します。B／Y に独立したボルトストップ解除機能はありません。"
-          ]
-        },
-        "ko": {
-          "title": "PP2000",
-          "intro": "버튼으로 탄창을 빼며 빈 상태에서 재장전 후 수동 약실 장전이 필요합니다.",
-          "steps": [
-            "총을 든 손의 B/Y로 분리합니다. 빈손 Trigger로 허리 탄창을 꺼내 맞추고 넣은 뒤 놓습니다.",
-            "탄을 다 쓰면 Trigger로 손잡이를 끝까지 당겼다 되돌립니다. B/Y에는 별도의 후퇴 고정 해제가 없습니다."
-          ]
-        }
-      },
-      "related": [
-        "reload",
-        "quick-load"
-      ],
-      "sources": [
-        "src/client/component/vr/gameplay/weapons/pp2000/mechanics.hpp"
-      ]
-    },
-    {
       "id": "miniuzi",
       "category": "weapons",
       "text": {
@@ -2810,63 +2398,63 @@
       "category": "weapons",
       "text": {
         "zh-CN": {
-          "title": "MP5K",
+          "title": "MP5",
           "intro": "弹匣实体拉出，机柄可手动挂起和下拍释放。",
           "steps": [
             "也可以拿备用弹匣，朝枪口方向击打弹匣后的释放拨片，使旧弹匣退出。B/Y 不会按键退匣。"
           ]
         },
         "en": {
-          "title": "MP5K",
+          "title": "MP5",
           "intro": "Physical magazine pull; charging handle can be caught and slapped down.",
           "steps": [
             "A spare magazine can strike the paddle behind the installed magazine toward the muzzle to release it. B/Y does not eject."
           ]
         },
         "zh-TW": {
-          "title": "MP5K",
+          "title": "MP5",
           "intro": "彈匣實體拉出，機柄可手動掛起和下拍釋放。",
           "steps": [
             "也可以拿備用彈匣，朝槍口方向擊打彈匣后的釋放撥片，使舊彈匣退出。B/Y 不會按鍵退匣。"
           ]
         },
         "fr": {
-          "title": "MP5K",
+          "title": "MP5",
           "intro": "Retrait physique du chargeur ; levier pouvant être accroché puis frappé vers le bas.",
           "steps": [
             "Un chargeur neuf peut frapper le levier derrière le chargeur monté vers le canon pour le libérer. B/Y n’éjecte pas."
           ]
         },
         "de": {
-          "title": "MP5K",
+          "title": "MP5",
           "intro": "Magazin von Hand ziehen; Spannhebel kann eingerastet und heruntergeschlagen werden.",
           "steps": [
             "Ersatzmagazin kann den Hebel hinter dem Magazin zur Mündung schlagen und entriegeln. B/Y wirft nicht aus."
           ]
         },
         "es": {
-          "title": "MP5K",
+          "title": "MP5",
           "intro": "Extracción manual; la palanca puede engancharse y golpearse hacia abajo.",
           "steps": [
             "Un cargador de repuesto puede golpear la paleta tras el instalado hacia la boca para soltarlo. B/Y no expulsa."
           ]
         },
         "ru": {
-          "title": "MP5K",
+          "title": "MP5",
           "intro": "Ручное извлечение магазина; рукоятка фиксируется и освобождается ударом вниз.",
           "steps": [
             "Запасным магазином можно ударить заднюю защёлку к дулу для сброса. B/Y не сбрасывает."
           ]
         },
         "ja": {
-          "title": "MP5K",
+          "title": "MP5",
           "intro": "マガジンを手で引き抜きます。ハンドルは固定し、下へ叩いて解除できます。",
           "steps": [
             "予備マガジンで装着済みマガジン後方のレバーを銃口方向へ叩くと外れます。B／Y では排出しません。"
           ]
         },
         "ko": {
-          "title": "MP5K",
+          "title": "MP5",
           "intro": "탄창을 직접 당겨 빼며 장전 손잡이를 걸고 아래로 쳐서 해제할 수 있습니다.",
           "steps": [
             "예비 탄창으로 장착된 탄창 뒤 패들을 총구 쪽으로 치면 분리됩니다. B/Y로는 빠지지 않습니다."
@@ -2884,101 +2472,6 @@
         "src/client/component/vr/gameplay/weapons/mp5/mechanics.hpp",
         "docs/vr-manual-handle-catch.md",
         "docs/vr-impact-release.md"
-      ]
-    },
-    {
-      "id": "ump",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "UMP45",
-          "intro": "支持手动挂起机柄和枪身侧面的空仓挂机释放。",
-          "steps": [
-            "旧弹匣也可用备用弹匣向前击打后方拨片退出。B/Y 不负责退弹匣或释放挂机。",
-            "若是最后一发后的自动挂机，装好有弹弹匣并松开手后，向内拍枪身左侧的挂机释放钮。",
-            "若机柄已手动抬起挂住，改为向下拍机柄；这时侧面释放钮不能解除手动卡槽。"
-          ]
-        },
-        "en": {
-          "title": "UMP45",
-          "intro": "Manual handle catch and a separate receiver hold-open release.",
-          "steps": [
-            "You can also strike the rear magazine paddle forward with a spare. B/Y does not eject or release the action.",
-            "For automatic last-round hold-open, seat a loaded magazine, free the hand, then slap the left receiver paddle inward.",
-            "For a manually raised handle catch, slap the handle downward instead; the side paddle cannot release that manual catch."
-          ]
-        },
-        "zh-TW": {
-          "title": "UMP45",
-          "intro": "支持手動掛起機柄和槍身側面的空倉掛機釋放。",
-          "steps": [
-            "舊彈匣也可用備用彈匣向前擊打后方撥片退出。B/Y 不負責退彈匣或釋放掛機。",
-            "若是最后一發后的自動掛機，裝好有彈彈匣并松開手后，向內拍槍身左側的掛機釋放鈕。",
-            "若機柄已手動抬起掛住，改為向下拍機柄；這時側面釋放鈕不能解除手動卡槽。"
-          ]
-        },
-        "fr": {
-          "title": "UMP45",
-          "intro": "Accrochage manuel du levier et commande séparée de culasse sur le boîtier.",
-          "steps": [
-            "Frappez aussi la palette arrière vers l’avant avec un chargeur neuf. B/Y ne libère ni chargeur ni culasse.",
-            "Après le blocage automatique de fin de chargeur, insérez un chargeur plein, libérez la main puis frappez la palette gauche vers l’intérieur.",
-            "Si le levier est accroché manuellement en haut, frappez-le vers le bas. La palette latérale ne libère pas cet accrochage."
-          ]
-        },
-        "de": {
-          "title": "UMP45",
-          "intro": "Manueller Hebelfang und separater Verschlussfanglöser am Gehäuse.",
-          "steps": [
-            "Hintere Magazinwippe auch mit Ersatzmagazin nach vorne schlagen. B/Y löst weder Magazin noch Verschluss.",
-            "Bei automatischem Verschlussfang volles Magazin einsetzen, Hand lösen und linke Gehäusewippe nach innen schlagen.",
-            "Manuell hochgefangenen Hebel stattdessen nach unten schlagen; die Seitenwippe löst diesen Fang nicht."
-          ]
-        },
-        "es": {
-          "title": "UMP45",
-          "intro": "Enganche manual de palanca y liberador de retén separado en el cajón.",
-          "steps": [
-            "Puedes golpear la paleta trasera adelante con un cargador de repuesto. B/Y no libera cargador ni cierre.",
-            "Para el bloqueo automático final, inserta un cargador lleno, libera la mano y golpea la paleta izquierda hacia dentro.",
-            "Si enganchaste manualmente la palanca arriba, golpéala hacia abajo; la paleta lateral no suelta ese enganche."
-          ]
-        },
-        "ru": {
-          "title": "UMP45",
-          "intro": "Ручная фиксация рукоятки и отдельная задержка на ствольной коробке.",
-          "steps": [
-            "Можно ударить заднюю защёлку вперёд запасным магазином. B/Y не сбрасывает магазин и не освобождает затвор.",
-            "При автоматической задержке вставьте полный магазин, освободите руку и ударьте левый рычаг коробки внутрь.",
-            "Рукоятку, вручную зафиксированную сверху, ударьте вниз; боковой рычаг эту фиксацию не снимает."
-          ]
-        },
-        "ja": {
-          "title": "UMP45",
-          "intro": "ハンドルの手動固定と、レシーバー側の独立したボルトストップがあります。",
-          "steps": [
-            "予備マガジンで後部レバーを前へ叩く方法も使えます。B／Y はマガジン排出にも機関部解放にも使いません。",
-            "最終弾後の自動ストップには、装填済みマガジンを入れて手を空け、左レシーバーレバーを内側へ叩きます。",
-            "手動で上に固定したハンドルは下へ叩きます。側面レバーではこの固定を解除できません。"
-          ]
-        },
-        "ko": {
-          "title": "UMP45",
-          "intro": "손잡이 수동 걸림과 리시버의 별도 노리쇠 멈치 해제가 있습니다.",
-          "steps": [
-            "예비 탄창으로 뒤쪽 패들을 앞으로 쳐도 됩니다. B/Y로 탄창이나 노리쇠를 해제하지 않습니다.",
-            "최종탄 자동 후퇴 고정은 탄창을 넣고 손을 비운 뒤 왼쪽 리시버 패들을 안쪽으로 쳐서 해제합니다.",
-            "수동으로 위에 걸어 둔 손잡이는 아래로 쳐야 합니다. 측면 패들로는 수동 걸림이 풀리지 않습니다."
-          ]
-        }
-      },
-      "recipe": "hk",
-      "related": [
-        "reload"
-      ],
-      "sources": [
-        "src/client/component/vr/gameplay/weapons/ump/mechanics.hpp",
-        "docs/vr-receiver-bolt-release.md"
       ]
     },
     {
@@ -3076,147 +2569,61 @@
       ]
     },
     {
-      "id": "vector",
+      "id": "ak47",
       "category": "weapons",
       "text": {
-        "zh-CN": {
-          "title": "KRISS Vector",
-          "intro": "可按键退弹匣，也可拍左侧挂机释放钮。",
-          "steps": [
-            "装入有弹弹匣并松开装填手后，空手向内拍枪身左侧释放钮，也可解除空仓挂机。"
-          ]
-        },
         "en": {
-          "title": "KRISS Vector",
-          "intro": "Button magazine release and a left-side bolt-release slap.",
+          "title": "AK-47",
+          "intro": "AK rock-in magazine: hook the front, rock it back; rock it forward to remove.",
           "steps": [
-            "After seating a loaded magazine and freeing the hand, an inward slap on the left receiver paddle also releases hold-open."
-          ]
-        },
-        "zh-TW": {
-          "title": "KRISS Vector",
-          "intro": "可按鍵退彈匣，也可拍左側掛機釋放鈕。",
-          "steps": [
-            "裝入有彈彈匣并松開裝填手后，空手向內拍槍身左側釋放鈕，也可解除空倉掛機。"
-          ]
-        },
-        "fr": {
-          "title": "KRISS Vector",
-          "intro": "Éjection par bouton et libération de culasse par frappe côté gauche.",
-          "steps": [
-            "Après insertion d’un chargeur plein, libérez la main puis frappez la palette gauche vers l’intérieur pour libérer la culasse."
-          ]
-        },
-        "de": {
-          "title": "KRISS Vector",
-          "intro": "Magazinauswurf per Taste, Verschlussfreigabe durch Schlag links.",
-          "steps": [
-            "Nach vollem Magazin und freier Hand löst ein Schlag auf die linke Wippe nach innen ebenfalls den Verschlussfang."
-          ]
-        },
-        "es": {
-          "title": "KRISS Vector",
-          "intro": "Expulsión por botón y liberación del cerrojo golpeando el lado izquierdo.",
-          "steps": [
-            "Tras insertar un cargador lleno y liberar la mano, golpea la paleta izquierda hacia dentro para soltar el retén."
-          ]
-        },
-        "ru": {
-          "title": "KRISS Vector",
-          "intro": "Сброс магазина кнопкой, снятие задержки ударом слева.",
-          "steps": [
-            "Вставьте полный магазин, освободите руку и ударьте левый рычаг внутрь для снятия задержки."
-          ]
-        },
-        "ja": {
-          "title": "KRISS Vector",
-          "intro": "ボタンでマガジンを排出し、左側を叩いてボルトを解放できます。",
-          "steps": [
-            "装填済みマガジンを入れて手を空けた後、左レシーバーレバーを内側へ叩くとストップを解除できます。"
+            "Insert: tilt the new magazine's bottom forward, hook its front lug at the front of the well, then rock it back until it latches.",
+            "Remove: hold Trigger on the installed magazine and rock its bottom forward about 12 degrees; it comes free into your hand.",
+            "Quick swap: strike the latch behind the installed magazine forward with a spare to drop the old one, then seat the spare.",
+            "The charging handle travels to the rear of its cut-out; pull it fully back and let it go."
           ]
         },
         "ko": {
-          "title": "KRISS Vector",
-          "intro": "버튼 탄창 분리와 왼쪽 노리쇠 해제 타격을 지원합니다.",
+          "title": "AK-47",
+          "intro": "AK식 탄창: 앞을 걸고 뒤로 젖혀 끼우고, 앞으로 젖혀 뺍니다.",
           "steps": [
-            "탄창을 넣고 손을 비운 뒤 왼쪽 리시버 패들을 안쪽으로 치면 후퇴 고정이 해제됩니다."
+            "끼우기: 새 탄창 아래쪽을 앞으로 기울여 앞 걸쇠를 탄창 구멍 앞에 건 뒤, 뒤로 젖혀 딸깍 걸리게 합니다.",
+            "빼기: 꽂힌 탄창을 트리거로 잡고 아래쪽을 앞으로 약 12° 젖히면 손으로 빠집니다.",
+            "빠른 교체: 새 탄창으로 꽂힌 탄창 뒤의 걸쇠를 앞쪽으로 치면 헌 탄창이 떨어집니다. 그다음 새 탄창을 끼우세요.",
+            "장전 손잡이는 홈 끝까지 당겼다가 놓습니다."
           ]
         }
       },
-      "recipe": "button-lock",
+      "recipe": "pull-charge",
       "related": [
         "reload"
       ],
       "sources": [
-        "src/client/component/vr/gameplay/weapons/vector/mechanics.hpp",
-        "docs/vr-receiver-bolt-release.md"
+        "src/client/component/vr/gameplay/weapons/ak47/mechanics.hpp",
+        "docs/vr-impact-release.md"
       ]
     },
     {
-      "id": "ak47",
+      "id": "ak74u",
       "category": "weapons",
       "text": {
-        "zh-CN": {
-          "title": "AK-47",
-          "intro": "弹匣实体拆装，支持备用弹匣击打卡笋。",
-          "steps": [
-            "拿备用弹匣向前击打旧弹匣后面的卡笋，可让旧弹匣掉落。先把备用弹匣从插入区域移开，再重新对齐装入。"
-          ]
-        },
         "en": {
-          "title": "AK-47",
-          "intro": "Physical magazine exchange with an optional spare-magazine latch strike.",
+          "title": "AK-74U",
+          "intro": "AK rock-in magazine: hook the front, rock it back; rock it forward to remove.",
           "steps": [
-            "Strike the latch behind the installed magazine forward with a spare to drop the old one. Withdraw the spare from the insertion area before approaching to seat it."
-          ]
-        },
-        "zh-TW": {
-          "title": "AK-47",
-          "intro": "彈匣實體拆裝，支持備用彈匣擊打卡筍。",
-          "steps": [
-            "拿備用彈匣向前擊打舊彈匣后面的卡筍，可讓舊彈匣掉落。先把備用彈匣從插入區域移開，再重新對齊裝入。"
-          ]
-        },
-        "fr": {
-          "title": "AK-47",
-          "intro": "Échange physique du chargeur, avec frappe optionnelle du verrou par le chargeur neuf.",
-          "steps": [
-            "Frappez vers l’avant le verrou derrière le chargeur avec le neuf. Éloignez d’abord le neuf de la zone d’insertion avant de l’y ramener."
-          ]
-        },
-        "de": {
-          "title": "AK-47",
-          "intro": "Physischer Magazinwechsel, optional Entriegelungsschlag mit Ersatzmagazin.",
-          "steps": [
-            "Hintere Magazinraste mit Ersatzmagazin nach vorne schlagen. Ersatz zuerst aus dem Einsetzbereich herausnehmen, dann zum Einsetzen erneut annähern."
-          ]
-        },
-        "es": {
-          "title": "AK-47",
-          "intro": "Cambio físico de cargador con golpe opcional al retén usando otro cargador.",
-          "steps": [
-            "Golpea adelante el retén tras el cargador con el repuesto. Retira el repuesto de la zona de inserción antes de volver a introducirlo."
-          ]
-        },
-        "ru": {
-          "title": "AK-47",
-          "intro": "Физическая замена магазина, опционально удар запасным по защёлке.",
-          "steps": [
-            "Ударьте запасным магазином заднюю защёлку вперёд. Перед вставкой сначала выведите запасной из зоны приёмника и поднесите снова."
-          ]
-        },
-        "ja": {
-          "title": "AK-47",
-          "intro": "手動マガジン交換。予備マガジンでラッチを叩く方法も使えます。",
-          "steps": [
-            "予備マガジンで装着済みマガジン後方のラッチを前へ叩きます。予備は一度挿入範囲から離してから、装着のために近づけてください。"
+            "Insert: tilt the new magazine's bottom forward, hook its front lug at the front of the well, then rock it back until it latches.",
+            "Remove: hold Trigger on the installed magazine and rock its bottom forward about 12 degrees; it comes free into your hand.",
+            "Quick swap: strike the latch behind the installed magazine forward with a spare to drop the old one, then seat the spare.",
+            "The charging handle travels to the rear of its cut-out; pull it fully back and let it go."
           ]
         },
         "ko": {
-          "title": "AK-47",
-          "intro": "물리 탄창 교체이며 예비 탄창으로 걸쇠를 치는 방법도 지원합니다.",
+          "title": "AK-74U",
+          "intro": "AK식 탄창: 앞을 걸고 뒤로 젖혀 끼우고, 앞으로 젖혀 뺍니다.",
           "steps": [
-            "예비 탄창으로 기존 탄창 뒤 걸쇠를 앞으로 치세요. 예비 탄창을 삽입 영역에서 한 번 뺀 뒤 다시 접근해 넣습니다."
+            "끼우기: 새 탄창 아래쪽을 앞으로 기울여 앞 걸쇠를 탄창 구멍 앞에 건 뒤, 뒤로 젖혀 딸깍 걸리게 합니다.",
+            "빼기: 꽂힌 탄창을 트리거로 잡고 아래쪽을 앞으로 약 12° 젖히면 손으로 빠집니다.",
+            "빠른 교체: 새 탄창으로 꽂힌 탄창 뒤의 걸쇠를 앞쪽으로 치면 헌 탄창이 떨어집니다. 그다음 새 탄창을 끼우세요.",
+            "장전 손잡이는 홈 끝까지 당겼다가 놓습니다."
           ]
         }
       },
@@ -3386,816 +2793,6 @@
       ]
     },
     {
-      "id": "scar",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "SCAR-H",
-          "intro": "可按键退匣；带前握把配件时握住实际握位。",
-          "steps": [
-            "装入有弹弹匣并松开操作手后，空手向内拍枪身左侧挂机释放钮，也可上膛。带下挂武器时，主枪和下挂弹药分别装填。"
-          ]
-        },
-        "en": {
-          "title": "SCAR-H",
-          "intro": "Button magazine release; grip the actual support position on attachments.",
-          "steps": [
-            "After seating a loaded magazine and freeing the hand, slap the left receiver paddle inward as another bolt-release route. Underbarrel ammunition is loaded separately."
-          ]
-        },
-        "zh-TW": {
-          "title": "SCAR-H",
-          "intro": "可按鍵退匣；帶前握把配件時握住實際握位。",
-          "steps": [
-            "裝入有彈彈匣并松開操作手后，空手向內拍槍身左側掛機釋放鈕，也可上膛。帶下掛武器時，主槍和下掛彈藥分別裝填。"
-          ]
-        },
-        "fr": {
-          "title": "SCAR-H",
-          "intro": "Éjection par bouton ; utilisez le vrai point d’appui de chaque accessoire.",
-          "steps": [
-            "Après insertion d’un chargeur plein et libération de la main, frappez la palette gauche vers l’intérieur pour libérer la culasse. L’accessoire sous canon se recharge séparément."
-          ]
-        },
-        "de": {
-          "title": "SCAR-H",
-          "intro": "Magazinauswurf per Taste; tatsächlichen Stützgriff der Anbauteile nutzen.",
-          "steps": [
-            "Nach vollem Magazin und freier Hand linke Wippe nach innen schlagen als weitere Verschlussfreigabe. Unterlaufmunition wird separat geladen."
-          ]
-        },
-        "es": {
-          "title": "SCAR-H",
-          "intro": "Expulsión por botón; usa la posición real de apoyo de los accesorios.",
-          "steps": [
-            "Tras poner un cargador lleno y liberar la mano, golpea la paleta izquierda hacia dentro para soltar el cerrojo. El accesorio bajo cañón se carga aparte."
-          ]
-        },
-        "ru": {
-          "title": "SCAR-H",
-          "intro": "Сброс кнопкой; держитесь за фактическую опору на обвесе.",
-          "steps": [
-            "Вставив полный магазин и освободив руку, ударьте левый рычаг внутрь для освобождения затвора. Подствольное оружие заряжается отдельно."
-          ]
-        },
-        "ja": {
-          "title": "SCAR-H",
-          "intro": "ボタンでマガジン排出。アタッチメントの実際の支持位置を握ってください。",
-          "steps": [
-            "装填済みマガジンを入れて手を空け、左レシーバーレバーを内側へ叩く方法でもボルトを解放できます。アンダーバレルの弾薬は別に装填します。"
-          ]
-        },
-        "ko": {
-          "title": "SCAR-H",
-          "intro": "버튼으로 탄창을 분리합니다. 부착물의 실제 보조 잡기 위치를 잡으세요.",
-          "steps": [
-            "탄창을 넣고 손을 비운 뒤 왼쪽 리시버 패들을 안쪽으로 쳐서도 노리쇠를 해제합니다. 하부 부착 무기 탄약은 따로 장전합니다."
-          ]
-        }
-      },
-      "recipe": "button-lock",
-      "related": [
-        "reload",
-        "underbarrel"
-      ],
-      "sources": [
-        "src/client/component/vr/gameplay/weapons/scar/reload_profile.hpp",
-        "docs/vr-receiver-bolt-release.md"
-      ]
-    },
-    {
-      "id": "acr",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "ACR",
-          "intro": "可按键退弹匣；心跳传感器需要单独翻开。",
-          "steps": [
-            "带心跳传感器时，用空闲手 Trigger 捏住传感器外壳，沿铰链向外翻开，再松开。仅按下 Trigger 不会自动开关。"
-          ]
-        },
-        "en": {
-          "title": "ACR",
-          "intro": "Button magazine release; unfold the heartbeat sensor separately.",
-          "steps": [
-            "With a heartbeat sensor attached, pinch its housing with the free hand’s Trigger, rotate it outward around the hinge and release. A Trigger press alone does not toggle it."
-          ]
-        },
-        "zh-TW": {
-          "title": "ACR",
-          "intro": "可按鍵退彈匣；心跳傳感器需要單獨翻開。",
-          "steps": [
-            "帶心跳傳感器時，用空閑手 Trigger 捏住傳感器外殼，沿鉸鏈向外翻開，再松開。僅按下 Trigger 不會自動開關。"
-          ]
-        },
-        "fr": {
-          "title": "ACR",
-          "intro": "Éjection par bouton ; le capteur cardiaque s’ouvre séparément.",
-          "steps": [
-            "Avec un capteur, pincez le boîtier avec Trigger de la main libre, tournez autour de la charnière puis relâchez. Un simple appui ne bascule pas son état."
-          ]
-        },
-        "de": {
-          "title": "ACR",
-          "intro": "Magazinauswurf per Taste; Herzschlagsensor separat ausklappen.",
-          "steps": [
-            "Sensor mit Trigger der freien Hand am Gehäuse greifen, am Scharnier ausklappen und lösen. Ein bloßer Triggerdruck schaltet ihn nicht um."
-          ]
-        },
-        "es": {
-          "title": "ACR",
-          "intro": "Expulsión por botón; despliega el sensor cardíaco por separado.",
-          "steps": [
-            "Si hay sensor, agarra su carcasa con Trigger de la mano libre, gíralo sobre la bisagra y suelta. Pulsar Trigger sin mover no lo alterna."
-          ]
-        },
-        "ru": {
-          "title": "ACR",
-          "intro": "Сброс кнопкой; датчик сердцебиения раскрывается отдельно.",
-          "steps": [
-            "При наличии датчика возьмите корпус Trigger свободной руки, поверните на шарнире и отпустите. Одного нажатия Trigger недостаточно."
-          ]
-        },
-        "ja": {
-          "title": "ACR",
-          "intro": "ボタンでマガジン排出。心拍センサーは別操作で開きます。",
-          "steps": [
-            "センサー付きの場合、空いた手の Trigger で外装をつかみ、ヒンジを中心に開いて離します。Trigger を押すだけでは切り替わりません。"
-          ]
-        },
-        "ko": {
-          "title": "ACR",
-          "intro": "버튼으로 탄창을 분리하며 심장 박동 감지기는 따로 펼칩니다.",
-          "steps": [
-            "감지기가 있으면 빈손 Trigger로 외장을 잡고 경첩을 따라 바깥으로 펼친 뒤 놓습니다. Trigger만 눌러서는 전환되지 않습니다."
-          ]
-        }
-      },
-      "recipe": "button-lock",
-      "related": [
-        "reload"
-      ],
-      "sources": [
-        "src/client/component/vr/gameplay/weapons/acr/mechanics.hpp",
-        "docs/vr-heartbeat-sensor.md"
-      ]
-    },
-    {
-      "id": "famas",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "FAMAS",
-          "intro": "弹匣实体拉出；备用弹匣击打方向朝后。",
-          "steps": [
-            "拿备用弹匣向枪托方向击打弹匣前方的释放杆，可退出旧弹匣。B/Y 只用于有效的空仓挂机释放，不会退弹匣。"
-          ]
-        },
-        "en": {
-          "title": "FAMAS",
-          "intro": "Physical magazine pull; spare-magazine release strike goes rearward.",
-          "steps": [
-            "Strike the release ahead of the magazine toward the stock with a spare to eject. B/Y only releases a valid hold-open; it does not eject the magazine."
-          ]
-        },
-        "zh-TW": {
-          "title": "FAMAS",
-          "intro": "彈匣實體拉出；備用彈匣擊打方向朝后。",
-          "steps": [
-            "拿備用彈匣向槍托方向擊打彈匣前方的釋放桿，可退出舊彈匣。B/Y 只用于有效的空倉掛機釋放，不會退彈匣。"
-          ]
-        },
-        "fr": {
-          "title": "FAMAS",
-          "intro": "Retrait physique ; la frappe avec chargeur neuf va vers l’arrière.",
-          "steps": [
-            "Frappez le verrou devant le chargeur vers la crosse avec le neuf. B/Y libère uniquement une culasse déjà bloquée, pas le chargeur."
-          ]
-        },
-        "de": {
-          "title": "FAMAS",
-          "intro": "Magazin herausziehen; Ersatzmagazinschlag geht nach hinten.",
-          "steps": [
-            "Vordere Entriegelung mit Ersatz Richtung Schaft schlagen. B/Y löst nur einen gültigen Verschlussfang, nicht das Magazin."
-          ]
-        },
-        "es": {
-          "title": "FAMAS",
-          "intro": "Extracción física; golpe de liberación hacia atrás.",
-          "steps": [
-            "Golpea el retén delante del cargador hacia la culata con el repuesto. B/Y solo libera un retén de cerrojo válido, no el cargador."
-          ]
-        },
-        "ru": {
-          "title": "FAMAS",
-          "intro": "Ручное извлечение; удар запасным магазином направлен назад.",
-          "steps": [
-            "Ударьте запасным магазином переднюю защёлку к прикладу. B/Y снимает только действующую задержку, магазин не сбрасывает."
-          ]
-        },
-        "ja": {
-          "title": "FAMAS",
-          "intro": "手で引き抜く方式。予備マガジンによる解除打撃は後方へ。",
-          "steps": [
-            "予備でマガジン前方の解除部をストック方向へ叩きます。B／Y は有効なボルトストップの解除専用で、マガジンは排出しません。"
-          ]
-        },
-        "ko": {
-          "title": "FAMAS",
-          "intro": "직접 탄창을 당겨 빼며 예비 탄창 해제 타격 방향은 뒤쪽입니다.",
-          "steps": [
-            "예비 탄창으로 탄창 앞 해제부를 개머리판 쪽으로 치세요. B/Y는 유효한 후퇴 고정만 풀며 탄창을 빼지 않습니다."
-          ]
-        }
-      },
-      "recipe": "pull-lock",
-      "related": [
-        "reload"
-      ],
-      "sources": [
-        "src/client/component/vr/gameplay/weapons/famas/mechanics.hpp",
-        "docs/vr-impact-release.md"
-      ]
-    },
-    {
-      "id": "fal",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "FAL",
-          "intro": "半自动步枪，弹匣实体拉出。",
-          "steps": [
-            "可用备用弹匣朝枪口方向击打弹匣卡笋退出旧弹匣。B/Y 不会让弹匣自动掉落。"
-          ]
-        },
-        "en": {
-          "title": "FAL",
-          "intro": "Semi-automatic rifle with physical magazine removal.",
-          "steps": [
-            "A spare can strike the magazine latch toward the muzzle to eject the installed magazine. B/Y does not drop it free."
-          ]
-        },
-        "zh-TW": {
-          "title": "FAL",
-          "intro": "半自動步槍，彈匣實體拉出。",
-          "steps": [
-            "可用備用彈匣朝槍口方向擊打彈匣卡筍退出舊彈匣。B/Y 不會讓彈匣自動掉落。"
-          ]
-        },
-        "fr": {
-          "title": "FAL",
-          "intro": "Fusil semi-automatique à retrait manuel du chargeur.",
-          "steps": [
-            "Un chargeur neuf peut frapper le verrou vers le canon pour éjecter l’ancien. B/Y ne l’éjecte pas."
-          ]
-        },
-        "de": {
-          "title": "FAL",
-          "intro": "Halbautomatisches Gewehr mit manueller Magazinentnahme.",
-          "steps": [
-            "Ersatzmagazin kann die Raste zur Mündung schlagen, um das alte auszuwerfen. B/Y wirft nicht aus."
-          ]
-        },
-        "es": {
-          "title": "FAL",
-          "intro": "Fusil semiautomático con extracción manual.",
-          "steps": [
-            "Golpea el retén hacia la boca con un cargador de repuesto para expulsar el instalado. B/Y no lo suelta."
-          ]
-        },
-        "ru": {
-          "title": "FAL",
-          "intro": "Полуавтоматическая винтовка с ручным извлечением магазина.",
-          "steps": [
-            "Запасным магазином можно ударить защёлку к дулу для сброса. B/Y не сбрасывает."
-          ]
-        },
-        "ja": {
-          "title": "FAL",
-          "intro": "手動でマガジンを外すセミオートライフル。",
-          "steps": [
-            "予備マガジンでラッチを銃口方向へ叩くと装着済みマガジンを外せます。B／Y では排出しません。"
-          ]
-        },
-        "ko": {
-          "title": "FAL",
-          "intro": "직접 탄창을 분리하는 반자동 소총입니다.",
-          "steps": [
-            "예비 탄창으로 걸쇠를 총구 쪽으로 치면 기존 탄창이 빠집니다. B/Y로는 분리되지 않습니다."
-          ]
-        }
-      },
-      "recipe": "pull-lock",
-      "related": [
-        "reload"
-      ],
-      "sources": [
-        "src/client/component/vr/gameplay/weapons/fal/mechanics.hpp",
-        "docs/vr-impact-release.md"
-      ]
-    },
-    {
-      "id": "tavor",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "TAR-21",
-          "intro": "无托步枪，弹匣位于握把后方。",
-          "steps": [
-            "备用弹匣可向前、向上击打弹匣前上方的释放杆；也有朝后的第二释放接触。实体捏住后拉出仍可使用。",
-            "B/Y 只释放有效的空仓挂机，不会按键退弹匣。"
-          ]
-        },
-        "en": {
-          "title": "TAR-21",
-          "intro": "Bullpup rifle with its magazine behind the grip.",
-          "steps": [
-            "Strike the release ahead of and above the magazine forward/upward with a spare; a second rearward release contact is also available. Direct pinch-and-pull still works.",
-            "B/Y only releases a valid hold-open; it does not eject the magazine."
-          ]
-        },
-        "zh-TW": {
-          "title": "TAR-21",
-          "intro": "無托步槍，彈匣位于握把后方。",
-          "steps": [
-            "備用彈匣可向前、向上擊打彈匣前上方的釋放桿；也有朝后的第二釋放接觸。實體捏住后拉出仍可使用。",
-            "B/Y 只釋放有效的空倉掛機，不會按鍵退彈匣。"
-          ]
-        },
-        "fr": {
-          "title": "TAR-21",
-          "intro": "Fusil bullpup : chargeur derrière la poignée.",
-          "steps": [
-            "Frappez le verrou situé devant et au-dessus du chargeur vers l’avant/haut avec le neuf ; un second contact vers l’arrière existe. Le retrait direct reste possible.",
-            "B/Y libère uniquement une culasse déjà bloquée, pas le chargeur."
-          ]
-        },
-        "de": {
-          "title": "TAR-21",
-          "intro": "Bullpup-Gewehr mit Magazin hinter dem Griff.",
-          "steps": [
-            "Entriegelung vor und über dem Magazin mit Ersatz nach vorne/oben schlagen; zweiter rückwärts gerichteter Kontakt ist möglich. Direktes Greifen und Ziehen funktioniert ebenfalls.",
-            "B/Y löst nur einen gültigen Verschlussfang, nicht das Magazin."
-          ]
-        },
-        "es": {
-          "title": "TAR-21",
-          "intro": "Fusil bullpup con cargador tras la empuñadura.",
-          "steps": [
-            "Golpea el liberador delante y encima del cargador hacia delante/arriba con el repuesto; hay otro contacto hacia atrás. Agarrar y tirar también funciona.",
-            "B/Y solo libera un retén válido, no expulsa el cargador."
-          ]
-        },
-        "ru": {
-          "title": "TAR-21",
-          "intro": "Винтовка булл-пап, магазин позади рукояти.",
-          "steps": [
-            "Ударьте запасным по защёлке спереди и сверху магазина вперёд/вверх; доступен и второй контакт назад. Прямое вытягивание тоже работает.",
-            "B/Y снимает только действующую задержку, магазин не сбрасывает."
-          ]
-        },
-        "ja": {
-          "title": "TAR-21",
-          "intro": "グリップ後方にマガジンがあるブルパップライフル。",
-          "steps": [
-            "予備でマガジン前上方の解除部を前／上へ叩きます。後方への第二の接触点もあります。直接つかんで引き抜く方法も使えます。",
-            "B／Y は有効なボルトストップの解除専用で、マガジンは排出しません。"
-          ]
-        },
-        "ko": {
-          "title": "TAR-21",
-          "intro": "탄창이 손잡이 뒤에 있는 불펍 소총입니다.",
-          "steps": [
-            "예비 탄창으로 탄창 앞 위쪽 해제부를 앞/위로 치세요. 뒤쪽 방향의 두 번째 해제 접촉점도 있으며 직접 잡아 당겨도 됩니다.",
-            "B/Y는 유효한 후퇴 고정만 풀며 탄창을 빼지 않습니다."
-          ]
-        }
-      },
-      "recipe": "pull-lock",
-      "aliases": [
-        "tar21"
-      ],
-      "related": [
-        "reload"
-      ],
-      "sources": [
-        "src/client/component/vr/gameplay/weapons/tavor/reload_profile.hpp",
-        "docs/vr-impact-release.md"
-      ]
-    },
-    {
-      "id": "fn2000",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "F2000",
-          "intro": "无托步枪，打空后需完整拉机柄。",
-          "steps": [
-            "备用弹匣可向上击打弹匣前方的大释放按钮，退出旧弹匣。没有 B/Y 退匣或单独挂机释放。"
-          ]
-        },
-        "en": {
-          "title": "F2000",
-          "intro": "Bullpup rifle requiring a full charging stroke after running empty.",
-          "steps": [
-            "A spare can strike upward on the large release button ahead of the magazine to eject. There is no B/Y magazine or separate hold-open release."
-          ]
-        },
-        "zh-TW": {
-          "title": "F2000",
-          "intro": "無托步槍，打空后需完整拉機柄。",
-          "steps": [
-            "備用彈匣可向上擊打彈匣前方的大釋放按鈕，退出舊彈匣。沒有 B/Y 退匣或單獨掛機釋放。"
-          ]
-        },
-        "fr": {
-          "title": "F2000",
-          "intro": "Fusil bullpup exigeant une course complète après épuisement.",
-          "steps": [
-            "Frappez vers le haut le gros bouton devant le chargeur avec le neuf. Pas d’éjection B/Y ni de libération séparée de culasse."
-          ]
-        },
-        "de": {
-          "title": "F2000",
-          "intro": "Bullpup-Gewehr, nach Leerschießen vollständig durchladen.",
-          "steps": [
-            "Großen Knopf vor dem Magazin mit Ersatz nach oben schlagen. Kein B/Y-Auswurf oder separater Verschlussfanglöser."
-          ]
-        },
-        "es": {
-          "title": "F2000",
-          "intro": "Bullpup que requiere recorrido completo tras agotarse.",
-          "steps": [
-            "Golpea hacia arriba el botón grande delante del cargador con el repuesto. No hay expulsión B/Y ni liberador separado."
-          ]
-        },
-        "ru": {
-          "title": "F2000",
-          "intro": "Булл-пап, требующий полного взведения после опустошения.",
-          "steps": [
-            "Ударьте запасным вверх по большой кнопке перед магазином. Нет сброса B/Y или отдельного снятия задержки."
-          ]
-        },
-        "ja": {
-          "title": "F2000",
-          "intro": "撃ち切り後に完全な装填操作が必要なブルパップ。",
-          "steps": [
-            "予備でマガジン前方の大きなボタンを上へ叩くと排出します。B／Y 排出や独立したボルトストップ解除はありません。"
-          ]
-        },
-        "ko": {
-          "title": "F2000",
-          "intro": "탄을 다 쓴 뒤 완전한 장전 동작이 필요한 불펍 소총입니다.",
-          "steps": [
-            "예비 탄창으로 탄창 앞 큰 버튼을 위로 치면 빠집니다. B/Y 탄창 분리나 별도 노리쇠 멈치 해제는 없습니다."
-          ]
-        }
-      },
-      "recipe": "pull-charge",
-      "related": [
-        "reload"
-      ],
-      "sources": [
-        "src/client/component/vr/gameplay/weapons/fn2000/reload_profile.hpp",
-        "docs/vr-impact-release.md"
-      ]
-    },
-    {
-      "id": "l86",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "L86 LSW",
-          "intro": "弹匣供弹机枪，实体拆装弹匣。",
-          "steps": [
-            "B/Y 可释放有效的空仓挂机，但不负责退弹匣。这把枪使用弹匣，不需要放弹链或打开供弹盖。"
-          ]
-        },
-        "en": {
-          "title": "L86 LSW",
-          "intro": "Magazine-fed machine gun with physical magazine exchange.",
-          "steps": [
-            "B/Y can release a valid hold-open but does not eject the magazine. This weapon needs no belt placement or feed-cover operation."
-          ]
-        },
-        "zh-TW": {
-          "title": "L86 LSW",
-          "intro": "彈匣供彈機槍，實體拆裝彈匣。",
-          "steps": [
-            "B/Y 可釋放有效的空倉掛機，但不負責退彈匣。這把槍使用彈匣，不需要放彈鏈或打開供彈蓋。"
-          ]
-        },
-        "fr": {
-          "title": "L86 LSW",
-          "intro": "Mitrailleuse à chargeur, échange physique.",
-          "steps": [
-            "B/Y libère une culasse bloquée mais pas le chargeur. Aucune bande ni couvercle à manipuler."
-          ]
-        },
-        "de": {
-          "title": "L86 LSW",
-          "intro": "Magazingewehr mit physischem Magazinwechsel.",
-          "steps": [
-            "B/Y löst den Verschlussfang, nicht das Magazin. Kein Gurt oder Zuführdeckel nötig."
-          ]
-        },
-        "es": {
-          "title": "L86 LSW",
-          "intro": "Ametralladora con cambio físico de cargador.",
-          "steps": [
-            "B/Y libera el retén, pero no expulsa el cargador. No requiere cinta ni tapa."
-          ]
-        },
-        "ru": {
-          "title": "L86 LSW",
-          "intro": "Пулемёт с физической заменой магазина.",
-          "steps": [
-            "B/Y снимает задержку, но не сбрасывает магазин. Лента и крышка не требуются."
-          ]
-        },
-        "ja": {
-          "title": "L86 LSW",
-          "intro": "マガジンを手で交換するマガジン給弾機関銃。",
-          "steps": [
-            "B／Y はストップを解除しますがマガジンは排出しません。ベルト配置や給弾カバー操作は不要です。"
-          ]
-        },
-        "ko": {
-          "title": "L86 LSW",
-          "intro": "탄창을 직접 교체하는 탄창식 기관총입니다.",
-          "steps": [
-            "B/Y는 후퇴 고정을 풀지만 탄창은 빼지 않습니다. 탄띠나 급탄 덮개 조작은 필요 없습니다."
-          ]
-        }
-      },
-      "recipe": "pull-lock",
-      "related": [
-        "reload"
-      ],
-      "sources": [
-        "src/client/component/vr/gameplay/weapons/l86/mechanics.hpp"
-      ]
-    },
-    {
-      "id": "aug",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "AUG HBAR",
-          "intro": "弹匣供弹，机柄可手动挂起并下拍释放。",
-          "steps": [
-            "备用弹匣可向后、向上击打弹匣后上方的释放钮。B/Y 不负责退匣或释放机柄。"
-          ]
-        },
-        "en": {
-          "title": "AUG HBAR",
-          "intro": "Magazine-fed with a manually caught charging handle.",
-          "steps": [
-            "A spare can strike the release behind and above the magazine rearward/upward. B/Y does not eject or release the handle."
-          ]
-        },
-        "zh-TW": {
-          "title": "AUG HBAR",
-          "intro": "彈匣供彈，機柄可手動掛起并下拍釋放。",
-          "steps": [
-            "備用彈匣可向后、向上擊打彈匣后上方的釋放鈕。B/Y 不負責退匣或釋放機柄。"
-          ]
-        },
-        "fr": {
-          "title": "AUG HBAR",
-          "intro": "Alimentation par chargeur, levier à accrochage manuel.",
-          "steps": [
-            "Frappez le verrou derrière et au-dessus du chargeur vers l’arrière/haut avec le neuf. B/Y ne libère ni chargeur ni levier."
-          ]
-        },
-        "de": {
-          "title": "AUG HBAR",
-          "intro": "Magazinzufuhr mit manuell einrastbarem Spannhebel.",
-          "steps": [
-            "Entriegelung hinter/über dem Magazin mit Ersatz nach hinten/oben schlagen. B/Y löst weder Magazin noch Hebel."
-          ]
-        },
-        "es": {
-          "title": "AUG HBAR",
-          "intro": "Alimentación por cargador y enganche manual de palanca.",
-          "steps": [
-            "Golpea con el repuesto el liberador detrás y encima del cargador hacia atrás/arriba. B/Y no suelta cargador ni palanca."
-          ]
-        },
-        "ru": {
-          "title": "AUG HBAR",
-          "intro": "Магазинное питание, ручная фиксация рукоятки.",
-          "steps": [
-            "Ударьте запасным назад/вверх по защёлке сзади и сверху магазина. B/Y не сбрасывает магазин и не освобождает рукоятку."
-          ]
-        },
-        "ja": {
-          "title": "AUG HBAR",
-          "intro": "マガジン給弾で、ハンドルを手動固定できます。",
-          "steps": [
-            "予備でマガジン後上方の解除部を後ろ／上へ叩きます。B／Y は排出にもハンドル解放にも使いません。"
-          ]
-        },
-        "ko": {
-          "title": "AUG HBAR",
-          "intro": "탄창식이며 장전 손잡이를 수동으로 걸 수 있습니다.",
-          "steps": [
-            "예비 탄창으로 탄창 뒤 위쪽 해제부를 뒤/위로 치세요. B/Y로는 탄창이나 손잡이를 풀 수 없습니다."
-          ]
-        }
-      },
-      "recipe": "hk",
-      "related": [
-        "reload"
-      ],
-      "sources": [
-        "src/client/component/vr/gameplay/weapons/aug/mechanics.hpp",
-        "docs/vr-impact-release.md"
-      ]
-    },
-    {
-      "id": "m240",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "M240",
-          "intro": "弹盒向枪身左侧取下，从左侧向右装入；先打开供弹盖。",
-          "steps": [
-            "取下时将旧弹盒向枪身左侧拉出；安装时将新弹盒从枪身左侧向右送入并装到位。取下和安装都要保持供弹盖打开。方向以枪身为准，与左右手持枪无关。",
-            "枪机开膛待击，没有额外膛内一发。",
-            "雪地心跳检测仪型号使用与 ACR 相同的操作：用空闲手 Trigger 捏住检测仪外壳，沿铰链翻开或合上，再松开。仅按下 Trigger 不会自动开关。"
-          ]
-        },
-        "en": {
-          "title": "M240",
-          "intro": "Remove the box toward the gun’s left; install from the left toward the right with the feed cover open.",
-          "steps": [
-            "Pull the old box toward the gun’s left. Guide the replacement from the gun’s left toward the right until seated. Keep the feed cover open for both operations. Directions follow the gun, regardless of which hand holds it.",
-            "Open-bolt operation has no extra chambered round.",
-            "The arctic heartbeat variant uses the same controls as the ACR: pinch the sensor housing with the free hand’s Trigger, fold it open or closed around its hinge, then release. A Trigger press alone does not toggle it."
-          ]
-        },
-        "zh-TW": {
-          "title": "M240",
-          "intro": "彈盒向槍身左側取下，從左側向右裝入；先打開供彈蓋。",
-          "steps": [
-            "取下時將舊彈盒向槍身左側拉出；安裝時將新彈盒從槍身左側向右送入并裝到位。取下和安裝都要保持供彈蓋打開。方向以槍身為準，與左右手持槍無關。",
-            "槍機開膛待擊，沒有額外膛內一發。",
-            "雪地心跳檢測儀型號使用與 ACR 相同的操作：用空閑手 Trigger 捏住檢測儀外殼，沿鉸鏈翻開或合上，再松開。僅按下 Trigger 不會自動開關。"
-          ]
-        },
-        "fr": {
-          "title": "M240",
-          "intro": "Retirez la boîte vers la gauche de l’arme ; insérez de gauche à droite, couvercle ouvert.",
-          "steps": [
-            "Tirez l’ancienne boîte vers la gauche de l’arme ; guidez la neuve de gauche à droite jusqu’au verrouillage. Gardez le couvercle ouvert. Les directions suivent l’arme, quelle que soit la main.",
-            "Culasse ouverte : pas de cartouche supplémentaire chambrée.",
-            "La variante arctique utilise le capteur comme l’ACR : pincez son boîtier avec Trigger, ouvrez ou fermez autour de la charnière puis relâchez. Une simple pression ne suffit pas."
-          ]
-        },
-        "de": {
-          "title": "M240",
-          "intro": "Kasten zur Waffenlinken entnehmen; bei offenem Deckel von links nach rechts einsetzen.",
-          "steps": [
-            "Alten Kasten nach Waffenlinks ziehen, Ersatz von links nach rechts einführen. Deckel bei beiden Vorgängen offen halten. Richtungen beziehen sich auf die Waffe, unabhängig von der Hand.",
-            "Offener Verschluss: keine zusätzliche Patrone im Lager.",
-            "Arktis-Sensor wie beim ACR: Gehäuse mit Trigger greifen, am Scharnier auf-/zuklappen und lösen. Ein bloßer Tastendruck schaltet nichts um."
-          ]
-        },
-        "es": {
-          "title": "M240",
-          "intro": "Saca la caja a la izquierda del arma e inserta de izquierda a derecha con la tapa abierta.",
-          "steps": [
-            "Saca la caja a la izquierda del arma y guía la nueva de izquierda a derecha hasta asentarla. Tapa abierta en ambos casos; las direcciones siguen al arma, no a la mano.",
-            "Cerrojo abierto: sin cartucho adicional en recámara.",
-            "El sensor de la variante ártica funciona como el ACR: sujeta la carcasa con Trigger, abre/cierra por la bisagra y suelta. Pulsar sin mover no lo alterna."
-          ]
-        },
-        "ru": {
-          "title": "M240",
-          "intro": "Коробка снимается влево от оружия, ставится слева направо при открытой крышке.",
-          "steps": [
-            "Снимайте коробку влево от оружия, новую вставляйте слева направо до посадки. Крышка открыта в обоих случаях; направления относительно оружия независимо от руки.",
-            "Открытый затвор: дополнительного патрона в патроннике нет.",
-            "Датчик арктической версии как у ACR: захватите корпус Trigger, раскройте или сложите на шарнире и отпустите. Одного нажатия мало."
-          ]
-        },
-        "ja": {
-          "title": "M240",
-          "intro": "弾薬箱は銃の左へ抜き、カバーを開けたまま左から右へ挿入します。",
-          "steps": [
-            "古い箱を銃の左へ引き、新品を左から右へ導いて装着します。どちらもカバーを開いたまま行います。方向は持つ手によらず銃基準です。",
-            "オープンボルト方式で、薬室の追加 1 発はありません。",
-            "寒冷地用心拍センサーは ACR と同操作です。空いた手の Trigger で外装をつかみ、ヒンジに沿って開閉して離します。押すだけでは切り替わりません。"
-          ]
-        },
-        "ko": {
-          "title": "M240",
-          "intro": "탄약 상자는 총의 왼쪽으로 빼고 덮개를 연 상태에서 왼쪽에서 오른쪽으로 넣습니다.",
-          "steps": [
-            "기존 상자를 총의 왼쪽으로 당기고 새 상자를 왼쪽에서 오른쪽으로 넣습니다. 두 동작 모두 덮개를 열어 두세요. 방향은 잡은 손과 관계없이 총 기준입니다.",
-            "오픈 볼트 방식으로 약실에 추가 한 발이 없습니다.",
-            "설원 심박 감지기 버전은 ACR과 같습니다. 빈손 Trigger로 외장을 잡고 경첩을 따라 펴거나 접은 뒤 놓습니다. 버튼만 눌러서는 전환되지 않습니다."
-          ]
-        }
-      },
-      "recipe": "belt",
-      "related": [
-        "reload"
-      ],
-      "sources": [
-        "src/client/component/vr/gameplay/weapons/m240/reload_profile.hpp",
-        "docs/vr-belt-fed-weapons.md",
-        "docs/vr-heartbeat-sensor.md"
-      ]
-    },
-    {
-      "id": "mg4",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "MG4",
-          "intro": "弹盒向上取下，从上方向下装入；供弹盖和弹链分别操作。",
-          "steps": [
-            "取下时将旧弹盒向上拉出；安装时将新弹盒从上方向下送入并装到位。取下和安装都要保持供弹盖打开。上下方向以枪身为准，与枪在现实空间中的倾斜无关。",
-            "换弹盒本身不会自动拉动枪机，先拉机柄或后拉都可以。"
-          ]
-        },
-        "en": {
-          "title": "MG4",
-          "intro": "Remove the box upward; install downward from above. Handle the cover and belt separately.",
-          "steps": [
-            "Pull the old box upward. Guide the replacement downward from above until seated. Keep the feed cover open for both operations. Up and down follow the gun, regardless of its tilt in the room.",
-            "Changing a box does not cock the bolt; cock before or after the exchange."
-          ]
-        },
-        "zh-TW": {
-          "title": "MG4",
-          "intro": "彈盒向上取下，從上方向下裝入；供彈蓋和彈鏈分別操作。",
-          "steps": [
-            "取下時將舊彈盒向上拉出；安裝時將新彈盒從上方向下送入并裝到位。取下和安裝都要保持供彈蓋打開。上下方向以槍身為準，與槍在現實空間中的傾斜無關。",
-            "換彈盒本身不會自動拉動槍機，先拉機柄或后拉都可以。"
-          ]
-        },
-        "fr": {
-          "title": "MG4",
-          "intro": "Retirez la boîte vers le haut ; insérez depuis le haut vers le bas. Couvercle et bande se manipulent séparément.",
-          "steps": [
-            "Tirez la boîte vers le haut, puis insérez la neuve depuis le haut. Couvercle ouvert pour les deux. Haut/bas suivent l’arme, pas son inclinaison dans la pièce.",
-            "Changer la boîte n’arme pas la culasse : armez avant ou après."
-          ]
-        },
-        "de": {
-          "title": "MG4",
-          "intro": "Kasten nach oben entnehmen, von oben nach unten einsetzen. Deckel und Gurt separat bedienen.",
-          "steps": [
-            "Alten Kasten hochziehen, Ersatz von oben einsetzen. Deckel offen halten. Oben/unten richtet sich nach der Waffe, nicht ihrer Raumneigung.",
-            "Kastenwechsel spannt den Verschluss nicht; vorher oder nachher spannen."
-          ]
-        },
-        "es": {
-          "title": "MG4",
-          "intro": "Saca la caja hacia arriba e insértala desde arriba. Tapa y cinta se manejan aparte.",
-          "steps": [
-            "Saca la caja arriba e introduce la nueva desde arriba hacia abajo, siempre con tapa abierta. Arriba/abajo son relativos al arma, no a la habitación.",
-            "Cambiar la caja no monta el cerrojo; hazlo antes o después."
-          ]
-        },
-        "ru": {
-          "title": "MG4",
-          "intro": "Коробку снимайте вверх, вставляйте сверху вниз. Крышка и лента управляются отдельно.",
-          "steps": [
-            "Тяните старую коробку вверх, новую направляйте сверху вниз. Крышка открыта. Верх/низ относительно оружия, независимо от наклона в комнате.",
-            "Замена коробки не взводит затвор; взведите до или после."
-          ]
-        },
-        "ja": {
-          "title": "MG4",
-          "intro": "箱は上へ外し、上から下へ挿入します。カバーとベルトは別に操作します。",
-          "steps": [
-            "箱を上に引き、新品を上から下へ入れます。両方ともカバーを開けたままです。上下は部屋での傾きによらず銃基準です。",
-            "箱の交換だけではボルトをコッキングしません。交換前か後に操作してください。"
-          ]
-        },
-        "ko": {
-          "title": "MG4",
-          "intro": "상자는 위로 빼고 위에서 아래로 넣습니다. 덮개와 탄띠는 따로 조작합니다.",
-          "steps": [
-            "기존 상자를 위로 빼고 새 상자를 위에서 아래로 넣으며 덮개를 열어 두세요. 위아래는 방 안의 기울기가 아닌 총 기준입니다.",
-            "상자 교체로 노리쇠가 장전되지 않습니다. 교체 전후에 장전하세요."
-          ]
-        }
-      },
-      "recipe": "belt",
-      "related": [
-        "reload"
-      ],
-      "sources": [
-        "src/client/component/vr/gameplay/weapons/mg4/reload_profile.hpp",
-        "docs/vr-belt-fed-weapons.md"
-      ]
-    },
-    {
       "id": "rpd",
       "category": "weapons",
       "text": {
@@ -4299,112 +2896,6 @@
       ]
     },
     {
-      "id": "m200",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "Intervention / M200",
-          "intro": "旋转后拉式枪机，每发都要手动循环。",
-          "steps": [
-            "让另一只手握住枪身支撑，用操作手 Trigger 捏住枪身右侧的枪机柄。",
-            "依次抬起机柄、向后拉、向前推，再放下锁住。每发射击后都需要这套循环。",
-            "松开 Trigger 会保留枪机位置，重新抓住可继续；没有完全闭锁时不能射击。",
-            "用 Trigger 拉出弹匣，从腰侧取新弹匣装入。也可用备用弹匣向前击打弹匣后的释放卡笋。"
-          ]
-        },
-        "en": {
-          "title": "Intervention / M200",
-          "intro": "Rotating bolt; manually cycle after every shot.",
-          "steps": [
-            "Support the gun with the other hand, then pinch the actual right-side bolt handle with the operating hand’s Trigger.",
-            "Lift, pull back, push forward, then lower to lock. Repeat after every shot.",
-            "Releasing Trigger retains the bolt position; regrasp to continue. The action must be locked before firing.",
-            "Pinch and pull the magazine, then insert a waist spare. A spare can also strike the release latch behind the magazine forward."
-          ]
-        },
-        "zh-TW": {
-          "title": "Intervention / M200",
-          "intro": "旋轉后拉式槍機，每發都要手動循環。",
-          "steps": [
-            "讓另一只手握住槍身支撐，用操作手 Trigger 捏住槍身右側的槍機柄。",
-            "依次抬起機柄、向后拉、向前推，再放下鎖住。每發射擊后都需要這套循環。",
-            "松開 Trigger 會保留槍機位置，重新抓住可繼續；沒有完全閉鎖時不能射擊。",
-            "用 Trigger 拉出彈匣，從腰側取新彈匣裝入。也可用備用彈匣向前擊打彈匣后的釋放卡筍。"
-          ]
-        },
-        "fr": {
-          "title": "Intervention / M200",
-          "intro": "Verrou rotatif, cycle manuel après chaque tir.",
-          "steps": [
-            "Soutenez l’arme de l’autre main et saisissez le vrai levier à droite avec Trigger de la main opératrice.",
-            "Levez, tirez vers l’arrière, poussez vers l’avant puis abaissez pour verrouiller. Après chaque tir.",
-            "Relâcher Trigger conserve la position du verrou ; reprenez pour continuer. Il doit être verrouillé pour tirer.",
-            "Retirez le chargeur en le pinçant, puis insérez un neuf de la taille. Le neuf peut aussi frapper vers l’avant le verrou derrière l’ancien."
-          ]
-        },
-        "de": {
-          "title": "Intervention / M200",
-          "intro": "Drehverschluss, nach jedem Schuss manuell repetieren.",
-          "steps": [
-            "Waffe mit anderer Hand stützen, echten rechten Kammerstängel mit Trigger der Bedienhand greifen.",
-            "Anheben, zurückziehen, vorschieben und zum Verriegeln absenken. Nach jedem Schuss wiederholen.",
-            "Trigger lösen hält die Verschlussposition; zum Fortsetzen neu greifen. Zum Feuern muss verriegelt sein.",
-            "Magazin greifen und ziehen, Hüftersatz einsetzen. Ersatz kann auch die hintere Raste nach vorne schlagen."
-          ]
-        },
-        "es": {
-          "title": "Intervention / M200",
-          "intro": "Cerrojo rotativo, ciclo manual tras cada disparo.",
-          "steps": [
-            "Apoya el arma con la otra mano y agarra el cerrojo real del lado derecho con Trigger.",
-            "Levanta, tira atrás, empuja adelante y baja para bloquear. Repite tras cada tiro.",
-            "Soltar Trigger conserva la posición del cerrojo; vuelve a agarrar para continuar. Debe estar bloqueado para disparar.",
-            "Agarra y saca el cargador, luego inserta uno de cintura. El repuesto también puede golpear adelante el retén tras el cargador."
-          ]
-        },
-        "ru": {
-          "title": "Intervention / M200",
-          "intro": "Поворотный затвор, ручной цикл после каждого выстрела.",
-          "steps": [
-            "Поддерживайте оружие другой рукой, рабочей рукой с Trigger захватите реальную рукоятку справа.",
-            "Поднимите, отведите назад, подайте вперёд и опустите для запирания. После каждого выстрела.",
-            "Отпускание Trigger сохраняет положение затвора; перехватите для продолжения. Для выстрела затвор должен быть заперт.",
-            "Вытяните магазин и вставьте поясной запасной. Запасным также можно ударить вперёд по защёлке сзади магазина."
-          ]
-        },
-        "ja": {
-          "title": "Intervention / M200",
-          "intro": "回転ボルト方式。毎射撃後に手動操作が必要です。",
-          "steps": [
-            "反対の手で銃を支え、操作する手の Trigger で実際の右側ボルトハンドルをつかみます。",
-            "上げる、引く、押す、下げてロックの順で操作します。発射ごとに繰り返します。",
-            "Trigger を離してもボルト位置を保持します。つかみ直して続行してください。射撃にはロックが必要です。",
-            "マガジンをつまんで抜き、腰から予備を挿入します。予備で後部の解除ラッチを前へ叩くこともできます。"
-          ]
-        },
-        "ko": {
-          "title": "Intervention / M200",
-          "intro": "회전 노리쇠이며 매 발사 후 수동 왕복이 필요합니다.",
-          "steps": [
-            "다른 손으로 총을 받치고 조작할 손의 Trigger로 실제 오른쪽 노리쇠 손잡이를 잡습니다.",
-            "올리고 뒤로 당기고 앞으로 민 뒤 내려 잠급니다. 매 발사 후 반복하세요.",
-            "Trigger를 놓으면 노리쇠 위치가 유지됩니다. 다시 잡아 이어가세요. 발사 전 잠겨 있어야 합니다.",
-            "탄창을 잡아 빼고 허리 예비 탄창을 넣습니다. 예비 탄창으로 뒤 걸쇠를 앞으로 쳐도 됩니다."
-          ]
-        }
-      },
-      "aliases": [
-        "cheytac"
-      ],
-      "related": [
-        "reload"
-      ],
-      "sources": [
-        "src/client/component/vr/gameplay/weapons/cheytac/reload_profile.hpp",
-        "docs/vr-m200.md"
-      ]
-    },
-    {
       "id": "m14",
       "category": "weapons",
       "text": {
@@ -4488,50 +2979,21 @@
       "id": "m82",
       "category": "weapons",
       "text": {
-        "zh-CN": {
-          "title": "Barrett .50cal / M82A1",
-          "intro": "半自动；打空后换弹并拉机柄。",
-          "steps": []
-        },
         "en": {
           "title": "Barrett .50cal / M82A1",
-          "intro": "Semi-automatic; charge after an empty magazine exchange.",
-          "steps": []
-        },
-        "zh-TW": {
-          "title": "Barrett .50cal / M82A1",
-          "intro": "半自動；打空后換彈并拉機柄。",
-          "steps": []
-        },
-        "fr": {
-          "title": "Barrett .50cal / M82A1",
-          "intro": "Semi-automatique ; armez après échange d’un chargeur vide.",
-          "steps": []
-        },
-        "de": {
-          "title": "Barrett .50cal / M82A1",
-          "intro": "Halbautomatisch; nach leerem Magazinwechsel durchladen.",
-          "steps": []
-        },
-        "es": {
-          "title": "Barrett .50cal / M82A1",
-          "intro": "Semiautomático; monta tras cambiar un cargador vacío.",
-          "steps": []
-        },
-        "ru": {
-          "title": "Barrett .50cal / M82A1",
-          "intro": "Полуавтомат; досылайте после замены пустого магазина.",
-          "steps": []
-        },
-        "ja": {
-          "title": "Barrett .50cal / M82A1",
-          "intro": "セミオート。空マガジン交換後に装填操作をします。",
-          "steps": []
+          "intro": "In One Shot, One Kill it rests on its bipod.",
+          "steps": [
+            "On the bipod: grip the rear with the right hand and steer the gun about the bipod within the mount's limits; the left hand may hold the handguard. Look through the actual scope; the right Trigger fires.",
+            "Carried: semi-automatic; charge after an empty magazine exchange."
+          ]
         },
         "ko": {
-          "title": "Barrett .50cal / M82A1",
-          "intro": "반자동이며 빈 탄창 교체 후 약실 장전이 필요합니다.",
-          "steps": []
+          "title": "바렛 .50cal / M82A1",
+          "intro": "One Shot, One Kill에서는 양각대에 거치되어 있습니다.",
+          "steps": [
+            "거치 상태: 오른손으로 뒤쪽을 쥐고 양각대를 축으로 정해진 범위 안에서 돌립니다. 왼손은 총열 덮개를 잡아도 됩니다. 실제 조준경을 들여다보고 오른손 트리거로 쏩니다.",
+            "들고 다닐 때: 반자동이며, 빈 탄창을 갈고 나면 장전 손잡이를 당깁니다."
+          ]
         }
       },
       "recipe": "pull-charge",
@@ -4547,67 +3009,20 @@
       "id": "dragunov",
       "category": "weapons",
       "text": {
-        "zh-CN": {
-          "title": "Dragunov / SVD",
-          "intro": "半自动，弹匣可拉出或用备用弹匣击打卡笋。",
-          "steps": [
-            "备用弹匣向前击打弹匣卡笋可退匣。空仓挂机后仍用机柄拉后、回位；B/Y 不释放挂机。"
-          ]
-        },
         "en": {
           "title": "Dragunov / SVD",
-          "intro": "Semi-automatic with pinch removal or a spare-magazine latch strike.",
+          "intro": "Semi-automatic with the AK rock-in magazine.",
           "steps": [
-            "Strike the magazine latch forward with a spare to eject. Use the handle to leave hold-open and chamber; B/Y does not release it."
-          ]
-        },
-        "zh-TW": {
-          "title": "Dragunov / SVD",
-          "intro": "半自動，彈匣可拉出或用備用彈匣擊打卡筍。",
-          "steps": [
-            "備用彈匣向前擊打彈匣卡筍可退匣。空倉掛機后仍用機柄拉后、回位；B/Y 不釋放掛機。"
-          ]
-        },
-        "fr": {
-          "title": "Dragunov / SVD",
-          "intro": "Semi-automatique, retrait manuel ou frappe du verrou avec un chargeur neuf.",
-          "steps": [
-            "Frappez le verrou vers l’avant avec le chargeur neuf. Le levier libère la culasse et chambre ; B/Y ne la libère pas."
-          ]
-        },
-        "de": {
-          "title": "Dragunov / SVD",
-          "intro": "Halbautomatisch, Magazin ziehen oder Raste mit Ersatzmagazin schlagen.",
-          "steps": [
-            "Raste mit Ersatzmagazin nach vorne schlagen. Hebel löst Verschlussfang und lädt; B/Y löst nicht."
-          ]
-        },
-        "es": {
-          "title": "Dragunov / SVD",
-          "intro": "Semiautomático con extracción manual o golpe al retén con otro cargador.",
-          "steps": [
-            "Golpea el retén adelante con el repuesto. Usa la palanca para liberar y alimentar; B/Y no lo hace."
-          ]
-        },
-        "ru": {
-          "title": "Dragunov / SVD",
-          "intro": "Полуавтомат, извлечение вручную или удар запасным магазином по защёлке.",
-          "steps": [
-            "Ударьте запасным по защёлке вперёд. Рукояткой снимите задержку и дошлите; B/Y не освобождает."
-          ]
-        },
-        "ja": {
-          "title": "Dragunov / SVD",
-          "intro": "セミオート。直接引き抜き、または予備でラッチを叩いて交換。",
-          "steps": [
-            "予備でラッチを前へ叩きます。ストップ解除と装填はハンドルで行い、B／Y では解除しません。"
+            "Insert: hook the magazine's front lug at the front of the well, then rock it back to latch. Remove: hold Trigger on it and rock it forward about 12 degrees.",
+            "A spare magazine striking the latch forward also drops the installed one. Use the handle to chamber; B/Y does not release it."
           ]
         },
         "ko": {
-          "title": "Dragunov / SVD",
-          "intro": "반자동이며 직접 분리하거나 예비 탄창으로 걸쇠를 칩니다.",
+          "title": "드라구노프 / SVD",
+          "intro": "AK식 탄창을 쓰는 반자동 저격총입니다.",
           "steps": [
-            "예비 탄창으로 걸쇠를 앞으로 칩니다. 손잡이로 후퇴 고정을 풀고 장전하며 B/Y로는 해제되지 않습니다."
+            "끼우기: 탄창 앞 걸쇠를 탄창 구멍 앞에 걸고 뒤로 젖혀 겁니다. 빼기: 트리거로 잡고 앞으로 약 12° 젖힙니다.",
+            "새 탄창으로 걸쇠를 앞으로 쳐도 꽂힌 탄창이 빠집니다. 장전은 손잡이로 합니다. B/Y로는 빠지지 않습니다."
           ]
         }
       },
@@ -4617,159 +3032,6 @@
       ],
       "sources": [
         "src/client/component/vr/gameplay/weapons/dragunov/reload_profile.hpp"
-      ]
-    },
-    {
-      "id": "wa2000",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "WA2000",
-          "intro": "半自动，弹匣实体拉出；B/Y 只释放挂机。",
-          "steps": [
-            "装好有弹弹匣后，也可按持枪手 B/Y 释放有效的空仓挂机。按键不会退弹匣。"
-          ]
-        },
-        "en": {
-          "title": "WA2000",
-          "intro": "Semi-automatic with physical magazine pull; B/Y only releases hold-open.",
-          "steps": [
-            "After seating a loaded magazine, B/Y in the firing hand can also release valid hold-open. It does not eject the magazine."
-          ]
-        },
-        "zh-TW": {
-          "title": "WA2000",
-          "intro": "半自動，彈匣實體拉出；B/Y 只釋放掛機。",
-          "steps": [
-            "裝好有彈彈匣后，也可按持槍手 B/Y 釋放有效的空倉掛機。按鍵不會退彈匣。"
-          ]
-        },
-        "fr": {
-          "title": "WA2000",
-          "intro": "Semi-automatique, retrait physique ; B/Y ne libère que la culasse.",
-          "steps": [
-            "Après insertion d’un chargeur plein, B/Y de la main armée peut libérer la culasse bloquée. Il n’éjecte pas le chargeur."
-          ]
-        },
-        "de": {
-          "title": "WA2000",
-          "intro": "Halbautomatisch, Magazin ziehen; B/Y löst nur den Verschlussfang.",
-          "steps": [
-            "Nach vollem Magazin kann B/Y der Schusshand den Verschlussfang lösen. Es wirft kein Magazin aus."
-          ]
-        },
-        "es": {
-          "title": "WA2000",
-          "intro": "Semiautomático, extracción física; B/Y solo libera el retén.",
-          "steps": [
-            "Con cargador lleno insertado, B/Y de la mano del arma libera el retén. No expulsa el cargador."
-          ]
-        },
-        "ru": {
-          "title": "WA2000",
-          "intro": "Полуавтомат, ручное извлечение; B/Y только снимает задержку.",
-          "steps": [
-            "После установки полного магазина B/Y руки с оружием снимает действующую задержку, но не сбрасывает магазин."
-          ]
-        },
-        "ja": {
-          "title": "WA2000",
-          "intro": "セミオートで手動マガジン取り外し。B／Y はストップ解除専用。",
-          "steps": [
-            "装填済みマガジンを入れた後、持つ手の B／Y で有効なストップを解除できます。マガジンは排出しません。"
-          ]
-        },
-        "ko": {
-          "title": "WA2000",
-          "intro": "반자동이며 탄창을 직접 빼고 B/Y는 후퇴 고정만 풉니다.",
-          "steps": [
-            "탄창을 넣은 뒤 총을 든 손의 B/Y로 유효한 후퇴 고정을 풀 수 있습니다. 탄창은 빼지 않습니다."
-          ]
-        }
-      },
-      "recipe": "pull-lock",
-      "related": [
-        "reload"
-      ],
-      "sources": [
-        "src/client/component/vr/gameplay/weapons/wa2000/reload_profile.hpp"
-      ]
-    },
-    {
-      "id": "aa12",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "AA-12",
-          "intro": "自动霰弹枪，弹匣实体拉出，顶部机柄上膛。",
-          "steps": [
-            "没有最后一发后的挂机释放。打空后装好弹匣，必须完整拉动顶部机柄；不用泵动护木或逐发填弹。"
-          ]
-        },
-        "en": {
-          "title": "AA-12",
-          "intro": "Automatic shotgun with physical magazine pull and a top charging handle.",
-          "steps": [
-            "There is no last-round bolt release. After an empty reload, fully cycle the top handle; no pump stroke or individual-shell loading is needed."
-          ]
-        },
-        "zh-TW": {
-          "title": "AA-12",
-          "intro": "自動霰彈槍，彈匣實體拉出，頂部機柄上膛。",
-          "steps": [
-            "沒有最后一發后的掛機釋放。打空后裝好彈匣，必須完整拉動頂部機柄；不用泵動護木或逐發填彈。"
-          ]
-        },
-        "fr": {
-          "title": "AA-12",
-          "intro": "Fusil automatique, retrait physique du chargeur et levier supérieur.",
-          "steps": [
-            "Pas de libération de fin de chargeur. Après rechargement à vide, effectuez un cycle complet du levier supérieur. Ni pompe ni cartouches individuelles."
-          ]
-        },
-        "de": {
-          "title": "AA-12",
-          "intro": "Automatische Schrotflinte mit gezogenem Magazin und oberem Spannhebel.",
-          "steps": [
-            "Kein Verschlussfanglöser. Nach leerem Wechsel oberen Hebel voll betätigen; keine Pumpe oder Einzelpatronenzufuhr nötig."
-          ]
-        },
-        "es": {
-          "title": "AA-12",
-          "intro": "Escopeta automática con extracción manual y palanca superior.",
-          "steps": [
-            "No hay liberador del último disparo. Tras recarga vacía, acciona completamente la palanca superior; no usa bombeo ni cartuchos sueltos."
-          ]
-        },
-        "ru": {
-          "title": "AA-12",
-          "intro": "Автоматический дробовик, ручное извлечение и верхняя рукоятка.",
-          "steps": [
-            "Нет снятия задержки после последнего выстрела. После пустой перезарядки полностью передёрните верхнюю рукоятку; помпа и одиночные патроны не нужны."
-          ]
-        },
-        "ja": {
-          "title": "AA-12",
-          "intro": "フルオートショットガン。手動マガジン取り外しと上部ハンドル。",
-          "steps": [
-            "最終弾後のボルト解放機構はありません。空からのリロード後は上部ハンドルを完全に往復。ポンプや単発弾装填は不要です。"
-          ]
-        },
-        "ko": {
-          "title": "AA-12",
-          "intro": "자동 산탄총이며 탄창을 직접 빼고 상단 장전 손잡이를 사용합니다.",
-          "steps": [
-            "최종탄 노리쇠 해제가 없습니다. 빈 탄창 교체 후 상단 손잡이를 완전히 왕복하며 펌프나 낱탄 장전은 필요 없습니다."
-          ]
-        }
-      },
-      "recipe": "pull-charge",
-      "related": [
-        "reload"
-      ],
-      "sources": [
-        "src/client/component/vr/gameplay/weapons/aa12/reload_profile.hpp",
-        "docs/vr-aa12.md"
       ]
     },
     {
@@ -4875,64 +3137,6 @@
       ]
     },
     {
-      "id": "spas12",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "SPAS-12",
-          "intro": "泵动霰弹枪，每发射击后拉后、推前。",
-          "steps": []
-        },
-        "en": {
-          "title": "SPAS-12",
-          "intro": "Pump shotgun; pull back and push forward after each shot.",
-          "steps": []
-        },
-        "zh-TW": {
-          "title": "SPAS-12",
-          "intro": "泵動霰彈槍，每發射擊后拉后、推前。",
-          "steps": []
-        },
-        "fr": {
-          "title": "SPAS-12",
-          "intro": "Fusil à pompe : tirez puis poussez après chaque tir.",
-          "steps": []
-        },
-        "de": {
-          "title": "SPAS-12",
-          "intro": "Pump-Schrotflinte: nach jedem Schuss zurückziehen und vorschieben.",
-          "steps": []
-        },
-        "es": {
-          "title": "SPAS-12",
-          "intro": "Escopeta de corredera: tira atrás y empuja adelante tras cada tiro.",
-          "steps": []
-        },
-        "ru": {
-          "title": "SPAS-12",
-          "intro": "Помповый дробовик: назад и вперёд после каждого выстрела.",
-          "steps": []
-        },
-        "ja": {
-          "title": "SPAS-12",
-          "intro": "ポンプ式。発射ごとに引いて押します。",
-          "steps": []
-        },
-        "ko": {
-          "title": "SPAS-12",
-          "intro": "펌프식으로 매 발사 후 뒤로 당기고 앞으로 밉니다.",
-          "steps": []
-        }
-      },
-      "recipe": "pump",
-      "related": [
-        "reload"
-      ],
-      "sources": [
-        "docs/vr-pump-shotguns.md"
-      ]
-    },
-    {
       "id": "w1200",
       "category": "weapons",
       "text": {
@@ -4988,438 +3192,6 @@
       ],
       "sources": [
         "docs/vr-pump-shotguns.md"
-      ]
-    },
-    {
-      "id": "striker",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "Striker",
-          "intro": "固定弹鼓逐发装填，不拆弹鼓，不额外泵动。",
-          "steps": [
-            "在腰侧弹药位新按住 Trigger 取一发霰弹，送入固定弹鼓的装填位置。每装一发会自动转到下一格。",
-            "单发装入空弹鼓后即可射击。每次扣动会自动转鼓，不需要单独按索引键或拉动机柄。",
-            "弹鼓不能像弹匣一样取下；弹药逐发补充。"
-          ]
-        },
-        "en": {
-          "title": "Striker",
-          "intro": "Load the fixed drum one shell at a time; no drum exchange or pumping.",
-          "steps": [
-            "Newly hold Trigger at the waist to draw one shell and guide it into the drum’s loading position. Each insertion automatically advances a chamber.",
-            "One shell in an empty drum is ready to fire. Trigger shots advance the drum automatically; no separate indexing button or charging stroke.",
-            "The fixed drum cannot be removed like a magazine; replenish it one shell at a time."
-          ]
-        },
-        "zh-TW": {
-          "title": "Striker",
-          "intro": "固定彈鼓逐發裝填，不拆彈鼓，不額外泵動。",
-          "steps": [
-            "在腰側彈藥位新按住 Trigger 取一發霰彈，送入固定彈鼓的裝填位置。每裝一發會自動轉到下一格。",
-            "單發裝入空彈鼓后即可射擊。每次扣動會自動轉鼓，不需要單獨按索引鍵或拉動機柄。",
-            "彈鼓不能像彈匣一樣取下；彈藥逐發補充。"
-          ]
-        },
-        "fr": {
-          "title": "Striker",
-          "intro": "Tambour fixe à remplir cartouche par cartouche, sans échange ni pompe.",
-          "steps": [
-            "Pressez à nouveau Trigger à la taille et guidez une cartouche au point de chargement. Chaque insertion fait avancer le tambour.",
-            "Une cartouche dans un tambour vide permet de tirer. Trigger avance automatiquement le tambour ; aucun bouton d’indexation ni levier.",
-            "Le tambour ne se retire pas comme un chargeur : remplissez-le cartouche par cartouche."
-          ]
-        },
-        "de": {
-          "title": "Striker",
-          "intro": "Feste Trommel einzeln laden; kein Trommelwechsel oder Pumpen.",
-          "steps": [
-            "Trigger an der Hüfte neu drücken, Patrone zur Ladeposition führen. Jedes Einsetzen dreht eine Kammer weiter.",
-            "Eine Patrone in leerer Trommel ist schussbereit. Trigger dreht automatisch weiter; keine eigene Drehtaste oder Ladebewegung.",
-            "Feste Trommel ist nicht als Magazin entnehmbar; einzeln auffüllen."
-          ]
-        },
-        "es": {
-          "title": "Striker",
-          "intro": "Tambor fijo, carga uno a uno; sin cambiar tambor ni bombear.",
-          "steps": [
-            "Pulsa de nuevo Trigger en la cintura y guía el cartucho al punto de carga. Cada inserción avanza una cámara.",
-            "Un cartucho en tambor vacío ya dispara. Trigger avanza el tambor; no hay botón de giro ni recorrido de carga.",
-            "El tambor fijo no se extrae como un cargador; rellénalo uno a uno."
-          ]
-        },
-        "ru": {
-          "title": "Striker",
-          "intro": "Несъёмный барабан, зарядка по одному; без замены или помпы.",
-          "steps": [
-            "Заново нажмите Trigger у пояса и вставьте патрон в загрузочную точку. Каждая вставка поворачивает барабан.",
-            "Один патрон в пустом барабане готов к выстрелу. Trigger поворачивает барабан автоматически, отдельного взведения нет.",
-            "Несъёмный барабан нельзя вынуть как магазин; пополняйте по патрону."
-          ]
-        },
-        "ja": {
-          "title": "Striker",
-          "intro": "固定ドラムへ 1 発ずつ装填。ドラム交換やポンプ操作はありません。",
-          "steps": [
-            "腰で Trigger を新たに押して弾を取り、ドラムの装填位置へ入れます。挿入ごとに次の薬室へ自動で進みます。",
-            "空のドラムに 1 発入れれば撃てます。Trigger で発射すると自動回転し、別の回転ボタンや装填操作は不要です。",
-            "固定ドラムはマガジンのように外せません。1 発ずつ補充してください。"
-          ]
-        },
-        "ko": {
-          "title": "Striker",
-          "intro": "고정 드럼에 한 발씩 장전하며 드럼 교체나 펌프 조작은 없습니다.",
-          "steps": [
-            "허리에서 Trigger를 새로 눌러 탄을 꺼내 드럼 장전 위치에 넣으면 삽입마다 약실이 자동으로 한 칸 돌아갑니다.",
-            "빈 드럼에 한 발만 넣어도 발사됩니다. 사격 시 자동 회전하며 별도 회전 버튼이나 장전 손잡이 조작이 없습니다.",
-            "고정 드럼은 탄창처럼 뺄 수 없습니다. 한 발씩 보충하세요."
-          ]
-        }
-      },
-      "related": [
-        "reload"
-      ],
-      "sources": [
-        "docs/vr-p90-striker.md"
-      ]
-    },
-    {
-      "id": "ranger",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "Ranger",
-          "intro": "双膛折开式霰弹枪，可逐膛装填。",
-          "steps": [
-            "一次只装一个空膛；另一膛未发射的子弹不会因开枪管而消失。Ranger 也可收进腰位，并使用腰侧快速装填。"
-          ]
-        },
-        "en": {
-          "title": "Ranger",
-          "intro": "Two-chamber break-action shotgun; load each chamber separately.",
-          "steps": [
-            "Load one empty chamber at a time; opening preserves an unfired round in the other. Ranger also fits waist slots and supports waist quick loading."
-          ]
-        },
-        "zh-TW": {
-          "title": "Ranger",
-          "intro": "雙膛折開式霰彈槍，可逐膛裝填。",
-          "steps": [
-            "一次只裝一個空膛；另一膛未發射的子彈不會因開槍管而消失。Ranger 也可收進腰位，并使用腰側快速裝填。"
-          ]
-        },
-        "fr": {
-          "title": "Ranger",
-          "intro": "Fusil basculant à deux chambres, chacune chargée séparément.",
-          "steps": [
-            "Chargez une chambre vide à la fois. L’ouverture conserve la cartouche non tirée de l’autre. Ranger accepte les emplacements et le chargement rapide à la taille."
-          ]
-        },
-        "de": {
-          "title": "Ranger",
-          "intro": "Doppelläufige Kipplaufschrotflinte, Kammern einzeln laden.",
-          "steps": [
-            "Je eine leere Kammer laden; Öffnen erhält unverschossene Patronen. Ranger passt an die Hüfte und unterstützt Hüft-Schnellladen."
-          ]
-        },
-        "es": {
-          "title": "Ranger",
-          "intro": "Escopeta basculante de dos recámaras, carga cada una aparte.",
-          "steps": [
-            "Carga una recámara vacía cada vez; abrir conserva el cartucho sin disparar de la otra. Ranger admite cintura y carga rápida."
-          ]
-        },
-        "ru": {
-          "title": "Ranger",
-          "intro": "Двуствольный переломный дробовик, каморы заряжаются отдельно.",
-          "steps": [
-            "Заряжайте пустые каморы по одной. Открытие сохраняет целый патрон в другой. Ranger помещается на пояс и поддерживает быструю зарядку."
-          ]
-        },
-        "ja": {
-          "title": "Ranger",
-          "intro": "2 薬室の中折れ式ショットガン。別々に装填します。",
-          "steps": [
-            "空の薬室へ 1 発ずつ入れます。開いても他方の未発射弾は保持します。Ranger は腰収納と腰でのクイック装填に対応します。"
-          ]
-        },
-        "ko": {
-          "title": "Ranger",
-          "intro": "약실 두 개를 각각 장전하는 중절식 산탄총입니다.",
-          "steps": [
-            "빈 약실을 하나씩 채우며 열어도 반대쪽 미발사 탄은 남습니다. Ranger는 허리 보관과 빠른 장전을 지원합니다."
-          ]
-        }
-      },
-      "recipe": "break",
-      "related": [
-        "reload",
-        "quick-load"
-      ],
-      "sources": [
-        "docs/vr-break-action.md"
-      ]
-    },
-    {
-      "id": "model1887",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "Model 1887",
-          "intro": "杠杆霰弹枪，用握枪手腕的上下转动循环机构。",
-          "steps": [
-            "射击后保持 Grip，先松开 Trigger，向上转腕开机构，再转回闭合，完成下一发上膛。",
-            "膛内有未发射子弹时，先用 B/Y 解锁再开始动作；已发射或空膛时可直接开。",
-            "打开到可装填位置后，用另一只手 Trigger 在腰侧取一发霰弹，送入对应弹管或空膛装填位置。",
-            "快速向上甩腕可尝试辅助转枪循环；辅助握枪手需离开，回到起始腕姿并略微稳定后接住。"
-          ]
-        },
-        "en": {
-          "title": "Model 1887",
-          "intro": "Lever shotgun cycled by the holding wrist’s pitch motion.",
-          "steps": [
-            "After firing, keep Grip held, release Trigger, pitch the wrist upward to open, then back to close and chamber.",
-            "With a live chamber, use B/Y to unlock before starting. A spent or empty chamber opens without that unlock.",
-            "Once open enough for loading, use the other hand’s Trigger to draw a waist shell and guide it into the tube or empty chamber contact.",
-            "A fast upward flick can start an assisted spin cycle with the support hand off. Return to the starting wrist orientation and settle briefly to catch."
-          ]
-        },
-        "zh-TW": {
-          "title": "Model 1887",
-          "intro": "杠桿霰彈槍，用握槍手腕的上下轉動循環機構。",
-          "steps": [
-            "射擊后保持 Grip，先松開 Trigger，向上轉腕開機構，再轉回閉合，完成下一發上膛。",
-            "膛內有未發射子彈時，先用 B/Y 解鎖再開始動作；已發射或空膛時可直接開。",
-            "打開到可裝填位置后，用另一只手 Trigger 在腰側取一發霰彈，送入對應彈管或空膛裝填位置。",
-            "快速向上甩腕可嘗試輔助轉槍循環；輔助握槍手需離開，回到起始腕姿并略微穩定后接住。"
-          ]
-        },
-        "fr": {
-          "title": "Model 1887",
-          "intro": "Fusil à levier actionné par l’inclinaison du poignet qui le tient.",
-          "steps": [
-            "Après le tir, gardez Grip, relâchez Trigger, inclinez le poignet vers le haut pour ouvrir puis revenez pour fermer et chambrer.",
-            "Avec une cartouche intacte, déverrouillez d’abord avec B/Y. Une douille ou chambre vide s’ouvre sans cela.",
-            "Assez ouvert, prenez une cartouche à la taille avec Trigger de l’autre main et guidez-la vers le tube ou le contact de chambre vide.",
-            "Sans main d’appui, un mouvement vif vers le haut peut lancer une rotation assistée. Revenez à l’orientation initiale et stabilisez brièvement pour rattraper."
-          ]
-        },
-        "de": {
-          "title": "Model 1887",
-          "intro": "Unterhebelrepetierer, bedient durch Nicken des haltenden Handgelenks.",
-          "steps": [
-            "Nach Schuss Grip halten, Trigger lösen, Handgelenk nach oben kippen zum Öffnen und zurück zum Schließen/Laden.",
-            "Bei scharfer Patrone vorher mit B/Y entriegeln. Leere Kammer oder Hülse öffnet ohne Entriegelung.",
-            "Ausreichend geöffnet mit Trigger der anderen Hand Hüftpatrone nehmen und in Rohr oder leere Kammer führen.",
-            "Ohne Stützhand kann ein schneller Aufwärtsschwenk eine unterstützte Drehung auslösen. Zur Ausgangsorientierung zurückkehren und kurz ruhig halten zum Fangen."
-          ]
-        },
-        "es": {
-          "title": "Model 1887",
-          "intro": "Escopeta de palanca accionada inclinando la muñeca que la sostiene.",
-          "steps": [
-            "Tras disparar, mantén Grip, suelta Trigger, inclina la muñeca arriba para abrir y vuelve para cerrar y alimentar.",
-            "Con cartucho vivo, desbloquea antes con B/Y. Con vaina o vacío abre directamente.",
-            "Abierta lo suficiente, toma un cartucho de cintura con Trigger de la otra mano e introdúcelo en el tubo o la recámara vacía.",
-            "Sin apoyo, un giro rápido arriba puede iniciar un ciclo giratorio asistido. Vuelve a la orientación inicial y estabiliza brevemente para atrapar."
-          ]
-        },
-        "ru": {
-          "title": "Model 1887",
-          "intro": "Рычажный дробовик, цикл наклоном удерживающего запястья.",
-          "steps": [
-            "После выстрела держите Grip, отпустите Trigger, наклоните запястье вверх для открытия и верните для закрытия и подачи.",
-            "При целом патроне сначала отоприте B/Y. С гильзой или пустым патронником отпирание не нужно.",
-            "Открыв достаточно, другой рукой возьмите поясной патрон Trigger и направьте в трубку либо точку пустого патронника.",
-            "Без поддержки быстрый взмах вверх может начать вспомогательный вращательный цикл. Верните исходный угол и ненадолго стабилизируйте для перехвата."
-          ]
-        },
-        "ja": {
-          "title": "Model 1887",
-          "intro": "保持する手首の上下回転で操作するレバー式。",
-          "steps": [
-            "発射後は Grip を保持して Trigger を離し、手首を上へ回して開き、戻して閉鎖・装填します。",
-            "実包入りの場合は先に B／Y で解除します。薬莢または空の薬室なら解除なしで開けます。",
-            "十分開いたら、反対の手の Trigger で腰の弾を取り、チューブまたは空薬室の装填位置へ入れます。",
-            "支持手を離して素早く上へ振ると、補助付きスピン操作を開始できます。元の手首角度へ戻して少し安定させるとキャッチします。"
-          ]
-        },
-        "ko": {
-          "title": "Model 1887",
-          "intro": "잡은 손목의 피치 움직임으로 왕복하는 레버식 산탄총입니다.",
-          "steps": [
-            "발사 후 Grip을 유지하고 Trigger를 놓은 채 손목을 위로 기울여 열고 다시 돌려 닫아 장전합니다.",
-            "실탄이 있으면 먼저 B/Y로 해제합니다. 빈 탄피나 빈 약실은 해제 없이 열립니다.",
-            "충분히 열리면 다른 손 Trigger로 허리 탄을 꺼내 튜브나 빈 약실 접촉점에 넣습니다.",
-            "보조 손을 뗀 채 빠르게 위로 튕기면 보조 회전 동작이 시작될 수 있습니다. 원래 손목 방향으로 돌아와 잠깐 안정시키면 잡힙니다."
-          ]
-        }
-      },
-      "related": [
-        "reload"
-      ],
-      "sources": [
-        "docs/vr-model1887.md"
-      ]
-    },
-    {
-      "id": "magnum",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": ".44 Magnum",
-          "intro": "打开弹巢、朝下退壳、装快速装弹器、甩腕合巢。",
-          "steps": [
-            "持枪手按 B/Y 打开弹巢。再按同一键不会合巢或自动清空。",
-            "让完全打开的弹巢开口朝下，弹壳和未发射子弹都会退出。装填前必须完全清空，再把开口转离朝下方向。",
-            "空闲手用 Trigger 在腰位取快速装弹器，对齐弹巢装入；备弹不足时可装入部分子弹。",
-            "用明确的右向甩腕合上弹巢，然后松开射击 Trigger 再重新扣动。每发可直接扣扳机，不需要手动扳击锤。"
-          ]
-        },
-        "en": {
-          "title": ".44 Magnum",
-          "intro": "Open the cylinder, tip down to empty, load a speedloader and flick closed.",
-          "steps": [
-            "Press B/Y in the firing hand to open. Another press does not close or empty it.",
-            "Tip the fully open cylinder mouth downward to drop cases and unfired rounds. Empty it completely, then turn the opening away from downward before loading.",
-            "Draw a speedloader with Trigger at the waist and align it with the cylinder. Partial reserves can supply a partial load.",
-            "Use a deliberate rightward wrist flick to close, then neutralise Trigger before firing again. Double-action shots do not require manual hammer cocking."
-          ]
-        },
-        "zh-TW": {
-          "title": ".44 Magnum",
-          "intro": "打開彈巢、朝下退殼、裝快速裝彈器、甩腕合巢。",
-          "steps": [
-            "持槍手按 B/Y 打開彈巢。再按同一鍵不會合巢或自動清空。",
-            "讓完全打開的彈巢開口朝下，彈殼和未發射子彈都會退出。裝填前必須完全清空，再把開口轉離朝下方向。",
-            "空閑手用 Trigger 在腰位取快速裝彈器，對齊彈巢裝入；備彈不足時可裝入部分子彈。",
-            "用明確的右向甩腕合上彈巢，然后松開射擊 Trigger 再重新扣動。每發可直接扣扳機，不需要手動扳擊錘。"
-          ]
-        },
-        "fr": {
-          "title": ".44 Magnum",
-          "intro": "Ouvrez le barillet, videz-le vers le bas, utilisez un chargeur rapide puis refermez d’un coup de poignet.",
-          "steps": [
-            "B/Y de la main armée ouvre. Une seconde pression ne ferme ni ne vide.",
-            "Barillet entièrement ouvert, orientez son ouverture vers le bas pour vider douilles et cartouches. Videz tout, puis détournez l’ouverture du bas avant de charger.",
-            "Prenez le chargeur rapide à la taille avec Trigger et alignez-le. Une réserve partielle peut fournir un chargement partiel.",
-            "Fermez d’un coup de poignet net vers la droite, puis relâchez Trigger avant de tirer. La double action ne nécessite pas d’armer le chien manuellement."
-          ]
-        },
-        "de": {
-          "title": ".44 Magnum",
-          "intro": "Trommel öffnen, nach unten leeren, Schnelllader einsetzen und zuschnappen.",
-          "steps": [
-            "B/Y der Schusshand öffnet. Nochmals drücken schließt oder leert nicht.",
-            "Ganz offene Trommel mit Öffnung nach unten halten, um Hülsen und Patronen zu leeren. Vollständig leeren, dann vor dem Laden weg von unten drehen.",
-            "Schnelllader mit Trigger an der Hüfte nehmen und ausrichten. Wenig Reserve kann eine Teilfüllung liefern.",
-            "Mit deutlichem Handgelenkschwung nach rechts schließen, Trigger vor Schießen neutralisieren. Doppelaktion braucht kein manuelles Hammerspannen."
-          ]
-        },
-        "es": {
-          "title": ".44 Magnum",
-          "intro": "Abre el tambor, vacía hacia abajo, usa un cargador rápido y cierra con la muñeca.",
-          "steps": [
-            "B/Y de la mano del arma abre. Otra pulsación no cierra ni vacía.",
-            "Inclina la boca del tambor abierto hacia abajo para soltar vainas y cartuchos. Vacíalo por completo y aparta la abertura de abajo antes de cargar.",
-            "Toma el cargador rápido de cintura con Trigger y alinéalo. Una reserva parcial puede cargar parcialmente.",
-            "Cierra con un movimiento claro de muñeca a la derecha y neutraliza Trigger antes de disparar. La doble acción no necesita montar el martillo."
-          ]
-        },
-        "ru": {
-          "title": ".44 Magnum",
-          "intro": "Откройте барабан, наклоните вниз, зарядите спидлоадером и закройте взмахом.",
-          "steps": [
-            "B/Y руки с оружием открывает. Повтор не закрывает и не опустошает.",
-            "Полностью открытый барабан направьте отверстием вниз, чтобы высыпать гильзы и патроны. Опустошите полностью и отверните отверстие от низа перед зарядкой.",
-            "Возьмите спидлоадер у пояса с Trigger и совместите. Неполный запас даёт частичную зарядку.",
-            "Закройте уверенным взмахом запястья вправо, затем отпустите Trigger перед стрельбой. Двойное действие не требует ручного взвода курка."
-          ]
-        },
-        "ja": {
-          "title": ".44 Magnum",
-          "intro": "シリンダーを開いて下に向け排出し、スピードローダーで装填して手首で閉じます。",
-          "steps": [
-            "持つ手の B／Y で開きます。再押下では閉じたり排出したりしません。",
-            "完全に開いたシリンダー口を下へ向け、薬莢と未発射弾を落とします。完全に空にしてから、装填前に口を下以外へ向けてください。",
-            "腰で Trigger を押してスピードローダーを取り、シリンダーに合わせます。予備が少なければ一部だけ装填できます。",
-            "手首を明確に右へ振って閉じ、Trigger を一度離してから射撃します。ダブルアクションなのでハンマーを手動で起こす必要はありません。"
-          ]
-        },
-        "ko": {
-          "title": ".44 Magnum",
-          "intro": "실린더를 열고 아래로 기울여 비운 뒤 스피드로더로 장전하고 손목을 튕겨 닫습니다.",
-          "steps": [
-            "총을 든 손의 B/Y로 엽니다. 다시 눌러도 닫히거나 비워지지 않습니다.",
-            "완전히 열린 실린더 입구를 아래로 기울여 탄피와 미발사 탄을 비웁니다. 모두 비운 뒤 입구가 아래를 향하지 않게 돌리고 장전하세요.",
-            "허리 Trigger로 스피드로더를 꺼내 실린더에 맞춥니다. 예비 탄약이 부족하면 일부만 장전할 수 있습니다.",
-            "손목을 오른쪽으로 확실히 튕겨 닫고 Trigger를 중립으로 둔 뒤 발사하세요. 더블 액션이라 공이를 수동으로 젖힐 필요는 없습니다."
-          ]
-        }
-      },
-      "related": [
-        "quick-load"
-      ],
-      "sources": [
-        "docs/vr-revolver-interaction.md"
-      ]
-    },
-    {
-      "id": "m79",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "M79 / Thumper",
-          "intro": "单膛折开式榴弹发射器。",
-          "steps": []
-        },
-        "en": {
-          "title": "M79 / Thumper",
-          "intro": "Single-chamber break-action grenade launcher.",
-          "steps": []
-        },
-        "zh-TW": {
-          "title": "M79 / Thumper",
-          "intro": "單膛折開式榴彈發射器。",
-          "steps": []
-        },
-        "fr": {
-          "title": "M79 / Thumper",
-          "intro": "Lance-grenades basculant à une chambre.",
-          "steps": []
-        },
-        "de": {
-          "title": "M79 / Thumper",
-          "intro": "Einzelschüssiger Kipplauf-Granatwerfer.",
-          "steps": []
-        },
-        "es": {
-          "title": "M79 / Thumper",
-          "intro": "Lanzagranadas basculante de una recámara.",
-          "steps": []
-        },
-        "ru": {
-          "title": "M79 / Thumper",
-          "intro": "Однозарядный переломный гранатомёт.",
-          "steps": []
-        },
-        "ja": {
-          "title": "M79 / Thumper",
-          "intro": "単薬室の中折れ式グレネードランチャー。",
-          "steps": []
-        },
-        "ko": {
-          "title": "M79 / Thumper",
-          "intro": "약실 하나인 중절식 유탄 발사기입니다.",
-          "steps": []
-        }
-      },
-      "recipe": "break",
-      "related": [
-        "reload"
-      ],
-      "sources": [
-        "docs/vr-break-action.md"
       ]
     },
     {
@@ -5612,85 +3384,22 @@
       "id": "stinger",
       "category": "weapons",
       "text": {
-        "zh-CN": {
-          "title": "Stinger",
-          "intro": "右手控制、左手辅助；这一实体武器打空后不能换弹。",
-          "steps": [
-            "右手用 Grip 握住控制握把，左手 Grip 可辅助。只用左手拿着时可以携带，但不能射击。",
-            "抬到瞄准位置，让任务原有的锁定流程工作。等待所需锁定完成，再用右手 Trigger 发射。",
-            "打空后仍会留在手上；手动松开 Grip 丢弃或更换。没有腰侧实体换弹或按键换弹。"
-          ]
-        },
         "en": {
           "title": "Stinger",
-          "intro": "Right-hand control and left-hand support; this physical instance cannot be reloaded.",
+          "intro": "Shoulder it to open the lock display; lock on, then fire.",
           "steps": [
-            "Grip the control handle with the right hand; use left Grip for support. A left-hand-only hold carries but cannot fire.",
-            "Raise it into the aiming position for the mission’s native lock-on flow. Wait for the required lock, then fire with right Trigger.",
-            "The spent launcher stays held. Release Grip to discard or exchange it; there is no physical waist or button reload."
-          ]
-        },
-        "zh-TW": {
-          "title": "Stinger",
-          "intro": "右手控制、左手輔助；這一實體武器打空后不能換彈。",
-          "steps": [
-            "右手用 Grip 握住控制握把，左手 Grip 可輔助。只用左手拿著時可以攜帶，但不能射擊。",
-            "抬到瞄準位置，讓任務原有的鎖定流程工作。等待所需鎖定完成，再用右手 Trigger 發射。",
-            "打空后仍會留在手上；手動松開 Grip 丟棄或更換。沒有腰側實體換彈或按鍵換彈。"
-          ]
-        },
-        "fr": {
-          "title": "Stinger",
-          "intro": "Contrôle à droite, appui à gauche ; cet exemplaire ne se recharge pas.",
-          "steps": [
-            "Grip droit sur la poignée de contrôle, Grip gauche en appui. La main gauche seule transporte mais ne tire pas.",
-            "Levez en position de visée pour le verrouillage normal de la mission. Attendez le verrouillage requis et tirez avec Trigger droit.",
-            "Le lanceur vide reste tenu. Relâchez Grip pour jeter ou échanger ; aucun rechargement à la taille ni par bouton."
-          ]
-        },
-        "de": {
-          "title": "Stinger",
-          "intro": "Rechte Hand steuert, linke stützt; dieses Exemplar ist nicht nachladbar.",
-          "steps": [
-            "Rechts Steuergriff mit Grip halten, links stützen. Nur links tragen erlaubt kein Feuern.",
-            "Zum nativen Zielerfassen in Zielposition heben. Erforderliche Zielerfassung abwarten und rechts Trigger drücken.",
-            "Leeres Rohr bleibt gehalten. Grip lösen zum Wegwerfen oder Tauschen; keine Hüft- oder Tastennachladung."
-          ]
-        },
-        "es": {
-          "title": "Stinger",
-          "intro": "Control derecho, apoyo izquierdo; este ejemplar no se recarga.",
-          "steps": [
-            "Grip derecho en la empuñadura y Grip izquierdo de apoyo. Solo la izquierda transporta, pero no dispara.",
-            "Levanta a posición de apuntado para el bloqueo original de la misión. Espera el bloqueo necesario y dispara con Trigger derecho.",
-            "El lanzador vacío sigue en mano. Suelta Grip para descartarlo o cambiarlo; no recarga por cintura ni botón."
-          ]
-        },
-        "ru": {
-          "title": "Stinger",
-          "intro": "Правая управляет, левая поддерживает; этот экземпляр не перезаряжается.",
-          "steps": [
-            "Правым Grip держите управляющую рукоять, левым поддерживайте. Одной левой можно нести, но не стрелять.",
-            "Поднимите для штатного захвата цели миссии. Дождитесь нужного захвата и стреляйте правым Trigger.",
-            "Пустой пускатель остаётся в руке. Отпустите Grip для сброса или обмена; поясной и кнопочной перезарядки нет."
-          ]
-        },
-        "ja": {
-          "title": "Stinger",
-          "intro": "右手が操作、左手が支持。この個体はリロードできません。",
-          "steps": [
-            "右 Grip で操作ハンドルを持ち、左 Grip で支えます。左手だけでは運べますが撃てません。",
-            "照準位置へ上げるとミッション本来のロックオン処理が始まります。必要なロックを待ち、右 Trigger で発射します。",
-            "撃ち終わった発射器は手に残ります。Grip を離して捨てるか交換してください。腰やボタンでのリロードはありません。"
+            "Grip the control handle with the right hand and support with the left.",
+            "Raise it to your shoulder to open the display. Keep the target inside the ring until it locks (red), then fire with right Trigger. The launch needs open space in front.",
+            "By default the tube aims. Turn on Javelin/Stinger head aim (Gameplay settings) to aim and lock with your head instead."
           ]
         },
         "ko": {
-          "title": "Stinger",
-          "intro": "오른손 조작, 왼손 보조이며 이 발사기는 재장전할 수 없습니다.",
+          "title": "스팅어",
+          "intro": "어깨에 올리면 록온 화면이 열립니다. 록온한 뒤 쏩니다.",
           "steps": [
-            "오른손 Grip으로 조작 손잡이를 잡고 왼손 Grip으로 받칩니다. 왼손만으로는 운반만 가능하며 발사되지 않습니다.",
-            "조준 자세로 들어 임무의 기본 잠금 절차를 시작합니다. 필요한 잠금을 기다린 뒤 오른쪽 Trigger로 발사하세요.",
-            "발사한 발사기는 계속 들고 있습니다. Grip을 놓아 버리거나 교환하세요. 허리나 버튼 재장전은 없습니다."
+            "오른손으로 조작 손잡이를 쥐고 왼손으로 받칩니다.",
+            "어깨에 올리면 화면이 열립니다. 목표를 원 안에 두어 록온(빨간색)되면 오른손 트리거로 쏩니다. 앞이 트여 있어야 발사됩니다.",
+            "기본은 발사관 방향으로 조준합니다. 게임 설정의 '재블린·스팅어 머리 조준'을 켜면 머리 방향으로 조준·록온합니다."
           ]
         }
       },
@@ -5705,16 +3414,6 @@
       "id": "javelin",
       "category": "weapons",
       "text": {
-        "zh-CN": {
-          "title": "Javelin",
-          "intro": "靠近 CLU 目镜进入独立显示，发射与换弹遵循武器流程。",
-          "steps": [
-            "右手 Grip 握住 CLU 控制握把，左手 Grip 辅助。只用左手携带不能发射。",
-            "把实际 CLU 目镜靠近眼睛进入显示，移开退出；当前不使用按键切换显示。",
-            "瞄准目标并等锁定，进入显示时已扣住的 Trigger 要先松开，再新扣右手 Trigger 发射。",
-            "发射后保持武器，等待原有装填和重新锁定流程。无需从腰侧取火箭弹或更换发射筒；备弹用尽后不会自动补给。"
-          ]
-        },
         "en": {
           "title": "Javelin",
           "intro": "Approach the CLU eyepiece for its display; firing and reload follow the weapon flow.",
@@ -5722,77 +3421,18 @@
             "Hold the CLU control grip with right Grip and support with left Grip. A left-hand-only carry cannot fire.",
             "Bring the actual CLU eyepiece close to the eyes to enter its display; move away to exit. Display button toggles are currently disabled.",
             "Aim and wait for lock. If Trigger was held on entry, release it before a fresh right Trigger press to fire.",
-            "Keep the launcher held through its normal reload and re-lock flow. Do not draw a waist rocket or replace the tube; depleted reserves are not replenished automatically."
-          ]
-        },
-        "zh-TW": {
-          "title": "Javelin",
-          "intro": "靠近 CLU 目鏡進入獨立顯示，發射與換彈遵循武器流程。",
-          "steps": [
-            "右手 Grip 握住 CLU 控制握把，左手 Grip 輔助。只用左手攜帶不能發射。",
-            "把實際 CLU 目鏡靠近眼睛進入顯示，移開退出；當前不使用按鍵切換顯示。",
-            "瞄準目標并等鎖定，進入顯示時已扣住的 Trigger 要先松開，再新扣右手 Trigger 發射。",
-            "發射后保持武器，等待原有裝填和重新鎖定流程。無需從腰側取火箭彈或更換發射筒；備彈用盡后不會自動補給。"
-          ]
-        },
-        "fr": {
-          "title": "Javelin",
-          "intro": "Approchez les yeux de l’oculaire CLU pour voir l’écran ; tir et rechargement suivent le fonctionnement de l’arme.",
-          "steps": [
-            "Grip droit sur la commande CLU et gauche en appui. Le port de la main gauche seule ne permet pas de tirer.",
-            "Approchez le vrai oculaire des yeux pour entrer dans l’affichage, éloignez pour sortir. Le basculement par bouton est désactivé.",
-            "Visez et attendez le verrouillage. Si Trigger était maintenu à l’entrée, relâchez-le puis pressez à nouveau le droit pour tirer.",
-            "Gardez le lanceur pendant son rechargement et reverrouillage normaux. Ne prenez pas de roquette à la taille et ne remplacez pas le tube ; la réserve vide ne se remplit pas seule."
-          ]
-        },
-        "de": {
-          "title": "Javelin",
-          "intro": "An das CLU-Okular nähern für die Anzeige; Schießen und Nachladen folgen dem Waffenablauf.",
-          "steps": [
-            "CLU-Steuergriff rechts mit Grip halten, links stützen. Nur linkes Tragen kann nicht feuern.",
-            "Reales Okular an die Augen bringen zum Anzeigen, entfernen zum Verlassen. Anzeige-Umschalttasten sind deaktiviert.",
-            "Zielen und Erfassung abwarten. War Trigger beim Eintritt gehalten, erst lösen, dann rechts neu drücken.",
-            "Werfer durch normalen Nachlade- und Erfassungsablauf halten. Keine Hüftrakete oder Rohrwechsel; leere Vorräte werden nicht automatisch aufgefüllt."
-          ]
-        },
-        "es": {
-          "title": "Javelin",
-          "intro": "Acércate al ocular CLU para ver la pantalla; disparo y recarga siguen el flujo del arma.",
-          "steps": [
-            "Sujeta el CLU con Grip derecho y apoya con el izquierdo. Llevar solo con la izquierda no permite disparar.",
-            "Acerca el ocular real a los ojos para entrar y aléjalo para salir. Los botones de alternar pantalla están desactivados.",
-            "Apunta y espera el bloqueo. Si Trigger estaba pulsado al entrar, suéltalo antes de pulsar el derecho de nuevo.",
-            "Mantén el lanzador durante su recarga y nuevo bloqueo. No saques un cohete de cintura ni cambies el tubo; las reservas agotadas no se rellenan solas."
-          ]
-        },
-        "ru": {
-          "title": "Javelin",
-          "intro": "Приблизьте глаза к окуляру CLU для экрана; стрельба и перезарядка по механике оружия.",
-          "steps": [
-            "Правым Grip держите CLU, левым поддерживайте. Одной левой стрелять нельзя.",
-            "Поднесите настоящий окуляр к глазам для входа, отведите для выхода. Кнопочное переключение экрана отключено.",
-            "Прицельтесь и дождитесь захвата. Если Trigger был зажат при входе, отпустите и заново нажмите правый.",
-            "Держите пускатель во время штатной перезарядки и повторного захвата. Не берите поясную ракету и не меняйте трубу; запас сам не пополняется."
-          ]
-        },
-        "ja": {
-          "title": "Javelin",
-          "intro": "CLU の接眼部へ近づくと画面が表示されます。射撃とリロードは武器の処理に従います。",
-          "steps": [
-            "右 Grip で CLU 操作グリップ、左 Grip で支持します。左手だけでは射撃できません。",
-            "実際の接眼部を目に近づけると画面へ入り、離れると終了します。画面のボタン切り替えは現在無効です。",
-            "照準を合わせてロックを待ちます。画面へ入る際 Trigger を保持していた場合は、離してから右 Trigger を押し直してください。",
-            "通常のリロードと再ロックの間も持ち続けます。腰のロケット取得や筒の交換は不要です。使い切った予備は自動補充されません。"
+            "Keep the launcher held through its normal reload and re-lock flow. Do not draw a waist rocket or replace the tube; depleted reserves are not replenished automatically.",
+            "Optional: Javelin/Stinger head aim (Gameplay settings) keeps the display on your head view and aims the lock with your head."
           ]
         },
         "ko": {
-          "title": "Javelin",
-          "intro": "CLU 접안부에 눈을 가까이 대면 화면이 나타납니다. 사격과 재장전은 무기 절차를 따릅니다.",
+          "title": "재블린",
+          "intro": "CLU 접안부를 눈 가까이 가져가면 조준 화면이 열립니다.",
           "steps": [
-            "오른손 Grip으로 CLU 조작 그립을 잡고 왼손으로 받칩니다. 왼손만으로는 발사되지 않습니다.",
-            "실제 접안부를 눈에 가까이 대면 화면에 들어가고 멀리하면 나옵니다. 화면 전환 버튼은 현재 꺼져 있습니다.",
-            "조준하고 잠금을 기다립니다. 진입 시 Trigger가 눌려 있었다면 놓은 뒤 오른쪽 Trigger를 새로 눌러 발사하세요.",
-            "일반 재장전과 재잠금 중에도 계속 잡으세요. 허리 로켓을 꺼내거나 발사관을 교체하지 마세요. 소진된 예비 탄약은 자동 보충되지 않습니다."
+            "오른손으로 CLU 조작 손잡이를, 왼손으로 받침을 쥡니다. 왼손만으로는 쏠 수 없습니다.",
+            "접안부를 눈 가까이 가져가면 화면이 열리고, 떼면 닫힙니다.",
+            "조준하고 록온을 기다립니다. 들어갈 때 트리거를 누르고 있었다면 놓았다가 다시 눌러 쏩니다.",
+            "선택: 게임 설정의 '재블린·스팅어 머리 조준'을 켜면 화면이 머리 시점에 남고 머리 방향으로 록온합니다."
           ]
         }
       },
@@ -5923,90 +3563,6 @@
       ]
     },
     {
-      "id": "shield",
-      "category": "weapons",
-      "text": {
-        "zh-CN": {
-          "title": "Riot Shield / 防暴盾",
-          "intro": "单手握持，以实际盾面朝向阻挡来袭。",
-          "steps": [
-            "用任一手 Grip 持盾，盾随前臂和手部方向移动。它没有辅助握位、扳机射击或弹药装填。",
-            "主动转动盾面面对威胁；近战需要挥盾接触目标。收纳和丢弃沿用普通携带操作。"
-          ]
-        },
-        "en": {
-          "title": "Riot Shield",
-          "intro": "One-hand holding; orient the actual shield face toward incoming fire.",
-          "steps": [
-            "Use either hand’s Grip. The shield follows the forearm and hand; there is no support grip, Trigger firing or reload.",
-            "Turn the face toward threats. Melee needs a physical shield strike; stow and drop using normal carry controls."
-          ]
-        },
-        "zh-TW": {
-          "title": "Riot Shield / 防暴盾",
-          "intro": "單手握持，以實際盾面朝向阻擋來襲。",
-          "steps": [
-            "用任一手 Grip 持盾，盾隨前臂和手部方向移動。它沒有輔助握位、扳機射擊或彈藥裝填。",
-            "主動轉動盾面面對威脅；近戰需要揮盾接觸目標。收納和丟棄沿用普通攜帶操作。"
-          ]
-        },
-        "fr": {
-          "title": "Bouclier antiémeute",
-          "intro": "Tenu à une main ; orientez la face réelle vers les tirs.",
-          "steps": [
-            "Grip de l’une ou l’autre main. Le bouclier suit main et avant-bras ; pas d’appui, de tir Trigger ni de recharge.",
-            "Tournez la face vers les menaces. Frappez physiquement pour la mêlée ; rangement et abandon utilisent les commandes normales."
-          ]
-        },
-        "de": {
-          "title": "Schutzschild",
-          "intro": "Einhändig halten, tatsächliche Schildfläche gegen Beschuss richten.",
-          "steps": [
-            "Grip beliebiger Hand. Schild folgt Unterarm und Hand; kein Stützgriff, Triggerfeuer oder Nachladen.",
-            "Fläche zur Gefahr drehen. Nahkampf per echtem Schildschlag; normal verstauen und fallenlassen."
-          ]
-        },
-        "es": {
-          "title": "Escudo antidisturbios",
-          "intro": "Una mano; orienta la cara real hacia los disparos.",
-          "steps": [
-            "Usa Grip de cualquier mano. Sigue mano y antebrazo; sin apoyo, disparo Trigger ni recarga.",
-            "Orienta la cara a las amenazas. Golpea físicamente para cuerpo a cuerpo; guarda y suelta con controles normales."
-          ]
-        },
-        "ru": {
-          "title": "Баллистический щит",
-          "intro": "Держится одной рукой; поверните лицевую сторону к огню.",
-          "steps": [
-            "Grip любой руки; щит следует предплечью и кисти. Нет поддержки, стрельбы Trigger или перезарядки.",
-            "Поворачивайте поверхность к угрозе. Ближний бой — физический удар щитом; уборка и сброс обычные."
-          ]
-        },
-        "ja": {
-          "title": "ライオットシールド",
-          "intro": "片手で保持し、実際の盾面を飛んでくる弾へ向けます。",
-          "steps": [
-            "左右いずれかの Grip で持ちます。盾は前腕と手に従い、支持グリップ、Trigger 射撃、リロードはありません。",
-            "盾面を脅威へ向けます。近接攻撃は実際に盾を打ちつけ、収納や落下は通常の保持操作を使います。"
-          ]
-        },
-        "ko": {
-          "title": "진압 방패",
-          "intro": "한 손으로 잡고 실제 방패 면을 날아오는 사격 쪽으로 향하세요.",
-          "steps": [
-            "어느 손이든 Grip으로 잡습니다. 방패는 팔뚝과 손을 따라가며 보조 잡기, Trigger 사격 또는 재장전이 없습니다.",
-            "방패 면을 위협 쪽으로 돌리세요. 실제로 방패를 휘둘러 근접 공격하며 보관과 떨어뜨리기는 일반 조작을 사용합니다."
-          ]
-        }
-      },
-      "related": [
-        "carry"
-      ],
-      "sources": [
-        "docs/vr-riot-shield.md"
-      ]
-    },
-    {
       "id": "story-basics",
       "category": "story",
       "text": {
@@ -6098,1176 +3654,175 @@
       ]
     },
     {
-      "id": "climbing",
+      "id": "bog-c4",
       "category": "story",
-      "text": {
-        "zh-CN": {
-          "title": "Cliffhanger：冰镐攀爬",
-          "intro": "两段可操作攀爬使用真实表面接触；自动入场、跳跃和收尾仍由剧情带领。",
-          "steps": [
-            "把对应冰镐尖带到有效表面，按住这只手 Trigger 或 Grip 建立支撑。",
-            "保持任一键按下时，支点和冰镐朝向固定。向下拉动实际手柄带动身体上升，交替两手前进。",
-            "要拔出一只镐，同时松开它的 Trigger 和 Grip，再向离开墙面的方向后撤约 2.5 厘米。仅松键不会立即拔出。",
-            "冰镐不占普通装备位，也不能丢弃。到达阶段出口后让剧情接管跳跃或登顶。"
-          ]
-        },
-        "en": {
-          "title": "Cliffhanger: ice-pick climbing",
-          "intro": "The two playable climbs use surface contact; the story still handles entry, jumps and finishing.",
-          "steps": [
-            "Bring a pick tip to a valid surface and hold that hand’s Trigger or Grip to establish support.",
-            "Either held button fixes the support and pick orientation. Pull the physical controller down to move up, alternating hands.",
-            "To detach a pick, release both Trigger and Grip and retract about 2.5 cm away from the wall. Releasing buttons alone does not immediately detach.",
-            "The picks do not use ordinary slots and cannot be dropped. At the phase exit, let the story handle the jump or climb-out."
-          ]
-        },
-        "zh-TW": {
-          "title": "Cliffhanger：冰鎬攀爬",
-          "intro": "兩段可操作攀爬使用真實表面接觸；自動入場、跳躍和收尾仍由劇情帶領。",
-          "steps": [
-            "把對應冰鎬尖帶到有效表面，按住這只手 Trigger 或 Grip 建立支撐。",
-            "保持任一鍵按下時，支點和冰鎬朝向固定。向下拉動實際手柄帶動身體上升，交替兩手前進。",
-            "要拔出一只鎬，同時松開它的 Trigger 和 Grip，再向離開墻面的方向后撤約 2.5 厘米。僅松鍵不會立即拔出。",
-            "冰鎬不占普通裝備位，也不能丟棄。到達階段出口后讓劇情接管跳躍或登頂。"
-          ]
-        },
-        "fr": {
-          "title": "Cliffhanger : escalade aux piolets",
-          "intro": "Les deux escalades jouables utilisent le contact de surface ; le scénario gère entrée, sauts et fin.",
-          "steps": [
-            "Amenez la pointe sur une surface valide et maintenez Trigger ou Grip de cette main pour prendre appui.",
-            "L’un ou l’autre bouton maintenu fixe appui et orientation. Tirez le contrôleur vers le bas pour monter, en alternant les mains.",
-            "Pour détacher, relâchez Trigger ET Grip puis reculez d’environ 2,5 cm du mur. Relâcher seul ne détache pas immédiatement.",
-            "Les piolets n’utilisent pas les emplacements ordinaires et ne se jettent pas. À la sortie, laissez le scénario gérer saut ou rétablissement."
-          ]
-        },
-        "de": {
-          "title": "Cliffhanger: Eispickelklettern",
-          "intro": "Beide spielbaren Kletterpassagen nutzen Oberflächenkontakt; Einstieg, Sprünge und Abschluss bleiben bei der Story.",
-          "steps": [
-            "Pickelspitze an gültige Oberfläche bringen und Trigger oder Grip dieser Hand zum Stützen halten.",
-            "Jede der gehaltenen Tasten fixiert Stütze und Pickelrichtung. Controller nach unten ziehen zum Hochziehen, Hände abwechseln.",
-            "Zum Lösen Trigger und Grip freigeben und etwa 2,5 cm von der Wand wegziehen. Tastenlösen allein löst nicht sofort.",
-            "Pickel nutzen keine normalen Plätze und können nicht fallen gelassen werden. Am Ende Story-Sprung oder Ausstieg abwarten."
-          ]
-        },
-        "es": {
-          "title": "Cliffhanger: escalada con piolets",
-          "intro": "Las dos escaladas usan contacto de superficie; la historia controla entrada, saltos y final.",
-          "steps": [
-            "Acerca la punta a una superficie válida y mantén Trigger o Grip de esa mano para apoyar.",
-            "Cualquiera de los botones fija apoyo y orientación. Tira del mando abajo para subir, alternando manos.",
-            "Para soltar, libera Trigger y Grip y retira unos 2,5 cm de la pared. Soltar botones no despega de inmediato.",
-            "Los piolets no usan espacios normales ni se tiran. Al terminar deja que la historia haga el salto o la salida."
-          ]
-        },
-        "ru": {
-          "title": "Cliffhanger: лазание с ледорубами",
-          "intro": "Оба игровых подъёма используют контакт с поверхностью; вход, прыжки и завершение ведёт сюжет.",
-          "steps": [
-            "Подведите острие к допустимой поверхности и держите Trigger или Grip этой руки для опоры.",
-            "Любая удерживаемая кнопка фиксирует опору и направление ледоруба. Тяните контроллер вниз для подъёма, чередуя руки.",
-            "Для снятия отпустите и Trigger, и Grip, затем отведите от стены примерно на 2,5 см. Одного отпускания мало.",
-            "Ледорубы не используют обычные слоты и не выбрасываются. На выходе дайте сюжету выполнить прыжок или подъём."
-          ]
-        },
-        "ja": {
-          "title": "Cliffhanger：アイスピックで登る",
-          "intro": "操作できる 2 回の登攀は壁面接触を使います。開始、ジャンプ、終了はストーリーが制御します。",
-          "steps": [
-            "先端を有効な壁面へ当て、その手の Trigger または Grip を保持して支持点を作ります。",
-            "どちらかのボタンを保持すると支持点とピックの向きが固定されます。左右交互にコントローラーを下へ引いて上へ進みます。",
-            "外すには Trigger と Grip の両方を離し、壁から約 2.5 cm 引き離します。ボタンを離すだけではすぐに外れません。",
-            "通常の収納スロットは使わず、落とせません。終了時はストーリーによるジャンプや登り切りを待ちます。"
-          ]
-        },
-        "ko": {
-          "title": "Cliffhanger: 얼음도끼 등반",
-          "intro": "조작 가능한 두 등반은 표면 접촉을 사용하며 진입, 점프 및 종료는 스토리가 처리합니다.",
-          "steps": [
-            "도끼 끝을 유효한 표면에 대고 그 손의 Trigger 또는 Grip을 눌러 지지점을 만듭니다.",
-            "둘 중 어느 버튼이든 유지하면 지지점과 도끼 방향이 고정됩니다. 손을 번갈아 컨트롤러를 아래로 당겨 올라갑니다.",
-            "떼려면 Trigger와 Grip을 모두 놓고 벽에서 약 2.5cm 뒤로 당깁니다. 버튼만 놓으면 즉시 떨어지지 않습니다.",
-            "얼음도끼는 일반 슬롯을 쓰지 않고 버릴 수 없습니다. 구간 종료 시 점프나 올라서기는 스토리에 맡기세요."
-          ]
-        }
-      },
       "sources": [
-        "docs/vr-cliffhanger-climbing.md",
-        "src/client/component/vr/gameplay/free_climb.hpp"
-      ]
-    },
-    {
-      "id": "cliff-green-beret",
-      "category": "story",
-      "text": {
-        "zh-CN": {
-          "title": "Cliffhanger：Green Beret 双冰镐",
-          "intro": "本关 Green Beret 生效时，胸前刀具由左右腰挂的两把冰镐替代。",
-          "steps": [
-            "用任一空闲手靠近任一侧腰挂并按住 Grip 取镐；两只手可以各持一把。",
-            "挥动实际镐头接触敌人进行攻击。Trigger 不会代替挥动发动攻击。",
-            "松开 Grip，该冰镐立即返回它原来的腰挂位置，不会掉在地上。",
-            "退出 Green Beret 会收回两把冰镐并恢复原来的装备。剧情攀爬接管时，使用剧情冰镐和攀爬操作；腰挂冰镐暂时收起。"
-          ]
-        },
-        "en": {
-          "title": "Cliffhanger: Green Beret ice picks",
-          "intro": "While Green Beret is active in this mission, two waist-mounted ice picks replace the chest knife.",
-          "steps": [
-            "Approach either waist slot with either free hand and hold Grip to take its pick. Each hand can hold one.",
-            "Swing the actual pick head into an enemy to attack. Trigger does not replace the physical swing.",
-            "Release Grip to return that pick immediately to its original waist slot; it does not become a world drop.",
-            "Leaving Green Beret removes both picks and restores your previous equipment. Story climbing temporarily takes over with its own picks and climbing controls."
-          ]
-        },
-        "zh-TW": {
-          "title": "Cliffhanger：Green Beret 雙冰鎬",
-          "intro": "本關 Green Beret 生效時，胸前刀具由左右腰掛的兩把冰鎬替代。",
-          "steps": [
-            "用任一空閑手靠近任一側腰掛并按住 Grip 取鎬；兩只手可以各持一把。",
-            "揮動實際鎬頭接觸敵人進行攻擊。Trigger 不會代替揮動發動攻擊。",
-            "松開 Grip，該冰鎬立即返回它原來的腰掛位置，不會掉在地上。",
-            "退出 Green Beret 會收回兩把冰鎬并恢復原來的裝備。劇情攀爬接管時，使用劇情冰鎬和攀爬操作；腰掛冰鎬暫時收起。"
-          ]
-        },
-        "fr": {
-          "title": "Cliffhanger : piolets Green Beret",
-          "intro": "Avec Green Beret actif dans cette mission, deux piolets à la taille remplacent le couteau de poitrine.",
-          "steps": [
-            "Avec l’une des mains libres, approchez un emplacement de taille et maintenez Grip. Chaque main peut porter un piolet.",
-            "Frappez l’ennemi avec la vraie tête du piolet. Trigger ne remplace pas le mouvement.",
-            "Relâchez Grip pour le rendre immédiatement à son emplacement d’origine, sans le laisser au sol.",
-            "Quitter Green Beret retire les deux piolets et restaure l’équipement précédent. L’escalade du scénario utilise temporairement ses propres piolets et commandes."
-          ]
-        },
-        "de": {
-          "title": "Cliffhanger: Green-Beret-Eispickel",
-          "intro": "Mit Green Beret ersetzen in dieser Mission zwei Hüftpickel das Brustmesser.",
-          "steps": [
-            "Beliebige freie Hand an einen Hüftplatz führen und Grip halten. Jede Hand kann einen Pickel tragen.",
-            "Mit dem tatsächlichen Pickelkopf den Gegner treffen. Trigger ersetzt den Schwung nicht.",
-            "Grip lösen bringt den Pickel sofort an seinen ursprünglichen Hüftplatz; kein Welt-Drop.",
-            "Green Beret verlassen entfernt beide Pickel und stellt die vorherige Ausrüstung wieder her. Story-Klettern übernimmt zeitweise mit eigenen Pickeln und Steuerung."
-          ]
-        },
-        "es": {
-          "title": "Cliffhanger: piolets Green Beret",
-          "intro": "Con Green Beret activo, dos piolets de cintura sustituyen al cuchillo del pecho en esta misión.",
-          "steps": [
-            "Acerca cualquier mano libre a un espacio de cintura y mantén Grip. Cada mano puede llevar un piolet.",
-            "Golpea al enemigo con la cabeza real del piolet. Trigger no sustituye el movimiento.",
-            "Soltar Grip lo devuelve al instante a su espacio original; no cae al mundo.",
-            "Al salir de Green Beret se quitan ambos piolets y vuelve tu equipo anterior. La escalada de historia toma el control temporal con sus propios piolets."
-          ]
-        },
-        "ru": {
-          "title": "Cliffhanger: ледорубы Green Beret",
-          "intro": "При активном Green Beret в этой миссии два поясных ледоруба заменяют нагрудный нож.",
-          "steps": [
-            "Любую свободную руку подведите к поясному слоту и зажмите Grip. Каждая рука держит один ледоруб.",
-            "Ударьте врага настоящей головкой ледоруба. Trigger не заменяет взмах.",
-            "Отпустите Grip для мгновенного возврата в исходный слот; на землю не падает.",
-            "Выход из Green Beret убирает ледорубы и возвращает прежнее снаряжение. Сюжетное лазание временно использует собственные ледорубы и управление."
-          ]
-        },
-        "ja": {
-          "title": "Cliffhanger：Green Beret のアイスピック",
-          "intro": "このミッションで Green Beret が有効な間、胸のナイフの代わりに腰のピック 2 本を使います。",
-          "steps": [
-            "空いた手を左右どちらかの腰スロットへ伸ばし、Grip で取ります。両手に 1 本ずつ持てます。",
-            "実際のピック頭部を振って敵へ当てます。Trigger では振る動作を代用できません。",
-            "Grip を離すと元の腰スロットへ即座に戻り、地面には落ちません。",
-            "Green Beret を終了すると 2 本とも消え、以前の装備に戻ります。ストーリー登攀中は専用ピックと操作へ一時的に切り替わります。"
-          ]
-        },
-        "ko": {
-          "title": "Cliffhanger: Green Beret 얼음도끼",
-          "intro": "이 임무에서 Green Beret이 켜지면 가슴 칼 대신 허리 얼음도끼 두 개를 사용합니다.",
-          "steps": [
-            "어느 빈손이든 허리 슬롯에 대고 Grip으로 꺼냅니다. 각 손에 하나씩 들 수 있습니다.",
-            "실제 도끼 머리를 휘둘러 적을 공격합니다. Trigger는 휘두르기를 대신하지 않습니다.",
-            "Grip을 놓으면 원래 허리 슬롯으로 즉시 돌아가며 바닥에 떨어지지 않습니다.",
-            "Green Beret을 끝내면 두 도끼가 사라지고 이전 장비가 복원됩니다. 스토리 등반은 전용 도끼와 조작으로 일시 전환됩니다."
-          ]
-        }
-      },
-      "sources": [
-        "docs/vr-cliffhanger.md",
-        "docs/vr-official-cheats.md"
-      ]
-    },
-    {
-      "id": "cliff-c4",
-      "category": "story",
-      "text": {
-        "zh-CN": {
-          "title": "Cliffhanger：安装 C4 与引爆",
-          "intro": "安装点与起爆器是两个操作，起爆仍需等待任务授权。",
-          "steps": [
-            "到达安装点，用空闲手指向任务目标，按住提示的 Grip 完成安装。",
-            "腹部起爆器可在允许操作时用 Grip 提前拿取；松开 Grip 放回。",
-            "等同伴和机库阶段发出引爆授权，再在持有起爆器的那只手先松开 Trigger，重新扣动引爆。",
-            "安装后立刻扣 Trigger，或一直扣住跨过剧情提示，都不会提前引爆。"
-          ]
-        },
-        "en": {
-          "title": "Cliffhanger: planting and detonating C4",
-          "intro": "Planting and the detonator are separate actions; detonation waits for the mission cue.",
-          "steps": [
-            "At the planting point, aim a free hand at the mission target and hold the prompted Grip to plant.",
-            "When interaction is allowed, take the abdominal detonator early with Grip if desired; release Grip to stow.",
-            "Wait for the companion and hangar detonation cue, then release and newly press Trigger in the hand holding the detonator.",
-            "Pressing immediately after planting or holding Trigger across the cue does not detonate early."
-          ]
-        },
-        "zh-TW": {
-          "title": "Cliffhanger：安裝 C4 與引爆",
-          "intro": "安裝點與起爆器是兩個操作，起爆仍需等待任務授權。",
-          "steps": [
-            "到達安裝點，用空閑手指向任務目標，按住提示的 Grip 完成安裝。",
-            "腹部起爆器可在允許操作時用 Grip 提前拿取；松開 Grip 放回。",
-            "等同伴和機庫階段發出引爆授權，再在持有起爆器的那只手先松開 Trigger，重新扣動引爆。",
-            "安裝后立刻扣 Trigger，或一直扣住跨過劇情提示，都不會提前引爆。"
-          ]
-        },
-        "fr": {
-          "title": "Cliffhanger : pose et détonation du C4",
-          "intro": "La pose et le détonateur sont séparés ; attendez le signal de la mission pour exploser.",
-          "steps": [
-            "Au point de pose, visez la cible avec la main libre et maintenez le Grip indiqué.",
-            "Dès que permis, vous pouvez prendre tôt le détonateur abdominal avec Grip ; relâchez pour ranger.",
-            "Attendez l’allié et le signal du hangar, puis relâchez et pressez à nouveau Trigger de la main tenant le détonateur.",
-            "Presser juste après la pose ou maintenir Trigger pendant le signal ne provoque pas de détonation anticipée."
-          ]
-        },
-        "de": {
-          "title": "Cliffhanger: C4 legen und zünden",
-          "intro": "Legen und Zünder sind getrennte Aktionen; Sprengung wartet auf das Missionssignal.",
-          "steps": [
-            "Am Platzierungsziel mit freier Hand zielen und den angezeigten Grip halten.",
-            "Wenn erlaubt, Bauchauslöser früh mit Grip nehmen; zum Verstauen Grip lösen.",
-            "Begleiter- und Hangarsignal abwarten, dann Trigger der Zünderhand lösen und neu drücken.",
-            "Drücken direkt nach dem Legen oder Trigger über das Signal hinweg halten zündet nicht vorzeitig."
-          ]
-        },
-        "es": {
-          "title": "Cliffhanger: colocar y detonar C4",
-          "intro": "Colocar y detonar son acciones separadas; la explosión espera la señal de misión.",
-          "steps": [
-            "En el punto de colocación, apunta con una mano libre y mantén el Grip indicado.",
-            "Cuando se permita, puedes tomar antes el detonador abdominal con Grip y soltar para guardar.",
-            "Espera al aliado y la señal del hangar; suelta y pulsa de nuevo Trigger de la mano del detonador.",
-            "Pulsar justo tras colocar o mantener Trigger durante la señal no detona antes."
-          ]
-        },
-        "ru": {
-          "title": "Cliffhanger: установка и подрыв C4",
-          "intro": "Установка и детонатор — отдельные действия; подрыв ждёт сигнала миссии.",
-          "steps": [
-            "У точки установки наведите свободную руку на цель и держите указанный Grip.",
-            "Когда разрешено, можно заранее взять детонатор у живота с Grip; отпустите для уборки.",
-            "Дождитесь спутника и сигнала ангара, затем отпустите и заново нажмите Trigger руки с детонатором.",
-            "Нажатие сразу после установки или удержание через сигнал не подрывает раньше времени."
-          ]
-        },
-        "ja": {
-          "title": "Cliffhanger：C4 の設置と起爆",
-          "intro": "設置と起爆装置は別操作です。起爆はミッションの合図を待ちます。",
-          "steps": [
-            "設置場所で空いた手を任務対象へ向け、表示された Grip を保持して設置します。",
-            "操作可能になれば腹部の起爆装置を Grip で早めに取れます。離すと収納します。",
-            "仲間と格納庫の起爆合図を待ち、起爆装置を持つ手の Trigger を離して押し直します。",
-            "設置直後の押下や合図をまたぐ Trigger 保持では、早期起爆しません。"
-          ]
-        },
-        "ko": {
-          "title": "Cliffhanger: C4 설치 및 폭파",
-          "intro": "설치와 기폭 장치는 별도 동작이며 폭파는 임무 신호를 기다립니다.",
-          "steps": [
-            "설치 지점에서 빈손으로 임무 대상을 가리키고 안내된 Grip을 길게 눌러 설치합니다.",
-            "허용되면 복부 기폭 장치를 Grip으로 미리 꺼낼 수 있으며 놓으면 보관됩니다.",
-            "동료와 격납고 폭파 신호를 기다린 뒤 기폭 장치 손의 Trigger를 놓았다 새로 누르세요.",
-            "설치 직후 누르거나 신호 전부터 Trigger를 계속 눌러도 일찍 폭파되지 않습니다."
-          ]
-        }
-      },
-      "sources": [
-        "docs/vr-cliffhanger.md",
-        "docs/vr-world-interaction.md"
-      ]
-    },
-    {
-      "id": "driving",
-      "category": "story",
-      "text": {
-        "zh-CN": {
-          "title": "Cliffhanger / Endgame：驾驶",
-          "intro": "雪地摩托与快艇使用驾驶控制；头部观察与车辆转向分开。",
-          "steps": [
-            "驾驶时任一摇杆前后控制油门、刹车或倒车，左右控制转向；两只摇杆的输入会合并。",
-            "雪地摩托可用 Grip 抓住对应车把，右手后拉或左手前推向右转，反向动作向左转。",
-            "握车把的手扣 Trigger 可加速，松开停止供油。该手 B/Y 重新设定车把中立方向。",
-            "驾驶武器从胸前用 Grip 拿取，松开最后一只手后放回胸前。先用 B/Y 退弹匣，再在胸前或腰侧用 Trigger 取新弹匣装入；也可持枪停留一秒快速装填。",
-            "暂停或重定位后把两只摇杆都回中，松开按钮，再重新抓车把或拿枪。"
-          ]
-        },
-        "en": {
-          "title": "Cliffhanger / Endgame: driving",
-          "intro": "The snowmobile and Zodiac use driving controls; head look is separate from steering.",
-          "steps": [
-            "During driving, either stick supplies throttle/braking/reverse and steering. Both stick inputs combine.",
-            "On the snowmobile, Grip the corresponding handlebars. Pull the right hand back or push the left forward to steer right; reverse those motions for left.",
-            "Trigger in a handle-holding hand accelerates; release stops supplying throttle. B/Y in that hand recentres handle steering.",
-            "Grip the chest-mounted driver gun to draw; last-hand release returns it. Eject with B/Y, then draw a chest/waist magazine with Trigger and insert, or dwell the gun there for one second to quick load.",
-            "After pause or recenter, centre both sticks and release buttons before regrasping handles or drawing the gun."
-          ]
-        },
-        "zh-TW": {
-          "title": "Cliffhanger / Endgame：駕駛",
-          "intro": "雪地摩托與快艇使用駕駛控制；頭部觀察與車輛轉向分開。",
-          "steps": [
-            "駕駛時任一搖桿前后控制油門、剎車或倒車，左右控制轉向；兩只搖桿的輸入會合并。",
-            "雪地摩托可用 Grip 抓住對應車把，右手后拉或左手前推向右轉，反向動作向左轉。",
-            "握車把的手扣 Trigger 可加速，松開停止供油。該手 B/Y 重新設定車把中立方向。",
-            "駕駛武器從胸前用 Grip 拿取，松開最后一只手后放回胸前。先用 B/Y 退彈匣，再在胸前或腰側用 Trigger 取新彈匣裝入；也可持槍停留一秒快速裝填。",
-            "暫停或重定位后把兩只搖桿都回中，松開按鈕，再重新抓車把或拿槍。"
-          ]
-        },
-        "fr": {
-          "title": "Cliffhanger / Endgame : conduite",
-          "intro": "Motoneige et Zodiac ont des commandes de conduite. Regarder avec la tête ne dirige pas le véhicule.",
-          "steps": [
-            "En conduite, chaque stick fournit accélération, freinage, marche arrière et direction. Les deux se combinent.",
-            "Sur la motoneige, prenez les poignées correspondantes avec Grip. Tirez la droite ou poussez la gauche pour tourner à droite ; inversez pour la gauche.",
-            "Trigger d’une main tenant une poignée accélère ; relâcher coupe la commande de gaz. B/Y de cette main recentre la direction physique.",
-            "Prenez l’arme de conduite sur la poitrine avec Grip ; lâcher la dernière main la range. B/Y éjecte, puis Trigger prend un chargeur poitrine/taille à insérer, ou maintenez l’arme là une seconde pour le chargement rapide.",
-            "Après pause ou recentrage, recentrez les deux sticks et relâchez les boutons avant de reprendre guidon ou arme."
-          ]
-        },
-        "de": {
-          "title": "Cliffhanger / Endgame: Fahren",
-          "intro": "Schneemobil und Zodiac nutzen Fahrsteuerung; Kopfbewegung ist von Lenkung getrennt.",
-          "steps": [
-            "Beim Fahren liefern beide Sticks Gas, Bremse, Rückwärtsgang und Lenkung; Eingaben werden kombiniert.",
-            "Am Schneemobil passende Lenker mit Grip halten. Rechte Hand zurück oder linke vor für rechts; umgekehrt für links.",
-            "Trigger einer Lenkerhand gibt Gas, Loslassen beendet die Gaszufuhr. B/Y dieser Hand zentriert die Handlenkung.",
-            "Fahrerwaffe an der Brust mit Grip nehmen; letzte Hand lösen verstaut sie. Mit B/Y auswerfen, Brust-/Hüftmagazin mit Trigger einsetzen oder Waffe dort eine Sekunde zum Schnellladen halten.",
-            "Nach Pause oder Zentrieren beide Sticks neutral stellen und Tasten lösen, bevor Lenker oder Waffe gegriffen werden."
-          ]
-        },
-        "es": {
-          "title": "Cliffhanger / Endgame: conducción",
-          "intro": "Moto de nieve y Zodiac usan controles de conducción; la mirada es independiente del giro.",
-          "steps": [
-            "Al conducir, cualquier stick acelera, frena, retrocede y gira. Las entradas se combinan.",
-            "Agarra los manillares con Grip. Tira de la derecha o empuja la izquierda para girar a la derecha; invierte para la izquierda.",
-            "Trigger de la mano del manillar acelera; soltar deja de dar gas. B/Y de esa mano recentra la dirección física.",
-            "Saca el arma del conductor del pecho con Grip; soltar la última mano la devuelve. Expulsa con B/Y e inserta cargador de pecho/cintura con Trigger, o mantén el arma allí un segundo para carga rápida.",
-            "Tras pausar o recentrar, centra ambos sticks y suelta botones antes de agarrar manillares o arma."
-          ]
-        },
-        "ru": {
-          "title": "Cliffhanger / Endgame: транспорт",
-          "intro": "Снегоход и Zodiac используют транспортное управление; взгляд отделён от руля.",
-          "steps": [
-            "При езде любой стик даёт газ, тормоз, задний ход и руление. Ввод обоих складывается.",
-            "На снегоходе Grip держит соответствующие ручки. Правая назад или левая вперёд поворачивает вправо; наоборот — влево.",
-            "Trigger руки на руле даёт газ; отпускание прекращает его. B/Y этой руки центрирует ручное руление.",
-            "Возьмите грудное оружие водителя Grip; отпускание последней руки возвращает его. Сбросьте B/Y и вставьте магазин с груди/пояса через Trigger, либо держите оружие там секунду для быстрой зарядки.",
-            "После паузы или центрирования верните оба стика в центр и отпустите кнопки перед захватом руля или оружия."
-          ]
-        },
-        "ja": {
-          "title": "Cliffhanger／Endgame：運転",
-          "intro": "スノーモービルと Zodiac は運転操作を使い、頭の視線は操舵と独立しています。",
-          "steps": [
-            "運転中はどちらのスティックでも加速、制動、後退、操舵ができ、両方の入力が合成されます。",
-            "対応するハンドルを Grip で握ります。右手を引くか左手を押すと右へ、逆の動きで左へ曲がります。",
-            "ハンドルを持つ手の Trigger で加速し、離すとアクセル入力を止めます。同じ手の B／Y でハンドル操舵を中央に戻します。",
-            "胸の運転用銃を Grip で取り、最後の手を離すと戻ります。B／Y で排出後、Trigger で胸／腰のマガジンを取って挿入するか、その位置に銃を 1 秒保持してクイック装填します。",
-            "ポーズやリセンター後は両スティックを中央に戻しボタンを離してから、ハンドルや銃を取ってください。"
-          ]
-        },
-        "ko": {
-          "title": "Cliffhanger / Endgame: 운전",
-          "intro": "스노모빌과 Zodiac은 운전 조작을 사용하며 머리 시선과 조향은 별개입니다.",
-          "steps": [
-            "운전 중 어느 스틱이든 가속, 제동, 후진 및 조향을 입력하며 양쪽 입력은 합쳐집니다.",
-            "스노모빌의 해당 핸들을 Grip으로 잡습니다. 오른손을 당기거나 왼손을 밀면 우회전하며 반대로 하면 좌회전합니다.",
-            "핸들을 잡은 손의 Trigger로 가속하며 놓으면 가속 입력이 멈춥니다. 그 손의 B/Y로 핸들 조향을 중앙에 맞춥니다.",
-            "가슴 운전용 총을 Grip으로 꺼내며 마지막 손을 놓으면 돌아갑니다. B/Y로 분리하고 Trigger로 가슴/허리 탄창을 넣거나 총을 그곳에 1초 대어 빠른 장전합니다.",
-            "일시 정지나 시점 재정렬 후 양쪽 스틱을 중앙에 두고 버튼을 놓은 다음 핸들이나 총을 잡으세요."
-          ]
-        }
-      },
-      "sources": [
-        "docs/vr-vehicles.md"
-      ]
-    },
-    {
-      "id": "designator",
-      "category": "story",
-      "text": {
-        "zh-CN": {
-          "title": "Exodus：激光指示器",
-          "intro": "从腹部取出装置，用它的激光指向目标后确认。",
-          "steps": [
-            "任一空闲手用 Grip 从腹部取出激光指示器。松开最后一只持有手会收回腹部。",
-            "让装置的激光对准任务允许指定的目标，新扣持有手 Trigger 确认。是否接受目标和支援效果由任务决定。",
-            "成功使用后等待约三秒，再松开并重新扣 Trigger 指定下一目标。另一只手可继续使用普通枪械。"
-          ]
-        },
-        "en": {
-          "title": "Exodus: laser designator",
-          "intro": "Draw the abdominal device, aim its laser and confirm the target.",
-          "steps": [
-            "Use either free hand’s Grip to draw the abdominal designator. Last-hand release returns it to the abdomen.",
-            "Aim its laser at a mission-eligible target and newly press the holding Trigger to confirm. The mission decides target acceptance and support response.",
-            "After use, wait about three seconds, then release and press Trigger again for the next target. The other hand can keep using an ordinary gun."
-          ]
-        },
-        "zh-TW": {
-          "title": "Exodus：激光指示器",
-          "intro": "從腹部取出裝置，用它的激光指向目標后確認。",
-          "steps": [
-            "任一空閑手用 Grip 從腹部取出激光指示器。松開最后一只持有手會收回腹部。",
-            "讓裝置的激光對準任務允許指定的目標，新扣持有手 Trigger 確認。是否接受目標和支援效果由任務決定。",
-            "成功使用后等待約三秒，再松開并重新扣 Trigger 指定下一目標。另一只手可繼續使用普通槍械。"
-          ]
-        },
-        "fr": {
-          "title": "Exodus : désignateur laser",
-          "intro": "Sortez l’appareil abdominal, visez au laser puis confirmez.",
-          "steps": [
-            "Grip de l’une des mains libres prend le désignateur. Relâcher la dernière main le rend à l’abdomen.",
-            "Visez une cible autorisée et pressez à nouveau Trigger de la main qui tient l’appareil. La mission décide de l’acceptation et du soutien.",
-            "Après usage, attendez environ trois secondes, relâchez puis pressez Trigger pour la cible suivante. L’autre main peut continuer à utiliser une arme."
-          ]
-        },
-        "de": {
-          "title": "Exodus: Lasermarkierer",
-          "intro": "Bauchgerät ziehen, Laser ausrichten und Ziel bestätigen.",
-          "steps": [
-            "Mit beliebiger freier Hand und Grip ziehen. Letzte Hand lösen bringt ihn an den Bauch zurück.",
-            "Gültiges Missionsziel anvisieren und Trigger der Haltehand neu drücken. Mission entscheidet über Annahme und Unterstützung.",
-            "Nach Benutzung etwa drei Sekunden warten, Trigger lösen und fürs nächste Ziel neu drücken. Andere Hand kann weiter eine normale Waffe nutzen."
-          ]
-        },
-        "es": {
-          "title": "Exodus: designador láser",
-          "intro": "Saca el dispositivo abdominal, apunta el láser y confirma.",
-          "steps": [
-            "Grip de cualquier mano libre lo saca. Soltar la última mano lo devuelve al abdomen.",
-            "Apunta a un objetivo válido de misión y pulsa de nuevo Trigger de la mano que lo sostiene. La misión decide aceptación y apoyo.",
-            "Espera unos tres segundos tras usarlo, suelta y pulsa Trigger para otro objetivo. La otra mano puede seguir usando un arma."
-          ]
-        },
-        "ru": {
-          "title": "Exodus: лазерный целеуказатель",
-          "intro": "Достаньте устройство с живота, наведите лазер и подтвердите цель.",
-          "steps": [
-            "Grip любой свободной руки берёт целеуказатель. Последнее отпускание возвращает к животу.",
-            "Наведите на допустимую цель и заново нажмите Trigger держащей руки. Принятие и ответ поддержки определяет миссия.",
-            "После применения подождите около трёх секунд, отпустите и снова нажмите Trigger. Другая рука может пользоваться обычным оружием."
-          ]
-        },
-        "ja": {
-          "title": "Exodus：レーザー照準器",
-          "intro": "腹部の装置を取り、レーザーを向けて目標を確定します。",
-          "steps": [
-            "左右いずれかの空いた手の Grip で取り出せます。最後の手を離すと腹部へ戻ります。",
-            "任務で許可された目標へレーザーを向け、保持手の Trigger を新たに押します。目標受理と支援の反応はミッションが決めます。",
-            "使用後は約 3 秒待ち、Trigger を離して押し直すと次の目標を指定できます。反対の手は通常の銃を使い続けられます。"
-          ]
-        },
-        "ko": {
-          "title": "Exodus: 레이저 지시기",
-          "intro": "복부 장치를 꺼내 레이저를 조준하고 목표를 확정합니다.",
-          "steps": [
-            "어느 빈손이든 Grip으로 꺼냅니다. 마지막 손을 놓으면 복부로 돌아갑니다.",
-            "임무에서 허용된 목표에 레이저를 대고 든 손의 Trigger를 새로 누르세요. 목표 인정과 지원 반응은 임무가 결정합니다.",
-            "사용 후 약 3초 기다리고 Trigger를 놓았다 다시 눌러 다음 목표를 지정합니다. 다른 손은 일반 총을 계속 사용할 수 있습니다."
-          ]
-        }
-      },
-      "sources": [
-        "docs/vr-special-equipment.md"
-      ]
-    },
-    {
-      "id": "agm",
-      "category": "story",
-      "text": {
-        "zh-CN": {
-          "title": "Wolverines! / Contingency：导弹电脑",
-          "intro": "取出腹部电脑，完全打开屏幕并松开开屏手，进入遥控。",
-          "steps": [
-            "任意一只空闲手用 Grip 拿住机身，另一只手用 Grip 或 Trigger 抓住主屏幕四周任意边缘，沿铰链翻开。左右手操作相同。",
-            "屏幕完全打开后，松开开屏时按住的 Grip 或 Trigger 才会请求遥控。一直按着不会启动；松开另一个按键也不会启动。",
-            "等待任务的准备与画面切换。进入遥控后，任意一只手的 Trigger 都可发射或飞行加速；进入时已按住的扳机要先松开，各手独立生效。",
-            "遥控时可转动头显，或用转向摇杆（默认右摇杆）上下、左右瞄准。进入无人机或导弹视角后先让摇杆回中；遥控转向始终连续。",
-            "进入前松开机身会合上收回。进入后电脑会自动收纳，普通行走和拿枪暂停，结束时随任务恢复。"
-          ]
-        },
-        "en": {
-          "title": "Wolverines! / Contingency: missile notebook",
-          "intro": "Draw the abdominal notebook, open its screen fully and release the lid hand to enter remote control.",
-          "steps": [
-            "Grip the case with either free hand. Use Grip or Trigger with the other hand at any of the main screen's four edges to open it around the hinge. Both hands work the same way.",
-            "At full opening, release the Grip or Trigger used to hold the lid to request remote control. Keeping it held or releasing the other button does not start it.",
-            "Wait for preparation and the camera transition. Either hand's Trigger can launch or boost. Each hand rearms independently after releasing a Trigger held across entry.",
-            "Turn your head or use the look stick (right stick by default) to steer pitch and yaw. Center the stick once after entering the drone or missile view; remote steering is continuous.",
-            "Releasing the case before entry closes and stows it. After entry it docks automatically; normal walking and carry resume when the mission ends the session."
-          ]
-        },
-        "zh-TW": {
-          "title": "Wolverines! / Contingency：導彈電腦",
-          "intro": "取出腹部電腦，完全打開屏幕并松開開屏手，進入遙控。",
-          "steps": [
-            "任意一只空閑手用 Grip 拿住機身，另一只手用 Grip 或 Trigger 抓住主屏幕四周任意邊緣，沿鉸鏈翻開。左右手操作相同。",
-            "屏幕完全打開后，松開開屏時按住的 Grip 或 Trigger 才會請求遙控。一直按著不會啟動；松開另一個按鍵也不會啟動。",
-            "等待任務的準備與畫面切換。進入遙控后，任意一只手的 Trigger 都可發射或飛行加速；進入時已按住的扳機要先松開，各手獨立生效。",
-            "遙控時可轉動頭顯，或用轉向搖桿（默認右搖桿）上下、左右瞄準。進入無人機或導彈視角后先讓搖桿回中；遙控轉向始終連續。",
-            "進入前松開機身會合上收回。進入后電腦會自動收納，普通行走和拿槍暫停，結束時隨任務恢復。"
-          ]
-        },
-        "fr": {
-          "title": "Wolverines! / Contingency : terminal de missiles",
-          "intro": "Sortez le terminal abdominal, ouvrez complètement puis relâchez la main de l’écran pour entrer en commande à distance.",
-          "steps": [
-            "Prenez le boîtier avec Grip d’une main libre. L’autre utilise Grip ou Trigger sur l’un des quatre bords de l’écran pour l’ouvrir autour de sa charnière. Les deux mains sont équivalentes.",
-            "À pleine ouverture, relâchez le bouton qui tient réellement le couvercle. Le maintenir ou relâcher l’autre bouton ne démarre pas la commande.",
-            "Attendez la préparation et le changement de caméra. Trigger de chaque main peut lancer ou accélérer ; chaque main se réarme en relâchant son Trigger maintenu à l’entrée.",
-            "Tournez la tête ou utilisez le stick de vue (droit par défaut) pour diriger verticalement et horizontalement. Recentrez une fois après entrée ; la direction distante est continue.",
-            "Relâcher le boîtier avant l’entrée le ferme et le range. Après entrée il se fixe automatiquement ; marche et port reprennent quand la mission termine la session."
-          ]
-        },
-        "de": {
-          "title": "Wolverines! / Contingency: Raketen-Laptop",
-          "intro": "Bauch-Laptop ziehen, Bildschirm ganz öffnen und Deckelhand lösen, um Fernsteuerung anzufordern.",
-          "steps": [
-            "Gehäuse mit freier Hand per Grip halten. Andere Hand mit Grip oder Trigger an einem der vier Bildschirmränder öffnet am Scharnier. Beide Hände sind gleichwertig.",
-            "Ganz geöffnet die tatsächlich zum Halten benutzte Grip-/Trigger-Taste lösen. Weiterhalten oder Lösen der anderen Taste startet nicht.",
-            "Vorbereitung und Kamerawechsel abwarten. Trigger jeder Hand startet oder beschleunigt; beim Eintritt gehaltenen Trigger je Hand unabhängig erst lösen.",
-            "Kopf oder Blickstick (standardmäßig rechts) steuert Nicken/Gieren. Nach Eintritt in Drohnen-/Raketenansicht Stick einmal zentrieren; Fernsteuerung läuft kontinuierlich.",
-            "Vor Eintritt Gehäuse lösen schließt und verstaut. Danach dockt es automatisch; Gehen und Tragen kehren beim Missionsende der Sitzung zurück."
-          ]
-        },
-        "es": {
-          "title": "Wolverines! / Contingency: portátil de misiles",
-          "intro": "Saca el portátil del abdomen, abre del todo y suelta la mano de la tapa para control remoto.",
-          "steps": [
-            "Sujeta la caja con Grip de cualquier mano. La otra usa Grip o Trigger en cualquiera de los cuatro bordes para abrir por la bisagra. Ambas manos son equivalentes.",
-            "Al abrir del todo, suelta el Grip o Trigger usado para la tapa. Mantenerlo o soltar el otro botón no inicia el control.",
-            "Espera preparación y cambio de cámara. Cualquier Trigger lanza o acelera; cada mano se reactiva independientemente al soltar el Trigger mantenido al entrar.",
-            "Mueve la cabeza o el stick de vista (derecho por defecto) para dirigir en ambos ejes. Centra una vez tras entrar en vista de dron/misil; el giro es continuo.",
-            "Soltar la caja antes de entrar la cierra y guarda. Después se acopla sola; andar y llevar vuelven cuando la misión acaba la sesión."
-          ]
-        },
-        "ru": {
-          "title": "Wolverines! / Contingency: ракетный ноутбук",
-          "intro": "Достаньте ноутбук, полностью откройте экран и отпустите крышку для удалённого управления.",
-          "steps": [
-            "Корпус держите Grip любой свободной руки. Другой рукой через Grip или Trigger на любом из четырёх краёв экрана откройте шарнир. Руки равноправны.",
-            "При полном открытии отпустите именно Grip или Trigger, державший крышку. Удержание или отпускание другой кнопки не запускает.",
-            "Дождитесь подготовки и перехода камеры. Любой Trigger запускает или ускоряет; каждая рука отдельно активируется после отпускания зажатого при входе Trigger.",
-            "Головой или стиком обзора (по умолчанию правым) управляйте тангажом и рысканием. После входа один раз центрируйте стик; управление непрерывное.",
-            "Отпускание корпуса до входа закрывает и убирает ноутбук. После входа он крепится автоматически; ходьба и переноска вернутся по завершении сеанса миссией."
-          ]
-        },
-        "ja": {
-          "title": "Wolverines!／Contingency：ミサイル端末",
-          "intro": "腹部から端末を取り、画面を完全に開いて開けた手を離すと遠隔操作へ移ります。",
-          "steps": [
-            "空いた手の Grip で本体を持ち、反対の手の Grip または Trigger で画面の四辺いずれかをつかみ、ヒンジに沿って開きます。左右同じ操作です。",
-            "完全に開いたら、開くために使った Grip または Trigger を離します。押し続けたり別のボタンを離したりしても開始しません。",
-            "準備とカメラ移行を待ちます。どちらの Trigger でも発射・加速できます。移行時に保持していた Trigger は各手で個別に離してから使います。",
-            "頭または視点スティック（標準では右）で上下左右へ操舵します。ドローン／ミサイル視点へ入ったら一度中央に戻してください。遠隔操舵は連続式です。",
-            "入る前に本体を離すと閉じて収納します。入った後は自動で固定され、ミッションが遠隔操作を終えると歩行と通常保持へ戻ります。"
-          ]
-        },
-        "ko": {
-          "title": "Wolverines! / Contingency: 미사일 노트북",
-          "intro": "복부 노트북을 꺼내 화면을 완전히 열고 덮개 손을 놓아 원격 조작에 들어갑니다.",
-          "steps": [
-            "빈손 Grip으로 본체를 잡고 다른 손의 Grip 또는 Trigger로 화면 네 가장자리 중 하나를 잡아 경첩을 따라 엽니다. 양손은 같은 방식입니다.",
-            "완전히 열리면 덮개를 잡는 데 사용한 Grip 또는 Trigger를 놓으세요. 계속 누르거나 다른 버튼을 놓아서는 시작되지 않습니다.",
-            "준비와 카메라 전환을 기다리세요. 어느 손의 Trigger든 발사나 가속이 가능하며 진입 때 누른 Trigger는 각 손별로 놓아야 다시 활성화됩니다.",
-            "머리나 시점 스틱(기본 오른쪽)으로 피치와 요를 조작합니다. 드론/미사일 시점 진입 후 스틱을 한 번 중앙에 두세요. 원격 조향은 연속적입니다.",
-            "진입 전에 본체를 놓으면 닫혀 보관됩니다. 진입 후에는 자동 거치되며 임무가 세션을 끝내면 일반 이동과 들기가 돌아옵니다."
-          ]
-        }
-      },
-      "sources": [
-        "docs/vr-special-equipment.md"
-      ]
-    },
-    {
-      "id": "flare",
-      "category": "story",
-      "text": {
-        "zh-CN": {
-          "title": "Whiskey Hotel：信号弹",
-          "intro": "等任务提示后双手拆盖点燃，Trigger 不是点火键。",
-          "steps": [
-            "用 Grip 从腹部装备位拿出信号弹。可以提前拿，但任务允许前不能拆盖。",
-            "出现点亮信号弹提示后，一手握管身，另一只手 Grip 握盖子，沿管身方向拉开约 4 厘米点燃。",
-            "未点燃时松开管身 Grip 会收回；点燃后松开会掉落，不会补回装备位。盖子也需自行松手。"
-          ]
-        },
-        "en": {
-          "title": "Whiskey Hotel: signal flare",
-          "intro": "Use both hands to remove the cap at the mission cue; Trigger does not ignite it.",
-          "steps": [
-            "Grip the flare from the abdominal slot. You can take it early, but cannot remove the cap before the cue.",
-            "When instructed, hold the tube in one hand, Grip the cap with the other and pull about 4 cm along the tube to ignite.",
-            "Releasing an unlit tube stows it. Releasing a lit one drops it without refill. Release the removed cap separately."
-          ]
-        },
-        "zh-TW": {
-          "title": "Whiskey Hotel：信號彈",
-          "intro": "等任務提示后雙手拆蓋點燃，Trigger 不是點火鍵。",
-          "steps": [
-            "用 Grip 從腹部裝備位拿出信號彈。可以提前拿，但任務允許前不能拆蓋。",
-            "出現點亮信號彈提示后，一手握管身，另一只手 Grip 握蓋子，沿管身方向拉開約 4 厘米點燃。",
-            "未點燃時松開管身 Grip 會收回；點燃后松開會掉落，不會補回裝備位。蓋子也需自行松手。"
-          ]
-        },
-        "fr": {
-          "title": "Whiskey Hotel : fusée de signalisation",
-          "intro": "Au signal, retirez le capuchon à deux mains. Trigger n’allume pas la fusée.",
-          "steps": [
-            "Prenez-la à l’abdomen avec Grip. Vous pouvez la sortir tôt, mais pas retirer le capuchon avant le signal.",
-            "Au signal, tenez le tube, saisissez le capuchon avec Grip de l’autre main et tirez environ 4 cm dans l’axe pour allumer.",
-            "Relâcher le tube éteint le range. Allumé, il tombe sans recharge. Lâchez le capuchon retiré séparément."
-          ]
-        },
-        "de": {
-          "title": "Whiskey Hotel: Leuchtfackel",
-          "intro": "Beim Missionssignal Kappe mit beiden Händen abziehen. Trigger zündet nicht.",
-          "steps": [
-            "Mit Grip vom Bauch nehmen. Frühes Ziehen erlaubt, Kappe erst nach Signal abnehmbar.",
-            "Beim Signal Rohr halten, Kappe mit anderem Grip greifen und etwa 4 cm längs abziehen zum Zünden.",
-            "Ungezündetes Rohr lösen verstaut es. Gezündetes fällt ohne Nachfüllen. Entfernte Kappe separat loslassen."
-          ]
-        },
-        "es": {
-          "title": "Whiskey Hotel: bengala",
-          "intro": "Al aviso, quita la tapa con dos manos. Trigger no la enciende.",
-          "steps": [
-            "Tómala del abdomen con Grip. Puedes sacarla antes, pero no quitar la tapa antes del aviso.",
-            "Al aviso, sujeta el tubo, agarra la tapa con Grip de la otra mano y tira unos 4 cm a lo largo para encender.",
-            "Soltarla apagada la guarda; encendida la tira sin reponer. Suelta la tapa retirada aparte."
-          ]
-        },
-        "ru": {
-          "title": "Whiskey Hotel: сигнальный фальшфейер",
-          "intro": "По сигналу снимите колпачок двумя руками. Trigger не зажигает.",
-          "steps": [
-            "Возьмите Grip у живота. Можно заранее достать, но колпачок снимается только по сигналу.",
-            "По команде держите трубку, другой рукой с Grip возьмите колпачок и вытяните примерно на 4 см вдоль трубки.",
-            "Незажжённая трубка при отпускании убирается, горящая падает без пополнения. Снятый колпачок отпустите отдельно."
-          ]
-        },
-        "ja": {
-          "title": "Whiskey Hotel：発炎筒",
-          "intro": "合図に合わせ両手でキャップを外します。Trigger では点火しません。",
-          "steps": [
-            "腹部スロットから Grip で取ります。早めに持てますが、合図前はキャップを外せません。",
-            "指示後に片手で筒を持ち、反対の手の Grip でキャップをつかんで筒に沿って約 4 cm 引くと点火します。",
-            "未点火の筒を離すと収納します。点火後は落下し補充されません。外したキャップは別に離してください。"
-          ]
-        },
-        "ko": {
-          "title": "Whiskey Hotel: 신호탄",
-          "intro": "임무 신호에 맞춰 양손으로 뚜껑을 벗깁니다. Trigger로 점화하지 않습니다.",
-          "steps": [
-            "복부 슬롯에서 Grip으로 꺼냅니다. 미리 꺼낼 수 있지만 신호 전에는 뚜껑을 벗길 수 없습니다.",
-            "지시가 나오면 한 손으로 몸통을 잡고 다른 손 Grip으로 뚜껑을 잡아 관 방향으로 약 4cm 당겨 점화합니다.",
-            "불붙기 전에 놓으면 보관되고 불붙은 것은 떨어지며 보충되지 않습니다. 벗긴 뚜껑은 따로 놓으세요."
-          ]
-        }
-      },
-      "aliases": [
-        "Whisky Hotel"
+        "src/client/component/vr/gameplay/c4_detonator.cpp"
       ],
-      "sources": [
-        "docs/vr-signal-flare.md"
-      ]
-    },
-    {
-      "id": "dsm",
-      "category": "story",
       "text": {
-        "zh-CN": {
-          "title": "Loose Ends：DSM 与地雷提示",
-          "intro": "对准可见 DSM，用 Grip 安装或取回；地雷提示使用右摇杆下推。",
-          "steps": [
-            "安装或回收阶段，用空闲手指向高亮的 DSM 物体，根据提示按住 Grip。",
-            "下载过程中设备暂时不可使用，等待任务进度允许回收。",
-            "遇到地雷躲避的姿态提示，明确向下推右摇杆，按当前站姿逐级蹲下或趴下。"
-          ]
-        },
         "en": {
-          "title": "Loose Ends: DSM and mine prompts",
-          "intro": "Aim at the visible DSM and use Grip to install or recover; mine prompts use right-stick down.",
+          "title": "The Bog: C4 on the ZPU",
+          "intro": "After planting, the mission hands you the detonator.",
           "steps": [
-            "During installation or recovery, aim a free hand at the highlighted DSM and hold the prompted Grip.",
-            "The device is unavailable during download; wait for the mission to allow recovery.",
-            "For the mine-avoidance stance prompt, firmly push the right stick down to crouch or go prone from your current stance."
-          ]
-        },
-        "zh-TW": {
-          "title": "Loose Ends：DSM 與地雷提示",
-          "intro": "對準可見 DSM，用 Grip 安裝或取回；地雷提示使用右搖桿下推。",
-          "steps": [
-            "安裝或回收階段，用空閑手指向高亮的 DSM 物體，根據提示按住 Grip。",
-            "下載過程中設備暫時不可使用，等待任務進度允許回收。",
-            "遇到地雷躲避的姿態提示，明確向下推右搖桿，按當前站姿逐級蹲下或趴下。"
-          ]
-        },
-        "fr": {
-          "title": "Loose Ends : DSM et mines",
-          "intro": "Visez le DSM visible et utilisez Grip pour installer ou récupérer ; pour les mines, stick droit vers le bas.",
-          "steps": [
-            "Visez le DSM surligné d’une main libre et maintenez le Grip indiqué pour installer ou reprendre.",
-            "L’appareil est indisponible pendant le téléchargement. Attendez l’autorisation de récupération.",
-            "Au signal de mine, poussez franchement le stick droit vers le bas pour vous accroupir ou vous coucher selon la posture actuelle."
-          ]
-        },
-        "de": {
-          "title": "Loose Ends: DSM und Minen",
-          "intro": "Sichtbares DSM mit Grip installieren/aufnehmen; bei Minen rechten Stick nach unten.",
-          "steps": [
-            "Mit freier Hand auf markiertes DSM zielen und angezeigten Grip zum Anschließen oder Aufnehmen halten.",
-            "Während Download nicht verfügbar; Missionsfreigabe zur Rücknahme abwarten.",
-            "Bei Minenhinweis rechten Stick kräftig nach unten, um aus aktueller Haltung zu ducken oder zu liegen."
-          ]
-        },
-        "es": {
-          "title": "Loose Ends: DSM y minas",
-          "intro": "Apunta al DSM visible y usa Grip para instalar o recuperar; para minas, stick derecho abajo.",
-          "steps": [
-            "Apunta al DSM resaltado con una mano libre y mantén el Grip indicado para instalar o recoger.",
-            "No está disponible durante la descarga; espera permiso para recuperarlo.",
-            "Ante la mina, empuja firmemente el stick derecho abajo para agacharte o tumbarte según tu postura."
-          ]
-        },
-        "ru": {
-          "title": "Loose Ends: DSM и мины",
-          "intro": "Наведитесь на видимый DSM и используйте Grip для установки/возврата; мины — правый стик вниз.",
-          "steps": [
-            "При установке/возврате наведите свободную руку на выделенный DSM и держите указанный Grip.",
-            "Во время загрузки недоступен; дождитесь разрешения миссии на возврат.",
-            "При подсказке мины уверенно отклоните правый стик вниз, чтобы присесть или лечь из текущей стойки."
-          ]
-        },
-        "ja": {
-          "title": "Loose Ends：DSM と地雷",
-          "intro": "見えている DSM に向け Grip で接続・回収します。地雷の指示には右スティック下を使います。",
-          "steps": [
-            "接続や回収時は空いた手を強調された DSM へ向け、表示された Grip を保持します。",
-            "ダウンロード中は使えません。ミッションが回収を許可するまで待ちます。",
-            "地雷回避の姿勢指示では右スティックを下へ大きく倒し、現在の姿勢からしゃがむか伏せます。"
+            "The detonator appears in the hand that is not holding your gun. Press that hand's Trigger to detonate."
           ]
         },
         "ko": {
-          "title": "Loose Ends: DSM과 지뢰",
-          "intro": "보이는 DSM을 가리켜 Grip으로 설치하거나 회수합니다. 지뢰 안내에는 오른쪽 스틱 아래 방향을 사용합니다.",
+          "title": "The Bog: 대공포 C4",
+          "intro": "설치하고 나면 미션이 기폭기를 줍니다.",
           "steps": [
-            "설치나 회수 시 빈손으로 강조된 DSM을 가리키고 안내된 Grip을 길게 누릅니다.",
-            "다운로드 중에는 사용할 수 없습니다. 임무에서 회수를 허용할 때까지 기다리세요.",
-            "지뢰 회피 안내가 나오면 오른쪽 스틱을 아래로 확실히 기울여 현재 자세에서 앉거나 엎드립니다."
+            "총을 쥐지 않은 손에 기폭기가 들립니다. 그 손의 트리거를 누르면 폭파합니다."
           ]
         }
-      },
-      "related": [
-        "stance"
+      }
+    },
+    {
+      "id": "ac130",
+      "category": "story",
+      "sources": [
+        "src/client/component/vr/gameplay/controller_component.cpp"
       ],
-      "sources": [
-        "docs/vr-estate-scripted-scenes.md",
-        "docs/vr-world-interaction.md"
-      ]
-    },
-    {
-      "id": "breach",
-      "category": "story",
       "text": {
-        "zh-CN": {
-          "title": "破门与慢动作战斗",
-          "intro": "用空闲手 Grip 开始破门；进入战斗后仍用握把 Trigger 射击。",
-          "steps": [
-            "靠近破门目标，指向或触及可用门板，按住提示手 Grip 发起原任务破门。",
-            "开门动作和身体接管阶段等待控制归还。进入慢动作后可继续实体射击、换弹和操作枪机。",
-            "按钮一直按住跨过入场可能不会触发射击，先松开再重新扣动。"
-          ]
-        },
         "en": {
-          "title": "Breaching and slow-motion combat",
-          "intro": "Start a breach with free-hand Grip; once combat resumes, use the firing grip’s Trigger.",
+          "title": "Death From Above: AC-130",
+          "intro": "The gunship monitor is a flat screen in front of you, aimed with the right stick.",
           "steps": [
-            "Approach the breach target, aim at or touch the usable door panel and hold the prompted Grip to start the mission breach.",
-            "Let the opening and body handoff finish. Physical firing, reloading and action handling continue during slow motion once available.",
-            "A Trigger held across entry may need to be released before a fresh firing press."
-          ]
-        },
-        "zh-TW": {
-          "title": "破門與慢動作戰斗",
-          "intro": "用空閑手 Grip 開始破門；進入戰斗后仍用握把 Trigger 射擊。",
-          "steps": [
-            "靠近破門目標，指向或觸及可用門板，按住提示手 Grip 發起原任務破門。",
-            "開門動作和身體接管階段等待控制歸還。進入慢動作后可繼續實體射擊、換彈和操作槍機。",
-            "按鈕一直按住跨過入場可能不會觸發射擊，先松開再重新扣動。"
-          ]
-        },
-        "fr": {
-          "title": "Brèches et combat au ralenti",
-          "intro": "Commencez avec Grip d’une main libre ; au retour du combat, tirez avec Trigger de la main armée.",
-          "steps": [
-            "Approchez la porte utilisable, visez ou touchez son panneau et maintenez le Grip indiqué pour démarrer.",
-            "Attendez la fin de l’ouverture et du transfert corporel. Dès qu’autorisés, tir, rechargement et mécanismes physiques fonctionnent au ralenti.",
-            "Si Trigger était maintenu pendant l’entrée, relâchez-le avant de tirer à nouveau."
-          ]
-        },
-        "de": {
-          "title": "Sprengzugang und Zeitlupenkampf",
-          "intro": "Mit freiem Grip starten; bei Kampfbeginn mit Trigger der Waffenhand feuern.",
-          "steps": [
-            "Türziel annähern, nutzbares Feld anvisieren/berühren und angezeigten Grip halten.",
-            "Öffnung und Körperübergabe abwarten. Sobald verfügbar funktionieren physisches Schießen, Nachladen und Mechanik auch in Zeitlupe.",
-            "Über den Eintritt gehaltener Trigger muss vor neuem Feuern eventuell gelöst werden."
-          ]
-        },
-        "es": {
-          "title": "Brechas y combate a cámara lenta",
-          "intro": "Inicia con Grip de una mano libre; al volver al combate usa Trigger de la mano del arma.",
-          "steps": [
-            "Acércate a la puerta, apunta o toca el panel utilizable y mantén el Grip indicado.",
-            "Espera a que terminen apertura y transición corporal. Cuando estén disponibles, disparo, recarga y mecanismos físicos siguen funcionando en cámara lenta.",
-            "Si Trigger se mantuvo al entrar, puede necesitar soltarse antes de disparar otra vez."
-          ]
-        },
-        "ru": {
-          "title": "Штурм и бой в замедлении",
-          "intro": "Начните Grip свободной руки; после возврата боя стреляйте Trigger оружейного хвата.",
-          "steps": [
-            "Подойдите к двери, наведитесь или коснитесь используемой панели и держите указанный Grip.",
-            "Дождитесь открытия и передачи тела. Когда разрешено, физическая стрельба, перезарядка и механизмы работают в замедлении.",
-            "Зажатый при входе Trigger может потребовать отпускания перед новым выстрелом."
-          ]
-        },
-        "ja": {
-          "title": "突入とスローモーション戦闘",
-          "intro": "空いた手の Grip で突入を開始し、戦闘が戻ったら射撃手の Trigger を使います。",
-          "steps": [
-            "突入口へ近づき、使用可能な扉パネルに向けるか触れ、表示された Grip で開始します。",
-            "扉の開放と身体制御の移行が終わるのを待ちます。利用可能になれば、スロー中も実際の射撃、リロード、機関部操作を続けられます。",
-            "移行をまたいで保持した Trigger は、射撃前に一度離す必要がある場合があります。"
+            "Aim with the right stick and fire with Trigger.",
+            "Right A or left Y cycles the 105/40/25 mm guns; right B switches thermal polarity."
           ]
         },
         "ko": {
-          "title": "돌입 및 슬로 모션 전투",
-          "intro": "빈손 Grip으로 돌입을 시작하고 전투가 재개되면 총을 든 손의 Trigger를 사용합니다.",
+          "title": "Death From Above: AC-130",
+          "intro": "건십 화면이 눈앞의 평면 화면으로 보이며 오른쪽 스틱으로 조준합니다.",
           "steps": [
-            "돌입 대상에 접근해 사용 가능한 문 패널을 가리키거나 만지고 안내된 Grip을 유지해 시작합니다.",
-            "문 열기와 신체 제어 전환이 끝날 때까지 기다립니다. 허용되면 슬로 모션에서도 물리 사격, 재장전 및 기구 조작을 계속할 수 있습니다.",
-            "진입 중 누르고 있던 Trigger는 새 사격 전에 놓아야 할 수 있습니다."
+            "오른쪽 스틱으로 조준하고 트리거로 쏩니다.",
+            "오른손 A 또는 왼손 Y로 105/40/25mm 포를 바꾸고, 오른손 B로 열화상 흑백을 바꿉니다."
           ]
         }
-      },
-      "sources": [
-        "docs/vr-world-interaction.md",
-        "docs/vr-breach-control.md"
-      ]
+      }
     },
     {
-      "id": "turret",
+      "id": "mounted-guns",
       "category": "story",
+      "sources": [
+        "src/client/component/vr/gameplay/mounted_hand_aim.hpp"
+      ],
       "text": {
-        "zh-CN": {
-          "title": "Team Player / Of Their Own Accord：机枪",
-          "intro": "先按下并松开 Grip 接管，再抓实际握把，持握手 Trigger 射击。",
-          "steps": [
-            "在固定机枪场景中，完成一次 Grip 按下与松开，进入实体握把控制。",
-            "靠近对应把手，按住 Grip 保持。只有握把的手重新扣 Trigger 才能射击；松开 Grip 释放该手。",
-            "用实际手部移动或右摇杆瞄准。转头用于观察，不替代机枪瞄准。"
-          ]
-        },
         "en": {
-          "title": "Team Player / Of Their Own Accord: mounted guns",
-          "intro": "First press and release Grip to take over, then grasp an actual handle and fire with that hand’s Trigger.",
+          "title": "Mounted and vehicle guns (Mk19)",
+          "intro": "Your hands always hold the handles; move your arms to swing the gun.",
           "steps": [
-            "In the mounted-gun scene, complete one Grip press and release to take over physical handle controls.",
-            "Grip near the corresponding handle to hold it. Only a gripping hand’s rearmed Trigger can fire; release Grip to free that hand.",
-            "Aim with actual hand movement or the right stick. Head turns let you look around separately from gun aim."
-          ]
-        },
-        "zh-TW": {
-          "title": "Team Player / Of Their Own Accord：機槍",
-          "intro": "先按下并松開 Grip 接管，再抓實際握把，持握手 Trigger 射擊。",
-          "steps": [
-            "在固定機槍場景中，完成一次 Grip 按下與松開，進入實體握把控制。",
-            "靠近對應把手，按住 Grip 保持。只有握把的手重新扣 Trigger 才能射擊；松開 Grip 釋放該手。",
-            "用實際手部移動或右搖桿瞄準。轉頭用于觀察，不替代機槍瞄準。"
-          ]
-        },
-        "fr": {
-          "title": "Team Player / Of Their Own Accord : mitrailleuses fixes",
-          "intro": "Pressez puis relâchez Grip pour prendre le contrôle, saisissez ensuite une vraie poignée et tirez avec Trigger de cette main.",
-          "steps": [
-            "Dans la scène de mitrailleuse fixe, effectuez une pression puis un relâchement de Grip pour activer les poignées physiques.",
-            "Grip près de la poignée correspondante la saisit. Seul Trigger réarmé d’une main qui tient peut tirer ; relâchez Grip pour libérer cette main.",
-            "Visez par mouvement réel des mains ou stick droit. La tête regarde autour indépendamment de la visée."
-          ]
-        },
-        "de": {
-          "title": "Team Player / Of Their Own Accord: stationäre Geschütze",
-          "intro": "Erst Grip drücken und lösen zum Übernehmen, dann echten Griff halten und mit dessen Trigger feuern.",
-          "steps": [
-            "In der Geschützszene einmal Grip drücken und lösen, um physische Griffe zu übernehmen.",
-            "Grip nahe passendem Griff hält ihn. Nur neu freigegebener Trigger einer greifenden Hand feuert; Grip lösen macht die Hand frei.",
-            "Mit echten Handbewegungen oder rechtem Stick zielen. Kopf kann unabhängig vom Geschütz umhersehen."
-          ]
-        },
-        "es": {
-          "title": "Team Player / Of Their Own Accord: armas montadas",
-          "intro": "Pulsa y suelta Grip para tomar control, agarra una manija real y dispara con su Trigger.",
-          "steps": [
-            "En la escena del arma montada, completa una pulsación y liberación Grip para activar manijas físicas.",
-            "Grip junto a la manija correspondiente la sujeta. Solo el Trigger reactivado de una mano agarrada dispara; suelta Grip para liberar.",
-            "Apunta moviendo las manos o el stick derecho. La cabeza mira alrededor sin cambiar la mira."
-          ]
-        },
-        "ru": {
-          "title": "Team Player / Of Their Own Accord: станковые орудия",
-          "intro": "Нажмите и отпустите Grip для перехода управления, затем возьмите настоящую рукоять и стреляйте Trigger этой руки.",
-          "steps": [
-            "В сцене орудия один раз нажмите и отпустите Grip для перехода к физическим рукоятям.",
-            "Grip возле соответствующей ручки захватывает её. Стреляет только повторно активированный Trigger держащей руки; отпустите Grip для освобождения.",
-            "Цельтесь движением рук или правым стиком. Повороты головы осматриваются независимо от оружия."
-          ]
-        },
-        "ja": {
-          "title": "Team Player／Of Their Own Accord：固定機銃",
-          "intro": "最初に Grip を押して離し操作を引き継ぎ、その後実際のハンドルを持って同じ手の Trigger で撃ちます。",
-          "steps": [
-            "固定機銃シーンで Grip の押下と解放を 1 回行うと、物理ハンドル操作へ移ります。",
-            "対応するハンドルの近くで Grip を押して持ちます。握っている手の再入力可能な Trigger だけが射撃でき、Grip を離すと手が空きます。",
-            "手の実際の移動か右スティックで狙います。頭を回しても銃の照準とは独立して見回せます。"
+            "Right Grip mounts and dismounts a mounted gun.",
+            "Move your hands left to swing the barrel right and lower them to raise it, as with real spade grips. Your head turns freely.",
+            "Fire with Trigger."
           ]
         },
         "ko": {
-          "title": "Team Player / Of Their Own Accord: 거치 기관총",
-          "intro": "먼저 Grip을 눌렀다 놓아 제어를 넘겨받고 실제 손잡이를 잡은 뒤 그 손의 Trigger로 사격합니다.",
+          "title": "거치 기관총과 차량 총좌 (MK19)",
+          "intro": "손이 항상 손잡이를 쥐고 있고, 팔을 움직이면 총이 돕니다.",
           "steps": [
-            "거치 기관총 장면에서 Grip을 한 번 눌렀다 놓아 실제 손잡이 조작으로 전환합니다.",
-            "해당 손잡이 근처에서 Grip으로 잡습니다. 잡은 손의 재활성화된 Trigger만 발사하며 Grip을 놓으면 손을 뗍니다.",
-            "실제 손 움직임이나 오른쪽 스틱으로 조준합니다. 머리는 총 조준과 별개로 주변을 볼 수 있습니다."
+            "오른쪽 그립으로 거치 기관총에 오르고 내립니다.",
+            "실제 손잡이처럼 손을 왼쪽으로 옮기면 총구가 오른쪽으로, 손을 내리면 총구가 위로 갑니다. 머리는 자유롭게 돌릴 수 있습니다.",
+            "트리거로 쏩니다."
           ]
         }
-      },
-      "sources": [
-        "docs/vr-mounted-turret.md"
-      ]
+      }
     },
     {
-      "id": "thermal",
+      "id": "aftermath",
       "category": "story",
+      "sources": [
+        "src/client/component/vr/gameplay/aftermath_crawl.cpp"
+      ],
       "text": {
-        "zh-CN": {
-          "title": "Of Their Own Accord：固定热成像狙击枪",
-          "intro": "左摇杆瞄准，右摇杆上下变焦；可用握持后的手部位移辅助瞄准。",
-          "steps": [
-            "左摇杆上下左右微调瞄准；右摇杆前后调整任务提供的变焦。",
-            "按住任一手 Grip 后，上下或左右移动手柄辅助瞄准。松开会保持当前准星，重新握持重新建立移动起点。",
-            "任一手 Trigger 射击，B/Y 请求退出固定武器。进入或恢复时先松开按钮。",
-            "转动头部观察固定显示，不会直接改变枪口或热成像画面的瞄准方向。"
-          ]
-        },
         "en": {
-          "title": "Of Their Own Accord: fixed thermal sniper",
-          "intro": "Left stick aims, right-stick vertical changes zoom; gripped hand displacement adds aiming.",
+          "title": "Aftermath: crawling out",
+          "intro": "After you wake up, crawl with your hands.",
           "steps": [
-            "Use the left stick for fine pitch/yaw and the right stick forward/back for the mission’s variable zoom.",
-            "Hold either Grip and move the controller vertically or sideways to aim. Releasing retains aim; another grasp establishes a new movement origin.",
-            "Either Trigger fires; B/Y requests exit. Neutralise buttons on entry or recovery.",
-            "Head turns view the anchored display without directly changing the muzzle or thermal aiming camera."
-          ]
-        },
-        "zh-TW": {
-          "title": "Of Their Own Accord：固定熱成像狙擊槍",
-          "intro": "左搖桿瞄準，右搖桿上下變焦；可用握持后的手部位移輔助瞄準。",
-          "steps": [
-            "左搖桿上下左右微調瞄準；右搖桿前后調整任務提供的變焦。",
-            "按住任一手 Grip 后，上下或左右移動手柄輔助瞄準。松開會保持當前準星，重新握持重新建立移動起點。",
-            "任一手 Trigger 射擊，B/Y 請求退出固定武器。進入或恢復時先松開按鈕。",
-            "轉動頭部觀察固定顯示，不會直接改變槍口或熱成像畫面的瞄準方向。"
-          ]
-        },
-        "fr": {
-          "title": "Of Their Own Accord : fusil thermique fixe",
-          "intro": "Le stick gauche vise, l’axe vertical droit zoome ; le déplacement d’une main avec Grip ajuste la visée.",
-          "steps": [
-            "Le stick gauche ajuste finement haut/bas et gauche/droite ; le droit avant/arrière change le zoom variable de la mission.",
-            "Maintenez l’un des Grip et déplacez verticalement ou latéralement le contrôleur. Relâcher garde la visée ; reprendre fixe une nouvelle origine.",
-            "Chaque Trigger tire ; B/Y demande de quitter. Relâchez les boutons à l’entrée ou à la récupération.",
-            "Tourner la tête permet de regarder l’écran ancré sans modifier directement le canon ni la caméra thermique de visée."
-          ]
-        },
-        "de": {
-          "title": "Of Their Own Accord: festes Wärmebild-Scharfschützengewehr",
-          "intro": "Links zielen, rechts vertikal zoomen; Verschieben einer greifenden Hand ergänzt die Zielbewegung.",
-          "steps": [
-            "Links feines Nicken/Gieren einstellen, rechts vor/zurück den Missionszoom ändern.",
-            "Beliebigen Grip halten und Controller vertikal/seitlich verschieben. Loslassen hält das Ziel; erneutes Greifen setzt neuen Ursprung.",
-            "Beide Trigger feuern; B/Y fordert Ausstieg an. Beim Eintritt oder Wiederherstellen Tasten neutralisieren.",
-            "Kopfdrehung betrachtet die verankerte Anzeige, ohne Mündung oder Wärmebild-Zielkamera direkt zu verändern."
-          ]
-        },
-        "es": {
-          "title": "Of Their Own Accord: francotirador térmico fijo",
-          "intro": "Izquierdo apunta, derecho vertical cambia zoom; desplazar una mano con Grip añade apuntado.",
-          "steps": [
-            "Usa izquierdo para ajustes finos en ambos ejes y derecho adelante/atrás para el zoom variable.",
-            "Mantén cualquier Grip y mueve el mando vertical o lateralmente. Soltar conserva la mira; volver a agarrar fija otro origen.",
-            "Cualquier Trigger dispara; B/Y solicita salir. Neutraliza botones al entrar o recuperar.",
-            "Girar la cabeza observa la pantalla anclada sin cambiar directamente cañón ni cámara térmica de apuntado."
-          ]
-        },
-        "ru": {
-          "title": "Of Their Own Accord: стационарная тепловизионная винтовка",
-          "intro": "Левый стик целится, правый вертикально меняет зум; смещение руки с Grip добавляет наводку.",
-          "steps": [
-            "Левым стиком точно меняйте тангаж/рыскание, правым вперёд/назад — увеличение миссии.",
-            "Держите любой Grip и двигайте контроллер вертикально/вбок. Отпускание сохраняет прицел, новый хват задаёт новую точку отсчёта.",
-            "Любой Trigger стреляет, B/Y запрашивает выход. При входе или восстановлении отпустите кнопки.",
-            "Поворот головы смотрит на закреплённый экран, не меняя напрямую ствол или тепловизионную камеру прицеливания."
-          ]
-        },
-        "ja": {
-          "title": "Of Their Own Accord：固定サーマル狙撃銃",
-          "intro": "左スティックが照準、右上下が倍率です。Grip 中の手の移動も照準へ加わります。",
-          "steps": [
-            "左スティックで上下左右を微調整し、右スティック前後でミッションの可変倍率を調整します。",
-            "どちらかの Grip を保持してコントローラーを上下左右へ移動します。離すと照準を維持し、握り直すと移動基準点が更新されます。",
-            "どちらの Trigger でも射撃し、B／Y で離脱を要求します。進入・復帰時はボタンを中立にしてください。",
-            "頭を回して固定された画面を見ても、銃口やサーマル照準カメラを直接動かしません。"
+            "Plant a hand on the floor with Grip and pull it toward you; your body moves the same distance. Alternate hands. The stick still crawls too."
           ]
         },
         "ko": {
-          "title": "Of Their Own Accord: 고정 열상 저격총",
-          "intro": "왼쪽 스틱은 조준, 오른쪽 수직축은 배율이며 Grip을 누른 손의 이동도 조준에 더해집니다.",
+          "title": "Aftermath: 기어 나가기",
+          "intro": "깨어난 뒤 손으로 기어 나갑니다.",
           "steps": [
-            "왼쪽 스틱으로 피치/요를 미세 조정하고 오른쪽 스틱 앞뒤로 임무 가변 배율을 조절합니다.",
-            "어느 Grip이든 누르고 컨트롤러를 위아래나 좌우로 움직입니다. 놓으면 조준을 유지하고 다시 잡으면 새 이동 기준점이 생깁니다.",
-            "어느 Trigger든 발사하고 B/Y는 나가기를 요청합니다. 진입이나 복구 시 버튼을 중립으로 두세요.",
-            "머리를 돌려 고정 화면을 보아도 총구나 열상 조준 카메라가 직접 바뀌지 않습니다."
+            "그립으로 손을 바닥에 짚고 몸 쪽으로 당기면 당긴 만큼 앞으로 갑니다. 양손을 번갈아 쓰세요. 스틱으로도 기어갈 수 있습니다."
           ]
         }
-      },
-      "sources": [
-        "docs/vr-fixed-thermal-sniper.md"
-      ]
+      }
     },
     {
-      "id": "ending",
+      "id": "air-support",
       "category": "story",
+      "sources": [
+        "src/client/component/vr/gameplay/air_support.cpp"
+      ],
       "text": {
-        "zh-CN": {
-          "title": "Endgame：爬行、拔刀与最后一击",
-          "intro": "终章使用专用身体交互，按场景阶段完成动作。",
-          "steps": [
-            "爬行时把手放到地面并握住 Grip，再向后拉带动身体。松开并抬手后，可再次落地抓住；双手可交替。",
-            "拔刀阶段，先松开再在刀柄附近重新按 Grip。握住后用明确的手腕旋转推进拔刀；两手同时握不会加倍加速。",
-            "最后投刀阶段看向 Shepherd，把右臂从前方或中立位置向后拉至少约 14 厘米，保持短暂准备，让场景接续投刀。",
-            "最后投刀不要求再松 Grip 或模拟射击。转头、仅移动身体或提前按住按钮不能替代这个准备动作。"
-          ]
-        },
         "en": {
-          "title": "Endgame: crawling, knife extraction and final throw",
-          "intro": "The finale uses dedicated body interactions at each scene phase.",
+          "title": "Safehouse: Cobra air support",
+          "intro": "Call the Cobra like a radio, then point at the target.",
           "steps": [
-            "For crawling, plant a hand on the ground with Grip held and pull backward. Release and lift before planting again; alternate hands if desired.",
-            "For extraction, release and newly press Grip near the knife handle. Deliberate wrist rotation advances extraction; two hands do not double progress.",
-            "For the final throw, look toward Shepherd and draw the right arm backward at least about 14 cm from a forward or neutral position, with a brief deliberate preparation.",
-            "The accepted preparation continues into the scene’s throw; no further Grip release or firing input is required. Head turns or whole-body motion alone do not substitute."
-          ]
-        },
-        "zh-TW": {
-          "title": "Endgame：爬行、拔刀與最后一擊",
-          "intro": "終章使用專用身體交互，按場景階段完成動作。",
-          "steps": [
-            "爬行時把手放到地面并握住 Grip，再向后拉帶動身體。松開并抬手后，可再次落地抓住；雙手可交替。",
-            "拔刀階段，先松開再在刀柄附近重新按 Grip。握住后用明確的手腕旋轉推進拔刀；兩手同時握不會加倍加速。",
-            "最后投刀階段看向 Shepherd，把右臂從前方或中立位置向后拉至少約 14 厘米，保持短暫準備，讓場景接續投刀。",
-            "最后投刀不要求再松 Grip 或模擬射擊。轉頭、僅移動身體或提前按住按鈕不能替代這個準備動作。"
-          ]
-        },
-        "fr": {
-          "title": "Endgame : ramper, retirer le couteau et lancer",
-          "intro": "Chaque phase du final emploie des interactions corporelles dédiées.",
-          "steps": [
-            "Pour ramper, posez une main au sol avec Grip et tirez vers l’arrière. Relâchez et levez avant de recommencer ; alternez si souhaité.",
-            "Pour retirer le couteau, relâchez puis pressez à nouveau Grip près du manche. Une rotation nette du poignet avance l’extraction ; deux mains ne doublent pas la progression.",
-            "Pour le dernier lancer, regardez Shepherd et reculez le bras droit d’au moins environ 14 cm depuis une position avant ou neutre, avec une brève préparation volontaire.",
-            "Une préparation acceptée poursuit automatiquement le lancer de la scène. Pas besoin de relâcher Grip ni de tirer ; tourner la tête ou déplacer tout le corps ne suffit pas."
-          ]
-        },
-        "de": {
-          "title": "Endgame: Kriechen, Messerziehen und letzter Wurf",
-          "intro": "Jede Finalphase nutzt eigene Körperinteraktionen.",
-          "steps": [
-            "Zum Kriechen Hand mit Grip auf den Boden setzen und zurückziehen. Vor erneutem Aufsetzen lösen und anheben; Hände bei Bedarf abwechseln.",
-            "Zum Ziehen Grip nahe Messergriff lösen und neu drücken. Bewusste Handgelenksdrehung steigert den Fortschritt; zwei Hände verdoppeln ihn nicht.",
-            "Für den letzten Wurf Shepherd ansehen und rechten Arm aus vorderer/neutraler Lage mindestens etwa 14 cm zurückziehen, mit kurzer bewusster Vorbereitung.",
-            "Akzeptierte Vorbereitung geht in den Szenenwurf über. Kein weiteres Grip-Lösen oder Schießen nötig; Kopf- oder reine Ganzkörperbewegung ersetzt sie nicht."
-          ]
-        },
-        "es": {
-          "title": "Endgame: arrastrarse, sacar el cuchillo y lanzar",
-          "intro": "Cada fase del final usa interacciones corporales específicas.",
-          "steps": [
-            "Para arrastrarte, planta la mano con Grip y tira atrás. Suelta y levanta antes de plantar otra vez; puedes alternar.",
-            "Para sacarlo, suelta y pulsa de nuevo Grip junto al mango. Gira deliberadamente la muñeca para avanzar; dos manos no duplican el progreso.",
-            "Para el último lanzamiento, mira a Shepherd y lleva el brazo derecho al menos unos 14 cm atrás desde posición adelantada o neutra, preparando brevemente.",
-            "La preparación aceptada continúa al lanzamiento de la escena. No requiere soltar Grip ni disparar; solo cabeza o movimiento de todo el cuerpo no sirve."
-          ]
-        },
-        "ru": {
-          "title": "Endgame: ползание, извлечение ножа и бросок",
-          "intro": "Каждая стадия финала использует отдельные телесные взаимодействия.",
-          "steps": [
-            "Для ползания упритесь рукой с Grip в землю и тяните назад. Отпустите и поднимите перед новым упором; можно чередовать руки.",
-            "Для извлечения отпустите и заново нажмите Grip у рукояти. Уверенное вращение запястья продвигает извлечение; две руки не удваивают прогресс.",
-            "Для финального броска смотрите на Шепарда и отведите правую руку минимум примерно на 14 см назад из переднего/нейтрального положения, с короткой подготовкой.",
-            "Принятая подготовка переходит в сюжетный бросок. Дополнительный отпуск Grip или спуск не нужен; одна голова или движение всего тела не заменяют."
-          ]
-        },
-        "ja": {
-          "title": "Endgame：ほふく・ナイフ抜き・最後の投擲",
-          "intro": "終盤は各シーン段階専用の身体操作を使います。",
-          "steps": [
-            "Grip を保持して地面に手を置き、後ろへ引いて進みます。次は離して手を上げてから置き直します。交互の手でも構いません。",
-            "抜くときは柄の近くで Grip を離して押し直します。意識して手首を回すと抜き取りが進みます。両手でも進行は倍になりません。",
-            "最後の投擲では Shepherd を見て、右腕を前方または中立位置から少なくとも約 14 cm 後ろへ引き、短く明確に構えます。",
-            "準備が受理されるとシーンの投擲へ続きます。追加の Grip 解放や射撃入力は不要です。頭の回転や全身移動だけでは代用できません。"
+            "Raise a hand to your ear and press Grip to take the designator.",
+            "Point that hand at the target; the marker follows it. Press that hand's Trigger (or right Trigger) to send the coordinates. Your gun returns to your hand.",
+            "Do the ear gesture again to put the designator away without calling."
           ]
         },
         "ko": {
-          "title": "Endgame: 포복, 칼 뽑기 및 마지막 투척",
-          "intro": "마지막 장면의 각 단계는 전용 신체 상호작용을 사용합니다.",
+          "title": "Safehouse: 코브라 공중 지원",
+          "intro": "무전기처럼 불러서 목표를 가리킵니다.",
           "steps": [
-            "Grip을 누른 손을 땅에 짚고 뒤로 당겨 기어갑니다. 다시 짚기 전에 놓고 손을 들어야 하며 번갈아 사용해도 됩니다.",
-            "칼자루 근처에서 Grip을 놓았다 새로 누르세요. 확실한 손목 회전으로 뽑기가 진행되며 양손이라고 진행이 두 배가 되지는 않습니다.",
-            "마지막 투척은 Shepherd를 보고 오른팔을 앞이나 중립 위치에서 최소 약 14cm 뒤로 당겨 잠깐 확실하게 준비합니다.",
-            "준비가 인정되면 장면의 투척으로 이어집니다. 추가 Grip 해제나 발사 입력은 필요 없으며 머리 회전이나 몸 전체 이동만으로는 대신할 수 없습니다."
+            "손을 귀에 대고 그립을 누르면 지정 장비를 듭니다.",
+            "그 손으로 목표를 가리키면 표시가 따라옵니다. 그 손 트리거(또는 오른손 트리거)를 누르면 좌표가 전달되고 총이 손으로 돌아옵니다.",
+            "부르지 않고 넣으려면 귀에 대는 동작을 한 번 더 하세요."
           ]
         }
-      },
+      }
+    },
+    {
+      "id": "dogs",
+      "category": "story",
       "sources": [
-        "docs/vr-scripted-sequences.md"
-      ]
+        "src/client/component/vr/gameplay/dog_escape.cpp"
+      ],
+      "text": {
+        "en": {
+          "title": "Dogs",
+          "intro": "A dog that jumps you can be fought off with the original timing.",
+          "steps": [
+            "When the dog knocks you down and the star prompt appears, press Grip or Trigger to snap its neck. Pressing too early fails."
+          ]
+        },
+        "ko": {
+          "title": "개 공격",
+          "intro": "덮친 개는 원작과 같은 타이밍으로 떨쳐낼 수 있습니다.",
+          "steps": [
+            "개가 덮쳐 넘어뜨리고 별 모양 신호가 뜨면 그립이나 트리거를 누르세요. 개의 목을 꺾습니다. 너무 일찍 누르면 실패합니다."
+          ]
+        }
+      }
+    },
+    {
+      "id": "ladders",
+      "category": "story",
+      "sources": [
+        "src/client/component/vr/gameplay/ladder_runtime.cpp"
+      ],
+      "text": {
+        "en": {
+          "title": "Ladders",
+          "intro": "Climb hand over hand.",
+          "steps": [
+            "Grip a rung and pull down to climb; alternate hands. Release both hands to let go."
+          ]
+        },
+        "ko": {
+          "title": "사다리",
+          "intro": "손을 번갈아 잡으며 오릅니다.",
+          "steps": [
+            "그립으로 가로대를 잡고 아래로 당기면 올라갑니다. 양손을 번갈아 쓰세요. 두 손을 다 놓으면 내려옵니다."
+          ]
+        }
+      }
     }
   ]
 }

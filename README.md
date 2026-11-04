@@ -24,6 +24,9 @@ Overlord MWR VR is an unofficial VR mod for the campaign of *Call of Duty: Moder
   - *Safehouse*: Cobra air support — raise a hand to your ear and press Grip, point at the target, press Trigger.
   - *Aftermath*: crawl out of the wreck by planting your hands and pulling.
   - Ladders climbed hand over hand.
+  - Claymores planted by reaching to the floor; dogs fought off with Grip/Trigger at the prompt.
+- **Real crouching and lying down** select the native stance (or use the stick).
+- **Javelin/Stinger head aim** option: aim and lock with the head instead of the tube.
 - **Desktop launcher** with first-time setup, VR settings, comfort and assistance options, and control help.
 
 ## Requirements
@@ -39,7 +42,7 @@ Pirated or cracked copies of the game are not supported. Releases do not contain
 
 ## Installation
 
-Download the latest release from this repository's Releases page.
+Download the latest release from the [Releases page](https://github.com/lesan0622/Overlord-MWR-VR/releases).
 
 **Installer (recommended):** run `OverlordMWR-VR-Setup.exe`. It finds the game through Steam (and Battle.net), asks before installing, refuses while the game is running, writes only the mod's files and creates a desktop shortcut. If the game is not found, pick the game folder (the one containing `h1_sp64_ship.exe`).
 
@@ -89,8 +92,8 @@ While the problem is visible, press **Ctrl+Shift+F8** with the game window selec
 Clone with submodules (GitHub's source ZIP does not include them). Install Visual Studio with *Desktop development with C++* and the Windows SDK, Python 3 and Node.js (the launcher UI is built during the client build), then in a Developer Command Prompt:
 
 ~~~bat
-git clone --recurse-submodules https://github.com/<your-account>/overlord-mwr-vr.git
-cd overlord-mwr-vr
+git clone --recurse-submodules https://github.com/lesan0622/Overlord-MWR-VR.git
+cd Overlord-MWR-VR
 generate.bat
 msbuild build\overlord.sln /m /p:Configuration=Release /p:Platform=x64
 python tools\build_installer.py Release
