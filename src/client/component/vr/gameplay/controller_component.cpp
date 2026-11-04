@@ -25,6 +25,7 @@
 #include "mounted_hand_aim.hpp"
 #include "air_support.hpp"
 #include "dog_escape.hpp"
+#include "physical_stance.hpp"
 #include "ladder_runtime.hpp"
 #include "game/dvars.hpp"
 #include "game/game.hpp"
@@ -77,6 +78,8 @@ namespace vr::controllers
 		game::dvar_t* auto_ads{};
 		game::dvar_t* turret_hand_aim{};
 		gameplay::mounted_hand_aim::state turret_hands; // Command thread (FinishMove).
+		game::dvar_t* physical_stance_dvar{};
+		gameplay::physical_stance::tracker physical_posture; // Command thread.
 		gameplay::weapons::ads_policy ads;
 		std::array<controller_input::digital_press_gate,2> attack_notifications{};
 		std::array<gameplay::weapons::hold,2> notified_owners{};
@@ -313,6 +316,20 @@ namespace vr::controllers
 				const int binding = controller_input::stance_binding(*posture_command.target, *reinterpret_cast<const int*>(native_stance_address));
 				if (binding) { utils::hook::invoke<void>(execute_binding_address, building_client, binding, 0, 0u); ++stance_count; }
 			}
+			// Real crouch/prone (physical_stance): only a change of the physical stance
+			// issues the native command, after any stick stance command this frame.
+			if (physical_stance_dvar && physical_stance_dvar->current.enabled)
+			{
+				const auto head = head_pose_bridge::get_status();
+				const auto target = head.pose_available && !head.recenter_pending && head.world_scale > 0 ?
+					physical_posture.update(head.local_position_units[2] / head.world_scale, head.recenter_count) : std::nullopt;
+				if (target && stance_allowed && !posture_command.target)
+				{
+					const int binding = controller_input::stance_binding(*target, *reinterpret_cast<const int*>(native_stance_address));
+					if (binding) { utils::hook::invoke<void>(execute_binding_address, building_client, binding, 0, 0u); ++stance_count; }
+				}
+			}
+			else physical_posture.reset();
 			if (posture_command.suppress_jump) button_mask &= ~controller_input::jump_button;
 			cmd->buttons |= button_mask; // Never clear a keyboard/native button.
 			if (button_state.pressed & controller_input::jump_button)
@@ -627,6 +644,8 @@ namespace vr::controllers
 				"Request native ADS while a supported physical weapon is raised to the sights");
 			turret_hand_aim=dvars::register_bool("vr_turretHandAim",true,game::DVAR_FLAG_SAVED,
 				"Mounted and vehicle guns: the hands hold the handles and the arms swing the gun");
+			physical_stance_dvar=dvars::register_bool("vr_physicalStance",true,game::DVAR_FLAG_SAVED,
+				"Crouching or lying down for real selects the native crouch/prone stance");
 			// MWR CL_KeyMove sets/clears usercmd bit 11 before FinishMove.
 			ads_verified=check(0x1401AA0C2,{0x81,0x4b,0x04,0x00,0x08,0x00,0x00}) &&
 				check(0x1401AA0B9,{0x81,0x63,0x04,0xff,0xf7,0xff,0xff});

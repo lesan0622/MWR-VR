@@ -12,6 +12,7 @@
 #include "vr/gameplay/ladder_runtime.hpp"
 #include "vr/gameplay/scripted_motion.hpp"
 #include "vr/gameplay/javelin_screen.hpp"
+#include "vr/gameplay/physical_stance.hpp"
 #include "vr/gameplay/fixed_sniper.hpp"
 #include "vr/gameplay/barrett_gun.hpp"
 #include "vr/gameplay/view_aimed_weapon.hpp"
@@ -233,6 +234,13 @@ namespace camera
 				vr::gameplay::barrett_gun::observe_native_eye(game::refdef->org);
 				request = {{vr::game_view::camera_owner::script, vr::game_view::head_rotation::free,
 					vr::game_view::head_translation::tracked}, barrett | (1ull << 61)};
+			}
+			// Real crouch/prone already lowers the tracked head: cancel the native
+			// eye-height drop up to that much so the view is not lowered twice.
+			if (ps && request.policy == vr::game_view::camera_profiles::gameplay && !request.epoch)
+			{
+				const auto head = vr::head_pose_bridge::get_status();
+				game::refdef->org[2] += vr::gameplay::physical_stance::eye_compensation_units(ps->viewHeightCurrent, head.world_scale);
 			}
 			if (ps && vr::head_pose_bridge::apply_camera(game::refdef->org, game::refdef->axis,
 				ps->commandTime, game::cgs->refdefViewAngles, request))
