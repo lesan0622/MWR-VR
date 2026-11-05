@@ -29,4 +29,27 @@ namespace vr::gameplay::equipment
 		const auto rotation=normalize(multiply(point.rotation,quat{0,-.70710678f,0,.70710678f}));
 		return {sub(point.position,rotate(rotation,model_center)),rotation};
 	}
+	// MWR claymore (action-slot item, sniperescape): on the torso, centered below
+	// the grenade row. Its grab box (14 cm high) clears the tactical box above it.
+	inline constexpr float claymore_drop=.32f;
+	inline anchor claymore_chest_anchor(const head_pose_bridge::spatial_frame& frame,const chest_slots& chest) noexcept
+	{
+		auto point=chest.anchors[unsigned(slot::tactical)];
+		const auto body=head_pose_bridge::body_slots_frame(frame);
+		point.position=sub(point.position,scale(body.head_yaw_axis[2],claymore_drop*body.units_per_meter));
+		return point;
+	}
+	inline anchor stowed_claymore(const head_pose_bridge::spatial_frame& frame,const chest_slots& chest,vec model_center) noexcept
+	{
+		const auto point=claymore_chest_anchor(frame,chest);
+		const auto rotation=normalize(multiply(point.rotation,quat{0,-.70710678f,0,.70710678f}));
+		return {sub(point.position,rotate(rotation,model_center)),rotation};
+	}
+	inline float claymore_grab_distance(const head_pose_bridge::spatial_frame& frame,const chest_slots& chest,vec palm) noexcept
+	{
+		if(!chest.valid)return INFINITY;
+		const auto body=head_pose_bridge::body_slots_frame(frame);const auto u=body.units_per_meter;
+		const body_reach_volume box{claymore_chest_anchor(frame,chest).position,scale(vec{-.12f,-.12f,-.07f},u),scale(vec{.12f,.12f,.07f},u),body.head_yaw_axis,0};
+		return box.box_distance(palm);
+	}
 }

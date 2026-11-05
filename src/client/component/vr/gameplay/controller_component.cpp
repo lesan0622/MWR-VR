@@ -110,6 +110,30 @@ namespace vr::controllers
 		std::atomic<std::uint64_t> attack_count{}, reload_count{};
 		constexpr int attack_button = 0x1, use_reload_button = 0x20; // MWR CL_CmdButtons 0x1401A7F30.
 		bool hooks_installed{};
+		// MWR GSC getplayerangles (method 0x8338, native 0x14028E430, Scr_AddVector 0x1403C7C90).
+		// While the physical sights are raised, scripts that test where the player looks
+		// (sniperescape heli_shot_down_detection -> player_looking_at, 0.995) get the weapon
+		// line: through a scope the head can sit several degrees off the target.
+		constexpr std::uintptr_t get_player_angles_address = 0x14028E430;
+		utils::hook::detour get_player_angles_hook;
+		std::atomic<float> sight_pitch{}, sight_yaw{};
+		std::atomic<controller_input::clock::rep> sight_at{};
+		std::atomic_uint64_t script_angle_calls{}, script_sight_calls{};
+		void get_player_angles_stub(const unsigned int entref)
+		{
+			++script_angle_calls;
+			const auto at = sight_at.load(std::memory_order_acquire);
+			const auto age = controller_input::clock::now().time_since_epoch().count() - at;
+			if (entref == 0 && at && age >= 0 &&
+				age < std::chrono::duration_cast<controller_input::clock::duration>(std::chrono::milliseconds(150)).count())
+			{
+				const float angles[3]{sight_pitch.load(), sight_yaw.load(), 0.f};
+				++script_sight_calls;
+				utils::hook::invoke<void>(0x1403C7C90, angles);
+				return;
+			}
+			get_player_angles_hook.invoke<void>(entref);
+		}
 
 		static_assert(sizeof(game::usercmd_s) == 64);
 		static_assert(offsetof(game::usercmd_s, buttons) == 4);
@@ -486,6 +510,17 @@ namespace vr::controllers
 					++ads_notify_count;
 				}
 				ads_requested=requested;
+				if (const auto muzzle=requested ? gameplay::weapons::current_muzzle() : gameplay::weapons::muzzle_frame{}; muzzle.valid)
+				{
+					const auto& f=muzzle.axis[0];
+					const float pitch=-std::asin(std::clamp(f[2],-1.f,1.f))*57.295779513f, yaw=std::atan2(f[1],f[0])*57.295779513f;
+					if (std::isfinite(pitch) && std::isfinite(yaw))
+					{
+						sight_pitch=pitch; sight_yaw=yaw;
+						sight_at.store(now.time_since_epoch().count(),std::memory_order_release);
+					}
+				}
+				else sight_at.store(0,std::memory_order_release);
 				// Javelin (Overlord javelin_screen): the CLU eyepiece at the eye opens the
 				// independent display and holds native ADS; the camera follows the launcher.
 				gameplay::weapons::javelin_screen::input(input,owner,gameplay_allowed(input) && normal_input_seen &&
@@ -602,6 +637,8 @@ namespace vr::controllers
 			console::info("[VR input] ads_gate=%s depth=%.3f lateral=%.3f height=%.3f facing=%.3f\n", gameplay::weapons::ads_policy::last_reason.load(),
 				gameplay::weapons::ads_policy::last_depth.load(), gameplay::weapons::ads_policy::last_lateral.load(),
 				gameplay::weapons::ads_policy::last_height.load(), gameplay::weapons::ads_policy::last_facing.load());
+			console::info("[VR input] script_angles calls=%llu sight=%llu sight_pitch=%.2f sight_yaw=%.2f\n",
+				script_angle_calls.load(), script_sight_calls.load(), sight_pitch.load(), sight_yaw.load());
 			const auto* ps = game::CL_IsCgameInitialized() ? game::CG_GetPredictedPlayerState(0) : nullptr;
 			console::info("[VR input] stance_verified=%d requests=%llu requested=%d actual=%d\n",
 				stance_verified, stance_count.load(), stance_verified && ps ? *reinterpret_cast<const int*>(native_stance_address) : -1,
@@ -690,6 +727,9 @@ namespace vr::controllers
 			utils::hook::call(normal_input_call, normal_input_stub);
 			utils::hook::call(finish_move_call, finish_move_stub);
 			hooks_installed = true;
+			if (check(get_player_angles_address, {0x48, 0x83, 0xec, 0x28, 0x8b, 0xc1, 0xc1, 0xe8, 0x10}))
+				get_player_angles_hook.create(get_player_angles_address, get_player_angles_stub);
+			else console::error("[VR input] getplayerangles signature mismatch; scripts keep the head view while aiming\n");
 		}
 
 		void pre_destroy() override

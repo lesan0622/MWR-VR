@@ -24,7 +24,7 @@ namespace vr::gameplay::interaction
 		float units{}, distance_meters{2.2f}, half_angle_degrees{12.f};
 		bool operator==(const ray&) const = default;
 	};
-	enum class prompt_kind { use, resupply };
+	enum class prompt_kind { use, resupply, ally };
 	struct target
 	{
 		target_key key{};
@@ -171,6 +171,21 @@ namespace vr::gameplay::interaction
 		auto wide=r;wide.half_angle_degrees=std::max(r.half_angle_degrees,use_trigger_cone_degrees);
 		auto chosen=score_model(wide,key,center,grown);
 		if(chosen)for(int i=0;i<3;++i)chosen.position[i]=std::clamp(chosen.position[i],center[i]-half[i],center[i]+half[i]);
+		return chosen;
+	}
+	// MWR: usable actors (sniperescape wounded MacMillan, makeusable) were a point at
+	// their bounds centre in the 12 degree cone, hard to hit on a body lying or sitting
+	// on the ground. Select against their box grown by 60 cm within 25 degrees.
+	inline target score_actor_use(const ray& r,target_key key,const vec& center,const vec& half) noexcept
+	{
+		if(!valid(r) || !key)return {};
+		constexpr float actor_margin_m=.60f,actor_cone_degrees=25.f;
+		vec grown=half;
+		for(auto& v:grown){if(!std::isfinite(v) || v<0 || v>2*r.units)return score(r,key,center);v+=actor_margin_m*r.units;}
+		auto wide=r;wide.half_angle_degrees=std::max(r.half_angle_degrees,actor_cone_degrees);
+		auto chosen=score_model(wide,key,center,grown);
+		if(chosen)for(int i=0;i<3;++i)chosen.position[i]=std::clamp(chosen.position[i],center[i]-half[i],center[i]+half[i]);
+		chosen.prompt=prompt_kind::ally;
 		return chosen;
 	}
 	inline target score_breach(const ray& r,target_key key,const vec& center,const vec& native_half) noexcept

@@ -384,6 +384,14 @@
     "description": "settings.ammoCounterHint"
   },
   {
+    "name": "vr_ammoCounterAlways",
+    "category": "gameplay",
+    "group": "settings.weaponInteraction",
+    "label": "settings.ammoCounterAlways",
+    "type": "toggle",
+    "description": "settings.ammoCounterAlwaysHint"
+  },
+  {
     "name": "vr_smartAmmoSelection",
     "category": "gameplay",
     "group": "settings.weaponInteraction",

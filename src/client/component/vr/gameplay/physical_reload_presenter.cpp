@@ -802,10 +802,19 @@ namespace vr::gameplay::weapons::physical_reload
 			mag=compose(as_anchor(solved[r.arms[off].wrist]),in_wrist);
 			next.held_world=mag;next.held_world.position=add(mag.position,view_offset);
 		}
-		// Rock-in: the hooked magazine stays in the hand (user, headset: it must be
-		// fully attached to the hand). Turning it about its lug drew it away from the
-		// palm; the hook and tilt still gate the insertion from the same pose.
-		(void)rock;
+		// Rock-in: a hooked magazine is drawn with its front lug caught in the well,
+		// turned by the sampled tilt, and the hand is moved onto it (user: the hook must
+		// be visible, and the magazine must stay attached to the hand). Earlier the
+		// magazine turned alone and left the palm; then it just followed the hand.
+		if (rock.hooked && definition.interaction.rock && manipulation && state.active && !state.fault &&
+			int(state.ammo.magazine_hand)==int(off) && !state.ammo.magazine_inserted)
+		{
+			const auto caught=compose(gun,rocked(*definition.interaction.rock,definition.magazine_rest,definition.magazine_top,rock.tilt));
+			(void)constrain_part_hand(r,library,grip_profile,targets,shoulders,body_axis,rear,compose(caught,inverse(in_wrist)),solved);
+			pose_fingers(r,library,grip_profile,knife_grasp ? std::span<const joint_pose>{equipment::knife_magazine_pose::fingers} : magazine_pose.fingers,off,solved);
+			mag=caught;
+			next.held_world=mag;next.held_world.position=add(mag.position,view_offset);
+		}
 		publish_scene(next);
 		if (slap_diagnostic.definition)
 		{

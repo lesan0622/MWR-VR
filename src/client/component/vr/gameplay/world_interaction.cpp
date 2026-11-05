@@ -8,6 +8,8 @@
 #include "component/command.hpp"
 #include "component/console.hpp"
 #include "component/scheduler.hpp"
+#include "component/scripting.hpp"
+#include "game/scripting/execution.hpp"
 #include "game/dvars.hpp"
 #include "game/game.hpp"
 #include "loader/component_loader.hpp"
@@ -37,6 +39,12 @@ namespace vr::gameplay::interaction
 		notification_gate notifications; // Existing command owner only.
 		bool pending_release{};
 		std::uint64_t gesture_serial{};
+		// Ally carry (sniperescape MacMillan, makeusable + waittill "trigger"): a grip
+		// held 2 s on him sends the use notify once, whatever the native hold does.
+		constexpr auto ally_hold=std::chrono::seconds(2);
+		controller_input::clock::time_point lease_started{};
+		bool ally_fired{};
+		std::atomic_uint64_t ally_triggers{};
 		std::atomic_uint64_t press_notifies{},release_notifies{};
 		std::atomic_uint64_t updates{},picks{},uses{},cancels{};
 		bool notification_ready()
@@ -142,7 +150,10 @@ namespace vr::gameplay::interaction
 		{
 			// The locked target must remain admitted, in range, in the hand cone and
 			// visible. Another candidate becoming more centered cannot steal a hold.
-			retained=retained && next.hover.targets[lease.hand()].key==lease.value().key;
+			// A carried ally (sniperescape MacMillan) needs a long hold while the hand
+			// rests on his body: keep it while he stays usable, even if the hand drifts.
+			if(lease.value().prompt!=prompt_kind::ally)
+				retained=retained && next.hover.targets[lease.hand()].key==lease.value().key;
 		}
 		lease.retain(available,held&~released,body.generation,retained);
 		if (had && !lease.active()) ++cancels;
@@ -167,6 +178,7 @@ namespace vr::gameplay::interaction
 			}
 			if (lease.begin(h,chosen,body.generation))
 			{
+				lease_started=now;ally_fired=false;
 				++uses;next.use=chosen;next.hand=h;next.serial=++gesture_serial;next.native_button=true;
 				if (released&(1u<<h))
 				{
@@ -174,6 +186,19 @@ namespace vr::gameplay::interaction
 					if(chosen)hand_interaction::completed(vr::hand(h),hand_interaction::world_object(std::uint32_t(chosen.key.entity),chosen.key.generation));
 				}
 			}
+		}
+		if (lease.active() && lease.value().prompt==prompt_kind::ally && !ally_fired && now-lease_started>=ally_hold &&
+			(held&~released&(1u<<lease.hand())) && native::live(lease.value()))
+		{
+			ally_fired=true;
+			try
+			{
+				const scripting::entity ally{game::scr_entref_t{static_cast<unsigned short>(lease.value().key.entity),0}};
+				const scripting::entity player{game::scr_entref_t{0,0}};
+				scripting::notify(ally,"trigger",{player});
+				++ally_triggers;
+			}
+			catch (...) {}
 		}
 		next.held=lease.active();
 		lease_hands=lease.owns_hand() ? 1u<<lease.hand() : 0;
@@ -215,7 +240,7 @@ namespace vr::gameplay::interaction
 				scheduler::once([] {
 					publication current;{const std::lock_guard lock(mutex);current=state;}
 					std::ostringstream out;out<<"ready="<<ready<<" updates="<<updates<<" pickups="<<picks<<" uses="<<uses<<" cancelled="<<cancels
-						<<" press_notifies="<<press_notifies<<" release_notifies="<<release_notifies
+						<<" press_notifies="<<press_notifies<<" release_notifies="<<release_notifies<<" ally_triggers="<<ally_triggers
 						<<" native="<<native::status()<<"\nreach_m="<<reach->current.value<<" cone_degrees="<<cone->current.value
 						<<" lease_hand="<<current.hand<<" held="<<current.held<<" target="<<current.use.key.entity<<'\n';
 					for (int h=0;h<2;++h) {const auto& t=current.hover.targets[h];out<<"hand="<<h<<" entity="<<t.key.entity<<" generation="<<t.key.generation

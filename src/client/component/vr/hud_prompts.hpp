@@ -24,6 +24,7 @@ namespace vr::hud_prompts
 		definition{key::interaction_use,control::grip},
 		definition{key::interaction_pickup,control::grip},
 		definition{key::interaction_resupply,control::grip},
+		definition{key::ally_pickup,control::grip},
 		definition{key::rappel_brake,control::trigger},
 		definition{key::story_melee,control::trigger},
 		definition{key::mine_prone,control::right_stick_down},

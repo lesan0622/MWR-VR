@@ -13,6 +13,7 @@ namespace game_text::locales
 		{key::button_grip_either,u8"Chwyt dowolnej ręki"},
 		{key::item_weapon,u8"broń"},
 		{key::interaction_use,u8"Przytrzymaj {button}, aby użyć"},
+		{key::ally_pickup,u8"Sięgnij do niego i przytrzymaj {button}, aby go podnieść"},
 		{key::interaction_pickup,u8"Przytrzymaj {button}, aby podnieść {item}"},
 		{key::interaction_resupply,u8"Przytrzymaj {button}, aby uzupełnić amunicję"},
 		{key::rappel_brake,u8"Przytrzymaj {button}, aby zwolnić"},

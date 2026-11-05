@@ -13,6 +13,7 @@ namespace game_text::locales
 		{key::button_grip_either,u8"左右いずれかのグリップ"},
 		{key::item_weapon,u8"武器"},
 		{key::interaction_use,u8"{button}を押し続けて操作"},
+		{key::ally_pickup,u8"手を伸ばして{button}を押し続けて担ぐ"},
 		{key::interaction_pickup,u8"{button}を押し続けて{item}を拾う"},
 		{key::interaction_resupply,u8"{button}を押し続けて弾薬を補充"},
 		{key::rappel_brake,u8"{button}を押し続けて減速"},

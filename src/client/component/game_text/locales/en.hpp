@@ -10,6 +10,7 @@ namespace game_text::locales
 		{key::button_grip_either,u8"Left/Right Grip"},
 		{key::item_weapon,u8"weapon"},
 		{key::interaction_use,u8"Hold {button} to interact"},
+		{key::ally_pickup,u8"Reach for him and hold {button} to pick him up"},
 		{key::interaction_pickup,u8"Hold {button} to pick up {item}"},
 		{key::rappel_brake,u8"Hold {button} to slow down"},
 		{key::story_melee,u8"Press {button} to kill the guard"},
