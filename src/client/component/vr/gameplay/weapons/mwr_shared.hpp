@@ -313,7 +313,9 @@ namespace vr::gameplay::weapons::mwr_shared
 		mwr_rebase::adopt(de50::base, "mwr_deserteagle", "wpn_h1_pst_de50_vm", &deserteagle_reload, true),
 		mwr_rebase::adopt(rpd::base, "mwr_rpd", "viewmodel_rpd_sp", &rpd_reload, true, rpd_drop_parts),
 		mwr_rebase::adopt(winchester1200::base, "winchester1200", "viewmodel_winchester1200", winchester1200::base.reload, true),
-		mwr_rebase::adopt(m1014::assemblies[0], "m1014", "viewmodel_benelli_m4", m1014::assemblies[0].reload, true),
+		// viewmodel_benelli_m4 has no MW2 j_ring and its j_bolt sits ~1 in off the MW2 rest: keeping the
+		// MW2 rest parts invalidated the pose library (arms and gun not drawn). Parts stay at the MWR idle.
+		mwr_rebase::adopt(m1014::assemblies[0], "m1014", "viewmodel_benelli_m4", m1014::assemblies[0].reload, false),
 		mwr_rebase::adopt(rpg::base, "rpg", "viewmodel_rpg7", rpg::base.reload, true),
 		mwr_rebase::adopt(javelin::base, "javelin", "viewmodel_javelin", javelin::base.reload, true),
 		mwr_rebase::adopt(stinger::base, "stinger", "viewmodel_stinger", stinger::base.reload, true),
