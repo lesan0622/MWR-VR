@@ -347,6 +347,22 @@ namespace command
 				}, scheduler::pipeline::server);
 			});
 
+			// MWR: write a checkpoint now, as GSC savegame("<name>") does (native 0x1402DCA60,
+			// builtin 0x85): autosave\<name>, no description, default screenshot, type 2.
+			add("savegame", [](const params& params)
+			{
+				if (!game::SV_Loaded()) return;
+				const std::string name = params.size() > 1 ? params.get(1) : "levelstart";
+				scheduler::once([=]()
+				{
+					char filename[64]{};
+					sprintf_s(filename, "autosave\\%s", name.data());
+					utils::hook::invoke<void>(0x140300AA0);
+					const auto result = utils::hook::invoke<int>(0x1404C4F90, filename, "", "$default", 1, 2, false);
+					console::info("[savegame] %s -> %d\n", filename, result);
+				}, scheduler::pipeline::server);
+			});
+
 			// MWR: these h2-mod cheats use H2 entity layouts and the GSC scripting
 			// context, which are not ported. Keep the native MWR commands instead.
 			if constexpr (false)
