@@ -287,10 +287,13 @@ namespace vr::gameplay::weapons::mwr_shared
 	// rpg: MWR viewmodel_rpg7 (rpg); original mechanics kept.
 	// javelin: MWR viewmodel_javelin (javelin); original mechanics kept.
 	// stinger: MWR viewmodel_stinger (stinger); original mechanics kept.
-	// p90: MWR viewmodel_p90 (p90); slide j_bolt, bullets tag_bullet_single.
+	// p90: MWR viewmodel_p90 (p90), viewmodel_p90_sp (p90_silencer, scoutsniper: same 37 bones, binds and idle); slide j_bolt, bullets tag_bullet_single.
 	inline const reload_profile p90_reload = mwr_rebase::rebase(p90::physical, {.id = "mwr_p90", .receiver = "viewmodel_p90", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "tag_bullet_single", .magazine_model = nullptr, .magazine_bind = {{5.896818f, 0.000000f, 3.248346f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{5.118773f, 0.984914f, 2.598390f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_same_part = true, .keep_mechanism = true, .magazine_from_receiver = true});
-	inline const std::array<profile, 25> profiles{{
+	inline const std::array<profile, 27> profiles{{
 		mwr_rebase::adopt(m16::bare, "mwr_m16", "viewmodel_m16", &m16_reload, false),
+		// m16_grenadier (bog_a): viewmodel_m16a4_sp_gl has viewmodel_m16's 31 bones and binds; the
+		// original M16 GL recipe puts the support hand on attach_h1_launcher_m203_m16_vm.
+		mwr_rebase::adopt(m16::grenadier, "mwr_m16", "viewmodel_m16a4_sp_gl", &m16_reload, false),
 		mwr_rebase::adopt(m4::foregrip, "mwr_m4", "viewmodel_m4a1_sp", &m4_reload, false),
 		mwr_rebase::adopt(ak47::assemblies[0], "mwr_ak47", "viewmodel_ak47", &ak47_reload, false),
 		mwr_rebase::adopt(ak74u_hand, "mwr_ak74u", "viewmodel_ak74u_sp", &ak74u_reload, false),
@@ -315,6 +318,7 @@ namespace vr::gameplay::weapons::mwr_shared
 		mwr_rebase::adopt(javelin::base, "javelin", "viewmodel_javelin", javelin::base.reload, true),
 		mwr_rebase::adopt(stinger::base, "stinger", "viewmodel_stinger", stinger::base.reload, true),
 		mwr_rebase::adopt(p90::assemblies[0], "mwr_p90", "viewmodel_p90", &p90_reload, true),
+		mwr_rebase::adopt(p90::assemblies[0], "mwr_p90", "viewmodel_p90_sp", &p90_reload, true),
 	}};
 	inline profile_match select(std::span<const hands::model_definition> models,
 		const hands::model_definition& receiver, const hands::rig& rig,

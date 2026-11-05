@@ -77,14 +77,18 @@ namespace vr::gameplay::weapons::underbarrel
 			// (the trigger sits 1.4 in behind it, as on the H2 attachment).
 			// viewmodel_ak47 + attach_h1_launcher_gp25_vm use the same tag_m203 and
 			// j_grenade (no slide; muzzle-loaded), in H2's tag_gp25 frame.
+			// viewmodel_m16a4_sp_gl + attach_h1_launcher_m203_m16_vm is the same
+			// launcher (identical binds from tag_m203) with renamed bones:
+			// j_m16m203_slide and j_grenade_ammo.
 			for(const auto& m:models)
 			{
-				const auto k=m.name=="attach_h1_launcher_m203_vm" ? kind::m203 : m.name=="attach_h1_launcher_gp25_vm" ? kind::gp25 : kind::none;
+				const bool m16=m.name=="attach_h1_launcher_m203_m16_vm";
+				const auto k=m.name=="attach_h1_launcher_m203_vm" || m16 ? kind::m203 : m.name=="attach_h1_launcher_gp25_vm" ? kind::gp25 : kind::none;
 				if(k==kind::none || m.begin<=r.gun || m.begin+m.count>r.count)continue;
 				const int tag=r.parent[m.begin];
 				if(tag<0 || tag>=m.begin || bones[tag].name!="tag_m203" || !hands::descendant(tag,r.gun,r))return {};
 				const auto child=[&](int parent,std::string_view name){for(int i=0;i<m.begin;++i)if(r.parent[i]==parent && bones[i].name==name)return i;return -1;};
-				const int slide=child(tag,"j_m203_slide"),round=child(tag,"j_grenade");
+				const int slide=child(tag,m16?"j_m16m203_slide":"j_m203_slide"),round=child(tag,m16?"j_grenade_ammo":"j_grenade");
 				if((k==kind::m203 && slide<0) || round<0)return {};
 				for(int b:{tag,slide,round})if(b>=0)for(float f:bones[b].bind.position)if(!std::isfinite(f)||std::abs(f)>10000)return {};
 				const auto gun=inverse(as_anchor(bones[r.gun].bind));
