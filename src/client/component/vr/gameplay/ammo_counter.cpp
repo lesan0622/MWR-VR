@@ -2,6 +2,7 @@
 #include "weapon_carry_runtime.hpp"
 #include "native_ammunition.hpp"
 #include "physical_reload_runtime.hpp"
+#include "tube_runtime.hpp"
 #include "hands/position_offset.hpp"
 #include "../directional_ui.hpp"
 #include "../native_waypoints.hpp"
@@ -19,8 +20,9 @@
 // each held gun's loaded/reserve count is drawn as world ink just above the
 // wrist that holds it: camera-facing, a fixed world size, both eyes at the
 // wrist's depth. Values are copied on the server thread; nothing is written.
-// By default a counter shows only while its gun's magazine is out (and briefly
-// after it seats); vr_ammoCounterAlways keeps the original always-on counter.
+// By default a counter shows only while its gun's magazine is out, or while a
+// tube-fed gun's loading hand holds a shell (and briefly after either ends);
+// vr_ammoCounterAlways keeps the original always-on counter.
 namespace vr::gameplay::ammo_counter
 {
 	namespace
@@ -30,15 +32,15 @@ namespace vr::gameplay::ammo_counter
 			bool valid{};
 			int hand{-1}, loaded{}, reserve{};
 			std::uint32_t weapon{};
-			bool magazine_out{};
+			bool reloading{}; // Magazine out, or a shell held for a tube.
 		};
 		std::mutex mutex;
 		std::array<sample, 2> samples{};
 		std::array<std::pair<std::uint32_t, int>, 2> most_loaded{}; // Per hand: weapon and its fullest loaded count.
 		game::dvar_t* enabled{};
 		game::dvar_t* always{};
-		constexpr auto linger = std::chrono::milliseconds(2000); // After the magazine seats again.
-		std::array<std::chrono::steady_clock::time_point, 2> magazine_seen{}; // Per hand slot: last frame it was out.
+		constexpr auto linger = std::chrono::milliseconds(2000); // After the magazine seats or the shell goes in.
+		std::array<std::chrono::steady_clock::time_point, 2> reloading_seen{}; // Per hand slot: last reloading frame.
 		std::atomic_uint64_t frames{}, drawn{}, rejected{};
 		std::mutex debug_mutex;
 		std::array<float, 6> last_debug{}; // Last drawn counter and head, world units.
@@ -58,8 +60,10 @@ namespace vr::gameplay::ammo_counter
 					const auto ammo = weapons::native_ammunition::observe_carried(game::g_entities[0].client, v.id);
 					if (!ammo.valid || ammo.loaded < 0 || ammo.reserve < 0) continue;
 					const auto reload = weapons::physical_reload::current(v.id);
-					const bool out = reload.active && reload.definition && !reload.ammo.magazine_inserted;
-					batch[h] = {true, static_cast<int>(holder), ammo.loaded, ammo.reserve, v.id.weapon, out};
+					const auto tube = weapons::tube::current(v.id);
+					const bool reloading = (reload.active && reload.definition && !reload.ammo.magazine_inserted) ||
+					                       (tube.active && tube.ammo.held_rounds > 0);
+					batch[h] = {true, static_cast<int>(holder), ammo.loaded, ammo.reserve, v.id.weapon, reloading};
 				}
 			}
 			const std::lock_guard lock(mutex);
@@ -80,8 +84,8 @@ namespace vr::gameplay::ammo_counter
 			const bool show_always = always && always->current.enabled;
 			for (unsigned i = 0; i < 2; ++i)
 			{
-				if (current[i].valid && current[i].magazine_out) magazine_seen[i] = now;
-				if (!show_always && current[i].valid && now - magazine_seen[i] > linger) current[i].valid = false;
+				if (current[i].valid && current[i].reloading) reloading_seen[i] = now;
+				if (!show_always && current[i].valid && now - reloading_seen[i] > linger) current[i].valid = false;
 			}
 			if (!current[0].valid && !current[1].valid) return;
 			head_pose_bridge::spatial_frame body;
@@ -153,7 +157,7 @@ namespace vr::gameplay::ammo_counter
 			enabled = dvars::register_bool("vr_ammoCounter", true, game::DVAR_FLAG_SAVED,
 			                               "Show the held gun's loaded and reserve ammo above its wrist");
 			always = dvars::register_bool("vr_ammoCounterAlways", false, game::DVAR_FLAG_SAVED,
-			                              "Keep the wrist ammo counter on at all times instead of only while the magazine is out");
+			                              "Keep the wrist ammo counter on at all times instead of only while reloading");
 			scheduler::loop(collect, scheduler::pipeline::server);
 			scheduler::loop(draw, scheduler::pipeline::lui);
 			command::add("vr_ammo_counter_status", []
