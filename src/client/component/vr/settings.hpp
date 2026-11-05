@@ -108,6 +108,7 @@ namespace vr::settings
 	inline constexpr boolean_setting chambering_guide{"vr_chamberingGuide", true}; // MWR: on by default
 	inline constexpr boolean_setting physical_ladders{"vr_physicalLadders", true};
 	inline constexpr boolean_setting ammo_counter{"vr_ammoCounter", true};
+	inline constexpr boolean_setting ammo_counter_always{"vr_ammoCounterAlways", false};
 	inline constexpr boolean_setting smart_ammo_selection{"vr_smartAmmoSelection", true};
 	inline constexpr boolean_setting launcher_head_aim{"vr_launcherHeadAim", false};
 	inline constexpr boolean_setting discard_ammo_penalty{"vr_discardAmmoPenalty", false};
@@ -129,6 +130,7 @@ namespace vr::settings
 		                              chambering_guide,
 		                              physical_ladders,
 		                              ammo_counter,
+		                              ammo_counter_always,
 		                              smart_ammo_selection,
 		                              launcher_head_aim,
 		                              discard_ammo_penalty,
