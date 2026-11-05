@@ -13,6 +13,7 @@ namespace game_text::locales
 		{key::button_grip_either,u8"хват любой руки"},
 		{key::item_weapon,u8"оружие"},
 		{key::interaction_use,u8"Удерживайте {button} для взаимодействия"},
+		{key::ally_pickup,u8"Протяните к нему руку и удерживайте {button}, чтобы поднять его"},
 		{key::interaction_pickup,u8"Удерживайте {button}, чтобы подобрать {item}"},
 		{key::interaction_resupply,u8"Удерживайте {button} для пополнения боеприпасов"},
 		{key::rappel_brake,u8"Удерживайте {button}, чтобы замедлиться"},

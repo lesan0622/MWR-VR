@@ -13,6 +13,7 @@ namespace game_text::locales
 		{key::button_grip_either,u8"왼손/오른손 그립"},
 		{key::item_weapon,u8"무기"},
 		{key::interaction_use,u8"{button}을 길게 눌러 상호작용"},
+		{key::ally_pickup,u8"손을 대위 몸에 뻗고 {button}을 길게 눌러 업기"},
 		{key::interaction_pickup,u8"{button}을 길게 눌러 {item} 줍기"},
 		{key::interaction_resupply,u8"{button}을 길게 눌러 탄약 보충"},
 		{key::rappel_brake,u8"{button}을 길게 눌러 감속"},

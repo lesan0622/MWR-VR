@@ -48,9 +48,16 @@ namespace vr::gameplay::interaction::native
 		// reaching for the grips; select them like use-trigger volumes.
 		bool mounted_gun(const game::gentity_s* entity)
 		{return entity && *reinterpret_cast<const std::uint8_t*>(entity)==8;}
+		bool actor(const game::gentity_s* entity)
+		{
+			if(!entity || !entity->script_classname)return false;
+			const auto* name=game::SL_ConvertToString(entity->script_classname);
+			return name && std::string_view(name).starts_with("actor_");
+		}
 		bool fallback_use_trigger(const game::gentity_s* entity)
 		{
-			if(mounted_gun(entity))return true;
+			// Actors re-run native admission below, so only usable ones (Price) pass.
+			if(mounted_gun(entity) || actor(entity))return true;
 			if(!entity || !entity->script_classname)return false;
 			const auto* name=game::SL_ConvertToString(entity->script_classname);
 			return name && use_trigger_class(name);
@@ -344,6 +351,7 @@ namespace vr::gameplay::interaction::native
 			const bool use_volume=!item.weapon && !script_model && ((classname && use_trigger_class(classname)) || mounted_gun(entity));
 			auto proposal=breach ? score_breach(aim,{id,key.generation},center,read<vec>(entity,0xe8)) :
 				use_volume ? score_use_trigger(aim,{id,key.generation},center,read<vec>(entity,0xe8)) :
+				!item.weapon && !script_model && actor(entity) ? score_actor_use(aim,{id,key.generation},center,read<vec>(entity,0xe8)) :
 				item.weapon || script_model ? score_volume(aim,{id,key.generation},volume,item.weapon) : score(aim,{id,key.generation},center);
 			if (!script_model) trace_point=proposal.position;
 			const auto test_visibility=[&](const vec& from) {return script_model ? script_visible(from,trace_point,entity) : visible(from,trace_point,id);};
@@ -380,6 +388,19 @@ namespace vr::gameplay::interaction::native
 				proposal.position=item.weapon || script_model ? volume.world(volume.center) : center;
 				if (proposal.key==held_target) {selected=proposal;break;}
 				selected=proposal;
+			}
+		}
+		// Usable actors (wounded MacMillan) are outside the trigger area query and the
+		// native centre-angle list misses a hand reaching for his legs or shoulders.
+		// Add actors in reach; native admission below still decides if they are usable.
+		{
+			const float reach=(aim.distance_meters+model_origin_margin_m)*aim.units;unsigned added{};
+			for(int id=1;id<2048 && added<4 && breach_count<breach_candidates.size();++id)
+			{
+				const auto* entity=&game::g_entities[id];
+				if(!read<std::uint8_t>(entity,0xbc) || !actor(entity) || std::find(breach_candidates.begin(),breach_candidates.begin()+breach_count,id)!=breach_candidates.begin()+breach_count)continue;
+				if(hands::length(hands::sub(read<vec>(entity,0xdc),aim.head))>reach)continue;
+				breach_candidates[breach_count++]=static_cast<unsigned short>(id);++added;
 			}
 		}
 		const auto nearby=breach_candidates;const auto nearby_count=breach_count;
@@ -438,6 +459,7 @@ namespace vr::gameplay::interaction::native
 				const auto center=read<vec>(entity,0xdc),half=read<vec>(entity,0xe8);
 				const auto identity=weapons::native_carry::entity_key(id);
 				auto proposal=breach_trigger(entity) ? score_breach(aim,{id,identity.generation},center,half) :
+					actor(entity) ? score_actor_use(aim,{id,identity.generation},center,half) :
 					score_use_trigger(aim,{id,identity.generation},center,half);
 				if(!proposal)continue;
 				const auto delta=hands::sub(center,aim.head);const auto distance=hands::length(delta);

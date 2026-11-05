@@ -13,6 +13,7 @@ namespace game_text::locales
 		{key::button_grip_either,u8"زر الإمساك في أي يد"},
 		{key::item_weapon,u8"سلاح"},
 		{key::interaction_use,u8"اضغط مطولًا على {button} للتفاعل"},
+		{key::ally_pickup,u8"مدّ يدك إليه واضغط مطولًا على {button} لحمله"},
 		{key::interaction_pickup,u8"اضغط مطولًا على {button} لالتقاط {item}"},
 		{key::interaction_resupply,u8"اضغط مطولًا على {button} لتزويد الذخيرة"},
 		{key::rappel_brake,u8"اضغط مطولًا على {button} للإبطاء"},

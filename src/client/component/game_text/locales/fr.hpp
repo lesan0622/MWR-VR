@@ -13,6 +13,7 @@ namespace game_text::locales
 		{key::button_grip_either,u8"bouton de prise gauche ou droit"},
 		{key::item_weapon,u8"arme"},
 		{key::interaction_use,u8"Maintenez {button} pour interagir"},
+		{key::ally_pickup,u8"Tendez la main vers lui et maintenez {button} pour le porter"},
 		{key::interaction_pickup,u8"Maintenez {button} pour ramasser {item}"},
 		{key::interaction_resupply,u8"Maintenez {button} pour reprendre des munitions"},
 		{key::rappel_brake,u8"Maintenez {button} pour ralentir"},

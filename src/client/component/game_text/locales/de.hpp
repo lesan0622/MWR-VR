@@ -13,6 +13,7 @@ namespace game_text::locales
 		{key::button_grip_either,u8"linke/rechte Greiftaste"},
 		{key::item_weapon,u8"Waffe"},
 		{key::interaction_use,u8"Zum Interagieren {button} halten"},
+		{key::ally_pickup,u8"Nach ihm greifen und {button} halten, um ihn aufzuheben"},
 		{key::interaction_pickup,u8"{button} halten, um {item} aufzuheben"},
 		{key::interaction_resupply,u8"{button} halten, um Munition aufzufüllen"},
 		{key::rappel_brake,u8"{button} zum Abbremsen halten"},

@@ -109,7 +109,8 @@ namespace vr::gameplay::interaction
 				game_text::runs runs;
 				const auto specific=target.weapon?std::optional<game_text::key>{}:hud_prompts::world_message(target.hint);
 				const auto message=specific?*specific:target.weapon ? game_text::key::interaction_pickup :
-					target.prompt==prompt_kind::resupply ? game_text::key::interaction_resupply : game_text::key::interaction_use;
+					target.prompt==prompt_kind::resupply ? game_text::key::interaction_resupply :
+					target.prompt==prompt_kind::ally ? game_text::key::ally_pickup : game_text::key::interaction_use;
 				auto attachments=weapon.attachments;
 				// Spaces belong to the translated template, not to the argument
 				// boundary. Native width drops trailing blanks, so account for them

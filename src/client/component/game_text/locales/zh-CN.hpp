@@ -11,6 +11,7 @@ namespace game_text::locales
 		{key::button_grip_either,u8"左／右手握持键"},
 		{key::item_weapon,u8"武器"},
 		{key::interaction_use,u8"按住{button}交互"},
+		{key::ally_pickup,u8"把手伸向他并按住{button}将他背起"},
 		{key::interaction_pickup,u8"按住{button}拾取{item}"},
 		{key::rappel_brake,u8"按住{button}减速"},
 		{key::story_melee,u8"按下{button}刺杀哨兵"},
