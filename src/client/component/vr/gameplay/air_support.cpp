@@ -3,6 +3,8 @@
 #include "native_action_slots.hpp"
 #include "weapon_carry_runtime.hpp"
 #include "native_ammunition.hpp"
+#include "chest_equipment.hpp"
+#include "native_carry.hpp"
 #include "../head_pose_bridge.hpp"
 #include "../digital_button_gate.hpp"
 #include "component/command.hpp"
@@ -136,13 +138,16 @@ namespace vr::gameplay::air_support
 			if (active) reason = "designating";
 		}
 
-		// Claymore (sniperescape action slot 4): reach a hand to the floor and press
-		// Grip. The native claymore is selected and fired once (it plants at the
-		// feet, facing the view), then the previous gun returns to the hand.
+		// Claymore (sniperescape action slot 4): Grip on the claymore shown on the torso
+		// (below the grenades) takes it: the native claymore is selected. Keep Grip held and
+		// lower that hand to the floor: it is fired once (plants at the feet, facing the
+		// view), then the previous gun returns to the hand. Releasing Grip before the
+		// floor puts it away. (Was Grip at the floor, which stole the Price pickup.)
 		constexpr std::string_view claymore = "claymore";
-		enum class plant_phase {idle, holstering, selecting, firing, returning};
+		enum class plant_phase {idle, holstering, selecting, held, firing, returning};
 		slot plant_slot{};
 		int plant_retries{};
+		int plant_hand{-1};
 		plant_phase plant{};
 		std::chrono::steady_clock::time_point plant_at{};
 		std::string plant_previous;
@@ -171,6 +176,25 @@ namespace vr::gameplay::air_support
 			if (!ps || !input.grip[h].valid || !head_pose_bridge::tracking_to_world(frame, input.grip[h].tracking, hand)) return false;
 			return (hand.position[2] - ps->origin[2]) / frame.units_per_meter <= .35f;
 		}
+		bool at_torso_slot(const head_pose_bridge::spatial_frame& frame, const controller_input::frame& input, int h) noexcept
+		{
+			// The claymore shown on the torso below the grenades (chest_equipment).
+			head_pose_bridge::world_pose hand;
+			if (!input.grip[h].valid || !head_pose_bridge::tracking_to_world(frame, input.grip[h].tracking, hand)) return false;
+			return equipment::claymore_grab_distance(frame, equipment::locate_chest(frame), hand.position) <= 1;
+		}
+		void put_away() noexcept
+		{
+			// Taken with empty hands: back to no weapon (the carry's empty-hand selection),
+			// or the claymore stays selected and cannot be taken again.
+			if (plant_previous.empty() || plant_previous == claymore) {(void)weapons::native_carry::select(0);return;}
+			try
+			{
+				const scripting::entity player{game::scr_entref_t{0, 0}};
+				player.call("switchtoweapon", {plant_previous});
+			}
+			catch (...) {}
+		}
 		void tick_claymore()
 		{
 			const auto s = claymore_slot();
@@ -182,7 +206,9 @@ namespace vr::gameplay::air_support
 			const bool tracked = input.focused && head_pose_bridge::get_spatial_frame(frame) && frame.generation == input.reference_generation;
 			for (int h = 0; h < 2; ++h)
 			{
-				if (!floor_grips[h].consume(input.squeeze[h]) || !tracked || plant != plant_phase::idle || !s.weapon || active || !at_floor(frame, input, h)) continue;
+				if (!floor_grips[h].consume(input.squeeze[h]) || !tracked || plant != plant_phase::idle || !s.weapon || active ||
+					weapons::carry::hand_has_weapon(vr::hand(h)) || !at_torso_slot(frame, input, h)) continue;
+				plant_hand = h;
 				plant_previous = name ? name : "";
 				plant_restore = {};
 				for (const auto& held : weapons::carry::held_instances())
@@ -199,6 +225,13 @@ namespace vr::gameplay::air_support
 				if (holstered) {plant = plant_phase::holstering;reason = "claymore: holstering";}
 				else {equipment::action_slots::request(unsigned(s.index), 1, s.weapon);plant = plant_phase::selecting;reason = "claymore requested";}
 			}
+			// Grip let go before the floor: put the claymore away, the gun comes back.
+			const bool holding = plant_hand >= 0 && input.squeeze[plant_hand].active && input.squeeze[plant_hand].down;
+			if (!holding && (plant == plant_phase::holstering || plant == plant_phase::selecting || plant == plant_phase::held))
+			{
+				if (active) put_away();
+				plant = plant_phase::returning;plant_at = now;reason = "claymore put away";
+			}
 			switch (plant)
 			{
 			case plant_phase::holstering:
@@ -210,14 +243,19 @@ namespace vr::gameplay::air_support
 				break;
 			case plant_phase::selecting:
 				// The raise animation runs before the native fire accepts the attack.
-				if (active && now - plant_at > 700ms) {plant = plant_phase::firing;plant_at = now;plant_attack = true;}
+				if (active && now - plant_at > 700ms) {plant = plant_phase::held;plant_at = now;reason = "claymore in hand";}
 				else if (!active && now - plant_at > 800ms && plant_retries < 3)
 				{
 					// A switch still settling (holster) can swallow the slot press: press again.
 					equipment::action_slots::request(unsigned(plant_slot.index), 1, plant_slot.weapon);
 					++plant_retries;plant_at = now;
 				}
-				else if (!active && now - plant_at > 800ms) plant = plant_phase::idle;
+				else if (!active && now - plant_at > 800ms) {plant = plant_phase::returning;plant_at = now;}
+				break;
+			case plant_phase::held:
+				// The raised claymore follows the grip down; at the floor it is planted.
+				if (!active) {plant = plant_phase::returning;plant_at = now;}
+				else if (tracked && at_floor(frame, input, plant_hand)) {plant = plant_phase::firing;plant_at = now;plant_attack = true;}
 				break;
 			case plant_phase::firing:
 				// Hold, then release: the claymore is planted by the release animation.
@@ -225,12 +263,7 @@ namespace vr::gameplay::air_support
 				else if (!plant_attack && (!active || now - plant_at > 1500ms))
 				{
 					++plants;plant = plant_phase::returning;plant_at = now;reason = "claymore planted";
-					try
-					{
-						const scripting::entity player{game::scr_entref_t{0, 0}};
-						if (active && !plant_previous.empty()) player.call("switchtoweapon", {plant_previous});
-					}
-					catch (...) {}
+					if (active) put_away();
 				}
 				break;
 			case plant_phase::returning:
@@ -241,7 +274,7 @@ namespace vr::gameplay::air_support
 							if (weapons::carry::debug_draw(item.at, plant_restore.hand)) {++restores;plant_restore = {};}
 							break;
 						}
-				if (!plant_restore.id || now - plant_at > 3s) {plant = plant_phase::idle;plant_restore = {};}
+				if (!plant_restore.id || now - plant_at > 3s) {plant = plant_phase::idle;plant_restore = {};plant_hand = -1;}
 				break;
 			default:
 				break;
@@ -277,7 +310,7 @@ namespace vr::gameplay::air_support
 		{
 			scheduler::loop(tick, scheduler::pipeline::server);
 			scheduler::loop([] {if (running && game::CL_IsCgameInitialized() && game::g_entities[0].client) tick_claymore();}, scheduler::pipeline::server);
-			scripting::on_level_start([] {pointer = -1;gesture_hand = -1;previous_weapon.clear();grips = {};plant = plant_phase::idle;plant_attack = false;floor_grips = {};});
+			scripting::on_level_start([] {pointer = -1;gesture_hand = -1;previous_weapon.clear();grips = {};plant = plant_phase::idle;plant_attack = false;floor_grips = {};plant_hand = -1;});
 			command::add("vr_air_support_status", [] {
 				console::info("[VR air support] slot=%d active=%d pointer=%d selections=%llu cancels=%llu views=%llu restores=%llu claymore_slot=%d plants=%llu plant_phase=%d reason=%s\n",
 					designator_slot().index, int(selected()), pointer.load(), selections.load(), cancels.load(), views.load(), restores.load(), claymore_slot().index, plants.load(), int(plant), reason.load());

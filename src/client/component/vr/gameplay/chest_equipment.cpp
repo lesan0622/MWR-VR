@@ -29,9 +29,9 @@ namespace vr::gameplay::equipment::chest_items
 	{
 		using clock=controller_input::clock;
 		struct item {std::uint32_t weapon{};game::XModel* model{};vec center{},extent{};int quantity{};grenades::kind type{grenades::kind::count};float scale{1};};
-		struct snapshot {std::array<item,2> items{};clock::time_point at{};std::uint64_t reference{};};
+		struct snapshot {std::array<item,3> items{};clock::time_point at{};std::uint64_t reference{};};
 		std::mutex mutex;snapshot published,submitted;
-		std::array<unsigned short,2> lighting{};
+		std::array<unsigned short,3> lighting{}; // tactical, lethal, claymore
 		std::atomic_bool alive{true};bool verified{};game::dvar_t* enabled{};
 		std::atomic_uint64_t submissions{},placements{};
 		bool running() noexcept {return alive && verified && enabled && enabled->current.enabled && weapons::carry::active();}
@@ -72,6 +72,24 @@ namespace vr::gameplay::equipment::chest_items
 						if(!finite(center) || !finite(extent) || std::any_of(extent.begin(),extent.end(),[](float x){return x<=0 || x>100;}))continue;
 						next.items[i]={token,model,center,extent,ammo.loaded+ammo.reserve,type,1};
 					}
+					// MWR claymore: action slot (ps+0x1de0 type 1, +0x1df0 weapon), shown on the
+					// torso below the grenades until it is the current weapon (+0x38c).
+					std::array<std::uint32_t,8> slots{};std::uint32_t current{};
+					if(utils::native_memory::read_bytes(slots.data(),reinterpret_cast<const std::byte*>(ps)+0x1de0,sizeof(slots)) &&
+						utils::native_memory::read_bytes(&current,reinterpret_cast<const std::byte*>(ps)+0x38c,4))
+						for(unsigned i=0;i<4;++i)
+						{
+							const auto token=slots[4+i];if(slots[i]!=1 || !token || token>511 || token==current)continue;
+							const auto* definition=game::weapon_defs[token];
+							if(!definition || !definition->szInternalName || std::string_view(definition->szInternalName)!="claymore")continue;
+							const auto ammo=weapons::native_ammunition::observe_carried(ps,token);
+							auto* model=definition->worldModel ? definition->worldModel[0]:nullptr;
+							if(!ammo.valid || !show_chest_item(ammo.loaded,ammo.reserve) || !model || !model->numBones || !model->numLods || !model->numsurfs || model->numCompositeModels)break;
+							const vec center{model->bounds.midPoint[0],model->bounds.midPoint[1],model->bounds.midPoint[2]};
+							const vec extent{model->bounds.halfSize[0],model->bounds.halfSize[1],model->bounds.halfSize[2]};
+							if(finite(center) && finite(extent))next.items[2]={token,model,center,extent,ammo.loaded+ammo.reserve,grenades::kind::count,1};
+							break;
+						}
 					next.reference=input.reference_generation;next.at=input.sampled_at;
 				}
 			}
@@ -85,12 +103,12 @@ namespace vr::gameplay::equipment::chest_items
 			head_pose_bridge::spatial_frame body;if(!head_pose_bridge::get_spatial_frame(body) || body.generation!=s.reference)return;
 			const auto now=clock::now();if(now<body.captured_at || now-body.captured_at>150ms)return;
 			const auto chest=locate_chest(body);if(!chest.valid)return;
-			for(auto& item:s.items)item.scale=grenades::stowed_scale(item.type,item.extent,body.units_per_meter);
+			for(unsigned i=0;i<2;++i)s.items[i].scale=grenades::stowed_scale(s.items[i].type,s.items[i].extent,body.units_per_meter);
 			{const std::lock_guard lock(mutex);submitted=s;}
 			for(unsigned i=0;i<s.items.size();++i)
 			{
-				const auto& item=s.items[i];if(!item.model || item.quantity<=0 || grenades::occupies_slot(i))continue;
-				const auto world=stowed_chest_item(chest,item_slots[i],scale(item.center,item.scale));
+				const auto& item=s.items[i];if(!item.model || item.quantity<=0 || (i<2 && grenades::occupies_slot(i)))continue;
+				const auto world=i==2?stowed_claymore(body,chest,item.center):stowed_chest_item(chest,item_slots[i],scale(item.center,item.scale));
 				game::GfxScaledPlacement placement{};placement.scale=item.scale;
 				std::copy(world.position.begin(),world.position.end(),placement.base.origin);
 				std::copy(world.rotation.begin(),world.rotation.end(),placement.base.quat);
@@ -101,12 +119,12 @@ namespace vr::gameplay::equipment::chest_items
 		{
 			using result=scene_models::placement_result;std::uintptr_t handle{};
 			if(!scene_models::native_entry::lighting(entry,handle))return result::unchanged;
-			unsigned index=2;for(unsigned i=0;i<2;++i)if(handle==reinterpret_cast<std::uintptr_t>(&lighting[i]))index=i;
-			if(index==2)return result::unchanged;
+			unsigned index=3;for(unsigned i=0;i<3;++i)if(handle==reinterpret_cast<std::uintptr_t>(&lighting[i]))index=i;
+			if(index==3)return result::unchanged;
 			if(!sequences::chest_equipment_visible())return result::omit;
 			snapshot s,live;{const std::lock_guard lock(mutex);s=submitted;live=published;}
 			const auto& item=s.items[index];game::XModel* model{};
-			if(grenades::occupies_slot(index) || !running() || !fresh(s) || !fresh(live) || s.reference!=live.reference || !item.model ||
+			if((index<2 && grenades::occupies_slot(index)) || !running() || !fresh(s) || !fresh(live) || s.reference!=live.reference || !item.model ||
 				item.weapon!=live.items[index].weapon || item.model!=live.items[index].model || live.items[index].quantity<=0 ||
 				!scene_models::native_entry::model(entry,model) || model!=item.model)return result::omit;
 			// MWR: no render-time skeleton record; follow the arm's current placement origin.
@@ -117,7 +135,7 @@ namespace vr::gameplay::equipment::chest_items
 			if(!read(p.record,engine_stereo_view::h2_current_model_placement_origin_offset,origin) || !finite(origin,1e7f))return result::omit;
 			const auto body=hands::attachments::body_frame(pose,origin);
 			const auto chest=locate_chest(body);if(!chest.valid)return result::omit;
-			const auto world=stowed_chest_item(chest,item_slots[index],scale(item.center,item.scale));
+			const auto world=index==2?stowed_claymore(body,chest,item.center):stowed_chest_item(chest,item_slots[index],scale(item.center,item.scale));
 			std::copy(world.position.begin(),world.position.end(),current.origin);std::copy(world.rotation.begin(),world.rotation.end(),current.quat);
 			previous=current;++placements;return result::replace;
 		}
@@ -142,7 +160,7 @@ namespace vr::gameplay::equipment::chest_items
 			command::add("vr_chestEquipment_status",[] {
 				snapshot s;{const std::lock_guard lock(mutex);s=published;}
 				std::string report=std::format("[VR chest equipment] enabled={} verified={} submissions={} prepared={} order=knife,tactical,lethal interactive=knife_and_grenades\n",running(),verified,submissions.load(),placements.load());
-				for(unsigned i=0;i<2;++i)report+=std::format("slot={} weapon={} quantity={} visible={}\n",i==0?"tactical":"lethal",s.items[i].weapon,s.items[i].quantity,s.items[i].model!=nullptr);
+				for(unsigned i=0;i<3;++i)report+=std::format("slot={} weapon={} quantity={} visible={}\n",i==0?"tactical":i==1?"lethal":"claymore",s.items[i].weapon,s.items[i].quantity,s.items[i].model!=nullptr);
 				console::print_text(console::con_type_info,report);scheduler::once([report]{utils::io::write_file("minidumps/overlord-chest-equipment.txt",report);},scheduler::pipeline::async);
 			});
 		}
