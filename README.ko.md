@@ -45,7 +45,7 @@ MWR VR은 *콜 오브 듀티: 모던 워페어 리마스터*(2016) 캠페인용 
 
 ## 설치
 
-[Releases 페이지](https://github.com/lesan0622/Overlord-MWR-VR/releases)에서 최신 버전을 받으세요.
+[Releases 페이지](https://github.com/lesan0622/MWR-VR/releases)에서 최신 버전을 받으세요.
 
 **설치 프로그램(권장)**: `OverlordMWR-VR-Setup.exe`를 실행합니다.
 - Steam(과 Battle.net)에서 게임 폴더를 찾고, 설치 전에 한 번 묻습니다.
@@ -112,8 +112,8 @@ Call of Duty Modern Warfare Remastered/
 그다음 개발자 명령 프롬프트에서 실행합니다.
 
 ~~~bat
-git clone --recurse-submodules https://github.com/lesan0622/Overlord-MWR-VR.git
-cd Overlord-MWR-VR
+git clone --recurse-submodules https://github.com/lesan0622/MWR-VR.git
+cd MWR-VR
 generate.bat
 msbuild build\overlord.sln /m /p:Configuration=Release /p:Platform=x64
 python tools\build_installer.py Release
