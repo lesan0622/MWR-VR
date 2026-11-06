@@ -101,7 +101,7 @@ namespace vr::diagnostics::support
 			try
 			{
 				// Save each snapshot immediately, so ZIP failure leaves usable text.
-				result->add("README.txt","Attach this ZIP to your Overlord issue. No console copying is needed.\n"
+				result->add("README.txt","Attach this ZIP to your MWR VR problem report. No console copying is needed.\n"
 					"This is a local diagnostic capture; nothing was uploaded automatically.\n"
 					"status-1/2 are fresh snapshots from this request, about five seconds apart.\n"
 					"The process/build/time and before_first_present labels identify their scope.\n"

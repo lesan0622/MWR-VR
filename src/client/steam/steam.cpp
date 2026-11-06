@@ -1,7 +1,7 @@
 #include <std_include.hpp>
 #include "steam.hpp"
 
-#define MSG_BOX_ERROR(message) MessageBoxA(nullptr, message, "Overlord MWR: ERROR", MB_ICONERROR);
+#define MSG_BOX_ERROR(message) MessageBoxA(nullptr, message, "MWR VR: ERROR", MB_ICONERROR);
 
 #include "component/console.hpp"
 

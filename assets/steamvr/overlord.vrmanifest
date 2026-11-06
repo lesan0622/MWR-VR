@@ -12,7 +12,7 @@
       "action_manifest_path": "vr_input/actions.json",
       "strings": {
         "en_us": {
-          "name": "Overlord"
+          "name": "MWR VR"
         }
       }
     }

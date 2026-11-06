@@ -4,7 +4,8 @@
 
 namespace product
 {
-	inline constexpr auto name = "Overlord";
+	// MWR port: shown as its own name (based on Overlord); keys, files and URLs keep "overlord".
+	inline constexpr auto name = "MWR VR";
 #ifdef _DEBUG
 	inline constexpr auto application_key = "overlord.debug";
 	inline constexpr auto application_manifest = L"overlord-debug.vrmanifest";

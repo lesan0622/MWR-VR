@@ -45,7 +45,7 @@ namespace steam_proxy
 
 			try
 			{
-				this->start_mod("\xF0\x9F\x8E\xAE" " Overlord MWR VR"s, app_id);
+				this->start_mod("\xF0\x9F\x8E\xAE" " MWR VR"s, app_id);
 			}
 			catch (std::exception& e)
 			{

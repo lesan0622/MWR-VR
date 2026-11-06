@@ -434,7 +434,7 @@ namespace console
 		void post_unpack() override
 		{
 			ShowWindow(GetConsoleWindow(), SW_SHOW);
-			SetConsoleTitle("Overlord");
+			SetConsoleTitle("MWR VR");
 
 #ifndef DEBUG
 			SetConsoleCtrlHandler(console_ctrl_handler, TRUE);

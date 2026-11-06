@@ -1,10 +1,10 @@
-# Overlord MWR VR
+# MWR VR
 
 [English](README.md) | 한국어
 
-![Overlord MWR VR](src/launcher-ui/public/images/launcher-background.jpg)
+![MWR VR](src/launcher-ui/public/images/launcher-background.jpg)
 
-Overlord MWR VR은 *콜 오브 듀티: 모던 워페어 리마스터*(2016) 캠페인용 비공식 VR 모드입니다. *모던 워페어 2 캠페인 리마스터*용 VR 모드인 [Overlord](https://github.com/Aeka0/Overlord)를 MWR 실행 파일에 맞게 옮기고 미션에 맞춰 손봤습니다. 입체 화면, 머리와 손의 6DOF 추적, 직접 다루는 총기, 장비와 스토리 장면의 VR 조작을 지원합니다. 가능한 한 게임 원래의 무기, 탄약, 애니메이션, 미션 로직을 그대로 써서 원작의 연출을 유지합니다.
+MWR VR은 *콜 오브 듀티: 모던 워페어 리마스터*(2016) 캠페인용 비공식 VR 모드입니다. *모던 워페어 2 캠페인 리마스터*용 VR 모드인 [Overlord](https://github.com/Aeka0/Overlord)를 MWR 실행 파일에 맞게 옮기고 미션에 맞춰 손봤습니다. 입체 화면, 머리와 손의 6DOF 추적, 직접 다루는 총기, 장비와 스토리 장면의 VR 조작을 지원합니다. 가능한 한 게임 원래의 무기, 탄약, 애니메이션, 미션 로직을 그대로 써서 원작의 연출을 유지합니다.
 
 ### **지금 버전은 Beta 1이며 한 사람이 관리합니다. 많은 기능을 관리자의 PC에서만 시험했고, 안정성은 낮다고 보셔야 합니다. 완성품이 아니라 시험판으로 생각해 주세요.**
 
@@ -47,13 +47,13 @@ Overlord MWR VR은 *콜 오브 듀티: 모던 워페어 리마스터*(2016) 캠�
 
 [Releases 페이지](https://github.com/lesan0622/Overlord-MWR-VR/releases)에서 최신 버전을 받으세요.
 
-**설치 프로그램(권장)**: `OverlordMWR-VR-Setup.exe`를 실행합니다.
+**설치 프로그램(권장)**: `MWR-VR-Setup.exe`를 실행합니다.
 - Steam(과 Battle.net)에서 게임 폴더를 찾고, 설치 전에 한 번 묻습니다.
 - 게임이 켜져 있으면 설치하지 않습니다.
 - 모드 파일만 쓰고, 바탕화면에 바로가기를 만듭니다.
 - 게임을 못 찾으면 `h1_sp64_ship.exe`가 있는 게임 폴더를 직접 고르면 됩니다.
 
-**수동 설치**: `OverlordMWR-VR-<버전>.zip`을 게임 폴더에 풉니다.
+**수동 설치**: `MWR-VR-<버전>.zip`을 게임 폴더에 풉니다.
 
 ~~~text
 Call of Duty Modern Warfare Remastered/

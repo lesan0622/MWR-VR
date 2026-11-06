@@ -59,7 +59,7 @@ namespace vr::diagnostics::support
 		for(const auto& file:files_)zip.add(file.first,file.second);
 		zip.add("manifest.json",manifest);
 		const auto partial=staging_/"package.partial";
-		if(!zip.write_file(partial,"Overlord diagnostics")||!MoveFileExW(partial.c_str(),destination_.c_str(),MOVEFILE_WRITE_THROUGH))
+		if(!zip.write_file(partial,"MWR VR diagnostics")||!MoveFileExW(partial.c_str(),destination_.c_str(),MOVEFILE_WRITE_THROUGH))
 			throw std::runtime_error("Diagnostic ZIP could not be finalized; captured text remains in the capture folder");
 		std::error_code ignored;
 		for(const auto& file:files_)std::filesystem::remove(staging_/file.first,ignored);

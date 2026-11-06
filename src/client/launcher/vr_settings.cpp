@@ -29,7 +29,7 @@ namespace launcher_vr_settings
 		template <typename Update>
 		void update_profile(Update update)
 		{
-			if (!game_data::is_game_directory_available()) throw std::runtime_error("Place Overlord in a supported game directory before saving VR settings.");
+			if (!game_data::is_game_directory_available()) throw std::runtime_error("Place MWR VR in a supported game directory before saving VR settings.");
 			game_data::initialize_players_folder();
 			const auto path = game_data::get_config_file_path();
 			// Re-read immediately before merging so unrelated profile edits survive.

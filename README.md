@@ -1,10 +1,10 @@
-# Overlord MWR VR
+# MWR VR
 
 English | [한국어](README.ko.md)
 
-![Overlord MWR VR](src/launcher-ui/public/images/launcher-background.jpg)
+![MWR VR](src/launcher-ui/public/images/launcher-background.jpg)
 
-Overlord MWR VR is an unofficial VR mod for the campaign of *Call of Duty: Modern Warfare Remastered* (2016). It is a port of [Overlord](https://github.com/Aeka0/Overlord), the VR mod for *Modern Warfare 2 Campaign Remastered*: stereoscopic rendering, 6DOF head and hand tracking, physical weapon handling, and VR interactions for equipment and story sequences, rebound to the MWR executable and adapted to its missions. Wherever possible it reuses the game's own weapon, ammunition, animation and mission logic, so the original story presentation is kept.
+MWR VR is an unofficial VR mod for the campaign of *Call of Duty: Modern Warfare Remastered* (2016). It is a port of [Overlord](https://github.com/Aeka0/Overlord), the VR mod for *Modern Warfare 2 Campaign Remastered*: stereoscopic rendering, 6DOF head and hand tracking, physical weapon handling, and VR interactions for equipment and story sequences, rebound to the MWR executable and adapted to its missions. Wherever possible it reuses the game's own weapon, ammunition, animation and mission logic, so the original story presentation is kept.
 
 ### **This is Beta 1, maintained by one person. Many features have been tested only on the maintainer's own machine, and stability is expected to be poor. Please treat it as a test build, not a finished product.**
 
@@ -44,9 +44,9 @@ Pirated or cracked copies of the game are not supported. Releases do not contain
 
 Download the latest release from the [Releases page](https://github.com/lesan0622/Overlord-MWR-VR/releases).
 
-**Installer (recommended):** run `OverlordMWR-VR-Setup.exe`. It finds the game through Steam (and Battle.net), asks before installing, refuses while the game is running, writes only the mod's files and creates a desktop shortcut. If the game is not found, pick the game folder (the one containing `h1_sp64_ship.exe`).
+**Installer (recommended):** run `MWR-VR-Setup.exe`. It finds the game through Steam (and Battle.net), asks before installing, refuses while the game is running, writes only the mod's files and creates a desktop shortcut. If the game is not found, pick the game folder (the one containing `h1_sp64_ship.exe`).
 
-**Manual:** extract `OverlordMWR-VR-<version>.zip` into the game folder:
+**Manual:** extract `MWR-VR-<version>.zip` into the game folder:
 
 ~~~text
 Call of Duty Modern Warfare Remastered/

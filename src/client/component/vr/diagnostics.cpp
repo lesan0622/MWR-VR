@@ -1133,7 +1133,7 @@ namespace vr::diagnostics
 		strftime(timestamp, sizeof(timestamp), "%Y-%m-%d-%H-%M-%S", &local_time);
 		const auto stem = std::string("minidumps/overlord-soft-freeze-") + timestamp;
 		std::ostringstream report;
-		report << "Overlord soft-freeze report\r\n"
+		report << "MWR VR soft-freeze report\r\n"
 			<< "Present age: " << age.count() << " ms\r\n"
 			<< "Present thread: " << graphics.present_thread_id << "\r\n"
 			<< "Last Present thread: " << graphics.last_present_thread_id << "\r\n"
@@ -1167,7 +1167,7 @@ namespace vr::diagnostics
 		strftime(timestamp, sizeof(timestamp), "%Y-%m-%d-%H-%M-%S", &local_time);
 		const auto stem = std::string("minidumps/overlord-scene-stall-") + timestamp;
 		std::ostringstream report;
-		report << "Overlord scene-hook stall report\r\n"
+		report << "MWR VR scene-hook stall report\r\n"
 			<< "Scene sequence: " << scene.sequence << "\r\n"
 			<< "Scene thread: " << scene.thread_id << "\r\n"
 			<< "Scene depth: " << scene.depth << "\r\n"
@@ -1204,7 +1204,7 @@ namespace vr::diagnostics
 		strftime(timestamp, sizeof(timestamp), "%Y-%m-%d-%H-%M-%S", &local_time);
 		const auto stem = std::string("minidumps/overlord-interop-stall-") + timestamp;
 		std::ostringstream report;
-		report << "Overlord GPU-interop stall report\r\n"
+		report << "MWR VR GPU-interop stall report\r\n"
 			<< "Interop sequence: " << interop.sequence << "\r\n"
 			<< "Interop thread: " << interop.thread_id << "\r\n"
 			<< "Interop depth: " << interop.depth << "\r\n"
@@ -1244,7 +1244,7 @@ namespace vr::diagnostics
 		strftime(timestamp, sizeof(timestamp), "%Y-%m-%d-%H-%M-%S", &local_time);
 		const auto stem = std::string("minidumps/overlord-backend-stall-") + timestamp;
 		std::ostringstream report;
-		report << "Overlord backend CPU stall report\r\n"
+		report << "MWR VR backend CPU stall report\r\n"
 			<< "Backend sequence: " << backend.sequence << "\r\n"
 			<< "Backend thread: " << backend.thread_id << "\r\n"
 			<< "Backend depth: " << backend.depth << "\r\n"
@@ -1274,7 +1274,7 @@ namespace vr::diagnostics
 		try
 		{
 			std::ostringstream report;
-			report << "Overlord live trace snapshot\r\n"
+			report << "MWR VR live trace snapshot\r\n"
 				<< "Tick: " << GetTickCount64() << "\r\n"
 				<< "Generation: " << graphics.generation << "\r\n"
 				<< "Present active: " << (graphics.present_active ? "yes" : "no") << "\r\n"

@@ -72,7 +72,7 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "Aeka0 / Overlord contributors"
-            VALUE "FileDescription", "Overlord"
+            VALUE "FileDescription", "MWR VR (based on Overlord)"
             VALUE "FileVersion", VERSION_FILE
             VALUE "InternalName", "overlord"
             VALUE "LegalCopyright", "Copyright (C) 2026 Aeka0 and Overlord contributors; original H2-Mod authors."
@@ -83,7 +83,7 @@ BEGIN
 #else
             VALUE "OriginalFilename", "overlord.exe"
 #endif
-            VALUE "ProductName", "Overlord"
+            VALUE "ProductName", "MWR VR"
             VALUE "ProductVersion", VERSION_PRODUCT
         END
     END
