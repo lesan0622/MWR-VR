@@ -27,8 +27,14 @@ namespace launcher_preflight
 		auto issues = json::array();
 		const bool game_available = game_data::is_game_directory_available();
 		if (!game_available)
-			issues.push_back({{"id", "game.binary"}, {"severity", "error"}, {"titleKey", "preflight.gameExe"},
-				{"detailKey", "preflight.gameExeDetail"}, {"fixable", false}});
+		{
+			// Missing (Overlord outside the MWR folder) and an unsupported build need different fixes.
+			const auto size = game_data::game_binary_size();
+			json issue{{"id", "game.binary"}, {"severity", "error"}, {"titleKey", "preflight.gameExe"},
+				{"detailKey", size ? "preflight.gameExeVersionDetail" : "preflight.gameExeDetail"}, {"fixable", false}};
+			if (size) issue["values"] = {{"size", std::to_string(size)}};
+			issues.push_back(std::move(issue));
+		}
 		for (const auto* name : game_dlls)
 			if (!readable_file(name))
 				issues.push_back({{"id", std::string("game.") + name}, {"severity", "error"}, {"titleKey", "preflight.file"},
