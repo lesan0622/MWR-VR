@@ -2,7 +2,7 @@
 
 Usage: python tools/build_installer.py [Release]
 The installer also takes /silent (detected folder, no dialogs; exit code 0 on success).
-Output: build/dist/OverlordMWR-VR-Setup.exe (and the same files as a .zip for
+Output: build/dist/MWR-VR-Setup.exe (and the same files as a .zip for
 manual installs). Build the solution first (generate.bat, then the Release
 configuration); this only packages what the game folder needs.
 """
@@ -47,14 +47,14 @@ def main() -> None:
     version = json.loads((ROOT / "version.json").read_text(encoding="utf-8")).get("name", "dev").replace(" ", "-")
     zip_path = DIST / "payload.zip"
     payload(zip_path)
-    setup = DIST / "OverlordMWR-VR-Setup.exe"
+    setup = DIST / "MWR-VR-Setup.exe"
     subprocess.run([str(CSC), "/nologo", "/codepage:65001", "/target:winexe", "/optimize+", "/platform:anycpu",
                     f"/out:{setup}", f"/win32icon:{ROOT / 'assets/icon/Icon.ico'}",
                     f"/resource:{zip_path},payload.zip",
                     "/reference:System.IO.Compression.dll", "/reference:System.IO.Compression.FileSystem.dll",
                     "/reference:System.Windows.Forms.dll",
                     str(ROOT / "tools/installer/Installer.cs")], check=True)
-    manual = DIST / f"OverlordMWR-VR-{version}.zip"
+    manual = DIST / f"MWR-VR-{version}.zip"
     zip_path.replace(manual)
     print(f"{setup} ({setup.stat().st_size // 1024} KB)\n{manual}")
 

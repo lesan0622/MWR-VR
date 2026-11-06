@@ -4,7 +4,8 @@
 
 namespace product
 {
-	inline constexpr auto name = "Overlord";
+	// MWR port: shown as its own name (based on Overlord); keys, files and URLs keep "overlord".
+	inline constexpr auto name = "MWR VR";
 #ifdef _DEBUG
 	inline constexpr auto application_key = "overlord.debug";
 	inline constexpr auto application_manifest = L"overlord-debug.vrmanifest";
@@ -12,10 +13,10 @@ namespace product
 	inline constexpr auto application_key = "overlord";
 	inline constexpr auto application_manifest = L"overlord.vrmanifest";
 #endif
-	inline constexpr auto repository_url = "https://github.com/lesan0622/Overlord-MWR-VR";
-	inline constexpr auto releases_url = "https://github.com/lesan0622/Overlord-MWR-VR/releases";
+	inline constexpr auto repository_url = "https://github.com/lesan0622/MWR-VR";
+	inline constexpr auto releases_url = "https://github.com/lesan0622/MWR-VR/releases";
 	// MWR port: problem reports go to its maintainer by email.
-	inline constexpr auto issues_url = "mailto:lesan00622@gmail.com?subject=Overlord%20MWR%20VR%20issue";
+	inline constexpr auto issues_url = "mailto:lesan00622@gmail.com?subject=MWR%20VR%20issue";
 
 	constexpr std::string_view localization_key(std::string_view key) noexcept
 	{

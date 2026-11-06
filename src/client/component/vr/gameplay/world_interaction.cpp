@@ -242,7 +242,8 @@ namespace vr::gameplay::interaction
 					std::ostringstream out;out<<"ready="<<ready<<" updates="<<updates<<" pickups="<<picks<<" uses="<<uses<<" cancelled="<<cancels
 						<<" press_notifies="<<press_notifies<<" release_notifies="<<release_notifies<<" ally_triggers="<<ally_triggers
 						<<" native="<<native::status()<<"\nreach_m="<<reach->current.value<<" cone_degrees="<<cone->current.value
-						<<" lease_hand="<<current.hand<<" held="<<current.held<<" target="<<current.use.key.entity<<'\n';
+						<<" lease_hand="<<current.hand<<" held="<<current.held<<" target="<<current.use.key.entity<<'\n'
+						<<"use_triggers="<<native::use_trigger_status()<<'\n';
 					for (int h=0;h<2;++h) {const auto& t=current.hover.targets[h];out<<"hand="<<h<<" entity="<<t.key.entity<<" generation="<<t.key.generation
 						<<" weapon="<<t.weapon<<" cosine="<<t.cosine<<" distance="<<t.distance<<'\n';}
 					out<<prompt_status();

@@ -336,7 +336,7 @@ namespace vr::steamvr
 				if (error == ERROR_ACCESS_DENIED)
 				{
 					return std::format("SteamVR vrserver PID {} is running, but Windows denied "
-						"process access. Launch Overlord under the same Windows user and elevation "
+						"process access. Launch MWR VR under the same Windows user and elevation "
 						"level as SteamVR (do not run one side as administrator).", *server_pid);
 				}
 				return std::format("SteamVR vrserver PID {} is unavailable: {}", *server_pid,
@@ -359,8 +359,8 @@ namespace vr::steamvr
 				server_elevated.has_value() && client_elevated.has_value() && *server_elevated != *client_elevated)
 			{
 				CloseHandle(server);
-				return std::format("SteamVR vrserver and Overlord have different elevation levels "
-					"(vrserver elevated={}, Overlord elevated={}). Run both at the same elevation level.",
+				return std::format("SteamVR vrserver and MWR VR have different elevation levels "
+					"(vrserver elevated={}, MWR VR elevated={}). Run both at the same elevation level.",
 					*server_elevated ? "true" : "false", *client_elevated ? "true" : "false");
 			}
 			HANDLE server_token{};
@@ -372,7 +372,7 @@ namespace vr::steamvr
 				if (server_sid.has_value() && client_sid.has_value() && *server_sid != *client_sid)
 				{
 					CloseHandle(server);
-					return "SteamVR vrserver is running under a different Windows user. Start Overlord "
+					return "SteamVR vrserver is running under a different Windows user. Start MWR VR "
 						"from the interactive SteamVR user session so OpenVR can share its IPC resources.";
 				}
 			}

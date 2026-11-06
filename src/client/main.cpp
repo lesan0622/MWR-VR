@@ -244,7 +244,7 @@ int main()
 		}
 		catch (const std::exception& error)
 		{
-			MessageBoxA(nullptr, error.what(), "Overlord", MB_ICONERROR);
+			MessageBoxA(nullptr, error.what(), "MWR VR", MB_ICONERROR);
 			return 1;
 		}
 	}

@@ -6,9 +6,9 @@ English | [한국어](README.ko.md)
 
 MWR VR is an unofficial VR mod for the campaign of *Call of Duty: Modern Warfare Remastered* (2016). It is a port of [Overlord](https://github.com/Aeka0/Overlord), the VR mod for *Modern Warfare 2 Campaign Remastered*: stereoscopic rendering, 6DOF head and hand tracking, physical weapon handling, and VR interactions for equipment and story sequences, rebound to the MWR executable and adapted to its missions. Wherever possible it reuses the game's own weapon, ammunition, animation and mission logic, so the original story presentation is kept.
 
-### **This is Beta 1, maintained by one person. Many features have been tested only on the maintainer's own machine, and stability is expected to be poor. Please treat it as a test build, not a finished product.**
+### **This is Beta 5, maintained by one person. Many features have been tested only on the maintainer's own machine, and stability is expected to be poor. Please treat it as a test build, not a finished product.**
 
-### **Version updates may break saves and progress. Mods made for the non-VR game are not expected to work with it.**
+### **Mods made for the non-VR game are not expected to work with it.**
 
 ## Main Features
 
@@ -44,9 +44,9 @@ Pirated or cracked copies of the game are not supported. Releases do not contain
 
 Download the latest release from the [Releases page](https://github.com/lesan0622/MWR-VR/releases).
 
-**Installer (recommended):** run `OverlordMWR-VR-Setup.exe`. It finds the game through Steam (and Battle.net), asks before installing, refuses while the game is running, writes only the mod's files and creates a desktop shortcut. If the game is not found, pick the game folder (the one containing `h1_sp64_ship.exe`).
+**Installer (recommended):** run `MWR-VR-Setup.exe`. It finds the game through Steam (and Battle.net), asks before installing, refuses while the game is running, writes only the mod's files and creates a desktop shortcut. If the game is not found, pick the game folder (the one containing `h1_sp64_ship.exe`).
 
-**Manual:** extract `OverlordMWR-VR-<version>.zip` into the game folder:
+**Manual:** extract `MWR-VR-<version>.zip` into the game folder:
 
 ~~~text
 Call of Duty Modern Warfare Remastered/
@@ -77,7 +77,7 @@ The launcher's Help page is inherited from Overlord and does not yet describe ev
 
 ## Known Issues
 
-- Headset confirmation is still pending for several Beta 1 features (Barrett bipod).
+- Headset confirmation is still pending for several features (Barrett bipod, mounted-gun grips).
 - A left-right flipped view has been reported in a cutscene; it has not been reproduced yet.
 - From Overlord: a `Create2DTexture` error may be avoided by disabling Shader Preloading in the graphics settings; MSI Afterburner may prevent startup.
 

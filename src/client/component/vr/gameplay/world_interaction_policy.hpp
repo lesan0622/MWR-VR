@@ -167,7 +167,10 @@ namespace vr::gameplay::interaction
 		// nearest point of the real volume so visibility traces never start inside
 		// nearby geometry.
 		constexpr float use_trigger_margin_m=.50f,use_trigger_cone_degrees=20.f;
-		vec grown=half;for(auto& v:grown)v+=use_trigger_margin_m*r.units;
+		// Cap at the model scorer's 2 m half-extent: a trigger linked to a rotated
+		// parent reports its axis-aligned bounds (ICBM tower-leg C4: 71 units on
+		// every axis), and the grown box must not exceed that limit and vanish.
+		vec grown=half;for(auto& v:grown)v=std::min(v+use_trigger_margin_m*r.units,2*r.units);
 		auto wide=r;wide.half_angle_degrees=std::max(r.half_angle_degrees,use_trigger_cone_degrees);
 		auto chosen=score_model(wide,key,center,grown);
 		if(chosen)for(int i=0;i<3;++i)chosen.position[i]=std::clamp(chosen.position[i],center[i]-half[i],center[i]+half[i]);

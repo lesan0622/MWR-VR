@@ -122,7 +122,7 @@ namespace exception
 				timestamp.wMinute, timestamp.wSecond, GetCurrentProcessId(),
 				emergency_dump.exception_thread_id);
 			const auto report_size = sprintf_s(emergency_dump.report,
-				"Overlord emergency crash evidence\r\n"
+				"MWR VR emergency crash evidence\r\n"
 				"Exception: 0x%08lX\r\nAddress: 0x%p\r\nProcess/thread: %lu/%lu\r\n"
 				"RIP/RSP/RBP: 0x%llX/0x%llX/0x%llX\r\n"
 				"Parameter count: %lu\r\nParameter 0/1/2: 0x%llX/0x%llX/0x%llX\r\n",
@@ -210,7 +210,7 @@ namespace exception
 			utils::thread::suspend_other_threads();
 			show_mouse_cursor();
 
-			MessageBoxA(nullptr, error_str.data(), "Overlord ERROR", MB_ICONERROR);
+			MessageBoxA(nullptr, error_str.data(), "MWR VR ERROR", MB_ICONERROR);
 			TerminateProcess(GetCurrentProcess(), exception_data.code);
 		}
 
@@ -226,7 +226,7 @@ namespace exception
 				recovery_data.last_recovery = std::chrono::high_resolution_clock::now();
 				++recovery_data.recovery_counts;
 				game::Com_Error(game::ERR_DROP, "Fatal error (0x%08X) at 0x%p.\nA minidump has been written.\n\n"
-				                "Overlord has tried to recover your game, but it might not run stable anymore.\n\n"
+				                "MWR VR has tried to recover your game, but it might not run stable anymore.\n\n"
 				                "Make sure to update your graphics card drivers and install operating system updates!\n",
 				                exception_data.code, exception_data.address);
 			}
@@ -269,7 +269,7 @@ namespace exception
 				info.append("\r\n");
 			};
 
-			line("Overlord Crash Dump");
+			line("MWR VR Crash Dump");
 			line("");
 			line("Version: "s + VERSION);
 			line("Environment: "s + game::environment::get_string());
@@ -308,7 +308,7 @@ namespace exception
 			utils::compression::zip::archive zip_file{};
 			zip_file.add("crash.dmp", dump);
 			zip_file.add("info.txt", info);
-			zip_file.write(crash_stem + ".zip", "Overlord Crash Dump");
+			zip_file.write(crash_stem + ".zip", "MWR VR Crash Dump");
 		}
 
 		bool is_harmless_error(const LPEXCEPTION_POINTERS exceptioninfo)

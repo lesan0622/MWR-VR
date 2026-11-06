@@ -78,7 +78,7 @@ void webview_window::initialize()
 		{
 			return invoke(weak, [&](webview_window& self)
 			{
-				check(result, "Could not initialize WebView2. Install or repair Microsoft Edge WebView2 Runtime, then reopen Overlord.");
+				check(result, "Could not initialize WebView2. Install or repair Microsoft Edge WebView2 Runtime, then reopen MWR VR.");
 				self.environment_ = environment;
 				check(environment->CreateCoreWebView2Controller(self,
 					Microsoft::WRL::Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
@@ -179,7 +179,7 @@ void webview_window::configure()
 			});
 		}).Get(), &token), "Could not serve embedded launcher content.");
 	check(webview_->add_ProcessFailed(Microsoft::WRL::Callback<ICoreWebView2ProcessFailedEventHandler>(
-		[weak](ICoreWebView2*, ICoreWebView2ProcessFailedEventArgs*) { return invoke(weak, [](webview_window& self) { self.fail("The WebView2 launcher stopped responding. Reopen Overlord to retry."); }); }).Get(), &token), "Could not monitor the launcher view.");
+		[weak](ICoreWebView2*, ICoreWebView2ProcessFailedEventArgs*) { return invoke(weak, [](webview_window& self) { self.fail("The WebView2 launcher stopped responding. Reopen MWR VR to retry."); }); }).Get(), &token), "Could not monitor the launcher view.");
 	resize();
 	check(webview_->Navigate(wide(uri_).c_str()), "Could not load the launcher page.");
 }
@@ -219,7 +219,7 @@ LRESULT webview_window::processor(const UINT message, const WPARAM w_param, cons
 		if (quiet_failure_) { shutdown(); close(); return 0; }
 		// Modal native UI is deferred out of COM callbacks to avoid reentrancy.
 		const auto text = error_ + L"\n\nOpen Microsoft's WebView2 download page?";
-		if (MessageBoxW(*this, text.c_str(), L"Overlord", MB_ICONERROR | MB_YESNO) == IDYES)
+		if (MessageBoxW(*this, text.c_str(), L"MWR VR", MB_ICONERROR | MB_YESNO) == IDYES)
 			ShellExecuteW(nullptr, L"open", L"https://developer.microsoft.com/en-us/microsoft-edge/webview2/", nullptr, nullptr, SW_SHOWNORMAL);
 		shutdown(); close(); return 0;
 	}

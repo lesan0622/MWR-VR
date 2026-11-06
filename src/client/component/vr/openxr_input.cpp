@@ -433,6 +433,7 @@ namespace vr::openxr
 			constexpr auto tracking_grace = std::chrono::milliseconds(2000);
 			if (XR_SUCCEEDED(located) && output.quality.position_valid && output.quality.orientation_valid)
 			{
+				output.quality.position_inferred = !output.quality.position_tracked;
 				if (output.quality.position_tracked && output.quality.orientation_tracked)
 					tracked_at = frame.sampled_at;
 				else if (tracked_at != controller_input::clock::time_point{} &&

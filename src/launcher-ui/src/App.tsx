@@ -147,7 +147,7 @@ export default function App() {
     return (
       <div className="launcher-shell">
         <header className="app-header">
-          <span className="brand">Overlord</span>
+          <span className="brand">MWR VR</span>
           <WindowControls
             t={t}
             onError={(error) => setError(errorKey(error))}

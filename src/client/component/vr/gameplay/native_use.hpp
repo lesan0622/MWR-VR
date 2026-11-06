@@ -13,4 +13,5 @@ namespace vr::gameplay::interaction::native
 	// use pass validates that target again through its normal hint/use pipeline.
 	void set_command_lease(const target&, bool held, std::uint64_t reference) noexcept;
 	const char* status() noexcept;
+	std::string use_trigger_status(); // Last use-trigger candidates: listed/nearby, sight, blocking entity.
 }

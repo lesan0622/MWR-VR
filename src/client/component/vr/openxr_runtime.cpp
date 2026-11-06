@@ -663,9 +663,11 @@ namespace vr::openxr
 			const char* enabled_extensions[]{XR_KHR_D3D11_ENABLE_EXTENSION_NAME,
 			                                 XR_KHR_COMPOSITION_LAYER_CYLINDER_EXTENSION_NAME};
 			XrInstanceCreateInfo instance_info{XR_TYPE_INSTANCE_CREATE_INFO};
-			strcpy_s(instance_info.applicationInfo.applicationName, product::name);
+			// Runtimes key per-app settings and quirks on this name: keep the
+			// original identity across the MWR VR display rename.
+			strcpy_s(instance_info.applicationInfo.applicationName, "Overlord");
 			instance_info.applicationInfo.applicationVersion = 1;
-			strcpy_s(instance_info.applicationInfo.engineName, product::name);
+			strcpy_s(instance_info.applicationInfo.engineName, "Overlord");
 			instance_info.applicationInfo.engineVersion = 1;
 			instance_info.applicationInfo.apiVersion = requested_api_version;
 			instance_info.enabledExtensionCount = cylinder_supported_ ? 2 : 1;

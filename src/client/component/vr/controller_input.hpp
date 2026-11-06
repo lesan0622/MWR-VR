@@ -48,6 +48,9 @@ namespace vr::controller_input
 	struct pose_quality
 	{
 		bool position_valid{}, orientation_valid{}, position_tracked{}, orientation_tracked{}, known{};
+		// Runtime reported a valid but untracked (inferred) position this frame,
+		// before the short-loss grace restores position_tracked.
+		bool position_inferred{};
 		bool operator==(const pose_quality&) const = default;
 	};
 	struct hand_pose

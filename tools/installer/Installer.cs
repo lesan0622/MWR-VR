@@ -1,4 +1,4 @@
-// One-click installer for Overlord MWR VR. Built by tools/build_installer.py with
+// One-click installer for MWR VR (based on Overlord). Built by tools/build_installer.py with
 // the .NET Framework csc (no extra runtime on Windows 10/11): the Release files
 // are embedded as payload.zip and extracted into the Call of Duty: Modern Warfare
 // Remastered folder, found through Steam (app 393080) or picked by the player.
@@ -14,7 +14,8 @@ using Microsoft.Win32;
 
 static class Installer
 {
-	const string Title = "Overlord MWR VR";
+	const string Title = "MWR VR";
+	const string LegacyShortcut = "Overlord MWR VR"; // Beta 1-4 desktop shortcut name.
 	const string GameFolder = "Call of Duty Modern Warfare Remastered";
 	const string GameExe = "h1_sp64_ship.exe";
 
@@ -65,8 +66,8 @@ static class Installer
 					Title, MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) return 1;
 			Extract(game);
 			Shortcut(game);
-			MessageBox.Show(T("설치가 끝났습니다.\n\n바탕화면의 'Overlord MWR VR' 또는 게임 폴더의 overlord.exe로 실행하세요.\n(SteamVR을 먼저 켜 두세요.)",
-				"Installed.\n\nStart 'Overlord MWR VR' on the desktop or overlord.exe in the game folder.\n(Start SteamVR first.)"),
+			MessageBox.Show(T("설치가 끝났습니다.\n\n바탕화면의 'MWR VR' 또는 게임 폴더의 overlord.exe로 실행하세요.\n(SteamVR을 먼저 켜 두세요.)",
+				"Installed.\n\nStart 'MWR VR' on the desktop or overlord.exe in the game folder.\n(Start SteamVR first.)"),
 				Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
 			return 0;
 		}
@@ -238,6 +239,9 @@ static class Installer
 		try
 		{
 			var desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+			// Replace the shortcut left by installs before the rename.
+			var legacy = Path.Combine(desktop, LegacyShortcut + ".lnk");
+			try { if (File.Exists(legacy)) File.Delete(legacy); } catch { }
 			var shell = Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell"));
 			var link = shell.GetType().InvokeMember("CreateShortcut", BindingFlags.InvokeMethod, null, shell,
 				new object[] { Path.Combine(desktop, Title + ".lnk") });

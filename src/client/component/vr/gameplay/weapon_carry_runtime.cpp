@@ -965,6 +965,10 @@ namespace vr::gameplay::weapons::carry
 					// Tracking loss is not a spatial release. The pose path already
 					// stops two-hand steering while preserving committed ownership.
 					if (valid_hands != 3) continue;
+					// Controllers held one in front of the other hide each other from the
+					// headset cameras; an inferred position drifts and must not tear the
+					// support grip off (player report: right hand unstuck from the front).
+					if (input.grip[0].quality.position_inferred || input.grip[1].quality.position_inferred) continue;
 					const auto held_pose = pose(v, wrists, input, valid_hands);
 					const int off = int(v.owner.support);
 					if (!held_pose.authored || held_pose.owner.id() != v.id) continue;

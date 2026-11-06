@@ -1,7 +1,7 @@
 {
   "en": {
     "launcher.loading": "Loading launcher…",
-    "launcher.hostRequired": "Open this interface through Overlord to connect to the game settings.",
+    "launcher.hostRequired": "Open this interface through MWR VR to connect to the game settings.",
     "launcher.busy": "Wait for the current operation to finish.",
     "launcher.timeout": "The operation timed out. Reload settings before retrying.",
     "launcher.closed": "The launcher has closed.",
@@ -19,7 +19,7 @@
   },
   "zh-CN": {
     "launcher.loading": "正在加载启动器…",
-    "launcher.hostRequired": "请通过 Overlord 打开此界面，以连接游戏设置。",
+    "launcher.hostRequired": "请通过 MWR VR 打开此界面，以连接游戏设置。",
     "launcher.busy": "请等待当前操作完成。",
     "launcher.timeout": "操作超时，请重新加载设置后再试。",
     "launcher.closed": "启动器已关闭。",
@@ -37,7 +37,7 @@
   },
   "zh-TW": {
     "launcher.loading": "正在載入啟動器…",
-    "launcher.hostRequired": "請透過 Overlord 開啟此介面，以連接遊戲設定。",
+    "launcher.hostRequired": "請透過 MWR VR 開啟此介面，以連接遊戲設定。",
     "launcher.busy": "請等待目前的操作完成。",
     "launcher.timeout": "操作逾時，請重新載入設定後再試。",
     "launcher.closed": "啟動器已關閉。",
@@ -55,7 +55,7 @@
   },
   "fr": {
     "launcher.loading": "Chargement du lanceur…",
-    "launcher.hostRequired": "Ouvrez cette interface via Overlord pour accéder aux paramètres du jeu.",
+    "launcher.hostRequired": "Ouvrez cette interface via MWR VR pour accéder aux paramètres du jeu.",
     "launcher.busy": "Attendez la fin de l’opération en cours.",
     "launcher.timeout": "L’opération a expiré. Rechargez les paramètres avant de réessayer.",
     "launcher.closed": "Le lanceur est fermé.",
@@ -73,7 +73,7 @@
   },
   "de": {
     "launcher.loading": "Launcher wird geladen…",
-    "launcher.hostRequired": "Öffne diese Oberfläche über Overlord, um auf die Spieleinstellungen zuzugreifen.",
+    "launcher.hostRequired": "Öffne diese Oberfläche über MWR VR, um auf die Spieleinstellungen zuzugreifen.",
     "launcher.busy": "Warte, bis der aktuelle Vorgang abgeschlossen ist.",
     "launcher.timeout": "Zeitüberschreitung. Lade die Einstellungen vor einem erneuten Versuch neu.",
     "launcher.closed": "Der Launcher wurde geschlossen.",
@@ -91,7 +91,7 @@
   },
   "es": {
     "launcher.loading": "Cargando el lanzador…",
-    "launcher.hostRequired": "Abre esta interfaz mediante Overlord para acceder a los ajustes del juego.",
+    "launcher.hostRequired": "Abre esta interfaz mediante MWR VR para acceder a los ajustes del juego.",
     "launcher.busy": "Espera a que termine la operación actual.",
     "launcher.timeout": "La operación ha agotado el tiempo. Recarga los ajustes antes de reintentar.",
     "launcher.closed": "El lanzador se ha cerrado.",
@@ -109,7 +109,7 @@
   },
   "ru": {
     "launcher.loading": "Загрузка лаунчера…",
-    "launcher.hostRequired": "Откройте этот интерфейс через Overlord для доступа к настройкам игры.",
+    "launcher.hostRequired": "Откройте этот интерфейс через MWR VR для доступа к настройкам игры.",
     "launcher.busy": "Дождитесь завершения текущей операции.",
     "launcher.timeout": "Время ожидания истекло. Перезагрузите настройки перед повторной попыткой.",
     "launcher.closed": "Лаунчер закрыт.",
@@ -127,7 +127,7 @@
   },
   "ja": {
     "launcher.loading": "ランチャーを読み込み中…",
-    "launcher.hostRequired": "ゲーム設定に接続するには Overlord からこの画面を開いてください。",
+    "launcher.hostRequired": "ゲーム設定に接続するには MWR VR からこの画面を開いてください。",
     "launcher.busy": "現在の操作が完了するまでお待ちください。",
     "launcher.timeout": "操作がタイムアウトしました。設定を再読み込みしてからお試しください。",
     "launcher.closed": "ランチャーは閉じられました。",
@@ -145,7 +145,7 @@
   },
   "ko": {
     "launcher.loading": "런처 불러오는 중…",
-    "launcher.hostRequired": "게임 설정에 연결하려면 Overlord에서 이 화면을 여세요.",
+    "launcher.hostRequired": "게임 설정에 연결하려면 MWR VR에서 이 화면을 여세요.",
     "launcher.busy": "현재 작업이 끝날 때까지 기다려 주세요.",
     "launcher.timeout": "작업 시간이 초과되었습니다. 설정을 다시 불러온 뒤 재시도하세요.",
     "launcher.closed": "런처가 닫혔습니다.",
