@@ -279,7 +279,7 @@
   "settings.positionOffsets": "位置偏移",
   "settings.angleOffsets": "角度偏移",
   "notice.title": "測試版本聲明",
-  "notice.maintenance": "MWR VR 僅由一人獨立維護，目前為{version}，而非穩定版本。專案正根據回饋進行高強度的相容性修補，許多功能僅在作者本人的電腦上測試過，仍有大量適配工作需要完成，穩定性預期很差。版本更迭也可能破壞遊戲存檔和進度。",
+  "notice.maintenance": "MWR VR 僅由一人獨立維護，目前為{version}，而非穩定版本。專案正根據回饋進行高強度的相容性修補，許多功能僅在作者本人的電腦上測試過，仍有大量適配工作需要完成，穩定性預期很差。",
   "notice.expectations": "請降低預期，將目前版本視為參與測試，而非完整成熟的產品。目前已收到在許多電腦上發生當機、無畫面等問題的回報，相關問題仍在持續追蹤、調查並嘗試修復。",
   "notice.feedback": "如果希望能較順利地開始遊玩，請等待穩定版本發布。如果願意協助提升穩定性，請透過 Issue 回報遇到的問題，並附上詳細的 vr_diagnose 記錄或 minidump。感謝關注與支持。",
   "notice.issues": "透過郵件回報",

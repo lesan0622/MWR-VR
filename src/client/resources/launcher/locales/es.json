@@ -279,7 +279,7 @@
   "settings.positionOffsets": "Desplazamiento de posición",
   "settings.angleOffsets": "Desplazamiento angular",
   "notice.title": "Aviso de versión de prueba",
-  "notice.maintenance": "MWR VR lo mantiene de forma independiente una sola persona. La versión actual es {version}, no una versión estable. El proyecto recibe intensas correcciones de compatibilidad basadas en los comentarios. Muchas funciones solo se han probado en el equipo del autor y queda mucho trabajo de adaptación. Cabe esperar una estabilidad muy baja. Los cambios de versión también pueden dañar las partidas guardadas y el progreso.",
+  "notice.maintenance": "MWR VR lo mantiene de forma independiente una sola persona. La versión actual es {version}, no una versión estable. El proyecto recibe intensas correcciones de compatibilidad basadas en los comentarios. Muchas funciones solo se han probado en el equipo del autor y queda mucho trabajo de adaptación. Cabe esperar una estabilidad muy baja.",
   "notice.expectations": "Reduzca sus expectativas y considere esta versión una participación en las pruebas, no un producto completo y maduro. Ya se han recibido informes de cierres inesperados, ausencia de imagen y otros problemas en muchos equipos. Estos problemas siguen en seguimiento, investigación y proceso de corrección.",
   "notice.feedback": "Si desea empezar a jugar con menos dificultades, espere a la versión estable. Si quiere ayudar a mejorar la estabilidad, informe de los problemas mediante un Issue e incluya registros detallados de vr_diagnose o un minidump. Gracias por su interés y apoyo.",
   "notice.issues": "Informar por correo",

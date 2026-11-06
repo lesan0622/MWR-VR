@@ -283,7 +283,7 @@
   "settings.positionOffsets": "Position offsets",
   "settings.angleOffsets": "Angle offsets",
   "notice.title": "Test build notice",
-  "notice.maintenance": "MWR VR is maintained independently by only one person. The current version is {version}, not a stable release. The project is undergoing intensive compatibility fixes based on feedback. Many features have only been tested on the author’s own machine, and substantial adaptation work remains. Expect very poor stability. Version changes may also damage game saves and progress.",
+  "notice.maintenance": "MWR VR is maintained independently by only one person. The current version is {version}, not a stable release. The project is undergoing intensive compatibility fixes based on feedback. Many features have only been tested on the author’s own machine, and substantial adaptation work remains. Expect very poor stability.",
   "notice.expectations": "Please lower your expectations and treat this version as participation in testing, rather than a complete, mature product. Crashes, missing visuals and other problems have already been reported on many machines. These issues are still being tracked, investigated and addressed.",
   "notice.feedback": "If you want a smoother start to playing, please wait for the stable release. If you would like to help improve stability, email problems to lesan00622@gmail.com and include detailed vr_diagnose records or a minidump. Thank you for your interest and support.",
   "notice.issues": "Report by Email",
