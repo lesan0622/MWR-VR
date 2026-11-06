@@ -62,6 +62,17 @@ namespace camera
 		float camera_origin_override[3]{};
 		float camera_angles_override[3]{};
 
+		// Hand-aimed mounted gun (vr_turretHandAim): the eye held from the mount entry.
+		struct mounted_entry {std::uint64_t epoch{};std::array<float,3> eye{};};
+		mounted_entry mounted_view;
+		std::uint64_t mounted_epoch{};
+		bool mounted_hand_aim()
+		{
+			if (!vr::gameplay::view_aimed::mounted() || vr::gameplay::view_aimed::active() || vr::gameplay::barrett_gun::epoch()) return false;
+			const auto* aim = game::Dvar_FindVar("vr_turretHandAim");
+			return aim && aim->current.enabled;
+		}
+
 		void paused_free_move()
 		{
 			// MWR: cg_paused has not been rebound; free-move stays disabled.
@@ -235,6 +246,19 @@ namespace camera
 				request = {{vr::game_view::camera_owner::script, vr::game_view::head_rotation::free,
 					vr::game_view::head_translation::tracked}, barrett | (1ull << 61)};
 			}
+			// Mounted gun swung by the hands (vr_turretHandAim, village_defend minigun,
+			// airlift Mk19): the hands set the native angles, and the native eye sits
+			// on the gun's aim chain (tag_player), so the whole view rotated and bobbed
+			// with every hand movement on top of the player's own turn (user report).
+			// Hold the entry heading and eye as for the Barrett; only the head moves.
+			else if (mounted_hand_aim())
+			{
+				if (!mounted_view.epoch) mounted_view = {++mounted_epoch, {game::refdef->org[0], game::refdef->org[1], game::refdef->org[2]}};
+				std::copy(mounted_view.eye.begin(), mounted_view.eye.end(), game::refdef->org);
+				request = {{vr::game_view::camera_owner::script, vr::game_view::head_rotation::free,
+					vr::game_view::head_translation::tracked}, mounted_view.epoch | (1ull << 58)};
+			}
+			if (!mounted_hand_aim()) mounted_view = {};
 			// Real crouch/prone already lowers the tracked head: cancel the native
 			// eye-height drop up to that much so the view is not lowered twice.
 			if (ps && request.policy == vr::game_view::camera_profiles::gameplay && !request.epoch)
