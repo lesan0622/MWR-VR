@@ -143,7 +143,7 @@ namespace vr::settings
 		                              ads_sprint,
 		                              exo_punch,
 		                              objective_markers,
-		                              boolean_setting{disable_lens_flare, false},
+		                              boolean_setting{disable_lens_flare, true},
 		                              boolean_setting{camera_bob, false},
 		                              boolean_setting{recoil, true},
 		                              boolean_setting{stabilization_toggles[0], false},
