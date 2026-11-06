@@ -134,12 +134,41 @@ namespace vr::gameplay::interaction::native
 			}
 			return list_hook.invoke<int>(player,output,previous);
 		}
-		bool visible(const vec& from,const vec& to,int target_entity)
+		struct sight {bool clear{};float fraction{1};int hit{-1};};
+		sight trace_sight(const vec& from,const vec& to,int target_entity)
 		{
 			game::Bounds point{};game::trace_t trace{};
 			game::G_TraceCapsule(&trace,from.data(),to.data(),&point,0,0x280e831);
-			return std::isfinite(trace.fraction) && ((trace.hitType==1 && trace.hitId==target_entity) ||
+			sight s;s.fraction=trace.fraction;s.hit=trace.hitType==1 ? int(trace.hitId) : -1;
+			s.clear=std::isfinite(trace.fraction) && ((trace.hitType==1 && trace.hitId==target_entity) ||
 				(!trace.startsolid && !trace.allsolid && trace.fraction>=.999f));
+			return s;
+		}
+		bool visible(const vec& from,const vec& to,int target_entity)
+		{return trace_sight(from,to,target_entity).clear;}
+		// MWR: a use trigger can enclose the object it is authored on (ICBM tower-leg
+		// C4: maps/_c4 links a 72x96x72 trigger_use to com_powerline_tower, around
+		// the leg). A sight line that stops inside the trigger's own volume reached
+		// it; geometry outside the volume (a wall in front) still blocks.
+		bool reaches_use_volume(const vec& from,const vec& to,const vec& center,const vec& half,int target_entity,float units)
+		{
+			const auto s=trace_sight(from,to,target_entity);
+			if(s.clear)return true;
+			if(!std::isfinite(s.fraction))return false;
+			const float f=std::clamp(s.fraction,0.f,1.f),margin=.05f*units;
+			for(unsigned i=0;i<3;++i)
+				if(std::abs(from[i]+(to[i]-from[i])*f-center[i])>half[i]+margin)return false;
+			return true;
+		}
+		// Last use-trigger evaluation (vr_interaction_status): listed/nearby, scored,
+		// head/hand sight and the entity a blocked sight line hit.
+		std::mutex use_detail_mutex;
+		std::string use_detail{"none"};
+		thread_local std::string query_use_detail;
+		void note_use(int id,const char* source,bool proposal,bool head,bool hand,int hit)
+		{
+			if(query_use_detail.size()>400)return;
+			query_use_detail+=std::format("{}:{} scored={} head={} hand={} hit={}; ",id,source,int(proposal),int(head),int(hand),hit);
 		}
 		oriented_volume weapon_volume(const game::gentity_s* entity,const weapons::native_carry::model_geometry& model)
 		{
@@ -316,6 +345,8 @@ namespace vr::gameplay::interaction::native
 		if (!client || read<int>(player,0x184)<=0 || (read<unsigned>(client,0xe740)&8)) return {};
 		querying=&aim;const auto leave=gsl::finally([]{querying=nullptr;});
 		surface_trace_budget=64;
+		query_use_detail.clear();
+		const auto publish_use=gsl::finally([]{if(!query_use_detail.empty()){const std::lock_guard lock(use_detail_mutex);use_detail=query_use_detail;}});
 		const auto proxies=scripted_use::sample(aim);
 		breach_count=0;
 		const auto count=list_hook.invoke<int>(&game::g_entities[0],candidates.data(),3999);
@@ -354,10 +385,22 @@ namespace vr::gameplay::interaction::native
 				!item.weapon && !script_model && actor(entity) ? score_actor_use(aim,{id,key.generation},center,read<vec>(entity,0xe8)) :
 				item.weapon || script_model ? score_volume(aim,{id,key.generation},volume,item.weapon) : score(aim,{id,key.generation},center);
 			if (!script_model) trace_point=proposal.position;
-			const auto test_visibility=[&](const vec& from) {return script_model ? script_visible(from,trace_point,entity) : visible(from,trace_point,id);};
+			const auto test_visibility=[&](const vec& from) {return script_model ? script_visible(from,trace_point,entity) :
+				use_volume ? reaches_use_volume(from,trace_point,center,read<vec>(entity,0xe8),id,aim.units) : visible(from,trace_point,id);};
 			bool head_clear=proposal && test_visibility(aim.head);
 			bool hand_tested=proposal && (head_clear || diagnostic);
 			bool hand_clear=hand_tested && test_visibility(aim.origin);
+			if(use_volume && !mounted_gun(entity))
+			{
+				note_use(id,"listed",bool(proposal),head_clear,hand_clear,proposal && !head_clear ? trace_sight(aim.head,trace_point,id).hit : -1);
+				if(!proposal && query_use_detail.size()<400)
+				{
+					const auto o=hands::sub(aim.origin,center),h=hands::sub(aim.head,center);
+					const auto half=read<vec>(entity,0xe8);
+					query_use_detail+=std::format("[hand-center=({:.0f},{:.0f},{:.0f}) head-center=({:.0f},{:.0f},{:.0f}) half=({:.1f},{:.1f},{:.1f}) units={:.2f} fwd=({:.2f},{:.2f},{:.2f}) reach={:.1f}m valid={}] ",
+						o[0],o[1],o[2],h[0],h[1],h[2],half[0],half[1],half[2],aim.units,aim.forward[0],aim.forward[1],aim.forward[2],aim.distance_meters,int(valid(aim)));
+				}
+			}
 			if(proposal && item.weapon && !(head_clear && hand_clear))
 			{
 				const auto exposed=exposed_surface(aim,{id,key.generation},item.weapon,volume,
@@ -468,8 +511,14 @@ namespace vr::gameplay::interaction::native
 				querying=&admission;++tested;
 				const int admitted=list_hook.invoke<int>(&game::g_entities[0],candidates.data(),3999);
 				querying=&aim;
+				const auto* classname=entity->script_classname ? game::SL_ConvertToString(entity->script_classname) : nullptr;
+				const bool use_volume=classname && use_trigger_class(classname) && !breach_trigger(entity);
 				if(admitted<0 || admitted>int(candidates.size()) ||
-					std::none_of(candidates.begin(),candidates.begin()+admitted,[&](const auto& c){return c.entity==entity;}))continue;
+					std::none_of(candidates.begin(),candidates.begin()+admitted,[&](const auto& c){return c.entity==entity;}))
+				{
+					if(use_volume)note_use(id,"nearby-not-admitted",true,false,false,-1);
+					continue;
+				}
 				// Contact can put a controller just inside the door surface. Head
 				// visibility plus native admission remain mandatory in that case.
 				vec point=center;
@@ -478,7 +527,11 @@ namespace vr::gameplay::interaction::native
 					const float radius=std::clamp(half[axis],(axis==2 ? .4f : .3f)*aim.units,aim.units);
 					point[axis]=std::clamp(aim.head[axis],center[axis]-radius,center[axis]+radius);
 				}
-				if(!script_visible(aim.head,point,entity) || (!proposal.contact && !script_visible(aim.origin,point,entity)))continue;
+				const auto sees=[&](const vec& from){return script_visible(from,point,entity) ||
+					(use_volume && reaches_use_volume(from,point,center,half,id,aim.units));};
+				const bool head_clear=sees(aim.head),hand_clear=head_clear && (proposal.contact || sees(aim.origin));
+				if(use_volume)note_use(id,"nearby",true,head_clear,hand_clear,!head_clear ? trace_sight(aim.head,point,id).hit : -1);
+				if(!head_clear || !hand_clear)continue;
 				proposal.position=center;
 				if(prefer(proposal,selected,held_target))selected=proposal;
 				if(proposal.key==held_target)break;
@@ -506,4 +559,6 @@ namespace vr::gameplay::interaction::native
 	void set_command_lease(const target& value,bool held,std::uint64_t reference) noexcept
 	{const std::lock_guard lock(command_mutex);command_state={value,held,reference,controller_input::clock::now()};}
 	const char* status() noexcept {return reason.load();}
+	std::string use_trigger_status()
+	{const std::lock_guard lock(use_detail_mutex);return use_detail;}
 }
