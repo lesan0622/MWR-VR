@@ -12,6 +12,7 @@
 #include "../native_scripted_control.hpp"
 #include "../view_aimed_weapon.hpp"
 #include "../barrett_gun.hpp"
+#include "../turret_hands.hpp"
 #include "../mounted_turret.hpp"
 #include "../weapon_carry_runtime.hpp"
 #include "../weapon_carry_pose.hpp"
@@ -702,15 +703,15 @@ namespace vr::gameplay::hands
 				original();
 				return;
 			}
-			// Turret/vehicle gun: keep the native hands on its grips (the held
-			// Barrett uses the independent empty hands).
-			if (view_aimed::mounted() && !(empty && barrett_gun::epoch()))
+			// Turret/vehicle gun: keep the native view (the held Barrett and the
+			// fitted turret grips of turret_hands use the independent empty hands).
+			if (view_aimed::mounted() && !(empty && (barrett_gun::epoch() || turret_hands::active())))
 			{
 				original();
 				return;
 			}
 			if (!scripted_control::predicted_allowed() &&
-			    !(empty && (scripted_control::predicted_disarmed() || barrett_gun::epoch() || vehicles::presentation_allowed() || cliffhanger_physical::independent_hands() ||
+			    !(empty && (scripted_control::predicted_disarmed() || barrett_gun::epoch() || turret_hands::active() || vehicles::presentation_allowed() || cliffhanger_physical::independent_hands() ||
 			                sequences::independent_hands(game::CG_GetPredictedPlayerState(0)))))
 			{
 				original();
@@ -1016,6 +1017,15 @@ namespace vr::gameplay::hands
 				                 view_offset,
 				                 {solved.data(), size_t(layout.count)},
 				                 visible);
+				if (empty)
+					turret_hands::present(solver().binding.equipment_parts,
+					                      layout,
+					                      input,
+					                      shoulders,
+					                      spatial.head_yaw_axis,
+					                      view_offset,
+					                      {solved.data(), size_t(layout.count)},
+					                      visible);
 				const unsigned tracked = (input.grip[0].valid && input.aim[0].valid ? 1u : 0u) |
 				                         (input.grip[1].valid && input.aim[1].valid ? 2u : 0u);
 				probe.forearm_twist_hands = solver().twist.update(solver().binding.twist_binding,
