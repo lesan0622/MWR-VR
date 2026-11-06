@@ -285,6 +285,7 @@ namespace vr::gameplay::weapons::physical_reload
 			value->view.decision = value->gesture.decision();
 			value->view.well_contact = value->gesture.well_contact();
 			value->view.rock_engaged = value->gesture.rock_engaged();
+			value->view.rock_start_tilt = value->gesture.rock_start_tilt();
 			value->view.requires_withdrawal = value->gesture.requires_withdrawal();
 			value->view.insert_after=value->gesture.insertion_after();
 			const auto& ammo=value->view.ammo;

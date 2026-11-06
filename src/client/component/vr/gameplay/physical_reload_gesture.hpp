@@ -144,6 +144,7 @@ namespace vr::gameplay::weapons::physical_reload
 		const char* decision() const noexcept { return decision_; }
 		bool well_contact() const noexcept { return well_contact_; }
 		bool rock_engaged() const noexcept { return rock_engaged_; }
+		float rock_start_tilt() const noexcept { return rock_start_tilt_; }
 		bool requires_withdrawal() const noexcept { return require_withdrawal_; }
 		clock::time_point insertion_after()const noexcept{return insert_after_;}
 		const geometry& examined() const noexcept { return examined_; }
