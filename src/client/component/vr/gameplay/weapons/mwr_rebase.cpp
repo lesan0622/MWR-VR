@@ -51,10 +51,18 @@ namespace vr::gameplay::weapons::mwr_rebase
 		// the same asset from its idle animation, while the bind pose can sit
 		// inches away (Dragunov bolt: bind x=7.40, idle x=9.92).
 		const auto magazine_shift = t.keep_mechanism ? vec{} : hands::sub(t.magazine_bind.position, source.magazine_rest.position);
-		const auto slide_shift = t.keep_mechanism || !t.slide_same_part ? vec{} :
+		const auto slide_shift = t.slide_feature_shift ? *t.slide_feature_shift :
+		    t.keep_mechanism || !t.slide_same_part ? vec{} :
 		    hands::sub(t.slide_bind.position, source.slide_rest.position);
 
 		p.id = t.id;
+		if (t.slide_stroke_m > 0 && p.interaction.slide_stroke > 0)
+		{
+			const float ratio = t.slide_stroke_m / p.interaction.slide_stroke;
+			p.interaction.slide_stroke = t.slide_stroke_m;
+			p.interaction.full_stroke *= ratio;
+			p.interaction.locked_travel *= ratio;
+		}
 		if (t.magazine_capacity > 0)
 			p.ammunition.magazine_capacity = t.magazine_capacity;
 		if (t.native_family)
@@ -93,6 +101,11 @@ namespace vr::gameplay::weapons::mwr_rebase
 		// bone is the same physical part; otherwise the receiver geometry holds.
 		p.slide_grab_low = shifted(source.slide_grab_low, slide_shift);
 		p.slide_grab_high = shifted(source.slide_grab_high, slide_shift);
+		if (t.slide_grab_box)
+		{
+			p.slide_grab_low = (*t.slide_grab_box)[0];
+			p.slide_grab_high = (*t.slide_grab_box)[1];
+		}
 		p.slide_grips = keep_span(source.slide_grips, [&](part_grip_pose& g) { shift_grip(g, slide_shift); });
 		p.knife_slide_grips =
 		    keep_span(source.knife_slide_grips, [&](part_grip_pose& g) { shift_grip(g, slide_shift); });

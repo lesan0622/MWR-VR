@@ -677,10 +677,24 @@ namespace vr::gameplay::weapons::physical_reload
 			move_part(r,parts.magazine,attached,solved);
 			const auto& event = state.events[state.effect_sequence % state.events.size()];
 			const auto seating_age = std::chrono::duration<float>(now-event.at).count();
+			// Rock-in seats through the visible hook rotation; the straight seating
+			// slide after it read as a second insertion (user, headset).
 			const bool seating = event.kind == mechanics::effect::magazine_in && state.ammo.magazine_inserted &&
+				!definition.interaction.rock &&
 				!state.slide_held && state.ammo.magazine_hand == hand::none && seating_age >= 0 && seating_age < .16f;
 			auto presented_magazine = attached;
-			if (!state.fault && state.magazine_grabbed && definition.interaction.manual_magazine)
+			if (!state.fault && state.magazine_grabbed && definition.interaction.rock)
+			{
+				// Rock-out: the taken magazine turns forward about its front lug by the
+				// hand's turn since the grab, up to the unlatch angle, instead of the
+				// linear pull (user: the latch motion must show on removal too).
+				const auto& rule=*definition.interaction.rock;
+				const float turn=std::isfinite(rock.tilt) ? rock.tilt-state.rock_start_tilt : 0.f;
+				presented_magazine=compose(gun,rocked(rule,definition.magazine_rest,definition.magazine_top,
+					std::clamp(turn,0.f,rule.arm_degrees+2.f)));
+				move_part(r,parts.magazine,presented_magazine,solved);
+			}
+			else if (!state.fault && state.magazine_grabbed && definition.interaction.manual_magazine)
 			{
 				const auto& p=*definition.interaction.manual_magazine;
 				const auto travel=std::clamp(dot(sub(hand_local,state.magazine_grab_start),p.pull_axis),0.f,p.pull_travel);

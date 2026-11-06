@@ -231,8 +231,16 @@ namespace vr::gameplay::weapons::mwr_shared
 		{"j_ring_le_2", {-0.0007873f, -0.0030457f, 0.3108706f, 0.9504470f}}
 	}};
 	inline bool saw_family(std::string_view name) noexcept { return native_weapon_family(name, "saw"); }
-	// saw: MWR viewmodel_m249_sp (saw); slide j_handle, bullets j_bullet1.
-	inline const reload_profile saw_reload = mwr_rebase::rebase(m240::physical, {.id = "mwr_saw", .receiver = "viewmodel_m249_sp", .magazine_bone = "tag_clip", .slide_bone = "j_handle", .bullets_bone = "j_bullet1", .magazine_model = "weapon_saw_clip", .magazine_bind = {{4.845652f, 0.637031f, 0.694129f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{9.281382f, 0.000000f, 4.368941f}, {0.0000000f, 0.0000000f, 0.7071068f, 0.7071068f}}, .slide_same_part = true, .keep_mechanism = false, .magazine_from_receiver = false, .magazine_in_wrist = &saw_magazine_in_wrist, .magazine_fingers = saw_magazine_fingers, .native_family = saw_family, .sound_key = mwr_saw::sound_key, .belt = &mwr_saw::belt, .cycle_notetrack = "weap_m249saw_chamber_plr"});
+	// saw: MWR viewmodel_m249_sp (saw); slide j_bolt, bullets j_bullet1.
+	// j_handle is the fixed carry handle; the charging handle is j_bolt (native
+	// reload pulls it 4.25 in, record_002 t=0.84). Its knob tip (vr_capture_bone_mesh
+	// radial_tip, bind 7.306,-2.570,4.173) sits off the bone, so the M240 tab
+	// grips move onto the knob rather than by the bone delta.
+	inline constexpr hands::vec saw_knob_shift{7.397f - 5.750437f, -2.570f + 2.870274f, 4.173f - 3.281639f};
+	// The M240 box runs 7 in forward of its handle, which here spans the carry
+	// handle; keep acquisition on the knob outside the receiver face (y -1.28).
+	inline constexpr std::array<hands::vec, 2> saw_knob_box{{{6.65f, -2.57f, 3.85f}, {8.15f, -1.28f, 4.55f}}};
+	inline const reload_profile saw_reload = mwr_rebase::rebase(m240::physical, {.id = "mwr_saw", .receiver = "viewmodel_m249_sp", .magazine_bone = "tag_clip", .slide_bone = "j_bolt", .bullets_bone = "j_bullet1", .magazine_model = "weapon_saw_clip", .magazine_bind = {{4.845652f, 0.637031f, 0.694129f}, {0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f}}, .slide_bind = {{6.481200f, -0.936100f, 4.163400f}, {0.0000000f, 0.0000000f, 0.7071068f, 0.7071068f}}, .slide_same_part = true, .keep_mechanism = false, .magazine_from_receiver = false, .magazine_in_wrist = &saw_magazine_in_wrist, .magazine_fingers = saw_magazine_fingers, .native_family = saw_family, .sound_key = mwr_saw::sound_key, .belt = &mwr_saw::belt, .cycle_notetrack = "weap_m249saw_chamber_plr", .slide_feature_shift = &saw_knob_shift, .slide_grab_box = &saw_knob_box, .slide_stroke_m = 4.25f * .0254f});
 	inline const profile saw_hand = [] {auto p = m240::base; p.wrists = {{{{9.538195f, 1.666559f, 0.069154f}, {0.1204551f, -0.0628470f, -0.1369783f, 0.9812124f}}, {{-3.485103f, -1.359254f, -0.310450f}, {-0.0486935f, -0.5978429f, 0.7985196f, -0.0507860f}}}}; return p;}(); // Wrists: saw native idle.
 	// skorpion magazine grasp: record_001.jsonl h1_wpn_smg_skorpion_reload t=0.555.
 	inline constexpr hands::anchor skorpion_magazine_in_wrist{{6.613346f, 3.135035f, 0.686989f}, {-0.4680494f, 0.6510136f, -0.0963901f, 0.5897627f}};

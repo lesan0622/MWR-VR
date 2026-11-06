@@ -48,6 +48,11 @@ namespace vr::gameplay::weapons::mwr_rebase
 		const char* cycle_notetrack{}; // MWR notetrack split for rear/close when the source's is absent.
 		// Explicit MWR action sounds (notetrack + part), replacing the source's rear/close cues.
 		sound_reference rear{}, close{};
+		// Operated-part features (grips, grab box, capture) move by this instead of
+		// the slide-bind delta when the MWR handle sits off its bone (M249 j_bolt knob).
+		const hands::vec* slide_feature_shift{};
+		const std::array<hands::vec, 2>* slide_grab_box{}; // Explicit MWR gun-local handle box (low, high; inches).
+		float slide_stroke_m{}; // Native action stroke when it differs from the source recipe.
 	};
 
 	// Builds once at static initialization; storage is never released because

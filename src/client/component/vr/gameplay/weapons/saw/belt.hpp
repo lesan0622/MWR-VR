@@ -75,6 +75,9 @@ inline const belt_feed::profile belt=[]{
 	belt_feed::profile p{"j_ammocover",cover_rest,{1.000000f, 0.000030f, -0.000060f},1.5512339f,cover_grip,chain_grip,chain_links};
 	// Reach envelope as on the original M240 cover; no palm-push region authored.
 	p.cover_extend_low_m={.12f,.03f,0};p.cover_extend_high_m={.12f,.03f,.12f};
+	// The charging-handle knob sits under the cover (4.8 cm from its grasp):
+	// the cover wins only when the hand is nearer to it than to the knob.
+	p.cover_preference=0;
 	return p;
 }();
 // Native SAW notetrack aliases (weapon notetrackSoundMap; no belt-lay sound).
