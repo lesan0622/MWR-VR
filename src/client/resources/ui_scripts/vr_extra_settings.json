@@ -1,0 +1,721 @@
+[
+  {
+    "name": "vr_moveDeadzone",
+    "category": "basics",
+    "group": "settings.turning",
+    "type": "number",
+    "min": 0.05,
+    "max": 0.5,
+    "step": 0.01,
+    "text": {
+      "en": [
+        "Movement stick deadzone",
+        "How far the movement stick must move before you walk."
+      ],
+      "ko": [
+        "이동 스틱 데드존",
+        "걷기 시작하기 전에 이동 스틱을 기울여야 하는 정도입니다."
+      ],
+      "de": [
+        "Totzone Bewegungsstick",
+        "Wie weit der Bewegungsstick bewegt werden muss, bevor du gehst."
+      ],
+      "es": [
+        "Zona muerta del stick de movimiento",
+        "Cuánto debe moverse el stick de movimiento antes de caminar."
+      ],
+      "fr": [
+        "Zone morte du stick de déplacement",
+        "Distance à parcourir par le stick de déplacement avant de marcher."
+      ],
+      "ja": [
+        "移動スティックのデッドゾーン",
+        "歩き始めるまでに移動スティックを倒す量です。"
+      ],
+      "ru": [
+        "Мёртвая зона стика движения",
+        "Насколько нужно отклонить стик движения, чтобы начать идти."
+      ],
+      "zh-CN": [
+        "移动摇杆死区",
+        "开始行走前移动摇杆需要推动的幅度。"
+      ],
+      "zh-TW": [
+        "移動搖桿死區",
+        "開始行走前移動搖桿需要推動的幅度。"
+      ]
+    }
+  },
+  {
+    "name": "vr_turnDeadzone",
+    "category": "basics",
+    "group": "settings.turning",
+    "type": "number",
+    "min": 0.05,
+    "max": 0.5,
+    "step": 0.01,
+    "text": {
+      "en": [
+        "Turn stick deadzone",
+        "How far the turn stick must move before smooth turning starts."
+      ],
+      "ko": [
+        "회전 스틱 데드존",
+        "부드러운 회전이 시작되기 전에 회전 스틱을 기울여야 하는 정도입니다."
+      ],
+      "de": [
+        "Totzone Drehstick",
+        "Wie weit der Drehstick bewegt werden muss, bevor das sanfte Drehen beginnt."
+      ],
+      "es": [
+        "Zona muerta del stick de giro",
+        "Cuánto debe moverse el stick de giro antes de empezar el giro suave."
+      ],
+      "fr": [
+        "Zone morte du stick de rotation",
+        "Distance à parcourir par le stick de rotation avant la rotation fluide."
+      ],
+      "ja": [
+        "回転スティックのデッドゾーン",
+        "スムーズ回転が始まるまでに回転スティックを倒す量です。"
+      ],
+      "ru": [
+        "Мёртвая зона стика поворота",
+        "Насколько нужно отклонить стик поворота, чтобы начался плавный поворот."
+      ],
+      "zh-CN": [
+        "转向摇杆死区",
+        "开始平滑转向前转向摇杆需要推动的幅度。"
+      ],
+      "zh-TW": [
+        "轉向搖桿死區",
+        "開始平滑轉向前轉向搖桿需要推動的幅度。"
+      ]
+    }
+  },
+  {
+    "name": "vr_physicalStance",
+    "category": "basics",
+    "group": "settings.comfort",
+    "type": "toggle",
+    "text": {
+      "en": [
+        "Real crouch and prone",
+        "Crouching or lying down for real changes your stance. Turn off when playing seated."
+      ],
+      "ko": [
+        "실제 앉기·엎드리기",
+        "실제로 앉거나 엎드리면 자세가 바뀝니다. 앉아서 플레이할 때는 끄세요."
+      ],
+      "de": [
+        "Echtes Hocken und Hinlegen",
+        "Echtes Hocken oder Hinlegen ändert deine Haltung. Im Sitzen ausschalten."
+      ],
+      "es": [
+        "Agacharse y tumbarse de verdad",
+        "Agacharte o tumbarte de verdad cambia tu postura. Desactívalo si juegas sentado."
+      ],
+      "fr": [
+        "S'accroupir et s'allonger réellement",
+        "S'accroupir ou s'allonger réellement change votre posture. Désactivez en jouant assis."
+      ],
+      "ja": [
+        "実際にしゃがむ・伏せる",
+        "実際にしゃがむ・伏せると姿勢が変わります。座ってプレイする場合はオフにしてください。"
+      ],
+      "ru": [
+        "Настоящее приседание и лёжа",
+        "Реальное приседание или положение лёжа меняет стойку. Отключите при игре сидя."
+      ],
+      "zh-CN": [
+        "真实蹲下与趴下",
+        "真实蹲下或趴下会改变姿势。坐着玩时请关闭。"
+      ],
+      "zh-TW": [
+        "真實蹲下與趴下",
+        "真實蹲下或趴下會改變姿勢。坐著玩時請關閉。"
+      ]
+    }
+  },
+  {
+    "name": "vr_objectiveMarkers",
+    "category": "basics",
+    "group": "settings.comfort",
+    "type": "toggle",
+    "text": {
+      "en": [
+        "Objective marker",
+        "Shows the current objective as a marker in the world."
+      ],
+      "ko": [
+        "목표 표시",
+        "현재 목표를 세계 안에 표시합니다."
+      ],
+      "de": [
+        "Zielmarkierung",
+        "Zeigt das aktuelle Ziel als Markierung in der Welt."
+      ],
+      "es": [
+        "Marcador de objetivo",
+        "Muestra el objetivo actual como un marcador en el mundo."
+      ],
+      "fr": [
+        "Marqueur d'objectif",
+        "Affiche l'objectif actuel sous forme de marqueur dans le monde."
+      ],
+      "ja": [
+        "目標マーカー",
+        "現在の目標をワールド内のマーカーで表示します。"
+      ],
+      "ru": [
+        "Маркер цели",
+        "Показывает текущую цель маркером в мире."
+      ],
+      "zh-CN": [
+        "目标标记",
+        "在世界中以标记显示当前目标。"
+      ],
+      "zh-TW": [
+        "目標標記",
+        "在世界中以標記顯示目前目標。"
+      ]
+    }
+  },
+  {
+    "name": "vr_subtitleScale",
+    "category": "other",
+    "group": "settings.subtitles",
+    "type": "number",
+    "min": 0.5,
+    "max": 3.0,
+    "step": 0.1,
+    "text": {
+      "en": [
+        "Subtitle size",
+        "Size of the VR subtitle and dialogue panel."
+      ],
+      "ko": [
+        "자막 크기",
+        "VR 자막·대사 패널의 크기입니다."
+      ],
+      "de": [
+        "Untertitelgröße",
+        "Größe des VR-Untertitel- und Dialogfelds."
+      ],
+      "es": [
+        "Tamaño de subtítulos",
+        "Tamaño del panel de subtítulos y diálogos en RV."
+      ],
+      "fr": [
+        "Taille des sous-titres",
+        "Taille du panneau de sous-titres et de dialogues en VR."
+      ],
+      "ja": [
+        "字幕サイズ",
+        "VR の字幕・会話パネルの大きさです。"
+      ],
+      "ru": [
+        "Размер субтитров",
+        "Размер панели субтитров и диалогов в VR."
+      ],
+      "zh-CN": [
+        "字幕大小",
+        "VR 字幕与对话面板的大小。"
+      ],
+      "zh-TW": [
+        "字幕大小",
+        "VR 字幕與對話面板的大小。"
+      ]
+    }
+  },
+  {
+    "name": "vr_desktopFov",
+    "category": "other",
+    "group": "settings.recordingMode",
+    "type": "number",
+    "min": 30,
+    "max": 120,
+    "step": 1,
+    "text": {
+      "en": [
+        "Desktop view FOV",
+        "Horizontal field of view of the desktop window, in degrees."
+      ],
+      "ko": [
+        "데스크톱 화면 시야각",
+        "PC 화면(데스크톱 창)의 가로 시야각(도)입니다."
+      ],
+      "de": [
+        "Sichtfeld Desktopansicht",
+        "Horizontales Sichtfeld des Desktopfensters in Grad."
+      ],
+      "es": [
+        "Campo de visión del escritorio",
+        "Campo de visión horizontal de la ventana de escritorio, en grados."
+      ],
+      "fr": [
+        "Champ de vision du bureau",
+        "Champ de vision horizontal de la fenêtre du bureau, en degrés."
+      ],
+      "ja": [
+        "デスクトップ表示の視野角",
+        "デスクトップウィンドウの水平視野角（度）です。"
+      ],
+      "ru": [
+        "Угол обзора на экране ПК",
+        "Горизонтальный угол обзора окна на рабочем столе, в градусах."
+      ],
+      "zh-CN": [
+        "桌面画面视野",
+        "桌面窗口的水平视野角度。"
+      ],
+      "zh-TW": [
+        "桌面畫面視野",
+        "桌面視窗的水平視野角度。"
+      ]
+    }
+  },
+  {
+    "name": "vr_autoAds",
+    "category": "gameplay",
+    "group": "settings.aiming",
+    "type": "toggle",
+    "text": {
+      "en": [
+        "Automatic aim down sights",
+        "Raising a supported weapon to your eye aims down its sights."
+      ],
+      "ko": [
+        "자동 정조준",
+        "지원되는 무기를 눈앞으로 들면 정조준합니다."
+      ],
+      "de": [
+        "Automatisches Zielen",
+        "Wenn du eine unterstützte Waffe ans Auge hebst, zielst du über Kimme und Korn."
+      ],
+      "es": [
+        "Apuntar automáticamente",
+        "Al subir un arma compatible hasta el ojo, apuntas con la mira."
+      ],
+      "fr": [
+        "Visée automatique",
+        "Lever une arme prise en charge jusqu'à l'œil passe en visée."
+      ],
+      "ja": [
+        "自動エイム",
+        "対応武器を目の前に構えるとエイムします。"
+      ],
+      "ru": [
+        "Автоматическое прицеливание",
+        "Поднятие поддерживаемого оружия к глазу включает прицеливание."
+      ],
+      "zh-CN": [
+        "自动瞄准",
+        "将支持的武器举到眼前时进入瞄准。"
+      ],
+      "zh-TW": [
+        "自動瞄準",
+        "將支援的武器舉到眼前時進入瞄準。"
+      ]
+    }
+  },
+  {
+    "name": "vr_scopeZoom",
+    "category": "gameplay",
+    "group": "settings.aiming",
+    "type": "toggle",
+    "text": {
+      "en": [
+        "Scope magnification",
+        "Shows a magnified image inside supported physical scopes."
+      ],
+      "ko": [
+        "스코프 확대",
+        "지원되는 실물 스코프 안에 확대된 화면을 보여 줍니다."
+      ],
+      "de": [
+        "Zielfernrohr-Vergrößerung",
+        "Zeigt ein vergrößertes Bild in unterstützten physischen Zielfernrohren."
+      ],
+      "es": [
+        "Aumento de la mira",
+        "Muestra una imagen ampliada dentro de las miras físicas compatibles."
+      ],
+      "fr": [
+        "Grossissement de la lunette",
+        "Affiche une image grossie dans les lunettes physiques prises en charge."
+      ],
+      "ja": [
+        "スコープ拡大",
+        "対応する実物スコープ内に拡大画像を表示します。"
+      ],
+      "ru": [
+        "Увеличение прицела",
+        "Показывает увеличенное изображение в поддерживаемых физических прицелах."
+      ],
+      "zh-CN": [
+        "瞄准镜放大",
+        "在支持的实体瞄准镜内显示放大画面。"
+      ],
+      "zh-TW": [
+        "瞄準鏡放大",
+        "在支援的實體瞄準鏡內顯示放大畫面。"
+      ]
+    }
+  },
+  {
+    "name": "vr_weaponHapticScale",
+    "category": "gameplay",
+    "group": "settings.weaponInteraction",
+    "type": "number",
+    "min": 0,
+    "max": 2,
+    "step": 0.1,
+    "text": {
+      "en": [
+        "Weapon vibration strength",
+        "Controller vibration from weapons; 0 turns it off."
+      ],
+      "ko": [
+        "무기 진동 세기",
+        "무기 사용 시 컨트롤러 진동 세기입니다. 0이면 끕니다."
+      ],
+      "de": [
+        "Stärke der Waffenvibration",
+        "Controller-Vibration durch Waffen; 0 schaltet sie aus."
+      ],
+      "es": [
+        "Intensidad de vibración del arma",
+        "Vibración del mando por las armas; 0 la desactiva."
+      ],
+      "fr": [
+        "Intensité des vibrations d'arme",
+        "Vibrations de la manette dues aux armes ; 0 les désactive."
+      ],
+      "ja": [
+        "武器の振動の強さ",
+        "武器によるコントローラーの振動です。0 でオフになります。"
+      ],
+      "ru": [
+        "Сила вибрации оружия",
+        "Вибрация контроллера от оружия; 0 отключает её."
+      ],
+      "zh-CN": [
+        "武器振动强度",
+        "武器带来的控制器振动；0 为关闭。"
+      ],
+      "zh-TW": [
+        "武器震動強度",
+        "武器帶來的控制器震動；0 為關閉。"
+      ]
+    }
+  },
+  {
+    "name": "vr_weaponInteractionSound",
+    "category": "gameplay",
+    "group": "settings.weaponInteraction",
+    "type": "toggle",
+    "text": {
+      "en": [
+        "Weapon handling sounds",
+        "Plays sounds for physical magazine, bolt and slide actions."
+      ],
+      "ko": [
+        "무기 조작 소리",
+        "탄창·노리쇠·슬라이드를 직접 조작할 때 소리를 냅니다."
+      ],
+      "de": [
+        "Waffenhandhabungsgeräusche",
+        "Spielt Geräusche für physische Magazin-, Verschluss- und Schlittenaktionen."
+      ],
+      "es": [
+        "Sonidos de manejo del arma",
+        "Reproduce sonidos al manipular cargador, cerrojo y corredera."
+      ],
+      "fr": [
+        "Sons de manipulation d'arme",
+        "Joue des sons pour les actions physiques de chargeur, culasse et glissière."
+      ],
+      "ja": [
+        "武器操作音",
+        "マガジン・ボルト・スライドを手で操作したときに音を鳴らします。"
+      ],
+      "ru": [
+        "Звуки обращения с оружием",
+        "Звуки физических действий с магазином, затвором и кожухом."
+      ],
+      "zh-CN": [
+        "武器操作音效",
+        "手动操作弹匣、枪栓和套筒时播放音效。"
+      ],
+      "zh-TW": [
+        "武器操作音效",
+        "手動操作彈匣、槍栓和滑套時播放音效。"
+      ]
+    }
+  },
+  {
+    "name": "vr_weaponArms",
+    "category": "gameplay",
+    "group": "settings.weaponInteraction",
+    "type": "toggle",
+    "text": {
+      "en": [
+        "Show arms",
+        "Shows the arms and hands; off shows only the weapon."
+      ],
+      "ko": [
+        "팔 표시",
+        "팔과 손을 보여 줍니다. 끄면 무기만 보입니다."
+      ],
+      "de": [
+        "Arme anzeigen",
+        "Zeigt Arme und Hände; aus zeigt nur die Waffe."
+      ],
+      "es": [
+        "Mostrar brazos",
+        "Muestra los brazos y las manos; desactivado solo muestra el arma."
+      ],
+      "fr": [
+        "Afficher les bras",
+        "Affiche les bras et les mains ; désactivé, seule l'arme est visible."
+      ],
+      "ja": [
+        "腕を表示",
+        "腕と手を表示します。オフにすると武器だけが表示されます。"
+      ],
+      "ru": [
+        "Показывать руки",
+        "Показывает руки и кисти; если выключено, видно только оружие."
+      ],
+      "zh-CN": [
+        "显示手臂",
+        "显示手臂和手；关闭后只显示武器。"
+      ],
+      "zh-TW": [
+        "顯示手臂",
+        "顯示手臂和手；關閉後只顯示武器。"
+      ]
+    }
+  },
+  {
+    "name": "vr_physicalMelee",
+    "category": "gameplay",
+    "group": "settings.weaponInteraction",
+    "type": "toggle",
+    "text": {
+      "en": [
+        "Physical melee",
+        "Chest knife and swinging your hand or weapon for melee."
+      ],
+      "ko": [
+        "직접 근접 공격",
+        "가슴의 칼, 손이나 무기를 휘둘러 근접 공격합니다."
+      ],
+      "de": [
+        "Physischer Nahkampf",
+        "Brustmesser und Nahkampf durch Schwingen von Hand oder Waffe."
+      ],
+      "es": [
+        "Cuerpo a cuerpo físico",
+        "Cuchillo en el pecho y golpes moviendo la mano o el arma."
+      ],
+      "fr": [
+        "Corps à corps physique",
+        "Couteau de poitrine et coups en balançant la main ou l'arme."
+      ],
+      "ja": [
+        "物理近接攻撃",
+        "胸のナイフや、手・武器を振る近接攻撃です。"
+      ],
+      "ru": [
+        "Физический ближний бой",
+        "Нож на груди и удары взмахом руки или оружия."
+      ],
+      "zh-CN": [
+        "实体近战",
+        "胸前小刀，以及挥动手或武器进行近战。"
+      ],
+      "zh-TW": [
+        "實體近戰",
+        "胸前小刀，以及揮動手或武器進行近戰。"
+      ]
+    }
+  },
+  {
+    "name": "vr_physicalGrenades",
+    "category": "gameplay",
+    "group": "settings.throwables",
+    "type": "toggle",
+    "text": {
+      "en": [
+        "Physical grenades",
+        "Take grenades from your chest, pull the pin with the other hand and throw."
+      ],
+      "ko": [
+        "직접 수류탄",
+        "가슴에서 수류탄을 꺼내 다른 손으로 핀을 뽑고 던집니다."
+      ],
+      "de": [
+        "Physische Granaten",
+        "Granaten von der Brust nehmen, Stift mit der anderen Hand ziehen und werfen."
+      ],
+      "es": [
+        "Granadas físicas",
+        "Toma granadas del pecho, quita la anilla con la otra mano y lánzalas."
+      ],
+      "fr": [
+        "Grenades physiques",
+        "Prenez les grenades sur la poitrine, dégoupillez avec l'autre main et lancez."
+      ],
+      "ja": [
+        "物理グレネード",
+        "胸からグレネードを取り、もう一方の手でピンを抜いて投げます。"
+      ],
+      "ru": [
+        "Физические гранаты",
+        "Берите гранаты с груди, выдёргивайте чеку другой рукой и бросайте."
+      ],
+      "zh-CN": [
+        "实体手榴弹",
+        "从胸前取出手榴弹，用另一只手拔掉保险销后投掷。"
+      ],
+      "zh-TW": [
+        "實體手榴彈",
+        "從胸前取出手榴彈，用另一隻手拔掉保險銷後投擲。"
+      ]
+    }
+  },
+  {
+    "name": "vr_turretHandAim",
+    "category": "gameplay",
+    "group": "settings.weaponInteraction",
+    "type": "toggle",
+    "text": {
+      "en": [
+        "Aim mounted guns by hand",
+        "Mounted and vehicle guns: hold the handles and swing the gun with your arms."
+      ],
+      "ko": [
+        "거치 무기 손 조준",
+        "거치·차량 무기의 손잡이를 잡고 팔로 총을 돌립니다."
+      ],
+      "de": [
+        "Montierte Waffen per Hand zielen",
+        "Montierte und Fahrzeugwaffen: Griffe halten und die Waffe mit den Armen schwenken."
+      ],
+      "es": [
+        "Apuntar armas montadas a mano",
+        "Armas montadas y de vehículo: sujeta las empuñaduras y gira el arma con los brazos."
+      ],
+      "fr": [
+        "Viser les armes montées à la main",
+        "Armes montées et de véhicule : tenez les poignées et orientez l'arme avec les bras."
+      ],
+      "ja": [
+        "据え置き武器を手で照準",
+        "据え置き・車両の武器のグリップを握り、腕で銃を動かします。"
+      ],
+      "ru": [
+        "Наводка станкового оружия руками",
+        "Станковое и бортовое оружие: держите рукояти и поворачивайте его руками."
+      ],
+      "zh-CN": [
+        "用手瞄准固定武器",
+        "固定与载具武器：握住握把，用手臂转动枪。"
+      ],
+      "zh-TW": [
+        "用手瞄準固定武器",
+        "固定與載具武器：握住握把，用手臂轉動槍。"
+      ]
+    }
+  },
+  {
+    "name": "vr_barrettFreeGun",
+    "category": "gameplay",
+    "group": "settings.weaponInteraction",
+    "type": "toggle",
+    "text": {
+      "en": [
+        "Physical Barrett",
+        "The M82 rests on its bipod and is aimed by hand through a physical scope; off uses the flat native scope."
+      ],
+      "ko": [
+        "직접 조작 배럿",
+        "M82를 양각대에 올리고 실물 스코프로 손으로 조준합니다. 끄면 원래 평면 스코프를 씁니다."
+      ],
+      "de": [
+        "Physisches Barrett",
+        "Das M82 liegt auf dem Zweibein und wird per Hand durch ein physisches Zielfernrohr gezielt; aus nutzt das flache Originalfernrohr."
+      ],
+      "es": [
+        "Barrett físico",
+        "El M82 apoya en su bípode y se apunta a mano con una mira física; desactivado usa la mira plana original."
+      ],
+      "fr": [
+        "Barrett physique",
+        "Le M82 repose sur son bipied et se vise à la main par une lunette physique ; désactivé, lunette plate d'origine."
+      ],
+      "ja": [
+        "物理バレット",
+        "M82 を二脚に載せ、実物スコープで手で照準します。オフにすると元の平面スコープになります。"
+      ],
+      "ru": [
+        "Физический Barrett",
+        "M82 стоит на сошках и наводится руками через физический прицел; если выключено — обычный плоский прицел."
+      ],
+      "zh-CN": [
+        "实体巴雷特",
+        "M82 架在两脚架上，通过实体瞄准镜用手瞄准；关闭后使用原版平面瞄准镜。"
+      ],
+      "zh-TW": [
+        "實體巴雷特",
+        "M82 架在兩腳架上，透過實體瞄準鏡用手瞄準；關閉後使用原版平面瞄準鏡。"
+      ]
+    }
+  },
+  {
+    "name": "vr_handCrawl",
+    "category": "gameplay",
+    "group": "settings.climbing",
+    "type": "toggle",
+    "text": {
+      "en": [
+        "Crawl with your hands",
+        "Grip plants a hand on the ground and pulling it drags your body."
+      ],
+      "ko": [
+        "손으로 기어가기",
+        "그립으로 손을 바닥에 짚고 당기면 몸이 끌려갑니다."
+      ],
+      "de": [
+        "Mit den Händen kriechen",
+        "Griff setzt eine Hand auf den Boden, Ziehen schleift den Körper nach."
+      ],
+      "es": [
+        "Arrastrarse con las manos",
+        "El agarre apoya una mano en el suelo y al tirar arrastras el cuerpo."
+      ],
+      "fr": [
+        "Ramper avec les mains",
+        "La poignée pose une main au sol et tirer fait avancer le corps."
+      ],
+      "ja": [
+        "手で這う",
+        "グリップで手を地面につき、引くと体を引きずります。"
+      ],
+      "ru": [
+        "Ползти руками",
+        "Хват упирает руку в землю, а рывок подтягивает тело."
+      ],
+      "zh-CN": [
+        "用手爬行",
+        "握持将手按在地上，拉动即可拖动身体。"
+      ],
+      "zh-TW": [
+        "用手爬行",
+        "握持將手按在地上，拉動即可拖動身體。"
+      ]
+    }
+  }
+]

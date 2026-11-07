@@ -30,6 +30,18 @@
 #define LUI_CAMPAIGN_UNLOCK   323
 #define LUI_SUBTITLES         324
 #define LUI_VR_OPTIONS        325
+#define VR_SETTINGS_SCHEMA    326
+#define VR_EXTRA_SETTINGS     327
+// 330 is OPENXR_LOADER_RESOURCE (launcher/preflight_resource.hpp).
+#define VR_LOCALE_EN        340
+#define VR_LOCALE_KO        341
+#define VR_LOCALE_DE        342
+#define VR_LOCALE_ES        343
+#define VR_LOCALE_FR        344
+#define VR_LOCALE_JA        345
+#define VR_LOCALE_RU        346
+#define VR_LOCALE_ZH_CN     347
+#define VR_LOCALE_ZH_TW     348
 
 #define LUA_JSON              305
 

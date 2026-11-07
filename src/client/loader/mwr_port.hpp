@@ -79,6 +79,7 @@ namespace mwr_port
 		"vr::player_height", // vr_playerHeight: body slots / physical stance scale; 3 s menu hold measures it.
 		"ui_scripting", // LUI script loading (h1-mod SP addresses); only common.lua, json and vr_options.lua.
 		"lui", // lui_open / lui_open_popup / lui_restart console commands.
+		"vr::settings_menu", // vr_settings_menu_status: the Options > VR catalog.
 		"vr::gameplay::weapons::javelin_screen", // Javelin CLU display at the eye; lock gate via playerads.
 		"vr::gameplay::weapons::launcher::native_component", // Javelin lock projection from the launcher (Target_IsInRect).
 		"vr::gameplay::fixed_sniper", // sniperescape Barrett: hand-drag/stick aim, flat native scope view.

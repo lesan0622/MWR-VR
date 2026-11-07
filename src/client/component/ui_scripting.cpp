@@ -32,6 +32,7 @@
 #include "product.hpp"
 #include "campaign_unlock_request.hpp"
 #include "vr/settings.hpp"
+#include "vr/settings_menu.hpp"
 #include <utils/flags.hpp>
 
 #include <utils/string.hpp>
@@ -296,6 +297,48 @@ namespace ui_scripting
 			using game = table;
 			auto game_type = game();
 			lua["game"] = game_type;
+
+			// Options > VR (vr_options.lua): launcher-schema settings this build registers.
+			game_type["vrsettings"] = [](const game&, const script_value& language)
+			{
+				table result;
+				int index = 1;
+				for (const auto& e : vr::settings_menu::catalog(language.as<int>()))
+				{
+					table row;
+					row["name"] = e.name;row["category"] = e.category;row["categoryLabel"] = e.category_label;
+					row["group"] = e.group;row["groupLabel"] = e.group_label;
+					row["label"] = e.label;row["description"] = e.description;
+					row["type"] = std::string(e.type == vr::settings_menu::kind::toggle ? "toggle" :
+						e.type == vr::settings_menu::kind::choice ? "choice" : "number");
+					row["min"] = e.min;row["max"] = e.max;row["step"] = e.step;row["scale"] = e.scale;
+					row["enabledLevel"] = e.enabled_level;
+					row["whenName"] = e.when_name;row["whenValue"] = e.when_value;
+					table options;
+					int option_index = 1;
+					for (const auto& option : e.options)
+					{
+						table item;
+						item["value"] = option.value;item["label"] = option.label;
+						options.set(option_index++, item);
+					}
+					row["options"] = options;
+					result.set(index++, row);
+				}
+				return result;
+			};
+			game_type["vrsettingtext"] = [](const game&, const script_value& language, const script_value& key)
+			{
+				return vr::settings_menu::text(language.as<int>(), key.as<std::string>());
+			};
+			game_type["vrsettingget"] = [](const game&, const script_value& name)
+			{
+				return vr::settings_menu::value(name.as<std::string>());
+			};
+			game_type["vrsettingset"] = [](const game&, const script_value& name, const script_value& value)
+			{
+				return vr::settings_menu::set(name.as<std::string>(), value.as<std::string>());
+			};
 
 			game_type["applycampaignunlock"] = [](const game&, const script_value& apply)
 			{
