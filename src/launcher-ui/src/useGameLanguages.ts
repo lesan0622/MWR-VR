@@ -2,14 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { bridge } from "./bridge";
 import { errorKey } from "./i18n";
 import type { Notice } from "./useSettings";
+import { languageAvailable, languageBlocksLaunch, languageSelectValue, type GameLanguageResult as Result } from "./gameLanguageModel";
 
-interface Result {
-  ok?: boolean;
-  pending?: boolean;
-  language: string;
-  choices: Array<{ value: string; label: string }>;
-  saved?: boolean;
-}
 export function useGameLanguages(enabled: boolean) {
   const [result, setResult] = useState<Result | null>(null);
   const [busy, setBusy] = useState(false);
@@ -41,11 +35,11 @@ export function useGameLanguages(enabled: boolean) {
       }
       if (!live.current || current !== generation.current) return;
       setResult(response);
-      const available = response.choices.some(
-        (choice) => choice.value === response.language,
-      );
+      const available = languageAvailable(response);
       setNotice(
-        response.saved
+        response.managedBySteam
+          ? { key: "language.gameSteam" }
+          : response.saved
           ? { key: "language.gameSaved" }
           : !response.choices.length
             ? { key: "language.gameEmpty", error: true }
@@ -75,6 +69,8 @@ export function useGameLanguages(enabled: boolean) {
   return {
     result,
     busy,
+    blocksLaunch: languageBlocksLaunch(result),
+    selectValue: languageSelectValue(result),
     notice,
     scan: () => run(),
     save: (language: string) => run(language),

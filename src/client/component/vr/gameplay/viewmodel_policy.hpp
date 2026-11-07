@@ -27,4 +27,12 @@ namespace vr::gameplay::weapons
 		for (std::size_t i=0;i<assembly.size();++i) assembly[i] |= interaction[i];
 		return assembly;
 	}
+	inline part_mask display_viewmodel_mask(part_mask normal, bool display_open) noexcept
+	{
+		// The display samples the scene itself on MWR. Hide every viewmodel
+		// surface (including the CLU housing) before that image is rendered.
+		// Do not alter bones: the launcher still needs its muzzle and grip pose.
+		if (display_open) normal.fill(~std::uint32_t{});
+		return normal;
+	}
 }

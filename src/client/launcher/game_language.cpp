@@ -145,7 +145,7 @@ namespace launcher_game_language
 					const auto choices = installed_folders(root);
 					auto selected = steam_language(root);
 					if (selected.empty() && choices.size() == 1) selected = choices[0].at("value").get<std::string>();
-					return json{{"ok", true}, {"language", selected.empty() ? "english" : selected}, {"choices", choices}, {"saved", false}}.dump();
+					return json{{"ok", true}, {"language", selected.empty() ? "english" : selected}, {"choices", choices}, {"saved", false}, {"managedBySteam", true}}.dump();
 				}
 				catch (...) { return failure("language.gameLoadError"); }
 			}

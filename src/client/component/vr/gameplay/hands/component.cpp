@@ -42,6 +42,7 @@
 #include "../weapon_recoil.hpp"
 #include "../weapon_render_pose.hpp"
 #include "../optic_runtime.hpp"
+#include "../javelin_screen.hpp"
 #include "../weapon_profiles.hpp"
 #include "../physical_reload_presenter.hpp"
 #include "../stowed_reload_pose.hpp"
@@ -1655,14 +1656,17 @@ namespace vr::gameplay::hands
 				                                      view_offset,
 				                                      spatial.units_per_meter,
 				                                      ads_control.active);
+				const bool launcher_display = weapons::javelin_screen::requested(owner) &&
+				                              weapons::javelin_screen::camera_epoch() != 0;
 				weapons::viewmodel_visibility::publish(
 				    object,
 				    object->matrices,
 				    object->timestamp,
-				    weapons::combine_part_masks(solver().binding.assembly_hidden,
+				    weapons::display_viewmodel_mask(weapons::combine_part_masks(solver().binding.assembly_hidden,
 				                                mechanical_pose.valid ? mechanical_pose.hidden
-				                                                      : weapons::part_mask{}),
-				    solver().binding.active_profile->viewmodel.visibility,
+				                                                      : weapons::part_mask{}), launcher_display),
+				    launcher_display ? weapons::part_visibility::surface
+				                     : solver().binding.active_profile->viewmodel.visibility,
 				    independent &&
 				            weapons::carry::hand_has_weapon(
 				                static_cast<vr::hand>(1 - int(owner.holding_hand()))) &&
