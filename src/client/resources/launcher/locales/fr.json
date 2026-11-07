@@ -92,7 +92,7 @@
   "settings.alignment": "Alignement des contrôleurs",
   "settings.body": "Corps",
   "settings.playerHeight": "Taille (cm)",
-  "settings.playerHeightHint": "Adapte à votre taille les étuis de ceinture et de dos, l'équipement de poitrine et les distances pour s'accroupir ou s'allonger réellement. Pour la mesurer, tenez-vous droit en jeu et maintenez X pendant 3 secondes (recentrage à 1 seconde) ; les deux manettes vibrent quand la taille est enregistrée. La hauteur des yeux en jeu ne change pas. Vous pouvez aussi la modifier ou la mesurer en jeu dans Options > VR.",
+  "settings.playerHeightHint": "Adapte à votre taille les étuis de ceinture et de dos, l'équipement de poitrine et les distances pour s'accroupir ou s'allonger réellement. Pour la mesurer, choisissez en jeu Options > VR > Calibrage > Mesurer la taille (hors menus, maintenez X 3 secondes), tenez-vous droit, bras tendus sur les côtés (en T), et pressez les deux gâchettes. Les épaules et la longueur des bras sont aussi ajustées. La hauteur des yeux en jeu ne change pas.",
   "settings.preset": "Préréglage",
   "choice.none": "Aucun",
   "settings.offsetHint": "Déplace la main et son centre de rotation ensemble. Les réglages suivent votre direction recentrée et restent stables quand vous tournez le poignet. Le déplacement vers l’intérieur est symétrique pour chaque main.",

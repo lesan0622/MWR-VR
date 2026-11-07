@@ -1,5 +1,146 @@
 [
   {
+    "name": "vr_armScale",
+    "category": "calibration",
+    "group": "settings.body",
+    "type": "number",
+    "min": 0.85,
+    "max": 1.25,
+    "step": 0.01,
+    "text": {
+      "en": [
+        "Arm length",
+        "Drawn arm length relative to the arm model. Measuring your height in a T-pose sets it."
+      ],
+      "ko": [
+        "팔 길이 배율",
+        "보이는 팔 길이를 팔 모델 대비 배율로 정합니다. T자 자세로 키를 재면 자동으로 맞춰집니다."
+      ],
+      "de": [
+        "Armlänge",
+        "Gezeichnete Armlänge im Verhältnis zum Armmodell. Eine Größenmessung in T-Pose stellt sie ein."
+      ],
+      "es": [
+        "Longitud del brazo",
+        "Longitud del brazo dibujado respecto al modelo. Medir tu altura en pose de T la ajusta."
+      ],
+      "fr": [
+        "Longueur du bras",
+        "Longueur du bras affiché par rapport au modèle. Mesurer votre taille en T la règle."
+      ],
+      "ja": [
+        "腕の長さ",
+        "表示される腕の長さ（腕モデル比）です。T ポーズで身長を計測すると自動で合わせます。"
+      ],
+      "ru": [
+        "Длина рук",
+        "Длина отображаемой руки относительно модели. Измерение роста в Т-позе задаёт её."
+      ],
+      "zh-CN": [
+        "手臂长度",
+        "显示的手臂长度（相对手臂模型）。以 T 字姿势测量身高时自动设置。"
+      ],
+      "zh-TW": [
+        "手臂長度",
+        "顯示的手臂長度（相對手臂模型）。以 T 字姿勢測量身高時自動設定。"
+      ]
+    }
+  },
+  {
+    "name": "vr_shoulderDown",
+    "category": "calibration",
+    "group": "settings.body",
+    "type": "number",
+    "min": 0.05,
+    "max": 0.45,
+    "step": 0.01,
+    "text": {
+      "en": [
+        "Shoulder height below eyes (m)",
+        "Where the drawn arms start. Measuring your height in a T-pose sets it."
+      ],
+      "ko": [
+        "눈~어깨 높이 (m)",
+        "보이는 팔이 시작되는 높이입니다. T자 자세로 키를 재면 자동으로 맞춰집니다."
+      ],
+      "de": [
+        "Schulter unter den Augen (m)",
+        "Wo die gezeichneten Arme beginnen. Eine Größenmessung in T-Pose stellt sie ein."
+      ],
+      "es": [
+        "Hombros bajo los ojos (m)",
+        "Donde empiezan los brazos dibujados. Medir tu altura en pose de T lo ajusta."
+      ],
+      "fr": [
+        "Épaules sous les yeux (m)",
+        "Point de départ des bras affichés. Mesurer votre taille en T le règle."
+      ],
+      "ja": [
+        "目から肩までの高さ (m)",
+        "表示される腕の付け根の高さです。T ポーズで身長を計測すると自動で合わせます。"
+      ],
+      "ru": [
+        "Плечи ниже глаз (м)",
+        "Откуда начинаются отображаемые руки. Измерение роста в Т-позе задаёт это."
+      ],
+      "zh-CN": [
+        "眼睛到肩膀高度 (m)",
+        "显示的手臂起点高度。以 T 字姿势测量身高时自动设置。"
+      ],
+      "zh-TW": [
+        "眼睛到肩膀高度 (m)",
+        "顯示的手臂起點高度。以 T 字姿勢測量身高時自動設定。"
+      ]
+    }
+  },
+  {
+    "name": "vr_shoulderHalfWidth",
+    "category": "calibration",
+    "group": "settings.body",
+    "type": "number",
+    "min": 0.1,
+    "max": 0.35,
+    "step": 0.01,
+    "text": {
+      "en": [
+        "Shoulder half width (m)",
+        "Distance from the head centre to each shoulder joint. Measuring your height sets it."
+      ],
+      "ko": [
+        "어깨 반폭 (m)",
+        "머리 중심에서 각 어깨 관절까지의 거리입니다. T자 자세로 키를 재면 자동으로 맞춰집니다."
+      ],
+      "de": [
+        "Halbe Schulterbreite (m)",
+        "Abstand von der Kopfmitte zu jedem Schultergelenk. Eine Größenmessung stellt ihn ein."
+      ],
+      "es": [
+        "Media anchura de hombros (m)",
+        "Distancia del centro de la cabeza a cada hombro. Medir tu altura la ajusta."
+      ],
+      "fr": [
+        "Demi-largeur des épaules (m)",
+        "Distance du centre de la tête à chaque épaule. Mesurer votre taille la règle."
+      ],
+      "ja": [
+        "肩の半幅 (m)",
+        "頭の中心から各肩関節までの距離です。身長を計測すると自動で合わせます。"
+      ],
+      "ru": [
+        "Половина ширины плеч (м)",
+        "Расстояние от центра головы до каждого плечевого сустава. Измерение роста задаёт его."
+      ],
+      "zh-CN": [
+        "肩宽一半 (m)",
+        "头部中心到每个肩关节的距离。测量身高时自动设置。"
+      ],
+      "zh-TW": [
+        "肩寬一半 (m)",
+        "頭部中心到每個肩關節的距離。測量身高時自動設定。"
+      ]
+    }
+  },
+  {
     "name": "vr_moveDeadzone",
     "category": "basics",
     "group": "settings.turning",

@@ -14,11 +14,11 @@ local korean = language == 15 -- LANGUAGE_KOREAN
 local extra = korean and {
     button_desc = "VR 설정을 게임 안에서 바꿉니다.",
     measure = "지금 키 측정",
-    measure_desc = "똑바로 선 채 선택하세요. 헤드셋 높이로 키를 잽니다. 메뉴 밖에서 X 버튼을 3초 눌러도 측정됩니다."
+    measure_desc = "선택한 뒤 똑바로 서서 두 팔을 옆으로 쭉 뻗고(T자) 양손 트리거를 함께 당기세요. 키, 어깨 높이·너비, 팔 길이를 잽니다(20초 안에). 메뉴 밖에서는 X 버튼을 3초 누른 뒤 같은 방법으로 잽니다."
 } or {
     button_desc = "Change VR settings in game.",
     measure = "Measure height now",
-    measure_desc = "Select while standing upright; the headset height sets your height. Holding X for 3 seconds outside menus also measures it."
+    measure_desc = "Select, then stand upright with both arms straight out to the sides (T-pose) and pull both triggers within 20 seconds. Measures your height, shoulder height and width, and arm length. Outside menus, hold X for 3 seconds first."
 }
 
 local settings = game:vrsettings(language)
@@ -148,12 +148,16 @@ end
 
 local function add_measure(menu)
     menu:AddButton(extra.measure, function()
-        -- Measures in place; rebuild the menu so the height row shows the result.
-        local before = get("vr_playerHeight")
-        Engine.ExecNow("vr_measure_height")
-        if get("vr_playerHeight") ~= before then
-            reopen(menu)
-        end
+        -- Armed: T-pose and both triggers measure. Rebuild once a result lands.
+        local before = Engine.GetDvarInt("vr_heightMeasured")
+        Engine.ExecNow("vr_measure_height arm")
+        menu:registerEventHandler("vr_measure_poll", function()
+            if Engine.GetDvarInt("vr_heightMeasured") ~= before then
+                before = Engine.GetDvarInt("vr_heightMeasured")
+                reopen(menu)
+            end
+        end)
+        menu:addElement(LUI.UITimer.new(250, "vr_measure_poll"))
     end, nil, true, nil, {
         desc_text = extra.measure_desc
     })

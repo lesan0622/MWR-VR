@@ -16,6 +16,15 @@ namespace vr::player_height
 	inline constexpr float reference_cm = 175.f, min_cm = 120.f, max_cm = 220.f;
 	inline constexpr float eye_to_crown_m = .11f; // Standing centre-eye height to the top of the head.
 	inline std::atomic<float> body_scale{1.f};
+	// vr_armScale: the viewmodel arm (shoulder -> wrist) length relative to the
+	// model; a T-pose measurement sets it from the real arm. model_arm_units is
+	// the unscaled model arm length published by the hand solver (world units).
+	inline constexpr float min_arm_scale = .85f, max_arm_scale = 1.25f;
+	inline std::atomic<float> arm_scale{1.f};
+	inline std::atomic<float> model_arm_units{NAN};
+	// Joint-centre shoulder half width per metre of height (0.18 m at 175 cm,
+	// the vr_shoulderHalfWidth default); grip centre to wrist joint.
+	inline constexpr float shoulder_half_width_per_height = .18f / 1.75f, grip_to_wrist_m = .08f;
 	// Backend-published HMD centre-eye height above the floor (OpenXR stage
 	// space or the OpenVR standing universe), with its steady-clock sample time.
 	inline std::atomic<float> head_floor_meters{NAN};

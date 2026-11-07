@@ -5,6 +5,7 @@
 #include <array>
 #include <cmath>
 #include <span>
+#include "../../player_height.hpp"
 
 namespace vr::gameplay::hands
 {
@@ -285,9 +286,12 @@ namespace vr::gameplay::hands
 			const auto shoulder = shoulders[hand];
 			const float native_upper = length(sub(elbow, native_shoulder)),
 			            native_lower = length(sub(wrist, elbow));
+			// vr_armScale (T-pose measurement): the drawn arm matches the real arm.
+			player_height::model_arm_units = native_upper + native_lower;
+			const float arm_scale = std::clamp(player_height::arm_scale.load(), player_height::min_arm_scale, player_height::max_arm_scale);
 			const auto limb =
-			    solve_limb(native_upper,
-			               native_lower,
+			    solve_limb(native_upper * arm_scale,
+			               native_lower * arm_scale,
 			               targets[hand].position,
 			               shoulder,
 			               body_axis,
