@@ -7,6 +7,7 @@
 #include "muzzle_clearance.hpp"
 #include "weapon_carry_runtime.hpp"
 #include "../head_pose_bridge.hpp"
+#include "riding_rebase.hpp"
 #include "component/scheduler_context.hpp"
 #include "game/game.hpp"
 #include "game/scripting/execution.hpp"
@@ -19,14 +20,6 @@ namespace vr::gameplay::weapons::native_ballistics
 	{
 		bool verified{};
 		thread_local bool emitting{};
-		// Riding: the player is linked to a parent (vehicle, moving platform);
-		// gentity tag info +0x208 -> parent, as aftermath_crawl reads it.
-		bool riding(const game::gentity_s* entity)
-		{
-			const void* tag{};
-			std::memcpy(&tag,reinterpret_cast<const std::byte*>(entity)+0x208,sizeof(tag));
-			return tag && *static_cast<const void* const*>(tag);
-		}
 		// Server eye minus the render frame's native view origin at the last shot.
 		std::atomic_uint64_t rebased_shots{},unrebased_shots{};
 		std::atomic<float> last_rebase_units{};
@@ -119,16 +112,12 @@ namespace vr::gameplay::weapons::native_ballistics
 		// riders alongside (user report). MWR addition, not in Overlord: applied
 		// only while riding (user request); scripted views far from the eye keep
 		// the unshifted muzzle.
-		if (!riding(entity)) {}
-		else if (head_pose_bridge::spatial_frame frame{}; head_pose_bridge::get_spatial_frame(frame) && frame.has_native_origin)
+		if (head_pose_bridge::spatial_frame frame{}; riding::linked() && head_pose_bridge::get_spatial_frame(frame))
 		{
-			const hands::vec native{frame.native_origin[0],frame.native_origin[1],frame.native_origin[2]};
-			const auto shift=hands::sub(eye,native);
-			const float distance=hands::length(shift);
-			if (std::isfinite(distance) && distance<=300.f) {shot.origin=hands::add(shot.origin,shift);last_rebase_units=distance;++rebased_shots;}
+			const auto shift=riding::shift(frame);
+			if (const float distance=hands::length(shift); distance>0) {shot.origin=hands::add(shot.origin,shift);last_rebase_units=distance;++rebased_shots;}
 			else ++unrebased_shots;
 		}
-		else ++unrebased_shots;
 		if (hands::length(hands::sub(eye,shot.origin))>200.f) return out;
 		out.status=outcome::obstruction;
 		if(!shield::firing_clear(id,shot.origin))return out;

@@ -13,6 +13,7 @@
 #include "game/dvars.hpp"
 #include "game/game.hpp"
 #include "loader/component_loader.hpp"
+#include "riding_rebase.hpp"
 #include <utils/hook.hpp>
 #include <utils/hook_validation.hpp>
 #include <utils/io.hpp>
@@ -111,7 +112,8 @@ namespace vr::gameplay::interaction
 		{
 			const auto edge=hi::input(vr::hand(h),hi::button::grip);if(!edge.press || (!edge.down && !edge.release) || !(f.valid_hands&(1u<<h)))continue;
 			head_pose_bridge::world_pose aim;if(!head_pose_bridge::tracking_to_world(f.body,f.input.aim[h].tracking,aim))continue;
-			const ray r{aim.position,aim.axis[0],f.body.head_position,f.body.units_per_meter,reach->current.value,cone->current.value};
+			const auto shift=riding::shift(f.body); // Server queries while riding (riding_rebase.hpp).
+			const ray r{hands::add(aim.position,shift),aim.axis[0],hands::add(f.body.head_position,shift),f.body.units_per_meter,reach->current.value,cone->current.value};
 			const auto chosen=query_target(h,r,lease.active() && lease.hand()==h?lease.value().key:target_key{},f.input);
 			queries.record(unsigned(h),r,chosen);
 			if(!chosen || (chosen.weapon && !edge.down))continue;
@@ -139,7 +141,8 @@ namespace vr::gameplay::interaction
 			head_pose_bridge::world_pose aim;
 			if (!(available&(1u<<h)) || !input.grip[h].valid || !input.aim[h].valid ||
 				!head_pose_bridge::tracking_to_world(body,input.aim[h].tracking,aim)) {available&=~(1u<<h);continue;}
-			rays[h]={aim.position,aim.axis[0],body.head_position,body.units_per_meter,reach->current.value,cone->current.value};
+			const auto shift=riding::shift(body); // Server queries while riding (riding_rebase.hpp).
+			rays[h]={hands::add(aim.position,shift),aim.axis[0],hands::add(body.head_position,shift),body.units_per_meter,reach->current.value,cone->current.value};
 			if(const auto chosen=queries.find(unsigned(h),input.sequence,input.reference_generation,rays[h]))
 				next.hover.targets[h]=*chosen && !native::live(*chosen)?target{}:*chosen;
 			else next.hover.targets[h]=query_target(h,rays[h],lease.active() && lease.hand()==h?lease.value().key:target_key{},input);
