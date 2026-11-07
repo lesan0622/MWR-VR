@@ -148,6 +148,8 @@ namespace vr::gameplay::weapons::carry
 		unsigned deferred_mask{};
 		hand_motion_history motion_history;
 		const char* reason{"waiting for VR gameplay"};
+		controller_input::clock::time_point overflow_attempt{};
+		std::uint64_t overflow_drops{};
 		interaction_context batch;
 		bool batch_ready{};
 		void clear()
@@ -988,6 +990,39 @@ namespace vr::gameplay::weapons::carry
 				publish();
 				invalidate_muzzle();
 			}
+			// MWR (user decision): no hidden overflow. The back takes one gun; a gun
+			// the game puts away with no free slot (turret mount or ladder with both
+			// hands full, a script weapon switch, a save load) drops at the player's
+			// feet instead, where it can be picked up again.
+			if (now - overflow_attempt >= 250ms)
+				for (const auto& v : owned.instances())
+				{
+					if (v.at != location::overflow) continue;
+					overflow_attempt = now;
+					const float length = std::hypot(body.head_forward[0], body.head_forward[1]);
+					if (!(length > .1f)) break;
+					const float yaw = std::atan2(body.head_forward[1], body.head_forward[0]);
+					const auto* origin = game::g_entities[0].origin;
+					const float ahead = .3f * body.units_per_meter;
+					// Lying on its side, muzzle along the view, 30 cm ahead at knee height.
+					const hands::anchor world{{origin[0] + std::cos(yaw) * ahead, origin[1] + std::sin(yaw) * ahead,
+						origin[2] + .4f * body.units_per_meter},
+						hands::multiply(hands::quat{0, 0, std::sin(yaw * .5f), std::cos(yaw * .5f)},
+							hands::quat{.70710678f, 0, 0, .70710678f})};
+					native_carry::world_key entity;
+					const auto id = v.id;
+					if (!native_carry::clearance(id.weapon, world, body.head_position) ||
+						!native_carry::drop(v, world, {0, 0, 0}, entity) || !owned.discard(id))
+					{
+						reason = "overflow gun drop rejected; retried";
+						break;
+					}
+					++overflow_drops;
+					reason = "gun with no free slot dropped at the player's feet";
+					publish();
+					invalidate_muzzle();
+					break;
+				}
 			std::array<scene, inventory::capacity> attachment_scenes{};
 			for (size_t i = 0; i < owned.instances().size(); ++i)
 				if (owned.instances()[i].at == location::held)
@@ -1683,7 +1718,7 @@ namespace vr::gameplay::weapons::carry
 					        std::ostringstream out;
 					        out << "active=" << active() << " selected=" << projection().weapon
 					            << " transitions=" << transitions << " rejections=" << rejections
-					            << " invariant=" << owned.invariant() << " reason=" << reason
+					            << " overflow_drops=" << overflow_drops << " invariant=" << owned.invariant() << " reason=" << reason
 					            << " native=" << native_carry::status() << '\n';
 					        out << drop_presentation::status();
 					        const auto clips = native_ammunition::instances();

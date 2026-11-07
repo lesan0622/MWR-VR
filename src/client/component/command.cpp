@@ -363,6 +363,43 @@ namespace command
 				}, scheduler::pipeline::server);
 			});
 
+			add("take", [](const params& params)
+			{
+				if (!game::SV_Loaded())
+				{
+					return;
+				}
+
+				if (params.size() < 2)
+				{
+					game::CG_GameMessage(0, "You did not specify a weapon name", 0);
+					return;
+				}
+
+				const std::string weapon = params.get(1);
+
+				// MWR port: native G_TakePlayerWeapon; the GSC VM is not available.
+				scheduler::once([=]()
+				{
+					auto* ps = game::g_entities[0].client;
+					if (!ps) return;
+					std::vector<game::Weapon> targets;
+					if (weapon == "all"s)
+					{
+						for (int i = 0; i < 15; ++i)
+						{
+							game::Weapon wp{};
+							std::memcpy(&wp.data, reinterpret_cast<const std::byte*>(ps) + 0x2f8 + i * 4, 4); // Owned weapons (carry probe).
+							if (wp.data) targets.push_back(wp);
+						}
+					}
+					else if (const auto wp = game::G_GetWeaponForName(weapon.data()); wp.data) targets.push_back(wp);
+					for (const auto wp : targets)
+						console::info("[take] %u -> %s\n", unsigned(wp.data), game::G_TakePlayerWeapon(ps, wp) ? "taken" : "not owned");
+					if (targets.empty()) console::info("[take] unknown weapon %s\n", weapon.data());
+				}, scheduler::pipeline::server);
+			});
+
 			// MWR: these h2-mod cheats use H2 entity layouts and the GSC scripting
 			// context, which are not ported. Keep the native MWR commands instead.
 			if constexpr (false)
@@ -449,41 +486,6 @@ namespace command
 						const scripting::entity player = scripting::call("getentbynum", {0}).as<scripting::entity>();
 						const auto weapon = player.call("getcurrentweapon");
 						player.call("dropitem", {weapon});
-					}
-					catch (...)
-					{
-					}
-				}, scheduler::pipeline::server);
-			});
-
-			add("take", [](const params& params)
-			{
-				if (!game::SV_Loaded())
-				{
-					return;
-				}
-
-				if (params.size() < 2)
-				{
-					game::CG_GameMessage(0, "You did not specify a weapon name", 0);
-					return;
-				}
-
-				const std::string weapon = params.get(1);
-
-				scheduler::once([=]()
-				{
-					try
-					{
-						const auto player = scripting::call("getentbynum", {0}).as<scripting::entity>();
-						if (weapon == "all"s)
-						{
-							player.call("takeallweapons");
-						}
-						else
-						{
-							player.call("takeweapon", {weapon});
-						}
 					}
 					catch (...)
 					{

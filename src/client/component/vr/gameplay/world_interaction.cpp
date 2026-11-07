@@ -13,6 +13,7 @@
 #include "game/dvars.hpp"
 #include "game/game.hpp"
 #include "loader/component_loader.hpp"
+#include "riding_rebase.hpp"
 #include <utils/hook.hpp>
 #include <utils/hook_validation.hpp>
 #include <utils/io.hpp>
@@ -45,7 +46,7 @@ namespace vr::gameplay::interaction
 		controller_input::clock::time_point lease_started{};
 		bool ally_fired{};
 		std::atomic_uint64_t ally_triggers{};
-		std::atomic_uint64_t press_notifies{},release_notifies{};
+		std::atomic_uint64_t press_notifies{},release_notifies{},sticky_frames{};
 		std::atomic_uint64_t updates{},picks{},uses{},cancels{};
 		bool notification_ready()
 		{
@@ -111,7 +112,8 @@ namespace vr::gameplay::interaction
 		{
 			const auto edge=hi::input(vr::hand(h),hi::button::grip);if(!edge.press || (!edge.down && !edge.release) || !(f.valid_hands&(1u<<h)))continue;
 			head_pose_bridge::world_pose aim;if(!head_pose_bridge::tracking_to_world(f.body,f.input.aim[h].tracking,aim))continue;
-			const ray r{aim.position,aim.axis[0],f.body.head_position,f.body.units_per_meter,reach->current.value,cone->current.value};
+			const auto shift=riding::shift(f.body); // Server queries while riding (riding_rebase.hpp).
+			const ray r{hands::add(aim.position,shift),aim.axis[0],hands::add(f.body.head_position,shift),f.body.units_per_meter,reach->current.value,cone->current.value};
 			const auto chosen=query_target(h,r,lease.active() && lease.hand()==h?lease.value().key:target_key{},f.input);
 			queries.record(unsigned(h),r,chosen);
 			if(!chosen || (chosen.weapon && !edge.down))continue;
@@ -139,7 +141,8 @@ namespace vr::gameplay::interaction
 			head_pose_bridge::world_pose aim;
 			if (!(available&(1u<<h)) || !input.grip[h].valid || !input.aim[h].valid ||
 				!head_pose_bridge::tracking_to_world(body,input.aim[h].tracking,aim)) {available&=~(1u<<h);continue;}
-			rays[h]={aim.position,aim.axis[0],body.head_position,body.units_per_meter,reach->current.value,cone->current.value};
+			const auto shift=riding::shift(body); // Server queries while riding (riding_rebase.hpp).
+			rays[h]={hands::add(aim.position,shift),aim.axis[0],hands::add(body.head_position,shift),body.units_per_meter,reach->current.value,cone->current.value};
 			if(const auto chosen=queries.find(unsigned(h),input.sequence,input.reference_generation,rays[h]))
 				next.hover.targets[h]=*chosen && !native::live(*chosen)?target{}:*chosen;
 			else next.hover.targets[h]=query_target(h,rays[h],lease.active() && lease.hand()==h?lease.value().key:target_key{},input);
@@ -222,7 +225,20 @@ namespace vr::gameplay::interaction
 		if (edge.release_before) release();
 		if (edge.press) {utils::hook::invoke<void>(0x1401ACBD0,0,73,0);++press_notifies;}
 		if (edge.release_after) release();
-		const bool use=valid && current.native_button && (edge.down || edge.press);
+		bool use=valid && current.native_button && (edge.down || edge.press);
+		// Keyboard-style hold: a started use stays pressed while that hand's grip
+		// is down, even after the target's hint clears or controls freeze. The
+		// launchfacility_b abort codes need usebuttonpressed() for 3 s while the
+		// script blanks the hint, freezes controls and links the view (user report).
+		static int sticky_hand=-1;
+		if (use) sticky_hand=current.hand;
+		else if (sticky_hand>=0)
+		{
+			const auto& grip=input.squeeze[sticky_hand];
+			const bool fresh=input.focused && now>=input.sampled_at && now-input.sampled_at<=150ms;
+			if (alive && ready && enabled->current.enabled && fresh && grip.active && grip.down) {use=true;++sticky_frames;}
+			else sticky_hand=-1;
+		}
 		native::set_command_lease(current.use,use,current.hover.reference);
 		return use ? 0x8 : 0; // +activate; deliberately distinct from use/reload 0x20.
 	}
@@ -240,7 +256,7 @@ namespace vr::gameplay::interaction
 				scheduler::once([] {
 					publication current;{const std::lock_guard lock(mutex);current=state;}
 					std::ostringstream out;out<<"ready="<<ready<<" updates="<<updates<<" pickups="<<picks<<" uses="<<uses<<" cancelled="<<cancels
-						<<" press_notifies="<<press_notifies<<" release_notifies="<<release_notifies<<" ally_triggers="<<ally_triggers
+						<<" press_notifies="<<press_notifies<<" release_notifies="<<release_notifies<<" sticky_frames="<<sticky_frames<<" ally_triggers="<<ally_triggers
 						<<" native="<<native::status()<<"\nreach_m="<<reach->current.value<<" cone_degrees="<<cone->current.value
 						<<" lease_hand="<<current.hand<<" held="<<current.held<<" target="<<current.use.key.entity<<'\n'
 						<<"use_triggers="<<native::use_trigger_status()<<'\n';

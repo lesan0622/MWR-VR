@@ -39,8 +39,9 @@ namespace lui
 
 			command::add("lui_restart", []()
 			{
-				utils::hook::invoke<void>(0x1403203B0);
-				utils::hook::invoke<void>(0x14032D370);
+				// MWR: one LUI restart entry (h1-mod SP 0x1401052C0) replaces H2's
+				// hks shutdown 0x1403203B0 + start 0x14032D370 pair.
+				utils::hook::invoke<void>(0x1401052C0);
 			});
 		}
 	};

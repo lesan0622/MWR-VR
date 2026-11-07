@@ -174,7 +174,7 @@ namespace vr::gameplay::weapons::independent_fire
 		{
 			initialized=native_ballistics::initialize();
 			command::add("vr_dual_fire_status",[] {scheduler::once([] {
-				std::ostringstream out;out << "initialized=" << initialized << " dual=" << dual() << " command_time=" << last_command << " same_tick_pairs=" << same_tick_pairs << '\n';
+				std::ostringstream out;out << "initialized=" << initialized << " dual=" << dual() << " command_time=" << last_command << " same_tick_pairs=" << same_tick_pairs << ' ' << native_ballistics::rebase_status() << '\n';
 				for (const auto& entry:instances.entries()) if (const auto& v=entry.value;v.id) out << "weapon=" << v.id.weapon << " instance=" << v.id.generation << " attempts=" << v.attempts
 					<< " shots=" << v.shots << " notifications=" << v.notifications << " last_command=" << v.last_shot << " ammo=" << v.before << "->" << v.after << " outcome=" << int(v.outcome) << " reason=" << v.reason << '\n';
 				out<<aim_assist::status();

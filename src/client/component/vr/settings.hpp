@@ -157,6 +157,8 @@ namespace vr::settings
 	}();
 	inline constexpr number_setting turn_speed{"vr_turnSpeed", 90.f, 15.f, 360.f, 5.f};
 	inline constexpr number_setting snap_angle{"vr_snapAngle", 30.f, 5.f, 90.f, 5.f};
+	// Player height in cm (player_height.hpp); 175 keeps the authored body layout.
+	inline constexpr number_setting player_height{"vr_playerHeight", 175.f, 120.f, 220.f, 1.f};
 	inline constexpr number_setting aim_assist_strength{"vr_aimAssistStrength", 0.f, 0.f, 100.f, 1.f};
 	inline constexpr number_setting enemy_melee_damage{"vr_enemyMeleeDamageScale", .5f, .1f, 2.f, .1f};
 	inline constexpr number_setting grenade_throw_speed{
@@ -215,6 +217,7 @@ namespace vr::settings
 										standard_hand_alignment[2], standard_hand_alignment[3],
 										standard_hand_alignment[4], standard_hand_alignment[5],
 	                                    snap_angle,
+	                                    player_height,
 	                                    aim_assist_strength,
 	                                    enemy_melee_damage,
 	                                    grenade_throw_speed,

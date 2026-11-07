@@ -1331,6 +1331,8 @@ namespace vr::openvr
 			ui_head_.position_meters={hmd_transform.m[0][3],hmd_transform.m[1][3],hmd_transform.m[2][3]};
 			for(unsigned row=0;row<3;++row)for(unsigned col=0;col<3;++col)ui_head_.orientation[row][col]=hmd_transform.m[row][col];
 			ui_head_valid_=true;
+			// Standing universe: y is the height above the calibrated floor.
+			player_height::publish_floor(hmd_transform.m[1][3]);
 			head_pose_bridge::publish_tracking_pose({
 				{hmd_transform.m[0][3], hmd_transform.m[1][3], hmd_transform.m[2][3]},
 				{{

@@ -110,6 +110,8 @@ namespace game
 		G_GivePlayerWeapon{0x1402F24F0 /* H2 0x14051B660 */};
 	WEAK symbol<void(void* ps, const Weapon weapon, int hadWeapon)> G_InitializeAmmo{0x14029D9E0 /* H2 0x1404C4110 */};
 	WEAK symbol<void(int localClientNum, const Weapon weapon)> G_SelectWeapon{0x1402F2EA0 /* H2 0x14051C0D0 */};
+	// MWR SP (h1-mod 0x2F3050): ps->clientNum entity, then the weapon name notify.
+	WEAK symbol<int(void* ps, const Weapon weapon)> G_TakePlayerWeapon{0x1402F3050};
 	WEAK symbol<void(trace_t* results, const float* start, const float* end, 
 		const Bounds* bounds, int passEntityNum, int contentmask)> G_TraceCapsule{0x1402A5640 /* H2 0x1404CBFE0;  */};
 	WEAK symbol<void(int* hitNum, const float* start, const float* end, 

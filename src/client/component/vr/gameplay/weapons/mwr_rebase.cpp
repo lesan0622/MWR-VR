@@ -166,6 +166,17 @@ namespace vr::gameplay::weapons::mwr_rebase
 		}
 		else if (t.additional_bullet_bones.empty())
 			p.additional_bullet_bones = source.additional_bullet_bones;
+		// A source bolt-catch paddle bone that is the MWR action bone is not a
+		// paddle here: MW2 M4 j_clip_release is the paddle, MWR viewmodel_m4a1_sp
+		// j_clip_release is the charging handle (bind -0.64,0,4.59). The guide
+		// then lit the handle as the catch (user: catch "won't press"). The slap
+		// centre stays: the receivers share the frame (magazine bind identical).
+		if (p.interaction.receiver_release && p.interaction.receiver_release->visual_bone == t.slide_bone)
+		{
+			auto* release = keep<physical_reload::receiver_bolt_release>(*p.interaction.receiver_release);
+			release->visual_bone = {};
+			p.interaction.receiver_release = release;
+		}
 		if (t.drop_bullet_parents)
 		{
 			p.bullet_parents = {};

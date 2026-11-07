@@ -6,6 +6,7 @@
 #include <chrono>
 #include "body_pose.hpp"
 #include "pose_filter.hpp"
+#include "player_height.hpp"
 
 namespace vr::head_pose_bridge
 {
@@ -79,10 +80,17 @@ namespace vr::head_pose_bridge
 		pose_filter::pose tracking_correction{};
 		bool head_stabilized{};
 		vector3 head_up{}; // Full center-eye up axis for head-mounted interactions.
+		// Native (pre-VR) view origin this frame was composed from. World poses are
+		// relative to it; server traces rebase onto the server eye (moving vehicles).
+		vector3 native_origin{};
+		bool has_native_origin{};
 	};
+	// Body slots are authored in metres for a 175 cm player; the slot frame's
+	// metre scales with vr_playerHeight (player_height::body_scale).
 	inline spatial_frame body_slots_frame(spatial_frame frame) noexcept
 	{
 		if(frame.body.valid){frame.head_position=frame.body.position;frame.head_yaw_axis=frame.body.yaw_axis;}
+		frame.units_per_meter*=player_height::body_scale.load();
 		return frame;
 	}
 

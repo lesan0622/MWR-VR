@@ -126,6 +126,14 @@
     "description": "settings.cameraBobHint"
   },
   {
+    "name": "vr_playerHeight",
+    "category": "calibration",
+    "group": "settings.body",
+    "label": "settings.playerHeight",
+    "type": "number",
+    "description": "settings.playerHeightHint"
+  },
+  {
     "name": "vr_controllerPoseMode",
     "category": "calibration",
     "group": "settings.controllerCompatibility",

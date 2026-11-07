@@ -275,6 +275,7 @@ int main()
 
 			game::environment::set_mode(mode);
 			launcher_vr_settings::initialize_startup_options(utils::flags::has_flag("launcher-start"));
+			launcher_process::ensure_steamvr_for_openvr();
 
 			entry_point = load_binary(mode);
 			if (!entry_point)

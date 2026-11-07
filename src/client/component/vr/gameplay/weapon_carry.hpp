@@ -9,6 +9,7 @@ namespace vr::gameplay::weapons::carry
 {
 	// Physical locations belong to instances; native definition ownership is a projection.
 	enum class location { absent, held, left_waist, right_waist, back, overflow, abdominal };
+	inline bool back_stack(location p) noexcept { return p==location::back || p==location::overflow; }
 	inline bool ordinary_slot(location p) noexcept
 	{ return p==location::left_waist || p==location::right_waist || p==location::back; }
 	struct rules
@@ -44,10 +45,14 @@ namespace vr::gameplay::weapons::carry
 			v->owner.revision=v->owner.rear_revision=++revision_;
 			generation_=std::max(generation_,id.generation);return true;
 		}
+		// MWR: the runtime confirmed a native world drop of a gun that had no free
+		// slot (overflow); it leaves the carried set.
+		bool discard(identity id) noexcept
+		{auto* v=mutable_find(id);if(!v || v->at!=location::overflow)return false;*v={};return true;}
 		void put_away() noexcept
 		{
 			for (auto& v:values_) if (v.at==location::held)
-			{v.at=free_slot(v);if (v.at==location::overflow) v.overflow_order=++overflow_sequence_;assign(v,hand::none,hand::none);}
+			{v.at=free_slot(v);if (back_stack(v.at)) v.overflow_order=++overflow_sequence_;assign(v,hand::none,hand::none);}
 		}
 			const auto& instances() const noexcept { return values_; }
 			// Explicit topology restoration, including empty hands/slots and overflow
@@ -88,10 +93,12 @@ namespace vr::gameplay::weapons::carry
 		{ if (ordinary_slot(p)) for (const auto& v:values_) if (v.at==p) return &v; return nullptr; }
 		const instance* next_back() const noexcept
 		{
-			if (const auto* normal=in_slot(location::back)) return normal;
-			const instance* first{};
-			for (const auto& v:values_) if (v.at==location::overflow && (!first || v.overflow_order<first->overflow_order)) first=&v;
-			return first;
+			// MWR: the back slot and its overflow are one stack, last stowed first
+			// drawn. Oldest-first left a gun picked up while the back was full (an
+			// AK-47 behind an RPG and a Dragunov) out of reach with two hands.
+			const instance* top{};
+			for (const auto& v:values_) if (back_stack(v.at) && (!top || v.overflow_order>top->overflow_order)) top=&v;
+			return top;
 		}
 		static bool accepts(const instance& v,location p) noexcept
 		{ return !v.policy.abdominal && (p==location::back || ((p==location::left_waist || p==location::right_waist) && v.policy.waist)); }
@@ -139,7 +146,7 @@ namespace vr::gameplay::weapons::carry
 				{
 					v.id=w.id; v.policy=w.policy;generation_=std::max(generation_,w.id.generation);
 					v.at=free_slot(v);
-					if (v.at==location::overflow) v.overflow_order=++overflow_sequence_;
+					if (back_stack(v.at)) v.overflow_order=++overflow_sequence_;
 					v.owner={w.id.weapon,++revision_,hand::none,hand::none,hold_source::interaction,revision_};
 					v.owner.instance_generation=w.id.generation;
 					break;
@@ -163,7 +170,7 @@ namespace vr::gameplay::weapons::carry
 				auto* displaced=mutable_find(held->id);
 				v->at=location::absent;
 				displaced->at=ordinary_slot(old_at) && accepts(*displaced,old_at) ? old_at : free_slot(*displaced);
-				if (displaced->at==location::overflow) displaced->overflow_order=++overflow_sequence_;
+				if (back_stack(displaced->at)) displaced->overflow_order=++overflow_sequence_;
 				assign(*displaced,hand::none,hand::none);
 			}
 			v->at=location::held; assign(*v,h,hand::none); return true;
@@ -229,6 +236,7 @@ namespace vr::gameplay::weapons::carry
 					other->at=location::held; assign(*other,last,hand::none);
 				}
 				v->at=target; assign(*v,hand::none,hand::none);
+				if (target==location::back) v->overflow_order=++overflow_sequence_;
 				return {exchanged ? outcome::exchanged : outcome::stowed,id,exchanged};
 			}
 			if (!drop(*v)) return reject();
