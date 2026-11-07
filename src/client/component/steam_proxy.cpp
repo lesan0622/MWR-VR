@@ -45,7 +45,7 @@ namespace steam_proxy
 
 			try
 			{
-				this->start_mod("\xF0\x9F\x8E\xAE" " MWR VR"s, app_id);
+				this->start_mod(app_id);
 			}
 			catch (std::exception& e)
 			{
@@ -125,15 +125,15 @@ namespace steam_proxy
 			this->client_utils_ = this->client_engine_.invoke<void*>(14, this->steam_pipe_); // GetIClientUtils
 		}
 
-		void start_mod(const std::string& title, size_t app_id)
+		void start_mod(unsigned int app_id)
 		{
 			if (!this->client_utils_ || !this->client_user_) return;
 
-			if (!this->client_user_.invoke<bool>("BIsSubscribedApp", app_id))
-			{
-				app_id = 480; // Spacewar
-			}
-
+			// This pipe identifies the running game; it is not an ownership gate.
+			// An IClientUser subscription query is not the current app's Family
+			// Sharing entitlement. Switching a borrower to Spacewar also disagreed
+			// with SteamAppId/SteamGameId and the native MWR app context.
+			// Keep the real app identity for both owners and Steam-authorized loans.
 			this->client_utils_.invoke<void>("SetAppIDForCurrentPipe", app_id, false);
 		}
 

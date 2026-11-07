@@ -3,6 +3,7 @@
 #include "webview_window.hpp"
 #include "services.hpp"
 #include "game_language.hpp"
+#include "game_language_policy.hpp"
 #include "launch_process.hpp"
 #include "component/game_data.hpp"
 #include "product.hpp"
@@ -89,8 +90,7 @@ struct launcher::impl
 		language_busy_ = result.value("pending", false);
 		if (!language_busy_ && result.value("ok", false))
 		{
-			const auto selected = result.at("language");
-			language_available_ = std::any_of(result.at("choices").begin(), result.at("choices").end(), [&](const auto& choice) { return choice.at("value") == selected; });
+			language_available_ = !launcher_game_language::blocks_launch(result);
 		}
 		return result;
 	}

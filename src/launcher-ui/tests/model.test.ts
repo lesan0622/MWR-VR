@@ -1,6 +1,23 @@
 import assert from "node:assert/strict";
 import preflightLocales from "../../client/resources/launcher/preflight-locales.json";
 import test from "node:test";
+import { languageBlocksLaunch, languageSelectValue } from "../src/gameLanguageModel";
+
+test("Steam inventory mismatch cannot trap launch or display English (Safe) as the selection", () => {
+  const result = {
+    language: "english",
+    choices: [{ value: "english_safe", label: "English (Safe)" }],
+    managedBySteam: true,
+  };
+  assert.equal(languageBlocksLaunch(result), false);
+  assert.equal(languageSelectValue(result), "");
+  assert.equal(languageBlocksLaunch({ ...result, choices: [] }), false);
+  assert.equal(languageBlocksLaunch({ ...result, managedBySteam: false }), true);
+  const installed = { ...result, choices: [{ value: "english", label: "English" }] };
+  assert.equal(languageSelectValue(installed), "english");
+  assert.equal(languageBlocksLaunch({ ...installed, managedBySteam: false }), false);
+  assert.equal(languageBlocksLaunch(null), false);
+});
 import {
   collect,
   makeDraft,

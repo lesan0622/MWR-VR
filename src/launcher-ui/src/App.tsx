@@ -471,7 +471,7 @@ function Launcher({ data }: { data: Bootstrap }) {
       if (report.issues.length) {
         setPreflightNotice(null);
         setPreflight(report);
-      } else if (gameLanguage.available === false) setPage("language");
+      } else if (gameLanguage.blocksLaunch) setPage("language");
       else await startGame(report);
     } catch (error) {
       setNotice({ key: errorKey(error), error: true });
@@ -525,7 +525,7 @@ function Launcher({ data }: { data: Bootstrap }) {
     setChecking(true);
     setPreflightNotice(null);
     try {
-      if (gameLanguage.available === false) {
+      if (gameLanguage.blocksLaunch) {
         setPreflight(null);
         setPage("language");
       } else {
@@ -855,9 +855,10 @@ function Launcher({ data }: { data: Bootstrap }) {
               >
                 <select
                   aria-label={t("language.game")}
-                  value={gameLanguage.result?.language || ""}
+                  value={gameLanguage.selectValue}
                   disabled={
                     gameLanguage.busy ||
+                    gameLanguage.result?.managedBySteam ||
                     disabled ||
                     !gameLanguage.result?.choices.length
                   }
@@ -866,7 +867,9 @@ function Launcher({ data }: { data: Bootstrap }) {
                   }
                 >
                   <option value="" disabled>
-                    {t("language.gameChoose")}
+                    {gameLanguage.result?.managedBySteam
+                      ? gameLanguage.result.language
+                      : t("language.gameChoose")}
                   </option>
                   {gameLanguage.result?.choices.map((choice) => (
                     <option key={choice.value} value={choice.value}>
