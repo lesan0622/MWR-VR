@@ -46,6 +46,7 @@ namespace ui_scripting
 		const auto lui_updater = utils::nt::load_resource(LUI_UPDATER);
 		const auto lui_campaign_unlock = utils::nt::load_resource(LUI_CAMPAIGN_UNLOCK);
 		const auto lui_subtitles = utils::nt::load_resource(LUI_SUBTITLES);
+		const auto lui_vr_options = utils::nt::load_resource(LUI_VR_OPTIONS);
 		const auto lua_json = utils::nt::load_resource(LUA_JSON);
 
 		using lua_function_t = std::function<arguments(const function_arguments& args)>;
@@ -970,18 +971,12 @@ namespace ui_scripting
 			lua["table"]["unpack"] = lua["unpack"];
 			lua["luiglobals"] = lua;
 
-			lua["printmemoryusage"] = []()
-			{
-				utils::hook::invoke<void>(0x14031F470);
-			};
-
+			// MWR: printmemoryusage (H2 0x14031F470) not rebound. Only the shared
+			// helpers and the VR options menu load; the H2 updater, campaign unlock,
+			// subtitle profile and on-disk mod scripts stay off (not ported).
 			load_script("lui_common", lui_common);
-			load_script("lui_updater", lui_updater);
 			load_script("lua_json", lua_json);
-
-			load_scripts();
-			load_script("lui_campaign_unlock", lui_campaign_unlock);
-			load_script("lui_subtitles", lui_subtitles);
+			load_script("lui_vr_options", lui_vr_options);
 		}
 
 		void try_start()
@@ -1054,7 +1049,7 @@ namespace ui_scripting
 				return load_buffer(globals.raw_script_name, utils::io::read_file(globals.raw_script_name));
 			}
 
-			return utils::hook::invoke<int>(0x1402D9410, state, compiler_options, reader, reader_data, chunk_name);
+			return utils::hook::invoke<int>(0x1400B46F0 /* H2 0x1402D9410 */, state, compiler_options, reader, reader_data, chunk_name);
 		}
 		
 		int main_handler(game::hks::lua_State* state)
@@ -1137,14 +1132,20 @@ namespace ui_scripting
 
 		void post_unpack() override
 		{
-			utils::hook::call(0x14030BF2B, db_find_xasset_header_stub);
-			utils::hook::call(0x14030C079, db_find_xasset_header_stub);
-			utils::hook::call(0x14030C104, hks_load_stub);
+			// MWR SP rebinding (h1-mod SP offsets; call sites verified in h1_sp64_clean:
+			// DB_FindXAssetHeader 0x1401F1120 type 0x3d, then the hks loader 0x1400B46F0).
+			utils::hook::call(0x1400E72CB /* H2 0x14030BF2B */, db_find_xasset_header_stub);
+			utils::hook::call(0x1400E7419 /* H2 0x14030C079 */, db_find_xasset_header_stub);
+			utils::hook::call(0x1400E74A4 /* H2 0x14030C104 */, hks_load_stub);
 
-			hks_package_require_hook.create(0x1402B4DA0, hks_package_require_stub);
-			hks_start_hook.create(0x140328BE0, hks_start_stub);
-			hks_shutdown_hook.create(0x1403203B0, hks_shutdown_stub);
+			hks_package_require_hook.create(0x140090070 /* H2 0x1402B4DA0 */, hks_package_require_stub);
+			hks_start_hook.create(0x140103C50 /* H2 0x140328BE0 */, hks_start_stub);
+			hks_shutdown_hook.create(0x1400FB370 /* H2 0x1403203B0 */, hks_shutdown_stub);
 
+			// MWR: the H2 unsafe-library removal below has no SP rebinding (h1-mod
+			// strips them in MP only). No on-disk Lua loads, so the stock LUI
+			// environment is unchanged.
+#if 0 // H2 addresses, kept for the future SP rebinding.
 			// remove unsafe functions
 			utils::hook::nop(0x1402D885A, 1);
 			utils::hook::jump(0x14031E700, 0x1402D86E0);
@@ -1172,6 +1173,7 @@ namespace ui_scripting
 
 			utils::hook::jump(0x1402B6F70, removed_function_stub);
 			utils::hook::jump(0x1402BD890, removed_function_stub);
+#endif
 		}
 	};
 }

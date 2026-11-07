@@ -92,7 +92,7 @@
   "settings.alignment": "Alineación de mandos",
   "settings.body": "Cuerpo",
   "settings.playerHeight": "Altura (cm)",
-  "settings.playerHeightHint": "Ajusta a tu altura las fundas de cintura y espalda, el equipo del pecho y las distancias para agacharte o tumbarte de verdad. Para medirla, ponte de pie y erguido en el juego y mantén pulsado X durante 3 segundos (a 1 segundo se recentra); ambos mandos vibran cuando se guarda la altura. La altura de los ojos en el juego no cambia.",
+  "settings.playerHeightHint": "Ajusta a tu altura las fundas de cintura y espalda, el equipo del pecho y las distancias para agacharte o tumbarte de verdad. Para medirla, ponte de pie y erguido en el juego y mantén pulsado X durante 3 segundos (a 1 segundo se recentra); ambos mandos vibran cuando se guarda la altura. La altura de los ojos en el juego no cambia. También puedes cambiarla o medirla en el juego en Opciones > VR.",
   "settings.preset": "Preajuste",
   "choice.none": "Ninguno",
   "settings.offsetHint": "Mueve la mano y su centro de rotación juntos. Usa tu referencia frontal recentrada y se mantiene estable al girar la muñeca. Hacia dentro se refleja para cada mano.",

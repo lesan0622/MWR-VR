@@ -29,6 +29,7 @@
 #define LUI_UPDATER           304
 #define LUI_CAMPAIGN_UNLOCK   323
 #define LUI_SUBTITLES         324
+#define LUI_VR_OPTIONS        325
 
 #define LUA_JSON              305
 

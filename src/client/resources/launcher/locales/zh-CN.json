@@ -92,7 +92,7 @@
   "settings.alignment": "控制器校准",
   "settings.body": "身体",
   "settings.playerHeight": "身高 (cm)",
-  "settings.playerHeightHint": "根据身高调整腰部和背部武器槽、胸前装备的位置，以及真实蹲下/趴下的判定距离。测量方法：在游戏中站直，按住 X 3 秒（1 秒时会重定位）；保存后两个控制器都会振动。游戏中的视线高度不会改变。",
+  "settings.playerHeightHint": "根据身高调整腰部和背部武器槽、胸前装备的位置，以及真实蹲下/趴下的判定距离。测量方法：在游戏中站直，按住 X 3 秒（1 秒时会重定位）；保存后两个控制器都会振动。游戏中的视线高度不会改变。 也可以在游戏内的 选项 > VR 中调整或测量。",
   "settings.preset": "预设",
   "choice.none": "无",
   "settings.offsetHint": "同时移动手部及其旋转中心。调整以重新定位后的前方为基准，转动手腕时保持稳定。向内偏移会在双手间镜像应用。",

@@ -92,7 +92,7 @@
   "settings.alignment": "Controller alignment",
   "settings.body": "Body",
   "settings.playerHeight": "Height (cm)",
-  "settings.playerHeightHint": "Places the waist and back weapon slots and chest equipment, and sets the real crouch/prone distances, for your height. To measure it, stand upright in game and keep holding X for 3 seconds (it recenters at 1 second); both controllers vibrate when the height is saved. Your in-game eye height does not change.",
+  "settings.playerHeightHint": "Places the waist and back weapon slots and chest equipment, and sets the real crouch/prone distances, for your height. To measure it, stand upright in game and keep holding X for 3 seconds (it recenters at 1 second); both controllers vibrate when the height is saved. Your in-game eye height does not change. You can also change or measure it in game under Options > VR.",
   "settings.preset": "Preset",
   "choice.none": "None",
   "settings.offsetHint": "Move your hand and its rotation center together. Adjustments use your recentered forward reference and remain stable when you turn your wrist. Inward is mirrored per hand.",

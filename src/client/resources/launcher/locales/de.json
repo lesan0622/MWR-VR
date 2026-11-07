@@ -92,7 +92,7 @@
   "settings.alignment": "Controller-Ausrichtung",
   "settings.body": "Körper",
   "settings.playerHeight": "Körpergröße (cm)",
-  "settings.playerHeightHint": "Passt Hüft- und Rückenholster, Brustausrüstung und die Distanzen für echtes Hocken/Hinlegen an deine Größe an. Zum Messen im Spiel aufrecht stehen und X 3 Sekunden gedrückt halten (nach 1 Sekunde wird neu zentriert); beide Controller vibrieren, wenn die Größe gespeichert ist. Die Augenhöhe im Spiel ändert sich nicht.",
+  "settings.playerHeightHint": "Passt Hüft- und Rückenholster, Brustausrüstung und die Distanzen für echtes Hocken/Hinlegen an deine Größe an. Zum Messen im Spiel aufrecht stehen und X 3 Sekunden gedrückt halten (nach 1 Sekunde wird neu zentriert); beide Controller vibrieren, wenn die Größe gespeichert ist. Die Augenhöhe im Spiel ändert sich nicht. Du kannst sie auch im Spiel unter Optionen > VR ändern oder messen.",
   "settings.preset": "Voreinstellung",
   "choice.none": "Keine",
   "settings.offsetHint": "Verschiebt Hand und Drehzentrum gemeinsam. Die Einstellung nutzt die neu zentrierte Vorwärtsrichtung und bleibt beim Drehen des Handgelenks stabil. Innen ist pro Hand gespiegelt.",

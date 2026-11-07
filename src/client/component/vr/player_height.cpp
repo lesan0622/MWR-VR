@@ -49,7 +49,7 @@ namespace vr::player_height
 				return;
 			}
 			++measurements;last_eye_meters = *eye;last_measured_cm = *cm;
-			command::execute(std::format("set {} {}", settings::player_height.name, int(*cm)));
+			command::execute(std::format("set {} {}", settings::player_height.name, int(*cm)), true);
 			apply();pulse(true);
 			console::info("[VR height] measured %.0f cm (eye %.2f m above the floor)\n", *cm, *eye);
 		}
@@ -103,7 +103,8 @@ namespace vr::player_height
 			scheduler::loop(apply, scheduler::pipeline::main, 250ms);
 			scheduler::loop(sample_layout, scheduler::pipeline::server, 250ms);
 			scheduler::loop(watch_hold, scheduler::pipeline::main);
-			command::add("vr_measure_height", [] {scheduler::once(measure, scheduler::pipeline::main);});
+			// Runs in place: the VR options menu (Engine.ExecNow) reads the new value right after.
+			command::add("vr_measure_height", [] {measure();});
 			command::add("vr_height_status", [] {console::print_text(console::con_type_info, status());});
 		}
 	};
