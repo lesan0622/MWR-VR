@@ -19,6 +19,14 @@ namespace vr::gameplay::weapons::native_ballistics
 	{
 		bool verified{};
 		thread_local bool emitting{};
+		// Riding: the player is linked to a parent (vehicle, moving platform);
+		// gentity tag info +0x208 -> parent, as aftermath_crawl reads it.
+		bool riding(const game::gentity_s* entity)
+		{
+			const void* tag{};
+			std::memcpy(&tag,reinterpret_cast<const std::byte*>(entity)+0x208,sizeof(tag));
+			return tag && *static_cast<const void* const*>(tag);
+		}
 		// Server eye minus the render frame's native view origin at the last shot.
 		std::atomic_uint64_t rebased_shots{},unrebased_shots{};
 		std::atomic<float> last_rebase_units{};
@@ -108,9 +116,11 @@ namespace vr::gameplay::weapons::native_ballistics
 		// native view origin that frame used and carry it onto the server eye: in
 		// a moving vehicle (jeepride) the rendered view trails the server by
 		// speed x latency, so shots left from a stale point and passed behind
-		// riders alongside (user report). Scripted views far from the eye keep
+		// riders alongside (user report). MWR addition, not in Overlord: applied
+		// only while riding (user request); scripted views far from the eye keep
 		// the unshifted muzzle.
-		if (head_pose_bridge::spatial_frame frame{}; head_pose_bridge::get_spatial_frame(frame) && frame.has_native_origin)
+		if (!riding(entity)) {}
+		else if (head_pose_bridge::spatial_frame frame{}; head_pose_bridge::get_spatial_frame(frame) && frame.has_native_origin)
 		{
 			const hands::vec native{frame.native_origin[0],frame.native_origin[1],frame.native_origin[2]};
 			const auto shift=hands::sub(eye,native);
