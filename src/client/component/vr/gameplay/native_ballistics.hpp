@@ -41,4 +41,6 @@ namespace vr::gameplay::weapons::native_ballistics
 	// Requires the current server scheduler scope and exact commandTime.
 	result fire_owned(std::uint32_t weapon, const shot_geometry& geometry, int command_time,debit_observer settled=nullptr);
 	result fire_owned(weapon_identity, const shot_geometry& geometry, int command_time,debit_observer settled=nullptr);
+	// Muzzle rebase onto the server eye (render-frame native view origin -> server eye).
+	std::string rebase_status();
 }

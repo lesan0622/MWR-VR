@@ -684,6 +684,8 @@ namespace vr::head_pose_bridge
 		camera_frame = {reference_pose, tracking_origin, base_yaw_axis, world_scale, recenter_count,
 			std::chrono::steady_clock::now()};
 		camera_frame.head_position = composed_origin;
+		camera_frame.native_origin = original_origin;
+		camera_frame.has_native_origin = true;
 		camera_frame.head_forward = composed_axis[0];
 		camera_frame.head_up = composed_axis[2];
 		camera_frame.tracking_correction=tracking_correction;

@@ -80,6 +80,10 @@ namespace vr::head_pose_bridge
 		pose_filter::pose tracking_correction{};
 		bool head_stabilized{};
 		vector3 head_up{}; // Full center-eye up axis for head-mounted interactions.
+		// Native (pre-VR) view origin this frame was composed from. World poses are
+		// relative to it; server traces rebase onto the server eye (moving vehicles).
+		vector3 native_origin{};
+		bool has_native_origin{};
 	};
 	// Body slots are authored in metres for a 175 cm player; the slot frame's
 	// metre scales with vr_playerHeight (player_height::body_scale).
