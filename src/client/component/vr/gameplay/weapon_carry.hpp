@@ -45,6 +45,10 @@ namespace vr::gameplay::weapons::carry
 			v->owner.revision=v->owner.rear_revision=++revision_;
 			generation_=std::max(generation_,id.generation);return true;
 		}
+		// MWR: the runtime confirmed a native world drop of a gun that had no free
+		// slot (overflow); it leaves the carried set.
+		bool discard(identity id) noexcept
+		{auto* v=mutable_find(id);if(!v || v->at!=location::overflow)return false;*v={};return true;}
 		void put_away() noexcept
 		{
 			for (auto& v:values_) if (v.at==location::held)
