@@ -831,6 +831,10 @@ namespace vr::openxr
 				(void)teardown_preserving_error();
 				return false;
 			}
+			// Optional floor reference for the height measurement (vr_measure_height).
+			space_info.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_STAGE;
+			if (XR_FAILED(dispatch_.create_reference_space(session_, &space_info, &stage_space_)))
+				stage_space_ = XR_NULL_HANDLE;
 
 			publish_progress_locked("swapchains", "xrEnumerateSwapchainFormats(count)");
 			std::uint32_t format_count{};
@@ -982,7 +986,7 @@ namespace vr::openxr
 		bool has_objects() const noexcept
 		{
 			return loader_ != nullptr || instance_ != XR_NULL_HANDLE || session_ != XR_NULL_HANDLE ||
-			       local_space_ != XR_NULL_HANDLE || view_space_ != XR_NULL_HANDLE ||
+			       local_space_ != XR_NULL_HANDLE || view_space_ != XR_NULL_HANDLE || stage_space_ != XR_NULL_HANDLE ||
 			       eyes_[0].handle != XR_NULL_HANDLE || eyes_[1].handle != XR_NULL_HANDLE;
 		}
 
@@ -1080,7 +1084,7 @@ namespace vr::openxr
 						return teardown_failure("xrDestroySwapchain", result);
 				}
 			}
-			for (auto* space : {&view_space_, &local_space_})
+			for (auto* space : {&stage_space_, &view_space_, &local_space_})
 			{
 				if (*space != XR_NULL_HANDLE)
 				{
@@ -1451,6 +1455,13 @@ namespace vr::openxr
 				head_pose_bridge::invalidate_pose();
 				(void)finish_prediction(world_submission::omit);
 				return false;
+			}
+			if (stage_space_ != XR_NULL_HANDLE)
+			{
+				XrSpaceLocation floor{XR_TYPE_SPACE_LOCATION};
+				if (XR_SUCCEEDED(dispatch_.locate_space(view_space_, stage_space_, prediction_.state.predictedDisplayTime, &floor)) &&
+					(floor.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT))
+					player_height::publish_floor(floor.pose.position.y);
 			}
 			std::array<head_pose_bridge::tracking_pose, 2> eye_poses{};
 			std::array<pose_filter::quat, 2> eye_rotations{};
@@ -1858,6 +1869,7 @@ namespace vr::openxr
 		XrSessionState session_state_{XR_SESSION_STATE_UNKNOWN};
 		XrSpace local_space_{XR_NULL_HANDLE};
 		XrSpace view_space_{XR_NULL_HANDLE};
+		XrSpace stage_space_{XR_NULL_HANDLE}; // Optional; floor height only.
 		std::array<eye_swapchain, 2> eyes_{};
 		std::array<engine_stereo_bridge::eye_projection, 2> projections_{};
 		std::vector<XrViewConfigurationView> view_configs_;

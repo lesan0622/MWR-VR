@@ -1,5 +1,6 @@
 #pragma once
 #include "controller_stance.hpp"
+#include "../player_height.hpp"
 #include <algorithm>
 #include <atomic>
 #include <cmath>
@@ -37,12 +38,15 @@ namespace vr::gameplay::physical_stance
 			standing_ = std::max(standing_, head_up_meters);
 			const float drop = std::max(0.f, standing_ - head_up_meters);
 			drop_meters = drop;active = true;
+			// Thresholds are authored for a 175 cm player (vr_playerHeight).
+			const float s = player_height::body_scale.load();
+			const float crouch_in = crouch_enter * s, crouch_out = crouch_exit * s, prone_in = prone_enter * s, prone_out = prone_exit * s;
 			auto next = physical_;
 			switch (physical_)
 			{
-			case posture::stand: next = drop > prone_enter ? posture::prone : drop > crouch_enter ? posture::crouch : posture::stand;break;
-			case posture::crouch: next = drop > prone_enter ? posture::prone : drop < crouch_exit ? posture::stand : posture::crouch;break;
-			case posture::prone: next = drop < crouch_exit ? posture::stand : drop < prone_exit ? posture::crouch : posture::prone;break;
+			case posture::stand: next = drop > prone_in ? posture::prone : drop > crouch_in ? posture::crouch : posture::stand;break;
+			case posture::crouch: next = drop > prone_in ? posture::prone : drop < crouch_out ? posture::stand : posture::crouch;break;
+			case posture::prone: next = drop < crouch_out ? posture::stand : drop < prone_out ? posture::crouch : posture::prone;break;
 			default: break;
 			}
 			if (next == physical_) return {};

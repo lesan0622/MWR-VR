@@ -866,6 +866,7 @@
           "intro": "默认左手 X 短按暂停或返回，长按约一秒重定位。",
           "steps": [
             "短按并松开 X 打开暂停菜单，或返回上一层。长按 X 约一秒重新设置当前头显朝向和菜单位置。",
+            "站直并按住 X 3 秒即可测量身高（校准 > 身体）；保存后两个控制器都会振动。",
             "菜单默认使用右手射线：指向选项，再扣 Trigger 点击。用另一只手的新 Trigger 按下可切换指针手，先松开后再点击。",
             "也可以用左摇杆选择菜单项，再用指针手 Trigger 或确认键确认，用 B/Y 返回。",
             "如果按键没有反应，先松开再按。自定义 SteamVR 绑定可能需要重新指定“暂停 / 返回”和“重定位”动作。"
@@ -876,6 +877,7 @@
           "intro": "Default left X pauses or goes Back on a short press, and recentres after a one-second hold.",
           "steps": [
             "Tap and release X to pause or go back one menu level. Hold X for about one second to recenter the headset heading and menu anchor.",
+            "Keep holding X for 3 seconds while standing upright to measure your height (Calibration > Body); both controllers vibrate when it is saved.",
             "Menus start with the right controller ray: point and press Trigger to click. A fresh Trigger press on the other hand transfers the pointer; release it before clicking.",
             "You can also use the left stick to select, then the pointer hand’s Trigger or Confirm button to confirm, and B/Y to go Back.",
             "If a press is ignored, release and press again. Existing custom SteamVR bindings may need the Pause / Back and Recenter actions assigned."
@@ -886,6 +888,7 @@
           "intro": "默認左手 X 短按暫停或返回，長按約一秒重定位。",
           "steps": [
             "短按并松開 X 打開暫停菜單，或返回上一層。長按 X 約一秒重新設置當前頭顯朝向和菜單位置。",
+            "站直並按住 X 3 秒即可測量身高（校準 > 身體）；儲存後兩個控制器都會震動。",
             "菜單默認使用右手射線：指向選項，再扣 Trigger 點擊。用另一只手的新 Trigger 按下可切換指針手，先松開后再點擊。",
             "也可以用左搖桿選擇菜單項，再用指針手 Trigger 或確認鍵確認，用 B/Y 返回。",
             "如果按鍵沒有反應，先松開再按。自定義 SteamVR 綁定可能需要重新指定“暫停 / 返回”和“重定位”動作。"
@@ -896,6 +899,7 @@
           "intro": "X gauche : appui bref pour pause/retour ; maintien d’une seconde pour recentrer.",
           "steps": [
             "Pressez et relâchez X pour pause ou retour d’un niveau. Maintenez environ une seconde pour recentrer la direction du casque et l’ancrage du menu.",
+            "Maintenez X pendant 3 secondes en vous tenant droit pour mesurer votre taille (Calibrage > Corps) ; les deux manettes vibrent quand elle est enregistrée.",
             "Le pointeur commence à droite : visez et cliquez avec Trigger. Une nouvelle pression de l’autre main transfère le pointeur ; relâchez avant de cliquer.",
             "Vous pouvez aussi sélectionner au stick gauche, confirmer avec Trigger de la main du pointeur ou Confirmer, et revenir avec B/Y.",
             "Si rien ne se passe, relâchez puis pressez de nouveau. Les anciennes configurations SteamVR peuvent nécessiter l’ajout de Pause / Retour et Recentrer."
@@ -906,6 +910,7 @@
           "intro": "X links: kurz für Pause/Zurück, eine Sekunde halten zum Zentrieren.",
           "steps": [
             "X kurz drücken und lösen für Pause oder eine Menüebene zurück. Etwa eine Sekunde halten zentriert Headset-Richtung und Menüanker.",
+            "Halte X aufrecht stehend 3 Sekunden lang gedrückt, um deine Körpergröße zu messen (Kalibrierung > Körper); beide Controller vibrieren, wenn sie gespeichert ist.",
             "Der Menüzeiger startet rechts: zeigen und mit Trigger klicken. Neuer Triggerdruck der anderen Hand übernimmt den Zeiger; vor dem Klick wieder lösen.",
             "Alternativ links auswählen, mit Trigger der Zeigerhand oder Bestätigen bestätigen und mit B/Y zurückgehen.",
             "Bei ignoriertem Druck loslassen und erneut drücken. In älteren SteamVR-Belegungen müssen Pause/Zurück und Zentrieren eventuell zugewiesen werden."
@@ -916,6 +921,7 @@
           "intro": "X izquierdo: toque corto para pausa/atrás, mantener un segundo para recentrar.",
           "steps": [
             "Pulsa y suelta X para pausar o retroceder un nivel. Mantén un segundo para recentrar la orientación del visor y el anclaje del menú.",
+            "Mantén pulsado X durante 3 segundos de pie y erguido para medir tu altura (Calibración > Cuerpo); ambos mandos vibran cuando se guarda.",
             "El puntero empieza a la derecha: apunta y pulsa Trigger. Un nuevo Trigger de la otra mano transfiere el puntero; suelta antes de hacer clic.",
             "También puedes seleccionar con el stick izquierdo, confirmar con Trigger de la mano del puntero o Confirmar, y volver con B/Y.",
             "Si no responde, suelta y pulsa otra vez. Las asignaciones antiguas de SteamVR pueden necesitar Pausa / Atrás y Recentrar."
@@ -926,6 +932,7 @@
           "intro": "Левый X: коротко — пауза/назад, удержание секунду — центрирование.",
           "steps": [
             "Нажмите и отпустите X для паузы или возврата на уровень меню. Удерживайте около секунды для центрирования направления шлема и положения меню.",
+            "Удерживайте X 3 секунды, стоя прямо, чтобы измерить рост (Калибровка > Тело); после сохранения оба контроллера вибрируют.",
             "Указатель меню начинается справа: наведите и нажмите Trigger. Новое нажатие другой рукой передаёт указатель; отпустите перед щелчком.",
             "Можно выбирать левым стиком, подтверждать Trigger руки с указателем или кнопкой подтверждения, возвращаться B/Y.",
             "Если нажатие игнорируется, отпустите и повторите. В старых раскладках SteamVR может потребоваться назначить «Пауза / Назад» и «Центрирование»."
@@ -936,6 +943,7 @@
           "intro": "標準の左 X は短押しでポーズ／戻る、1 秒長押しでリセンターです。",
           "steps": [
             "X を押して離すとポーズまたはメニューを一段戻します。約 1 秒保持するとヘッドセットの正面とメニュー位置を合わせます。",
+            "まっすぐ立ったまま X を 3 秒間押し続けると身長を計測します（キャリブレーション > 身体）。保存されると両方のコントローラーが振動します。",
             "メニューのポインターは右手から始まります。向けて Trigger でクリック。反対の手で新たに Trigger を押すと移り、一度離してからクリックできます。",
             "左スティックで選択し、ポインター側の Trigger または決定ボタンで確定、B／Y で戻る操作もできます。",
             "反応しない場合は離して再度押してください。以前の独自 SteamVR 設定では Pause／Back と Recenter の割り当てが必要な場合があります。"
@@ -946,6 +954,7 @@
           "intro": "기본 왼쪽 X는 짧게 눌러 일시 정지/뒤로, 1초간 길게 눌러 시점 재정렬입니다.",
           "steps": [
             "X를 눌렀다 놓으면 일시 정지하거나 메뉴를 한 단계 돌아갑니다. 약 1초 유지하면 헤드셋 방향과 메뉴 위치가 재정렬됩니다.",
+            "똑바로 선 채 X를 3초 동안 누르고 있으면 키를 측정합니다(보정 > 신체). 저장되면 양쪽 컨트롤러가 진동합니다.",
             "메뉴 포인터는 오른손에서 시작합니다. 가리킨 뒤 Trigger로 클릭합니다. 다른 손에서 Trigger를 새로 누르면 포인터가 이동하므로 놓은 뒤 클릭하세요.",
             "왼쪽 스틱으로 선택하고 포인터 손의 Trigger나 확인 버튼으로 확정하며 B/Y로 돌아갈 수도 있습니다.",
             "입력이 무시되면 놓았다 다시 누르세요. 기존 사용자 지정 SteamVR 배치에는 Pause / Back과 Recenter 지정이 필요할 수 있습니다."
