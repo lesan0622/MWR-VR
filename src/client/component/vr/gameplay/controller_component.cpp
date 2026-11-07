@@ -585,7 +585,12 @@ namespace vr::controllers
 			if (!normal_input_seen)
 			{
 				// Scripted/suppressed branches must rearm even if they never poll controls.
-				if (local_client == 0) gameplay::interaction::command(controller_input::latest_interaction(), false, now);
+				// A grip use held into frozen controls keeps +activate (keyboard hold).
+				if (local_client == 0)
+				{
+					const int held_use = gameplay::interaction::command(controller_input::latest_interaction(), false, now);
+					if (result) result->buttons |= held_use;
+				}
 				locomotion.reset();
 				buttons.reset();
 				attack_notifications={}; notified_owners={};
