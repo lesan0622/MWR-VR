@@ -3,6 +3,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <d3d11.h>
 
 namespace vr::native_post_aa
@@ -27,6 +28,31 @@ namespace vr::native_post_aa
 	{
 		return value <= mode::smaa;
 	}
+	// MWR has no per-eye temporal/filmic history readers yet. Keep these
+	// user-selectable modes from rejecting the entire stereo pair.
+	[[nodiscard]] constexpr mode effective_mode(const mode value) noexcept
+	{
+		return value == mode::smaa_t2x || value == mode::filmic_smaa ||
+			value == mode::filmic_smaa_t2x ? mode::smaa : value;
+	}
+	// The native dispatcher reads the record itself. Override only for its
+	// call, restoring the arena-owned record even if rendering unwinds.
+	class scoped_mode final
+	{
+		std::byte* field_;
+		mode saved_{};
+	public:
+		explicit scoped_mode(void* record) noexcept
+			: field_(static_cast<std::byte*>(record) + mode_offset)
+		{
+			std::memcpy(&saved_, field_, sizeof(saved_));
+			const auto selected = effective_mode(saved_);
+			std::memcpy(field_, &selected, sizeof(selected));
+		}
+		~scoped_mode() { std::memcpy(field_, &saved_, sizeof(saved_)); }
+		scoped_mode(const scoped_mode&) = delete;
+		scoped_mode& operator=(const scoped_mode&) = delete;
+	};
 	[[nodiscard]] constexpr bool temporal(const mode value) noexcept
 	{
 		return value == mode::smaa_t2x || value == mode::filmic_smaa_t2x;

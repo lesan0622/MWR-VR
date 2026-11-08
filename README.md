@@ -6,7 +6,7 @@ English | [한국어](README.ko.md)
 
 MWR VR is an unofficial VR mod for the campaign of *Call of Duty: Modern Warfare Remastered* (2016). It is a port of [Overlord](https://github.com/Aeka0/Overlord), the VR mod for *Modern Warfare 2 Campaign Remastered*: stereoscopic rendering, 6DOF head and hand tracking, physical weapon handling, and VR interactions for equipment and story sequences, rebound to the MWR executable and adapted to its missions. Wherever possible it reuses the game's own weapon, ammunition, animation and mission logic, so the original story presentation is kept.
 
-### **This is Beta 6, maintained by one person. Many features have been tested only on the maintainer's own machine, and stability is expected to be poor. Please treat it as a test build, not a finished product.**
+### **This is Beta 8, maintained by one person. Many features have been tested only on the maintainer's own machine, and stability is expected to be poor. Please treat it as a test build, not a finished product.**
 
 ### **Mods made for the non-VR game are not expected to work with it.**
 

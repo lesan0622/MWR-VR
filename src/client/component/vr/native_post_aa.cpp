@@ -5,6 +5,7 @@
 #include "native_render_contract.hpp"
 #include "diagnostics/post_aa.hpp"
 #include "component/d3d11.hpp"
+#include "component/console.hpp"
 #include "game/game.hpp"
 #include "loader/component_loader.hpp"
 #include <utils/hook.hpp>
@@ -69,7 +70,16 @@ namespace vr::native_post_aa
 		{
 			mode result{};
 			std::memcpy(&result, static_cast<const std::byte*>(record) + mode_offset, sizeof(result));
-			return result;
+			const auto selected = effective_mode(result);
+			if (selected != result)
+			{
+				static std::atomic_uint32_t reported{};
+				const auto bit = 1u << static_cast<unsigned>(result);
+				if (!(reported.fetch_or(bit, std::memory_order_relaxed) & bit))
+					console::info("[VR] post-AA mode %u uses SMAA 1x for VR; temporal/filmic AA is not supported\n",
+						static_cast<unsigned>(result));
+			}
+			return selected;
 		}
 		template<std::size_t N> bool matches(std::uintptr_t address, const std::uint8_t (&bytes)[N])
 		{
@@ -307,6 +317,7 @@ namespace vr::native_post_aa
 			// to the VR display target. The HDR scene is never an AA destination.
 			const auto draw = [&]
 			{
+				const scoped_mode aa_mode(record);
 				auto* source_state = *reinterpret_cast<void* const*>(0x140801FB0);
 				utils::hook::invoke<void>(0x14059C0E0, source_state, static_cast<std::byte*>(record) + 0x170);
 				return utils::hook::invoke<bool>(dispatch_address, record,
