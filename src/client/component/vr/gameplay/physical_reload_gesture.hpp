@@ -88,7 +88,9 @@ namespace vr::gameplay::weapons::physical_reload
 			 s.magazine_inserted && s.magazine_rounds == 0) ? p.locked_travel : 0;
 	}
 	inline float attached_magazine_radius(const profile& p) noexcept
-	{return p.manual_magazine?p.manual_magazine->grab_radius:p.support_magazine_catch?0.f:p.button_magazine_radius;}
+	{return p.support_magazine_catch ? 0.f : (p.manual_magazine?p.manual_magazine->grab_radius:p.button_magazine_radius)+.02f;}
+	inline float slide_acquisition_radius(const profile& p) noexcept
+	{return p.slide_radius + (p.motion==action_motion::charging_handle && !p.preserve_handle_acquisition ? .02f : 0.f);}
 	inline bool attached_magazine_contact(const profile& p,const mechanics::state& s,const geometry& g) noexcept
 	{
 		return attached_magazine_radius(p)>0 && valid(g.magazine) && s.magazine_inserted &&
@@ -307,7 +309,7 @@ namespace vr::gameplay::weapons::physical_reload
 			// sample. Establish that real contact before choosing catch versus drop.
 			if(release_pressed && rules.release==mechanics::magazine_release::button && offhand_available &&
 				acquire_parts && access.parts && pressed && trigger.down && owner.support!=offhand && !offhand_busy(s) &&
-				attached_magazine_contact(p,s,g) && (g.slide_distance>p.slide_radius || prefer_magazine))
+				attached_magazine_contact(p,s,g) && (g.slide_distance>slide_acquisition_radius(p) || prefer_magazine))
 				(void)grasp_magazine();
 			// The native shot boundary never sees an empty shot. Process only a
 			// fresh tracked rear trigger edge here, without native fire/ammo writes.
@@ -648,7 +650,7 @@ namespace vr::gameplay::weapons::physical_reload
 			const bool magazine_candidate=access.parts && (rules.release==mechanics::magazine_release::button || p.manual_magazine) && attached_magazine_contact(p,s,g);
 			// A deliberate press over the gun takes precedence over an overlapping
 			// waist sphere. Hold-while-entering never acquires either interaction.
-			if (access.parts && (!g.knife_held || p.knife_slide_pose_count) && g.slide_distance <= p.slide_radius && !(magazine_candidate && prefer_magazine))
+			if (access.parts && (!g.knife_held || p.knife_slide_pose_count) && g.slide_distance <= slide_acquisition_radius(p) && !(magazine_candidate && prefer_magazine))
 			{
 				if (p.manual_bolt && !rotating_bolt::permits(*p.manual_bolt,offhand))
 				{decision_="manual bolt hand unavailable";return;}
