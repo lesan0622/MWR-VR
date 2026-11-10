@@ -90,6 +90,7 @@ namespace vr::gameplay::weapons::physical_reload
 		bool support_magazine_catch{};     // Grip support may transfer to a Trigger-held magazine.
 		float well_withdraw_margin{.015f}; // Exit/reentry gate, separate from contact hysteresis.
 		const rock_in* rock{};
+		bool preserve_handle_acquisition{}; // G36 retains its authored handle reach.
 	};
 	inline constexpr bool native_action_recoil(const profile& p) noexcept
 	{

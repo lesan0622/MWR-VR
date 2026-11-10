@@ -37,6 +37,7 @@ inline const reload_profile physical = [] {
 	p.round_column = true; // j_bullet1 skins the whole visible round column.
 	p.interaction = physical_reload::with_box_magazine_well(p.interaction);
 	p.interaction.manual_magazine = &manual_magazine; // MP5-style rock/paddle latch.
+	p.interaction.preserve_handle_acquisition = true;
 	// One native chamber recording: pull back | release, split at its quiet gap.
 	p.rear_sound = {"weap_g36_chamber_plr", sound_reference_kind::notetrack, sound_part::first};
 	p.close_sound = {"weap_g36_chamber_plr", sound_reference_kind::notetrack, sound_part::second};

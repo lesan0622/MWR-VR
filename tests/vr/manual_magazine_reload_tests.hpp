@@ -56,13 +56,11 @@ namespace manual_magazine_reload_tests
 			for (const bool magazine_facing:{true,false})
 			{
 				Fixture f(d);f.owner.rear=rear;
-				// Deliberately make the other part's contact closer. Box distance
-				// must not override an unambiguous grip facing in this overlap.
-				f.geometry.slide_distance=magazine_facing ? .01f : .04f;
-				f.geometry.magazine.grip_distance=magazine_facing ? .04f : 0.f;
-				f.geometry.magazine_facing=w::closer_grasp_facing(magazine_facing ? magazine_wrist.rotation : action.wrist.rotation,
-					magazine_wrist.rotation,action.wrist.rotation);f.step();f.trigger(true);
-				check(magazine_facing ? f.control.magazine_grabbed() : f.control.slide_held(),"P90 overlap selects the intended grasp despite the other box being closer");
+				// Distance selects the part even when wrist facing requests the other.
+				f.geometry.slide_distance=magazine_facing ? .04f : .01f;
+				f.geometry.magazine.grip_distance=magazine_facing ? 0.f : .04f;
+				f.geometry.magazine_facing=!magazine_facing;f.step();f.trigger(true);
+				check(magazine_facing ? f.control.magazine_grabbed() : f.control.slide_held(),"P90 overlap selects the nearest part without requiring wrist facing");
 				f.geometry.magazine_facing=!magazine_facing;f.step();
 				check(magazine_facing ? f.control.magazine_grabbed() && !f.control.slide_held() : f.control.slide_held() && !f.control.magazine_grabbed(),
 					"crossing a P90 overlap cannot switch an already-held magazine or handle");
@@ -81,14 +79,16 @@ namespace manual_magazine_reload_tests
 					f.geometry.slide_pose=candidate.pose;f.geometry.magazine=hit;
 					f.geometry.magazine_facing=w::closer_grasp_facing(wrist.rotation,magazine_wrist.rotation,action.wrist.rotation);
 					f.geometry.hand_in_gun=scale(wrist.position,1/units);f.step();f.trigger(true);
-					check(magazine ? f.control.magazine_grabbed() : f.control.slide_held(),
-						"actual P90 contact-volume overlaps preserve top versus side grasp intent");
+					const bool nearer=hit.grip_distance/w::physical_reload::attached_magazine_radius(d->interaction)<
+						candidate.distance_meters/w::physical_reload::slide_acquisition_radius(d->interaction);
+					check(nearer ? f.control.magazine_grabbed() : f.control.slide_held(),
+						"actual P90 overlap selects by physical distance independent of wrist facing");
 				}
 				check(overlaps>0,"P90 overlap regression exercises real intersecting contacts for each grasp");
 			}
 			{
 				Fixture f(d);f.owner.rear=rear;f.geometry.slide_distance=f.geometry.magazine.grip_distance=0;f.step();f.trigger(true);
-				check(f.control.slide_held() && !f.control.magazine_grabbed(),"P90 overlap retains action priority without a closer magazine facing");
+				check(f.control.slide_held() && !f.control.magazine_grabbed(),"P90 overlap retains action priority at an exact distance tie");
 				f.trigger(false);auto state=f.state;state.magazine_inserted=false;state.magazine_rounds=0;f.adopt(state);f.step();f.trigger(true);
 				check(f.control.slide_held() && !f.control.magazine_grabbed(),"absent P90 magazine cannot steal handle acquisition");
 			}

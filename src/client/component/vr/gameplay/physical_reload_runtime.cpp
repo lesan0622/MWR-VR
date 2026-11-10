@@ -448,7 +448,7 @@ namespace vr::gameplay::weapons::physical_reload
 					release.event,10,0,1,true,true,hi::object(hi::domain::carry,entry.id,1)});
 				continue;
 			}
-			float part=g.slide_distance/p.slide_radius;
+			float part=g.slide_distance/slide_acquisition_radius(p);
 			if(attached_magazine_radius(p)>0 && valid(g.magazine) && view.ammo.magazine_inserted)
 				part=std::min(part,g.magazine.grip_distance/attached_magazine_radius(p));
 			if(p.belt && belt_feed::preferred(*p.belt,view.ammo.belt,view.ammo.magazine_inserted,view.ammo.magazine_rounds,g.belt,g.slide_distance,g.magazine.grip_distance))part=0;

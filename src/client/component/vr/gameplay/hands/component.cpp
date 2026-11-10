@@ -72,9 +72,24 @@ namespace vr::gameplay::hands
 		// placement, which trails the camera while the player moves (H2 kept it on
 		// the camera). Offset only the rendered copy by the measured lag so arms and
 		// stowed guns stay with the head; gameplay keeps the true solved pose.
-		vec render_lag() noexcept
+		void validate_placement_source()
 		{
-			const auto lag = engine_stereo_view::placement_lag();
+			const auto verify=[](std::uintptr_t address,const auto& bytes) {
+				std::array<std::uint8_t,std::tuple_size_v<std::decay_t<decltype(bytes)>>> mask{};mask.fill(255);
+				return bool(utils::hook_validation::verify_masked_bytes(reinterpret_cast<void*>(address),{bytes.data(),mask.data(),bytes.size()}));
+			};
+			constexpr std::array<std::uint8_t,28> consumer{
+				0x0f,0x10,0x05,0xc1,0x60,0x69,0x11,0x0f,0x11,0x83,0x88,0x01,0,0,
+				0x0f,0x10,0x0d,0xc3,0x60,0x69,0x11,0x0f,0x11,0x8b,0x98,0x01,0,0};
+			constexpr std::array<std::uint8_t,39> producer{0xf3,0x0f,0x10,0x4b,0x58,0xf3,0x0f,0x11,0x0d,0xf7,0x7d,0x69,0x11,
+				0xf3,0x0f,0x10,0x43,0x5c,0xf3,0x0f,0x11,0x05,0xee,0x7d,0x69,0x11,
+				0xf3,0x0f,0x10,0x4b,0x60,0xf3,0x0f,0x11,0x0d,0xe5,0x7d,0x69,0x11};
+			if(!verify(0x14058F9EC,producer) || !verify(0x140591720,consumer))
+				throw std::runtime_error("MWR current model placement source validation failed");
+		}
+		vec render_lag(const vec& solve_origin) noexcept
+		{
+			const auto lag = engine_stereo_view::placement_lag(solve_origin);
 			return {lag[0], lag[1], lag[2]};
 		}
 		template <class Bones>
@@ -516,7 +531,7 @@ namespace vr::gameplay::hands
 				return false;
 			vec offset{};
 			std::memcpy(offset.data(), render_view + 0x58, sizeof(offset));
-			const auto lag = render_lag();
+			const auto lag = render_lag(offset);
 			if (!std::all_of(offset.begin(),
 			                 offset.end(),
 			                 [](float x) { return std::isfinite(x) && std::abs(x) < 1e7f; }))
@@ -930,7 +945,7 @@ namespace vr::gameplay::hands
 			}
 			vec view_offset{};
 			std::memcpy(view_offset.data(), render_view + 0x58, sizeof(view_offset));
-			const auto lag = render_lag();
+			const auto lag = render_lag(view_offset);
 			render_origin_rebase::publish_solve_origin(view_offset, lag);
 			probe.offsets = {shoulder_half_width->current.value,
 			                 shoulder_down->current.value,
@@ -2180,6 +2195,7 @@ namespace vr::gameplay::hands
 	  public:
 		void post_unpack() override
 		{
+			validate_placement_source();
 			animation_query_ready = weapons::initialize_animation_query();
 			if (!animation_query_ready)
 				console::error("[VR grips] Animation query signature rejected; authored grip presentation "

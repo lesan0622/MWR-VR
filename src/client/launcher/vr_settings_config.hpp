@@ -161,7 +161,7 @@ namespace launcher_vr_settings
 		if (parts.size() != 3 || (!same_name(parts[0], "seta") && !same_name(parts[0], "set"))) return {};
 		for(const auto& field:vr::settings::choices)if(same_name(field.name,parts[1]))return field.name;
 		for(const auto& field:vr::settings::toggles)
-			if(field.max_enabled_value > 1 ? native_name(parts[1], field.name) : same_name(field.name, parts[1]))return field.name;
+			if(native_name(parts[1], field.name))return field.name;
 		for (const auto& field : vr::settings::numbers)
 			if (same_name(field.name, parts[1])) return field.name;
 		return {};

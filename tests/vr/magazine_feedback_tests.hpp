@@ -44,13 +44,16 @@ namespace magazine_feedback_tests
 					const auto seated=compose(compose(gun,d->magazine_rest),inverse(grasp.in_wrist));
 					if(length(sub(wrist.position,seated.position))/units>d->interaction.button_magazine_radius)++expanded;
 				}
-				for(float gap:{.049f,.051f})
+				const float reach=p::attached_magazine_radius(d->interaction);
+				for(float gap:{reach-.001f,reach+.001f})
 				{
 					const auto contact=compose(gun,{{box.grab_high[0]+gap*units,centre[1],centre[2]},{0,0,0,1}}).position;
 					const anchor wrist{sub(contact,rotate(rotation,grasp.contact)),rotation};p::geometry g;
 					w::sample_attached_magazine(*d,g,gun,wrist,controller,basis,grasp,compose(wrist,grasp.in_wrist),units,false);
-					check((g.magazine.grip_distance<=p::attached_magazine_radius(d->interaction))==(gap<.05f),
-						"button magazine contact uses the same bounded five-centimetre margin as physical extraction");
+					const auto local=compose(inverse(gun),wrist).position;
+					const auto wrist_gap=p::box_distance(local,box.grab_low,box.grab_high)/units;
+					check((g.magazine.grip_distance<=reach)==(std::min(gap,wrist_gap)<reach),
+						"button magazine contact admits either real finger contact or nearby tracked wrist");
 				}
 			}
 		}

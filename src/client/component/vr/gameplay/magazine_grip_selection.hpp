@@ -85,6 +85,18 @@ namespace vr::gameplay::weapons
 		g.attached_magazine_pose=grasp.index;
 		const anchor contact_wrist{wrist.position,normalize(multiply(controller,magazine_wrist_basis(p,grasp,basis,knife)))};
 		g.magazine=magazine_contacts(p,gun,contact_wrist,free_magazine,units,&grasp.contact);
+		// A rotated authored finger offset must not reject a hand whose tracked
+		// wrist is already at the magazine body. Keep the finger route as well:
+		// it admits natural reaches where the wrist sits just outside the box.
+		// Knife co-grasps retain their separate authored contact to avoid stealing
+		// an interaction with the hand/tool occupying another part.
+		if (!knife && g.magazine.valid && p.magazine_contacts && std::isfinite(units) && units>0)
+		{
+			const auto local=compose(inverse(gun),wrist).position;
+			const auto& box=*p.magazine_contacts;
+			const float wrist_distance=physical_reload::box_distance(local,box.grab_low,box.grab_high)/units;
+			if(std::isfinite(wrist_distance))g.magazine.grip_distance=std::min(g.magazine.grip_distance,wrist_distance);
+		}
 		// Button-release profiles without a separate latch box use the authored
 		// seated wrist as their spherical contact. No render-snapped hand input.
 		if(!g.magazine.valid && p.ammunition.release==mechanics::magazine_release::button && std::isfinite(units) && units>0)
