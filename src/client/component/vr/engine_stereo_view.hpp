@@ -9,9 +9,9 @@
 
 namespace vr::engine_stereo_view
 {
-	// MWR: camera origin (+0x100) minus skinned placement (+0x190) of the latest
-	// natural scene record. The placement trails the camera while the player moves.
-	std::array<float, 3> placement_lag() noexcept;
+	// Current native placement relative to this skeleton's solve origin. Never
+	// borrow a correction from a previously completed stereo scene.
+	std::array<float, 3> placement_lag(const std::array<float,3>& solve_origin) noexcept;
 	// A mounted turret view (sniperescape Barrett) sits hundreds of units from the
 	// player's skinned placement; accept that offset instead of the 64-unit guard.
 	void allow_far_placement(bool) noexcept;

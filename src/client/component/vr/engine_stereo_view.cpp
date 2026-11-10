@@ -3,6 +3,7 @@
 #include "engine_stereo_view.hpp"
 #include <atomic>
 #include "stabilization.hpp"
+#include "placement_compensation.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -522,13 +523,17 @@ namespace vr::engine_stereo_view
 
 	namespace
 	{
-		std::array<std::atomic<float>, 3> latest_placement_lag{};
+		// R_SetSceneParms copies refdef+0x58 here; R_SetupViewInfo copies this
+		// block+8 to record+0x190. Native scene producers share this stable source.
+		constexpr std::uintptr_t native_placement_origin=0x151C277F0;
 		std::atomic_bool far_placement{};
 	}
 	void allow_far_placement(bool allowed) noexcept { far_placement = allowed; }
-	std::array<float, 3> placement_lag() noexcept
+	std::array<float, 3> placement_lag(const std::array<float,3>& solve_origin) noexcept
 	{
-		return {latest_placement_lag[0].load(), latest_placement_lag[1].load(), latest_placement_lag[2].load()};
+		std::array<float,3> placement{};
+		std::memcpy(placement.data(),reinterpret_cast<const void*>(native_placement_origin),sizeof(placement));
+		return placement_compensation::delta(solve_origin,placement,far_placement.load(std::memory_order_relaxed));
 	}
 	bool clone_scene_records(const void* const natural_record,
 		const slot_pair& views, scene_record_pair& output) noexcept
@@ -536,16 +541,6 @@ namespace vr::engine_stereo_view
 		output = {};
 		if (natural_record == nullptr || !validate_finalized(views)) return false;
 		std::memcpy(output.left.data(), natural_record, output.left.size());
-		{
-			std::array<float, 3> camera{}, placement{}, lag{};
-			std::memcpy(camera.data(), output.left.data() + h2_view_origin_offset, sizeof(camera));
-			std::memcpy(placement.data(), output.left.data() + h2_current_model_placement_origin_offset, sizeof(placement));
-			float energy{};
-			for (std::size_t i = 0; i < 3; ++i) { lag[i] = camera[i] - placement[i]; energy += lag[i] * lag[i]; }
-			const float limit = far_placement.load(std::memory_order_relaxed) ? 2048.0f : 64.0f;
-			if (!std::isfinite(energy) || energy > limit * limit) lag = {};
-			for (std::size_t i = 0; i < 3; ++i) latest_placement_lag[i].store(lag[i], std::memory_order_relaxed);
-		}
 		if (std::memcmp(output.left.data() + h2_view_origin_offset,
 			views.natural_camera.data(), sizeof(views.natural_camera)) != 0)
 		{
