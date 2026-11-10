@@ -251,12 +251,14 @@ namespace scene_models
 	}
 	bool rigid_part::create_face_partition(game::XModel* source,unsigned bone,std::span<const surface_face_range> ranges,bool include)
 	{return !ranges.empty() && create_impl(source,bone,{&bone,1},membership::rigid,ranges,include);}
+	bool rigid_part::create_rigid_face_partition(game::XModel* source,unsigned bone,std::span<const surface_face_range> ranges,bool include)
+	{return !ranges.empty() && create_impl(source,bone,{&bone,1},membership::rigid_surfaces,ranges,include);}
 	bool rigid_part::create_face_partition(game::XModel* source,unsigned anchor,std::span<const unsigned> bones,std::span<const surface_face_range> ranges)
 	{return !ranges.empty() && create_impl(source,anchor,bones,membership::rigid,ranges,true);}
 	bool rigid_part::create_static_face_partition(game::XModel* source, unsigned anchor,
-		std::span<const unsigned> bones, std::span<const surface_face_range> ranges,bool include)
+		std::span<const unsigned> bones, std::span<const surface_face_range> ranges)
 	{
-		return !ranges.empty() && create_impl(source, anchor, bones, membership::rigid_bone, ranges, include);
+		return !ranges.empty() && create_impl(source, anchor, bones, membership::rigid_bone, ranges, true);
 	}
 	bool rigid_part::create_impl(game::XModel* source,unsigned bone,std::span<const unsigned> bones,membership mode,
 		std::span<const surface_face_range> face_ranges,bool include)
@@ -299,6 +301,7 @@ namespace scene_models
 		{
 			game::XSurface surface;
 			if (!read(model.lodInfo[0].surfs+n,surface)) return false;
+			if(mode==membership::rigid_surfaces && (surface.flags&4u))continue;
 			if(skin_partition || (mode==membership::rigid_bone && (surface.flags&4u)))
 			{
 				status_="skin partition requires complete bind-space triangles";

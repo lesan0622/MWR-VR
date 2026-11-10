@@ -267,7 +267,7 @@ namespace vr::gameplay::weapons::mwr_rebase
 		p.variant = "mwr_rebased";
 		p.reload = reload;
 		p.suppress_equip = [](std::string_view) noexcept { return false; };
-		p.viewmodel = {.visibility = part_visibility::surface};
+		p.viewmodel = {.visibility = receiver=="viewmodel_m4a1_sp" ? part_visibility::rigid_groups : part_visibility::surface};
 		return p;
 	}
 

@@ -18,7 +18,7 @@ namespace scene_models
 		std::unique_ptr<storage> data_;
 		const char* status_{"not constructed"};
 		bool upload_vertices();
-		enum class membership {rigid,static_skin,rigid_bone};
+		enum class membership {rigid,static_skin,rigid_bone,rigid_surfaces};
 		bool create_impl(game::XModel*,unsigned,std::span<const unsigned>,membership,
 			std::span<const surface_face_range> face_ranges={},bool include=true);
 	public:
@@ -60,6 +60,8 @@ namespace scene_models
 		// Multi-material version, preserving each source surface/material. Ranges
 		// must be sorted and non-overlapping within their surface.
 		bool create_face_partition(game::XModel*,unsigned bone,std::span<const surface_face_range>,bool include);
+		// Caller must retain native skin surfaces using rigid_groups visibility.
+		bool create_rigid_face_partition(game::XModel*,unsigned bone,std::span<const surface_face_range>,bool include);
 		// Exact face subset across several rigid groups (e.g. magazine + rounds).
 		bool create_face_partition(game::XModel*,unsigned anchor,std::span<const unsigned> bones,
 			std::span<const surface_face_range>);
@@ -67,7 +69,7 @@ namespace scene_models
 		// Every selected face must belong wholly to the requested bones; reject
 		// mixed ownership rather than freezing a deforming receiver boundary.
 		bool create_static_face_partition(game::XModel*, unsigned anchor, std::span<const unsigned> bones,
-		                                  std::span<const surface_face_range>,bool include=true);
+		                                  std::span<const surface_face_range>);
 		game::XModel* model() const noexcept;
 		// Must publish descriptor -> actual source identity before native submit.
 		// GPU/geometry validation alone does not grant a native asset-pool index.

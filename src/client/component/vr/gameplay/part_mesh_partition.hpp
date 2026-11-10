@@ -13,7 +13,7 @@ namespace vr::gameplay::weapons
 		std::span<const std::array<unsigned,2>> surfaces;
 		std::span<const scene_models::surface_face_range> moving_faces;
 		hands::vec moving_low,moving_high;
-		bool include_skin{}; // Explicit complete single-bone skin triangles in this otherwise rigid group.
+		bool rigid_only{}; // Preserve deforming native surfaces with rigid_groups visibility.
 	};
 	inline bool valid_partition(const part_mesh_partition& p) noexcept
 	{

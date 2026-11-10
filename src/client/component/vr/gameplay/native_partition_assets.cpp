@@ -74,8 +74,8 @@ namespace vr::gameplay::weapons::physical_reload::partition_assets
 			auto next=std::make_unique<prepared_parts>();
 			for(unsigned part=0;part<2;++part)
 			{
-				const bool created=recipe.include_skin ?
-					next->parts[part].create_static_face_partition(source,bone,{&bone,1},recipe.moving_faces,part==1) :
+				const bool created=recipe.rigid_only ?
+					next->parts[part].create_rigid_face_partition(source,bone,recipe.moving_faces,part==1) :
 					next->parts[part].create_face_partition(source,bone,recipe.moving_faces,part==1);
 				if(!created)
 				{valid=false;reasons[i]=next->parts[part].status();break;}
