@@ -30,3 +30,23 @@ The user also provided an early console log ending at `main_lockout`. It has no
 graphic failure state or description. The thermal-world warning is also present
 in earlier working runs. No speculative graphics fix was made from that warning;
 the visible symptom and a failure-time diagnostic bundle are still needed.
+
+## Follow-up: magazine acquisition through wrist rotation
+
+The authored finger contact is displaced from the tracked wrist. Rotating the
+wrist moved that point out of the magazine box, even when the wrist remained
+at the magazine. Attached magazine sampling now admits the smaller distance of
+the authored contact and the tracked wrist to the same gun-local magazine box.
+Existing finger reaches remain valid. No radius was enlarged again. Knife
+co-grasps retain their authored contact; latch strike geometry, magazine pose,
+insertion alignment, ammo transactions and breakaway rules remain unchanged.
+
+For the P90's overlapping handle and magazine, selection now compares distance
+relative to each part's acquisition radius, rather than wrist facing. Exact
+ties retain handle priority; an absent magazine cannot claim priority. Once a
+part is held, wrist rotation cannot switch that lease.
+
+Focused tests include both hands, three scale values, and twelve rotations
+around each of three axes for every registered direct-grasp magazine profile,
+plus distant-wrist rejection. Existing button/feedback and manual-magazine
+regressions are also run, including P90 overlaps and held-part continuity.

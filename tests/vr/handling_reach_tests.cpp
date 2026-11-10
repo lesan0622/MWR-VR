@@ -11,6 +11,26 @@ int main()
 	const auto check=[&](bool value,const char* text) {if(!value){++failures;std::cerr<<text<<'\n';}};
 	button_magazine_tests::run<fixture>(check);
 	magazine_feedback_tests::run<fixture>(check);
+	manual_magazine_reload_tests::run<fixture>(check);
+	unsigned angles{};
+	for(const auto* d:w::reload_profiles)if(d->magazine_contacts && p::attached_magazine_radius(d->interaction)>0)
+	for(int actor=0;actor<2;++actor)for(float units:{20.f,39.37007874f,80.f})for(unsigned axis=0;axis<3;++axis)for(unsigned angle=0;angle<12;++angle)
+	{
+		using namespace vr::gameplay::hands;using namespace vr::gameplay::hands::pose_math;
+		const anchor gun{{12,-5,31},normalize(quat{.2f,.3f,.1f,.8f})};
+		const float half=angle*3.14159265f/12;
+		quat rotation{0,0,0,std::cos(half)};rotation[axis]=std::sin(half);rotation=normalize(rotation);
+		const auto grasp=w::select_magazine_grip(*d,rotation,actor,{1,0,0,0},false,false,0,std::nullopt,true);
+		const auto& box=*d->magazine_contacts;
+		const auto center=scale(add(box.grab_low,box.grab_high),.5f);
+		const anchor wrist{compose(gun,{center,{0,0,0,1}}).position,multiply(gun.rotation,rotation)};
+		p::geometry g;w::sample_attached_magazine(*d,g,gun,wrist,wrist.rotation,{0,0,0,1},grasp,compose(wrist,grasp.in_wrist),units,false);
+		check(g.magazine.valid && g.magazine.grip_distance<.00001f,"rotating wrist at magazine body rejected contact");
+		auto far=wrist;far.position[0]+=units*3;
+		w::sample_attached_magazine(*d,g,gun,far,far.rotation,{0,0,0,1},grasp,compose(far,grasp.in_wrist),units,false);
+		check(g.magazine.grip_distance>p::attached_magazine_radius(d->interaction),"distant wrist acquired magazine");
+		++angles;
+	}
 	for(const auto* d:w::reload_profiles)
 	{
 		const auto& interaction=d->interaction;
@@ -50,5 +70,5 @@ int main()
 		check(!unchanged.control.slide_held(),"G36 acquired outside original reach");
 	}
 	check(checked>0,"no button-magazine cases exercised");
-	std::cout<<"handling cases="<<checked<<" failures="<<failures<<'\n';return failures?1:0;
+	std::cout<<"handling cases="<<checked<<" rotation cases="<<angles<<" failures="<<failures<<'\n';return failures?1:0;
 }

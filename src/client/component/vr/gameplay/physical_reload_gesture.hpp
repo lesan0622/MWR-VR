@@ -297,7 +297,10 @@ namespace vr::gameplay::weapons::physical_reload
 				(!magazine_down || !s.magazine_inserted || g.seated_hand_distance>p.part_release_distance ||
 				 hands::length(hands::sub(g.hand_in_gun,previous_hand_))>p.max_contact_step))
 			{magazine_grabbed_=magazine_seated_=false;}
-			const bool prefer_magazine=p.manual_magazine && p.manual_magazine->prefer_grasp_facing && g.magazine_facing;
+			// For overlapping top-fed magazines/handles, choose physical proximity
+			// rather than requiring a particular wrist orientation.
+			const bool prefer_magazine=p.manual_magazine && p.manual_magazine->prefer_grasp_facing &&
+				g.magazine.grip_distance/attached_magazine_radius(p)<g.slide_distance/slide_acquisition_radius(p);
 			const auto grasp_magazine=[&] {
 				if(g.attached_magazine_pose>=p.magazine_pose_count){decision_="magazine grip unavailable";return false;}
 				magazine_grabbed_=true;magazine_pose_=g.attached_magazine_pose;

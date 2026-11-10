@@ -50,8 +50,10 @@ namespace magazine_feedback_tests
 					const auto contact=compose(gun,{{box.grab_high[0]+gap*units,centre[1],centre[2]},{0,0,0,1}}).position;
 					const anchor wrist{sub(contact,rotate(rotation,grasp.contact)),rotation};p::geometry g;
 					w::sample_attached_magazine(*d,g,gun,wrist,controller,basis,grasp,compose(wrist,grasp.in_wrist),units,false);
-					check((g.magazine.grip_distance<=reach)==(gap<reach),
-						"button magazine contact respects the expanded acquisition boundary");
+					const auto local=compose(inverse(gun),wrist).position;
+					const auto wrist_gap=p::box_distance(local,box.grab_low,box.grab_high)/units;
+					check((g.magazine.grip_distance<=reach)==(std::min(gap,wrist_gap)<reach),
+						"button magazine contact admits either real finger contact or nearby tracked wrist");
 				}
 			}
 		}
