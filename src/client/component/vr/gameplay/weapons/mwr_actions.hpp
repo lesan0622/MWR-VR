@@ -14,15 +14,15 @@ namespace vr::gameplay::weapons::mwr_actions
 	// Disconnected bolt meshes reviewed from the MWR source mesh. Exact
 	// topology and bounds are checked before replacing the immutable rigid group.
 	inline constexpr std::array<std::array<unsigned,2>,9> mp5_surfaces{{{4596,5858},{245,398},{84,66},{2762,4078},{138,130},{876,1132},{669,772},{524,624},{4122,5226}}};
-	inline constexpr std::array<scene_models::surface_face_range,1> mp5_faces{{{0,890,904}}};
+	inline constexpr std::array<scene_models::surface_face_range,1> mp5_faces{{{0,890,903}}};
 	inline constexpr partitioned_bolt mp5_bolt{
 		{"viewmodel_mp5_sp",19,mp5_surfaces,mp5_faces,{4.081041f,-.801363f,4.924840f},{6.067664f,-.401661f,5.959110f}},
 		{"j_gun",{{},{0,0,0,1}},mp5_travel,mp5_stroke,0,true}};
 	inline constexpr partitioned_bolt mp5_wet_bolt=[] {auto p=mp5_bolt;p.mesh.source="viewmodel_mp5_sp_wet";return p;}();
 	inline constexpr std::array<std::array<unsigned,2>,11> m4_surfaces{{{9809,12200},{414,604},{4167,4750},{10029,13222},{2454,3910},{784,954},{102,122},{215,242},{540,896},{608,570},{512,720}}};
-	inline constexpr std::array<scene_models::surface_face_range,1> m4_faces{{{3,11056,11190}}};
+	inline constexpr std::array<scene_models::surface_face_range,1> m4_faces{{{3,11056,11189}}};
 	inline constexpr partitioned_bolt m4_bolt{
-		{"viewmodel_m4a1_sp",26,m4_surfaces,m4_faces,{2.785364f,-.496752f,3.403120f},{6.177806f,-.071412f,4.214979f}},
+		{"viewmodel_m4a1_sp",26,m4_surfaces,m4_faces,{2.785364f,-.496752f,3.403120f},{6.177806f,-.071412f,4.214979f},true},
 		{"j_gun",{{},{0,0,0,1}},m4_travel,.059f,0,true}};
 	inline constexpr charging_handle_bolt m16_bolt{
 		"j_bolt",{{4.642004f,0,3.836105f},{0,0,0,1}},m16_travel,.078f,0,true};

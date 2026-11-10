@@ -254,9 +254,9 @@ namespace scene_models
 	bool rigid_part::create_face_partition(game::XModel* source,unsigned anchor,std::span<const unsigned> bones,std::span<const surface_face_range> ranges)
 	{return !ranges.empty() && create_impl(source,anchor,bones,membership::rigid,ranges,true);}
 	bool rigid_part::create_static_face_partition(game::XModel* source, unsigned anchor,
-		std::span<const unsigned> bones, std::span<const surface_face_range> ranges)
+		std::span<const unsigned> bones, std::span<const surface_face_range> ranges,bool include)
 	{
-		return !ranges.empty() && create_impl(source, anchor, bones, membership::rigid_bone, ranges, true);
+		return !ranges.empty() && create_impl(source, anchor, bones, membership::rigid_bone, ranges, include);
 	}
 	bool rigid_part::create_impl(game::XModel* source,unsigned bone,std::span<const unsigned> bones,membership mode,
 		std::span<const surface_face_range> face_ranges,bool include)

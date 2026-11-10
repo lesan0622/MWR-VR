@@ -67,7 +67,7 @@ namespace scene_models
 		// Every selected face must belong wholly to the requested bones; reject
 		// mixed ownership rather than freezing a deforming receiver boundary.
 		bool create_static_face_partition(game::XModel*, unsigned anchor, std::span<const unsigned> bones,
-		                                  std::span<const surface_face_range>);
+		                                  std::span<const surface_face_range>,bool include=true);
 		game::XModel* model() const noexcept;
 		// Must publish descriptor -> actual source identity before native submit.
 		// GPU/geometry validation alone does not grant a native asset-pool index.
