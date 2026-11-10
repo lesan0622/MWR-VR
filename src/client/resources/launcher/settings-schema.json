@@ -8,6 +8,22 @@
     "description": "settings.runtimeBackendHint"
   },
   {
+    "name": "vr_pistolHolsterSide",
+    "category": "basics",
+    "group": "settings.handedness",
+    "label": "settings.pistolHolsterSide",
+    "type": "choice",
+    "description": "settings.pistolHolsterSideHint"
+  },
+  {
+    "name": "vr_controlHand",
+    "category": "basics",
+    "group": "settings.handedness",
+    "label": "settings.controlHand",
+    "type": "choice",
+    "description": "settings.controlHandHint"
+  },
+  {
     "name": "vr_turnMode",
     "category": "basics",
     "group": "settings.turning",

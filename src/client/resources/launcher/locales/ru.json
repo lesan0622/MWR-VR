@@ -302,5 +302,14 @@
   "settings.campaignUnlockHint": "Применяется один раз при запуске из этого окна. Открывает миссии и награды за разведданные, не отмечая кампанию или сбор предметов завершёнными. При закрытии окна выбор сбрасывается.",
   "settings.exoPunch": "Удар экзоскелета",
   "settings.exoPunchHint": "Повышает урон ваших физических атак в ближнем бою и отбрасывает врагов при смертельном ударе. Пули и взрывы не затрагиваются. Требует включения ragdoll в расширенных настройках графики.",
-  "settings.funFeatures": "Развлекательные функции"
+  "settings.funFeatures": "Развлекательные функции",
+  "settings.handedness": "Handedness",
+  "settings.controlHand": "Control hand",
+  "settings.controlHandHint": "Right: move/sprint on left, turn/jump on right, X for menu. Left swaps sticks and clicks, with A for menu and X for the primary action. Restart required.",
+  "settings.pistolHolsterSide": "Default pistol holster side",
+  "settings.pistolHolsterSideHint": "Preferred hip for newly assigned pistols. Independent of the control hand; explicit stows keep their chosen side. Restart required.",
+  "choice.rightHand": "Right-handed",
+  "choice.leftHand": "Left-handed",
+  "choice.rightSide": "Right hip",
+  "choice.leftSide": "Left hip"
 }

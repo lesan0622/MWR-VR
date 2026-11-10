@@ -1,5 +1,6 @@
 #pragma once
 #include "weapon_holding.hpp"
+#include "../handedness.hpp"
 #include <array>
 #include <algorithm>
 #include <cstdint>
@@ -267,9 +268,12 @@ namespace vr::gameplay::weapons::carry
 		instance* mutable_find(identity id) noexcept
 		{ for (auto& v:values_) if (v.id==id && v.at!=location::absent) return &v; return nullptr; }
 		location free_slot(const instance& v) const noexcept
-		// Default loadout placement prefers the right hip; explicit stows keep
+		// Default loadout placement follows the holster preference; explicit stows keep
 		// the player's chosen slot and reconciliation never moves surviving guns.
-		{ if(v.policy.abdominal)return location::abdominal;for (auto p:{location::right_waist,location::left_waist,location::back}) if (accepts(v,p) && !in_slot(p)) return p; return location::overflow; }
+		{ if(v.policy.abdominal)return location::abdominal;
+		  const bool left=handedness::left_holster.load();
+		  for(auto p:{left?location::left_waist:location::right_waist,left?location::right_waist:location::left_waist,location::back})
+		    if(accepts(v,p) && !in_slot(p))return p;return location::overflow; }
 		void assign(instance& v,hand rear,hand support) noexcept
 		{
 			if(v.policy.right_control)

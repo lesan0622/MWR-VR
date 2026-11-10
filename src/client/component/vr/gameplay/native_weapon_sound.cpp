@@ -10,6 +10,7 @@
 #include "native_ammunition.hpp"
 #include "quick_reload.hpp"
 #include "sound_variant_selection.hpp"
+#include "mwr_reload_sound.hpp"
 #include <utils/native_memory.hpp>
 #include "component/scheduler.hpp"
 #include "game/game.hpp"
@@ -338,6 +339,7 @@ namespace vr::gameplay::weapons::native_weapon_sound
 		if (!observed.valid || observed.ammo.weapon != weapon ||
 			native_name!=observed.native_name.data() || capacity!=observed.base_capacity) return false;
 		sound_map map;
+		sound=mwr_reload_sound(native_name,sound);
 		if (!copy_reload_sound_map(weapon, sound, map)) return false;
 		if (sound.kind==sound_reference_kind::alias)
 		{

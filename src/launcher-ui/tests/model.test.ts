@@ -146,17 +146,18 @@ test("every migrated field has translations in every existing locale", () => {
 });
 
 test("native comfort effects are independent switches beside background blur", () => {
-  const names = ["r_dof_limit", "r_mbLimit", "vr_disableBlur"];
+  const names = ["r_dof_limit", "vr_disableBlur"];
   for (const name of names) {
     const field = fields.find((field) => field.name === name)!;
     assert.equal(field.category, "basics");
     assert.equal(field.group, "settings.comfort");
     assert.equal(field.type, "toggle");
   }
-  const fixture = { ...state, values: { r_dof_limit: true, r_mbLimit: false, vr_disableBlur: true } } as SettingsState;
+  assert.equal(fields.some(field=>field.name==="r_mbLimit"),false);
+  const fixture = { ...state, values: { r_dof_limit: true, vr_disableBlur: true } } as SettingsState;
   const draft = makeDraft(fixture.values, fixture.limits);
-  assert.deepEqual(collect({ ...draft, r_dof_limit: false, r_mbLimit: true }, fixture), {
-    r_dof_limit: false, r_mbLimit: true, vr_disableBlur: true,
+  assert.deepEqual(collect({ ...draft, r_dof_limit: false }, fixture), {
+    r_dof_limit: false, vr_disableBlur: true,
   });
 });
 
@@ -183,7 +184,7 @@ test("EXO Punch is a Cheats toggle and saves independently of native intel cheat
 
 test("turning follows the backend in Basics and sight attraction belongs to Aiming", () => {
   const basicsGroups = [...new Set(fields.filter((field) => field.category === "basics").map((field) => field.group))];
-  assert.deepEqual(basicsGroups.slice(0, 2), ["settings.runtimeBackend", "settings.turning"]);
+  assert.deepEqual(basicsGroups.slice(0, 3), ["settings.runtimeBackend", "settings.handedness", "settings.turning"]);
   for (const name of ["vr_turnMode", "vr_turnSpeed", "vr_snapAngle"])
     assert.equal(fields.find((field) => field.name === name)?.category, "basics");
   for (const [name, mode] of [["vr_turnSpeed", "smooth"], ["vr_snapAngle", "snap"]]) {

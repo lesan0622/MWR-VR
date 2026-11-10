@@ -302,5 +302,14 @@
   "settings.campaignUnlockHint": "Appliqué une seule fois au lancement depuis cette fenêtre. Débloque les missions et les récompenses des renseignements sans compléter la progression ni la collecte. Fermer cette fenêtre annule la sélection.",
   "settings.exoPunch": "Coup de poing d’exosquelette",
   "settings.exoPunchHint": "Augmente les dégâts de vos attaques physiques au corps à corps et projette les ennemis lors des coups mortels. Les balles et explosions restent inchangées. Nécessite les ragdolls dans les options graphiques avancées.",
-  "settings.funFeatures": "Fonctions amusantes"
+  "settings.funFeatures": "Fonctions amusantes",
+  "settings.handedness": "Handedness",
+  "settings.controlHand": "Control hand",
+  "settings.controlHandHint": "Right: move/sprint on left, turn/jump on right, X for menu. Left swaps sticks and clicks, with A for menu and X for the primary action. Restart required.",
+  "settings.pistolHolsterSide": "Default pistol holster side",
+  "settings.pistolHolsterSideHint": "Preferred hip for newly assigned pistols. Independent of the control hand; explicit stows keep their chosen side. Restart required.",
+  "choice.rightHand": "Right-handed",
+  "choice.leftHand": "Left-handed",
+  "choice.rightSide": "Right hip",
+  "choice.leftSide": "Left hip"
 }

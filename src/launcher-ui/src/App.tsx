@@ -1,3 +1,4 @@
+import { guideSteps, guideFields } from "./onboarding";
 import { ExternalLink } from "lucide-react";
 import {
   lazy,
@@ -65,31 +66,9 @@ const mainPages = ["play", "settings", "language", "help", "about"];
 const Help = lazy(() =>
   import("./Help").then((module) => ({ default: module.Help })),
 );
-const guideSteps = [
-  "language",
-  "device",
-  "comfort",
-  "assistance",
-  "challenge",
-  "finish",
-];
-const guideFields = [
-  [],
-  ["vr_turnMode", "vr_turnSpeed", "vr_snapAngle"],
-  [
-    "vr_headStabilization",
-    "vr_handStabilization",
-    "vr_disableLensFlare",
-    "vr_disableBlur",
-    "r_dof_limit",
-    "r_mbLimit",
-    "vr_cameraBob",
-  ],
-  ["vr_chamberingGuide", "vr_quickReload", "vr_aimAssistStrength"],
-  ["vr_recoilPenalty", "vr_discardAmmoPenalty"],
-  [],
-];
 const guideDescriptions: Record<string, string> = {
+  vr_controlHand: "settings.controlHandHint",
+  vr_pistolHolsterSide: "settings.pistolHolsterSideHint",
   vr_turnMode: "oobe.turnHelp",
   vr_turnSpeed: "oobe.turnSpeedHelp",
   vr_snapAngle: "oobe.snapAngleHelp",
@@ -98,7 +77,6 @@ const guideDescriptions: Record<string, string> = {
   vr_disableLensFlare: "oobe.flareHelp",
   vr_disableBlur: "oobe.blurHelp",
   r_dof_limit: "settings.depthOfFieldHint",
-  r_mbLimit: "settings.motionBlurHint",
   vr_cameraBob: "oobe.bobHelp",
   vr_chamberingGuide: "oobe.chamberHelp",
   vr_quickReload: "oobe.reloadHelp",

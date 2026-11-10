@@ -52,7 +52,10 @@ namespace vr::settings
 		.values = {"standard", "legacy"},
 		.default_index = 0,
 		.label_keys = {"choice.standardControllerPose", "choice.legacyControllerPose"}};
+	inline constexpr choice_setting control_hand{.name="vr_controlHand",.values={"right","left"},.label_keys={"choice.rightHand","choice.leftHand"}};
+	inline constexpr choice_setting pistol_holster_side{.name="vr_pistolHolsterSide",.values={"right","left"},.label_keys={"choice.rightSide","choice.leftSide"}};
 	inline constexpr std::array choices{
+	    control_hand,pistol_holster_side,
 		runtime_backend, controller_pose_mode, killfeed_style,
 	    choice_setting{
 	        .name = turn_mode, .values = {"smooth", "snap"}, .label_keys = {"choice.smooth", "choice.snap"}},

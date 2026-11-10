@@ -1,5 +1,6 @@
 #include <std_include.hpp>
 #include "controller_input.hpp"
+#include "handedness.hpp"
 #include "controller_calibration.hpp"
 #include "stabilization.hpp"
 #include "input_history.hpp"
@@ -77,6 +78,7 @@ namespace vr::controller_input
 			if(value.aim[h].valid && !next.aim[h].valid &&
 				next.source.channels[index(hand_channel(input_channel::left_aim,h))].reason!=input_reason::pose_filter_rejected)
 				next.source.channels[index(hand_channel(input_channel::left_aim,h))]={input_reason::calibration_invalid};
+		handedness::controls(next);
 		next.continuity_generation=continuity;history.observe(next);current=next;
 	}
 	void set_gameplay_active(bool active) noexcept

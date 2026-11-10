@@ -302,5 +302,14 @@
   "settings.campaignUnlockHint": "從此視窗啟動遊戲時套用一次，開放關卡和情報獎勵，不補齊通關或收集紀錄。關閉此視窗會捨棄尚未執行的選擇。",
   "settings.exoPunch": "外骨骼拳擊",
   "settings.exoPunchHint": "提高物理近戰傷害，致死命中時擊飛敵人。不影響子彈與爆炸傷害。需要在進階圖形設定中啟用布娃娃。",
-  "settings.funFeatures": "趣味功能"
+  "settings.funFeatures": "趣味功能",
+  "settings.handedness": "Handedness",
+  "settings.controlHand": "Control hand",
+  "settings.controlHandHint": "Right: move/sprint on left, turn/jump on right, X for menu. Left swaps sticks and clicks, with A for menu and X for the primary action. Restart required.",
+  "settings.pistolHolsterSide": "Default pistol holster side",
+  "settings.pistolHolsterSideHint": "Preferred hip for newly assigned pistols. Independent of the control hand; explicit stows keep their chosen side. Restart required.",
+  "choice.rightHand": "Right-handed",
+  "choice.leftHand": "Left-handed",
+  "choice.rightSide": "Right hip",
+  "choice.leftSide": "Left hip"
 }

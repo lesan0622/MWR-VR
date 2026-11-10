@@ -7,6 +7,7 @@
 #include "diagnostics/renderer_evidence.hpp"
 #include "diagnostics/support_bundle.hpp"
 #include "debug_options.hpp"
+#include "handedness.hpp"
 #include "desktop_mirror.hpp"
 #include "desktop_mirror_layout.hpp"
 #include "engine_backend_probe.hpp"
@@ -799,6 +800,12 @@ namespace vr
 	public:
 		void post_unpack() override
 		{
+			static auto hands=settings::control_hand.values;
+			static auto holsters=settings::pistol_holster_side.values;
+			auto* controls=dvars::register_enum(settings::control_hand.name,hands.data(),0,game::DVAR_FLAG_SAVED,"Control hand; requires restart");
+			auto* holster=dvars::register_enum(settings::pistol_holster_side.name,holsters.data(),0,game::DVAR_FLAG_SAVED,"Default pistol holster side; requires restart");
+			if(controls)controls->current.integer=controls->latched.integer=int(handedness::left_controls.load());
+			if(holster)holster->current.integer=holster->latched.integer=int(handedness::left_holster.load());
 			for (std::size_t i{}; i < debug_options::names.size(); ++i)
 			{
 				// Startup hooks use the launcher's frozen selection. Seed the native

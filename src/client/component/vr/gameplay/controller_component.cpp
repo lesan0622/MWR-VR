@@ -1,5 +1,6 @@
 #include <std_include.hpp>
 #include "../controller_input.hpp"
+#include "../handedness.hpp"
 #include "../diagnostics.hpp"
 #include "../engine_stereo_owner_pass.hpp"
 #include "../settings.hpp"
@@ -424,19 +425,21 @@ namespace vr::controllers
 					++reload_notify_count;
 				}
 			}
-			// AC-130: right B toggles thermal, right A or left Y cycles the guns.
+			// Vehicle buttons follow the selected control hand; release inputs stay physical.
+			const auto dominant=handedness::dominant()==hand::left?0u:1u;
+			const auto support=1u-dominant;
 			if (gunship_bindings_verified && gameplay && gameplay::view_aimed::gunship())
 			{
-				const auto cycle = input.primary[1].presses + input.secondary[0].presses;
-				if (input.secondary[1].presses != gunship_reload_presses)
+				const auto cycle = input.primary[dominant].presses + input.secondary[support].presses;
+				if (input.secondary[dominant].presses != gunship_reload_presses)
 					utils::hook::invoke<void>(notify_command_address, building_client, use_reload_binding, 0);
 				if (cycle != gunship_cycle_presses)
 					utils::hook::invoke<void>(notify_command_address, building_client, weapnext_binding, 0);
 				gunship_cycle_presses = cycle;
 			}
-			else gunship_cycle_presses = input.primary[1].presses + input.secondary[0].presses;
-			gunship_reload_presses = input.secondary[1].presses;
-			if (gameplay && input.secondary[1].active && input.secondary[1].down)
+			else gunship_cycle_presses = input.primary[dominant].presses + input.secondary[support].presses;
+			gunship_reload_presses = input.secondary[dominant].presses;
+			if (gameplay && input.secondary[dominant].active && input.secondary[dominant].down)
 			{
 				cmd->buttons |= use_reload_button;
 				++reload_count;

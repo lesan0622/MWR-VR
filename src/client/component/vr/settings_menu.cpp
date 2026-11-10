@@ -16,7 +16,7 @@ namespace vr::settings_menu
 		using json = nlohmann::json;
 		constexpr std::array categories{"basics", "calibration", "gameplay", "cheats", "other"};
 		// Applied at game start only; changing them in game would mislead.
-		constexpr std::array launcher_only{settings::runtime_backend.name, settings::controller_pose_mode.name};
+		constexpr std::array launcher_only{settings::runtime_backend.name,settings::controller_pose_mode.name,settings::control_hand.name,settings::pistol_holster_side.name};
 
 		// Read during static initialization, like ui_scripting's Lua resources:
 		// once the game image is mapped, the process module no longer holds them.

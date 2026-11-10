@@ -306,5 +306,14 @@
   "settings.campaignUnlockHint": "Applies once when you launch the game from this window. Unlocks missions and intel rewards without completing campaign or collectible records. Closing this window discards the selection.",
   "settings.exoPunch": "EXO Punch",
   "settings.exoPunchHint": "Boost your physical melee damage and launch enemies on lethal hits. Bullets and explosions are unaffected. Requires ragdolls in Advanced Graphics.",
-  "settings.funFeatures": "Fun features"
+  "settings.funFeatures": "Fun features",
+  "settings.handedness": "Handedness",
+  "settings.controlHand": "Control hand",
+  "settings.controlHandHint": "Right: move/sprint on left, turn/jump on right, X for menu. Left swaps sticks and clicks, with A for menu and X for the primary action. Restart required.",
+  "settings.pistolHolsterSide": "Default pistol holster side",
+  "settings.pistolHolsterSideHint": "Preferred hip for newly assigned pistols. Independent of the control hand; explicit stows keep their chosen side. Restart required.",
+  "choice.rightHand": "Right-handed",
+  "choice.leftHand": "Left-handed",
+  "choice.rightSide": "Right hip",
+  "choice.leftSide": "Left hip"
 }
