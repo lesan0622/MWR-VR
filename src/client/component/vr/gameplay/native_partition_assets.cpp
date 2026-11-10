@@ -79,6 +79,11 @@ namespace vr::gameplay::weapons::physical_reload::partition_assets
 					next->parts[part].create_face_partition(source,bone,recipe.moving_faces,part==1);
 				if(!created)
 				{valid=false;reasons[i]=next->parts[part].status();break;}
+				// MWR's M4 opposite receiver wall was only visible from outside.
+				// Opening the bolt exposes its back faces; keep the actual receiver
+				// wall opaque rather than drawing the world through the ejection port.
+				if(!part && p->id=="mwr_m4" && !next->parts[part].make_two_sided())
+				{valid=false;reasons[i]="M4 receiver interior index preparation rejected";break;}
 				next->value.models[part]=next->parts[part].model();
 				const auto bind=next->parts[part].bind();hands::anchor parent{{bind[0],bind[1],bind[2]},{bind[3],bind[4],bind[5],bind[6]}};
 				if(part && fold)parent=compose_reload(parent,fold->pivot);

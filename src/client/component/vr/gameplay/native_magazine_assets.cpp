@@ -50,6 +50,16 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 		std::array<std::atomic<const round_stack*>, reload_profiles.capacity()> round_selected{};
 		std::array<std::atomic<const char*>, reload_profiles.capacity()> round_reasons{};
 		std::array<clock::time_point, reload_profiles.capacity()> round_attempt{};
+		struct chamber_asset
+		{
+			scene_models::rigid_part single;
+			asset view{};hands::anchor rest{};
+			game::XModel* source{};game::XSurface* surfaces{};
+		};
+		std::array<std::unique_ptr<chamber_asset>,reload_profiles.capacity()*2> chamber_retained;
+		std::array<std::atomic<const chamber_asset*>,reload_profiles.capacity()> chamber_selected{};
+		std::array<std::atomic<const char*>,reload_profiles.capacity()> chamber_reasons{};
+		std::array<clock::time_point,reload_profiles.capacity()> chamber_attempt{};
 
 		const char* ready_status(const reload_profile& definition)
 		{
@@ -508,6 +518,91 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 		}
 	}
 
+	namespace
+	{
+		void refresh_chamber(size_t index,const reload_profile& definition)
+		{
+			if(definition.ammunition.feed!=mechanics::feed_type::closed_bolt)return;
+			const auto* magazine=selected[index].load();const auto* stack=round_selected[index].load();
+			auto* source=magazine?magazine->source:stack?stack->source:nullptr;
+			if(!source){chamber_selected[index]=nullptr;return;}
+			const auto* current=chamber_selected[index].load();
+			if(current && current->source==source && current->surfaces==source->lodInfo[0].surfs)return;
+			for(const auto& cached:chamber_retained)if(cached && cached->source==source && cached->surfaces==source->lodInfo[0].surfs)
+			{chamber_selected[index]=cached.get();return;}
+			const auto now=clock::now();if(now>=chamber_attempt[index] && now-chamber_attempt[index]<std::chrono::seconds(1))return;
+			chamber_attempt[index]=now;
+			const int brass=find_bone(*source,"tag_brass"),muzzle=find_bone(*source,"tag_flash");
+			if(brass<0 || muzzle<0){chamber_reasons[index]="native chamber/barrel anchors unavailable";return;}
+			auto next=std::make_unique<chamber_asset>();
+			int bullet=find_bone(*source,"tag_bullet_single");
+			if(bullet<0 && std::string_view(source->name)=="viewmodel_g36c")bullet=find_bone(*source,"j_bullet1");
+			bool created{};
+			if(bullet>=0)created=next->single.create_rigid_bone(source,unsigned(bullet));
+			else if(const auto* fill=definition.magazine_fill())
+			{
+				// Population one minus the permanent body is exactly one native
+				// cartridge. A stack recipe already names that single cartridge.
+				std::vector<scene_models::surface_face_range> faces;
+				if(fill->stack)faces.assign(fill->stack->rounds[0].faces.begin(),fill->stack->rounds[0].faces.end());
+				else for(const auto& range:fill->faces[1])for(unsigned face=range.first;face<=range.last;++face)
+					if(!scene_models::face_in_partition(fill->faces[0],range.surface,face))
+					{
+						if(!faces.empty() && faces.back().surface==range.surface && faces.back().last+1==face)faces.back().last=face;
+						else faces.push_back({range.surface,face,face});
+					}
+				const auto recipe=definition.magazine_mesh();bone_selection bones;
+				if(!faces.empty() && recipe.body_count<recipe.count && bind_mesh_bones(*source,recipe,bones))
+					created=next->single.create_static_face_partition(source,bones[recipe.body_count],
+						std::span(bones).subspan(recipe.body_count,recipe.count-recipe.body_count),faces);
+			}
+			else if(definition.bullets_bone.find("bullet")!=std::string_view::npos)
+			{
+				bullet=find_bone(*source,definition.bullets_bone);
+				created=bullet>=0 && next->single.create_rigid_bone(source,unsigned(bullet)) && next->single.isolate_cartridge();
+			}
+			if(created && definition.round_column)created=next->single.isolate_cartridge();
+			if(!created){chamber_reasons[index]="verified own single-cartridge geometry unavailable";return;}
+			const auto& bounds=next->single.model()->bounds;
+			const hands::vec center{bounds.midPoint[0],bounds.midPoint[1],bounds.midPoint[2]};
+			unsigned axis{};for(unsigned a=1;a<3;++a)if(bounds.halfSize[a]>bounds.halfSize[axis])axis=a;
+			float end_radius[2]{};
+			const auto* model=next->single.model();
+			for(unsigned s=0;s<model->numsurfs;++s)
+			{
+				const auto& surface=model->lodInfo[0].surfs[s];
+				for(unsigned t=0;t<surface.triCount;++t)for(auto v:{surface.triIndices[t].v1,surface.triIndices[t].v2,surface.triIndices[t].v3})
+				{
+					const auto& xyz=surface.verts0.packedVerts0[v].xyz;
+					if(std::abs(xyz[axis]-center[axis])<bounds.halfSize[axis]*.8f)continue;
+					float radius{};for(unsigned a=0;a<3;++a)if(a!=axis)radius+=(xyz[a]-center[a])*(xyz[a]-center[a]);
+					const auto end=xyz[axis]>center[axis]?1u:0u;end_radius[end]=std::max(end_radius[end],radius);
+				}
+			}
+			const bool reverse=end_radius[0]<end_radius[1]*.95f;
+			constexpr float q=.70710678118f;
+			const hands::quat direction=axis==0 ? (reverse?hands::quat{0,0,1,0}:hands::quat{0,0,0,1}) :
+				axis==1?hands::quat{0,0,reverse?q:-q,q}:hands::quat{0,reverse?-q:q,0,q};
+			game::DObjAnimMat rear{},barrel{};
+			if(!utils::native_memory::read_bytes(&rear,source->baseMat+brass,sizeof(rear)) ||
+				!utils::native_memory::read_bytes(&barrel,source->baseMat+muzzle,sizeof(barrel)) ||
+				!next->single.bake_vertices([&](unsigned,std::span<game::GfxPackedVertex> vertices){
+					for(auto& vertex:vertices)for(unsigned a=0;a<3;++a)vertex.xyz[a]-=center[a];return true;}))return;
+			next->view={next->single.model(),{{},{0,0,0,1}}};
+			next->rest={{rear.trans[0],barrel.trans[1],barrel.trans[2]},direction};
+			next->source=source;next->surfaces=source->lodInfo[0].surfs;
+			auto slot=std::find_if(chamber_retained.begin(),chamber_retained.end(),[](const auto& value){return !value;});
+			if(slot==chamber_retained.end())return;
+			const std::array<scene_models::runtime_model,1> identities{{{next->single.model(),source}}};
+			if(!scene_models::register_runtime_models(identities))return;
+			*slot=std::move(next);chamber_selected[index]=slot->get();chamber_reasons[index]="own single cartridge ready";
+		}
+	}
+	std::optional<hands::anchor> chamber_rest(const reload_profile* definition) noexcept
+	{
+		const auto index=reload_profile_index(definition);const auto* chamber=index<reload_profiles.size()?chamber_selected[index].load():nullptr;
+		return chamber?std::optional(chamber->rest):std::nullopt;
+	}
 	asset rounds(const reload_profile* definition, int count) noexcept
 	{
 		const auto index = reload_profile_index(definition);
@@ -549,9 +644,8 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 		const auto* prepared = index < reload_profiles.size() ? selected[index].load() : nullptr;
 		if (prepared && prepared->cartridge_view.model)
 			return prepared->cartridge_view;
-		// MWR: the receiver's own round (also used for counted magazine rounds).
-		const auto* stack = index < reload_profiles.size() ? round_selected[index].load() : nullptr;
-		return stack ? stack->cartridge : asset{};
+		const auto* chamber=index<reload_profiles.size()?chamber_selected[index].load():nullptr;
+		return chamber?chamber->view:asset{};
 	}
 
 	void clear() noexcept
@@ -562,6 +656,7 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 			entry = nullptr;
 		for (auto& entry : round_selected)
 			entry = nullptr;
+		for(auto& entry:chamber_selected)entry=nullptr;
 	}
 
 	void retire_after_drain() noexcept
@@ -571,6 +666,8 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 			entry.reset();
 		for (auto& entry : round_retained)
 			entry.reset();
+		for(auto& entry:chamber_retained)entry.reset();
+		chamber_attempt={};for(auto& reason:chamber_reasons)reason=nullptr;
 		round_attempt = {};
 		for (auto& reason : reasons)
 			reason = "waiting for loaded assets after retirement";
@@ -591,6 +688,7 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 		{
 			refresh_profile(index);
 			refresh_rounds(index, *reload_profiles[index]);
+			refresh_chamber(index,*reload_profiles[index]);
 		}
 	}
 }

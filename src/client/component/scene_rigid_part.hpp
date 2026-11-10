@@ -57,6 +57,11 @@ namespace scene_models
 		// Main owner, before registration. Bake into private immutable buffers;
 		// queued models and source vertices must never be edited through this API.
 		bool bake_vertices(const std::function<bool(unsigned,std::span<game::GfxPackedVertex>)>& transform);
+		// Private opaque receiver interior: retain both windings without changing native materials.
+		bool make_two_sided();
+		// A bullet bone can contain a complete stack. Keep one parallel cartridge,
+		// including its separate case/projectile/primer material islands.
+		bool isolate_cartridge();
 		// Multi-material version, preserving each source surface/material. Ranges
 		// must be sorted and non-overlapping within their surface.
 		bool create_face_partition(game::XModel*,unsigned bone,std::span<const surface_face_range>,bool include);

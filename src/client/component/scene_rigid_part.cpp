@@ -8,6 +8,7 @@
 #include <wrl/client.h>
 #include <cfloat>
 #include <cmath>
+#include <map>
 
 namespace scene_models
 {
@@ -225,6 +226,106 @@ namespace scene_models
 			}
 			mesh.vertex_buffer=std::move(buffer);mesh.vertex_view=std::move(view);surface.vb0=mesh.vertex_buffer.Get();surface.vb0View=mesh.vertex_view.Get();
 		}
+		return true;
+	}
+	bool rigid_part::make_two_sided()
+	{
+		if(!data_ || !scheduler::is_executing(scheduler::pipeline::main))return false;
+		for(unsigned i=0;i<data_->count;++i)if(data_->meshes[i].indices.size()>32767)return false;
+		for(unsigned i=0;i<data_->count;++i)
+		{
+			auto& mesh=data_->meshes[i];auto& surface=data_->surfaces[i];
+			const auto count=mesh.indices.size();mesh.indices.reserve(count*2);
+			for(size_t f=0;f<count;++f){const auto face=mesh.indices[f];mesh.indices.push_back({face.v1,face.v3,face.v2});}
+			ComPtr<ID3D11Device> device;surface.vb0->GetDevice(&device);
+			if(!device || !create_surface_indices(device.Get(),surface.indexBufferView,std::as_bytes(std::span(mesh.indices)),mesh.index_buffer,mesh.index_view))return false;
+			surface.indexBuffer=mesh.index_buffer.Get();surface.indexBufferView=mesh.index_view.Get();
+			surface.triCount=static_cast<unsigned short>(mesh.indices.size());surface.triIndices=surface.triIndices2=mesh.indices.data();
+			mesh.group.triCount=surface.triCount;
+		}
+		return true;
+	}
+	bool rigid_part::isolate_cartridge()
+	{
+		if(!data_ || !scheduler::is_executing(scheduler::pipeline::main))return false;
+		using point=std::array<float,3>;
+		std::map<std::array<int,3>,unsigned> vertices;
+		std::vector<unsigned> parent;
+		std::vector<std::vector<unsigned>> roots(data_->count);
+		const auto find=[&](unsigned p){while(parent[p]!=p){parent[p]=parent[parent[p]];p=parent[p];}return p;};
+		for(unsigned s=0;s<data_->count;++s)
+		{
+			const auto& mesh=data_->meshes[s];
+			for(const auto& face:mesh.indices)
+			{
+				std::array<unsigned,3> ids{};unsigned corner{};
+				for(auto v:{face.v1,face.v2,face.v3})
+				{
+					const auto& p=mesh.vertices[v].xyz;std::array<int,3> key{};
+					for(unsigned a=0;a<3;++a)key[a]=int(std::lround(p[a]*10000.f));
+					const auto [it,inserted]=vertices.try_emplace(key,unsigned(parent.size()));
+					if(inserted)parent.push_back(it->second);ids[corner++]=it->second;
+				}
+				for(unsigned a=1;a<3;++a)parent[find(ids[a])]=find(ids[0]);
+				roots[s].push_back(ids[0]);
+			}
+		}
+		struct island {point low{FLT_MAX,FLT_MAX,FLT_MAX},high{-FLT_MAX,-FLT_MAX,-FLT_MAX};unsigned count{};};
+		std::map<unsigned,island> islands;
+		for(unsigned s=0;s<data_->count;++s)for(size_t f=0;f<roots[s].size();++f)
+		{
+			auto& part=islands[find(roots[s][f])];++part.count;
+			const auto& face=data_->meshes[s].indices[f];
+			for(auto v:{face.v1,face.v2,face.v3})for(unsigned a=0;a<3;++a)
+			{const float p=data_->meshes[s].vertices[v].xyz[a];part.low[a]=std::min(part.low[a],p);part.high[a]=std::max(part.high[a],p);}
+		}
+		if(islands.empty())return false;
+		unsigned axis{};float length{};
+		for(const auto& [_,part]:islands)for(unsigned a=0;a<3;++a)if(part.high[a]-part.low[a]>length){length=part.high[a]-part.low[a];axis=a;}
+		if(length<=.01f)return false;
+		const island* seed{};
+		for(const auto& [_,part]:islands)if(part.high[axis]-part.low[axis]>=length*.75f &&
+			(!seed || part.low[2]+part.high[2]>seed->low[2]+seed->high[2]))seed=&part;
+		if(!seed)return false;
+		float width{};for(unsigned a=0;a<3;++a)if(a!=axis)width=std::max(width,seed->high[a]-seed->low[a]);
+		if(width<=.001f)return false;
+		std::map<unsigned,bool> selected;
+		point low{FLT_MAX,FLT_MAX,FLT_MAX},high{-FLT_MAX,-FLT_MAX,-FLT_MAX};
+		for(const auto& [id,part]:islands)
+		{
+			float radius{};for(unsigned a=0;a<3;++a)if(a!=axis){const float delta=(part.low[a]+part.high[a]-seed->low[a]-seed->high[a])*.5f;radius+=delta*delta;}
+			const float gap=std::max({0.f,part.low[axis]-seed->high[axis],seed->low[axis]-part.high[axis]});
+			if(radius>width*width*.0625f || gap>length*.35f)continue;
+			selected[id]=true;for(unsigned a=0;a<3;++a){low[a]=std::min(low[a],part.low[a]);high[a]=std::max(high[a],part.high[a]);}
+		}
+		float radial{};for(unsigned a=0;a<3;++a)if(a!=axis)radial=std::max(radial,high[a]-low[a]);
+		// Reject an inseparable column or a non-cartridge part; never substitute
+		// a magazine, sight or cartridge from another weapon/caliber.
+		if(high[axis]-low[axis]<radial*1.4f)return false;
+		unsigned count{};
+		for(unsigned s=0;s<data_->count;++s)
+		{
+			auto& mesh=data_->meshes[s];size_t kept{};
+			for(size_t f=0;f<mesh.indices.size();++f)if(selected.contains(find(roots[s][f])))mesh.indices[kept++]=mesh.indices[f];
+			mesh.indices.resize(kept);if(!kept)continue;
+			if(count!=s){data_->surfaces[count]=data_->surfaces[s];data_->materials[count]=data_->materials[s];data_->meshes[count]=std::move(mesh);}
+			auto& output=data_->meshes[count];auto& surface=data_->surfaces[count];
+			ComPtr<ID3D11Device> device;surface.vb0->GetDevice(&device);
+			if(!device || !create_surface_indices(device.Get(),surface.indexBufferView,std::as_bytes(std::span(output.indices)),output.index_buffer,output.index_view))return false;
+			surface.indexBuffer=output.index_buffer.Get();surface.indexBufferView=output.index_view.Get();
+			surface.triCount=static_cast<unsigned short>(kept);surface.triIndices=surface.triIndices2=output.indices.data();
+			output.group.triCount=surface.triCount;surface.rigidVertLists=&output.group;surface.verts0.packedVerts0=output.vertices.data();++count;
+		}
+		if(!count)return false;
+		data_->count=count;data_->model.numsurfs=static_cast<unsigned char>(count);
+		data_->lod.numsurfs=data_->model.lodInfo[0].numsurfs=static_cast<unsigned short>(count);
+		float radius{};
+		for(unsigned a=0;a<3;++a)
+		{
+			data_->model.bounds.midPoint[a]=(low[a]+high[a])*.5f;data_->model.bounds.halfSize[a]=(high[a]-low[a])*.5f;
+			radius+=std::max(low[a]*low[a],high[a]*high[a]);
+		}
+		data_->model.radius=std::sqrt(radius);data_->bone_info.bounds=data_->model.bounds;data_->bone_info.radiusSquared=radius;
 		return true;
 	}
 	namespace

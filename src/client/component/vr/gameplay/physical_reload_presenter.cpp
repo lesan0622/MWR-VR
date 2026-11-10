@@ -413,6 +413,7 @@ namespace vr::gameplay::weapons::physical_reload
 		auto& handle_fold_return=motion->fold;
 		auto& handle_catch_return=motion->catch_motion;
 		const auto& definition = *profile;
+		const auto measured_chamber=magazine_assets::chamber_rest(profile);
 		const auto rear=static_cast<int>(owner.holding_hand()),off=1-rear;
 		const auto plan=hand_interaction::pose(hand(off));
 		if(plan.driver && (plan.driver.provider!=hand_interaction::domain::magazine || plan.driver.object!=owner.id()))manipulation=false;
@@ -714,7 +715,7 @@ namespace vr::gameplay::weapons::physical_reload
 			}
 			if (definition.receiver_parented_bullets)
 				move_part(r,parts.bullets,compose(presented_magazine,parts.bullets_in_magazine),solved);
-			if (definition.chamber_round)
+			if (definition.chamber_round && !measured_chamber)
 			{
 				const auto chamber=chamber_cartridge_pose(definition,state.ammo,visual_travel,0,units);
 				if(chamber)move_part(r,parts.bullets,compose(gun,*chamber),solved);
@@ -857,11 +858,15 @@ namespace vr::gameplay::weapons::physical_reload
 		held.definition = profile;held.view.owner=owner;
 		held.inserted_origin=view_offset;
 		{const std::lock_guard debug_lock(debug_mutex);debug_valid=state.ammo.magazine_hand==hand(off);if(debug_valid){debug_mag=mag;debug_wrist=as_anchor(solved[r.arms[off].wrist]);}}
-		if(state.active && !state.fault && manual && magazine_assets::cartridge(profile).model)
+		if(state.active && !state.fault && (manual || measured_chamber) && magazine_assets::cartridge(profile).model &&
+			(manual || state.slide_held || action_shot_fraction(shot_age)==0))
 		{
-			if(const auto chamber=chamber_cartridge_pose(definition,state.ammo,visual_travel,bolt_target.travel,units))
+			if(const auto chamber=chamber_cartridge_pose(definition,state.ammo,visual_travel,bolt_target.travel,units,
+				measured_chamber?&*measured_chamber:nullptr))
 			{held.live_chamber=true;held.chamber_model=compose(gun,*chamber);}
 		}
+		if(measured_chamber && definition.chamber_round)
+			for(size_t i=0;i<hidden.size();++i)hidden[i]|=parts.bullet_mask[i];
 		if(state.active && !state.fault && definition.magazine_fill() && state.ammo.magazine_inserted)
 		{
 			held.counted_inserted=true;held.inserted_model=as_anchor(solved[parts.magazine]);held.inserted_origin=view_offset;
