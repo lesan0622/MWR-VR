@@ -801,10 +801,14 @@ namespace vr
 		{
 			for (std::size_t i{}; i < debug_options::names.size(); ++i)
 			{
-				// The normal profile load applies saved values. Keep reset defaults
-				// off even when this process loaded a probe; edits apply next launch.
-				dvars::register_bool(debug_options::names[i], false,
+				// Startup hooks use the launcher's frozen selection. Seed the native
+				// saved value too: late registration/profile writes must not persist
+				// the reset default over an enabled launcher selection.
+				auto* setting=dvars::register_bool(debug_options::names[i], false,
 					game::DVAR_FLAG_SAVED, "Optional VR diagnostic; requires game restart");
+				const bool selected=debug_options::enabled(static_cast<debug_options::probe>(i));
+				if(setting)setting->current.enabled=setting->latched.enabled=selected;
+				if(selected)console::info("[VR debug] %s enabled at startup\n",debug_options::names[i]);
 			}
 			static auto pose_modes = settings::controller_pose_mode.values;
 			dvars::register_enum(settings::controller_pose_mode.name, pose_modes.data(),
