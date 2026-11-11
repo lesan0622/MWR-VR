@@ -65,6 +65,7 @@ namespace vr::gameplay::weapons::physical_reload
 			std::array<anchor,2> partition_model{};vec partition_origin{};bool partitioned_mesh{};
 			anchor inserted_model{};vec inserted_origin{};bool counted_inserted{};
 			anchor chamber_model{};bool live_chamber{};
+			anchor liner_model{};bool receiver_liner{}; // MWR G36 receiver interior (back faces)
 			anchor attached_model{};
 			// MWR: a pistol magazine in hand, relative to the tracked visual wrist.
 			int hand{-1};anchor in_tracked{};bool tracked{};
@@ -90,8 +91,8 @@ namespace vr::gameplay::weapons::physical_reload
 		std::array<dropped,8> drops{};
 		// R_FilterXModelIntoScene copies placement but RETAINS this pointer in
 		// sceneModel+0x68. Lighting handles must outlive all queued render work.
-		constexpr size_t round_lighting_base = 15+8+30+15+15;
-		// Held, drops, partition, inserted, live chamber; then MWR counted rounds per index.
+		constexpr size_t round_lighting_base = 15+8+30+15+15+15;
+		// Held, drops, partition, inserted, live chamber, receiver liner; then MWR counted rounds per index.
 		std::array<unsigned short,round_lighting_base*2> lighting_handles{};
 		std::atomic<std::uint64_t> chamber_draws{}; // MWR port diagnostic: live chamber cartridge submits.
 		std::mutex debug_mutex;hands::anchor debug_mag{},debug_wrist{},debug_final{};bool debug_valid{};
@@ -118,8 +119,8 @@ namespace vr::gameplay::weapons::physical_reload
 				const auto part=index>=round_lighting_base?index-round_lighting_base:index;
 				if(part>=15 && part<23)return result::unchanged;
 				if(part<15){const std::lock_guard lock(mutex);if(held_frames[part].tracked)return result::unchanged;} // Submitted at the tracked wrist.
-				const bool chamber_part=part>=68,inserted_part=part>=53 && !chamber_part,partition_part=part>=23 && part<53;
-				const auto part_slot=chamber_part?part-68:inserted_part?part-53:partition_part?(part-23)/2:part;
+				const bool liner_part=part>=83,chamber_part=part>=68 && !liner_part,inserted_part=part>=53 && part<68,partition_part=part>=23 && part<53;
+				const auto part_slot=liner_part?part-83:chamber_part?part-68:inserted_part?part-53:partition_part?(part-23)/2:part;
 				if(part_slot>=submitted_view.size())return result::unchanged;
 				vec origin{},solved{};
 				{const std::lock_guard lock(mutex);solved=submitted_view[part_slot];}
@@ -130,7 +131,7 @@ namespace vr::gameplay::weapons::physical_reload
 				return result::replace;
 			}
 			if(index>=round_lighting_base)return result::unchanged;
-			if(index>=15 && index<23)return result::unchanged;
+			if((index>=15 && index<23) || index>=83)return result::unchanged;
 			const bool chamber=index>=68;
 			const bool inserted=index>=53 && !chamber;
 			const bool partitioning=index>=23 && index<53;const auto piece=partitioning?(index-23)%2:0;
@@ -305,6 +306,14 @@ namespace vr::gameplay::weapons::physical_reload
 				draw(world,68+hand_frame.slot,hand_frame.definition,hand_frame.units,0,true);
 				++chamber_draws;
 			}
+			if(hand_frame.receiver_liner && eligible(attachment_kind::action_partition))
+				if(const auto liner=magazine_assets::receiver_liner(hand_frame.definition);liner.model)
+				{
+					auto world=hand_frame.liner_model;world.position=add(world.position,hand_frame.inserted_origin);
+					world=compose(world,liner.in_magazine);game::GfxScaledPlacement placement{};
+					std::copy(world.position.begin(),world.position.end(),placement.base.origin);std::copy(world.rotation.begin(),world.rotation.end(),placement.base.quat);placement.scale=1;
+					float color[4]{1,1,1,1};scene_models::submit(liner.model,&placement,0,&lighting_handles[83+hand_frame.slot],color,color,color,.25f*hand_frame.units);
+				}
 			if(hand_frame.partitioned_mesh && eligible(attachment_kind::action_partition))
 			{
 				const auto asset=partition_assets::get(hand_frame.definition);
@@ -865,6 +874,7 @@ namespace vr::gameplay::weapons::physical_reload
 				measured_chamber?&*measured_chamber:nullptr))
 			{held.live_chamber=true;held.chamber_model=compose(gun,*chamber);}
 		}
+		if(state.active && magazine_assets::receiver_liner(profile).model){held.receiver_liner=true;held.liner_model=gun;}
 		if(measured_chamber && definition.chamber_round)
 			for(size_t i=0;i<hidden.size();++i)hidden[i]|=parts.bullet_mask[i];
 		if(state.active && !state.fault && definition.magazine_fill() && state.ammo.magazine_inserted)

@@ -58,7 +58,9 @@ namespace scene_models
 		// queued models and source vertices must never be edited through this API.
 		bool bake_vertices(const std::function<bool(unsigned,std::span<game::GfxPackedVertex>)>& transform);
 		// Private opaque receiver interior: retain both windings without changing native materials.
-		bool make_two_sided();
+		// keep_front=false keeps only the reversed winding: a back-face liner drawn
+		// over the unchanged native model (MWR G36 receiver interior).
+		bool make_two_sided(bool keep_front=true);
 		// A bullet bone can contain a complete stack. Keep one parallel cartridge,
 		// including its separate case/projectile/primer material islands.
 		bool isolate_cartridge();

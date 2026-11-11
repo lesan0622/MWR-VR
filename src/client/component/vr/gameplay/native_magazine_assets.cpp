@@ -52,8 +52,8 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 		std::array<clock::time_point, reload_profiles.capacity()> round_attempt{};
 		struct chamber_asset
 		{
-			scene_models::rigid_part single;
-			asset view{};hands::anchor rest{};
+			scene_models::rigid_part single,liner;
+			asset view{},liner_view{};hands::anchor rest{};
 			game::XModel* source{};game::XSurface* surfaces{};
 		};
 		std::array<std::unique_ptr<chamber_asset>,reload_profiles.capacity()*2> chamber_retained;
@@ -655,7 +655,14 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 			// along the bore comes from the press-check rule, measured from tag_brass
 			// projected onto that line. No lift toward the case-exit height.
 			namespace sm=vr::spatial_math;
-			const sm::vec muzzle_at{barrel.trans[0],barrel.trans[1],barrel.trans[2]},exit_at{rear.trans[0],rear.trans[1],rear.trans[2]};
+			sm::vec muzzle_at{barrel.trans[0],barrel.trans[1],barrel.trans[2]},exit_at{rear.trans[0],rear.trans[1],rear.trans[2]};
+			// MWR MP5: tag_brass (x 6.53) is ahead of the real port window (x 4.10..6.13),
+			// so a press check showed the round outside it. The partitioned bolt piece is
+			// exactly the plate filling that window and retreats from its front edge:
+			// centre the station on the part a one-round press check opens.
+			const auto* window=std::string_view(source->name).starts_with("viewmodel_mp5") && definition.bolt_partition ?
+				&definition.bolt_partition->mesh : nullptr;
+			if(window)exit_at[0]=window->moving_high[0]-forward*.5f*(length-rim);
 			auto bore=sm::unit(sm::rotate({barrel.quat[0],barrel.quat[1],barrel.quat[2],barrel.quat[3]},{1,0,0}));
 			// A muzzle tag not pointing down the bore (>10 deg off viewmodel +x) is not an axis.
 			if(!std::isfinite(bore[0]) || std::abs(bore[0])<.985f)bore={1,0,0};
@@ -668,13 +675,31 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 			const float centre_station=port_station+(slide?.3f*length-rim/2:length-1.5f*rim)+(g36?1.5f:0.f);
 			next->rest={sm::add(muzzle_at,sm::scale(bore,centre_station)),
 				sm::multiply(sm::from_to({forward,0,0},bore),direction)};
+			// The stylised MWR MP5 window starts 0.29 in above the bore (z 4.92 vs
+			// tag_flash 4.63): a bore-line round sat wholly under its lower edge
+			// (mock shift test: +0.5 in shows the whole round). Lift just into it.
+			if(window)next->rest.position[2]=std::max(next->rest.position[2],window->moving_low[2]+bounds.halfSize[2]);
+			// MWR G36 receiver is open-shelled: with the bolt back the inner walls were
+			// culled and the port showed the world (user). Draw j_gun's back faces only,
+			// over the unchanged native receiver, while the gun is held.
+			if(g36)if(const int gun=find_bone(*source,"j_gun");gun>=0 && next->liner.create_rigid_bone(source,unsigned(gun)) &&
+				next->liner.make_two_sided(false))
+			{
+				const auto bind=next->liner.bind();
+				next->liner_view={next->liner.model(),inverse_reload({{bind[0],bind[1],bind[2]},{bind[3],bind[4],bind[5],bind[6]}})};
+			}
 			next->source=source;next->surfaces=source->lodInfo[0].surfs;
 			auto slot=std::find_if(chamber_retained.begin(),chamber_retained.end(),[](const auto& value){return !value;});
 			if(slot==chamber_retained.end())return;
-			const std::array<scene_models::runtime_model,1> identities{{{next->single.model(),round_source}}};
-			if(!scene_models::register_runtime_models(identities))return;
+			const std::array<scene_models::runtime_model,2> identities{{{next->single.model(),round_source},{next->liner_view.model,source}}};
+			if(!scene_models::register_runtime_models(std::span(identities).first(next->liner_view.model?2:1)))return;
 			*slot=std::move(next);chamber_selected[index]=slot->get();chamber_reasons[index]=round_source==source?"own single cartridge ready":"M4/M16 5.56 cartridge ready";
 		}
+	}
+	asset receiver_liner(const reload_profile* definition) noexcept
+	{
+		const auto index=reload_profile_index(definition);const auto* chamber=index<reload_profiles.size()?chamber_selected[index].load():nullptr;
+		return chamber?chamber->liner_view:asset{};
 	}
 	std::optional<hands::anchor> chamber_rest(const reload_profile* definition) noexcept
 	{

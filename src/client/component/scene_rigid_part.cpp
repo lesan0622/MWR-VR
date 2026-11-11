@@ -228,15 +228,16 @@ namespace scene_models
 		}
 		return true;
 	}
-	bool rigid_part::make_two_sided()
+	bool rigid_part::make_two_sided(bool keep_front)
 	{
 		if(!data_ || !scheduler::is_executing(scheduler::pipeline::main))return false;
-		for(unsigned i=0;i<data_->count;++i)if(data_->meshes[i].indices.size()>32767)return false;
+		for(unsigned i=0;i<data_->count;++i)if(keep_front && data_->meshes[i].indices.size()>32767)return false;
 		for(unsigned i=0;i<data_->count;++i)
 		{
 			auto& mesh=data_->meshes[i];auto& surface=data_->surfaces[i];
 			const auto count=mesh.indices.size();mesh.indices.reserve(count*2);
 			for(size_t f=0;f<count;++f){const auto face=mesh.indices[f];mesh.indices.push_back({face.v1,face.v3,face.v2});}
+			if(!keep_front)mesh.indices.erase(mesh.indices.begin(),mesh.indices.begin()+count);
 			ComPtr<ID3D11Device> device;surface.vb0->GetDevice(&device);
 			if(!device || !create_surface_indices(device.Get(),surface.indexBufferView,std::as_bytes(std::span(mesh.indices)),mesh.index_buffer,mesh.index_view))return false;
 			surface.indexBuffer=mesh.index_buffer.Get();surface.indexBufferView=mesh.index_view.Get();
