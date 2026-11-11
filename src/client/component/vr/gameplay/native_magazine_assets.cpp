@@ -584,7 +584,6 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 			if(!created){chamber_reasons[index]="verified own single-cartridge geometry unavailable";return;}
 			const auto& bounds=next->single.model()->bounds;
 			const hands::vec center{bounds.midPoint[0],bounds.midPoint[1],bounds.midPoint[2]};
-			const float round_x=center[0];
 			unsigned axis{}; // bore (+x), enforced by one_round
 			float end_radius[2]{};
 			const auto* model=next->single.model();
@@ -609,27 +608,32 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 				!next->single.bake_vertices([&](unsigned,std::span<game::GfxPackedVertex> vertices){
 					for(auto& vertex:vertices)for(unsigned a=0;a<3;++a)vertex.xyz[a]-=center[a];return true;}))return;
 			next->view={next->single.model(),{{},{0,0,0,1}}};
-			// The source round is the magazine's top round. The bolt strips it one
-			// cartridge length forward into the chamber, ahead of the bolt face; at
-			// tag_brass (ejection port) it would sit inside the closed bolt and the
-			// bolt-parented travel would keep it hidden for the whole stroke.
-			// MWR M16: j_bolt front x=6.18, top round 3.83..6.07 -> chamber 6.07..8.31.
+			// Seat by the press-check rule (user): pulling the action back one rimless
+			// round length must show the whole rimless round in the ejection port,
+			// still inside the gun. tag_brass is the native case-exit point = port
+			// centre. The chamber round travels with the bolt (chamber_cartridge_pose).
+			// Receiver port (fixed): after travel L-rim the rimless span
+			// [rear-L+2rim, rear+rim] centres on tag_brass. MWR AK47 bolt-face seat put
+			// it 1.65 in behind the port then, Dragunov 1.79; M4 0.28 (fine).
+			// Slide port (pistol: port and round travel together): the rimless span
+			// [rear+rim, rear+L] centres on tag_brass; the barrel hood covers it at
+			// rest. The magazine-forward seat put M9 1.30 in ahead of the port.
+			// Mesh rays cannot find the window: rigid-bone receiver/slide meshes leak
+			// (USP slide read open -2.34..3.75).
 			const float forward=barrel.trans[0]>=rear.trans[0]?1.f:-1.f,half=bounds.halfSize[axis];
-			float chamber_rear=round_x+forward*half;
-			// Where the bolt is its own compact rigid part on the bore line, its face
-			// is the exact chamber rear (MWR Dragunov j_bolt front 8.05 vs top round
-			// front 8.92; M14 8.05 vs 7.91; G36 j_bolt_1 8.93 vs 6.93). A carrier with
-			// piston, a whole pistol slide or an MP5 cocking handle is not a face.
+			const float length=2*half,rim=.05f*length;
+			bool slide{};
 			for(const auto* name:{"j_bolt","j_bolt_1"})if(const int bolt=find_bone(*source,name);bolt>=0)
 			{
 				scene_models::rigid_part probe;
 				if(!probe.create_rigid_bone(source,unsigned(bolt)) || !probe.model())continue;
 				const auto& b=probe.model()->bounds;
 				const float face=b.midPoint[0]+forward*b.halfSize[0];
-				const bool on_bore=std::abs(barrel.trans[2]-b.midPoint[2])<=b.halfSize[2];
-				if(on_bore && 2*b.halfSize[0]<=2*half*2.5f && forward*(face-round_x)>0 && forward*(face-chamber_rear)<=4*half)
-				{chamber_rear=face;break;}
+				// A pistol slide is on the bore and reaches the muzzle (M9 7.31 vs 7.58).
+				if(std::abs(barrel.trans[2]-b.midPoint[2])<=b.halfSize[2] &&
+					std::abs(face-barrel.trans[0])<=.15f*std::abs(barrel.trans[0]-rear.trans[0])){slide=true;break;}
 			}
+			const float chamber_rear=slide?rear.trans[0]-forward*(rim+length)/2:rear.trans[0]+forward*(length/2-1.5f*rim);
 			// Height: tag_flash is the bore, but seen through the port a bore-height
 			// round reads sunk inside the receiver (AK47 tag_brass 0.91 in above the
 			// bore, Dragunov 0.43, M9/M1911/USP .23/.35/.44). Lift it toward the native
