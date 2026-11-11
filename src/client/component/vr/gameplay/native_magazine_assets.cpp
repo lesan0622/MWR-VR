@@ -566,6 +566,11 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 			const auto& bounds=next->single.model()->bounds;
 			const hands::vec center{bounds.midPoint[0],bounds.midPoint[1],bounds.midPoint[2]};
 			unsigned axis{};for(unsigned a=1;a<3;++a)if(bounds.halfSize[a]>bounds.halfSize[axis])axis=a;
+			// A magazine round is a slender body along the viewmodel bore (+x). A
+			// stack that survived isolation (MWR G36C skinned j_bullet column,
+			// half 1.47x0.37x3.49 in) is not one round; never draw it in the chamber.
+			bool slender=axis==0;for(unsigned a=1;a<3;++a)slender=slender && bounds.halfSize[a]<=bounds.halfSize[0]*.45f;
+			if(!slender){chamber_reasons[index]="own single-cartridge geometry is not one slender round";return;}
 			float end_radius[2]{};
 			const auto* model=next->single.model();
 			for(unsigned s=0;s<model->numsurfs;++s)
@@ -589,7 +594,13 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 				!next->single.bake_vertices([&](unsigned,std::span<game::GfxPackedVertex> vertices){
 					for(auto& vertex:vertices)for(unsigned a=0;a<3;++a)vertex.xyz[a]-=center[a];return true;}))return;
 			next->view={next->single.model(),{{},{0,0,0,1}}};
-			next->rest={{rear.trans[0],barrel.trans[1],barrel.trans[2]},direction};
+			// The source round is the magazine's top round. The bolt strips it one
+			// cartridge length forward into the chamber, ahead of the bolt face; at
+			// tag_brass (ejection port) it would sit inside the closed bolt and the
+			// bolt-parented travel would keep it hidden for the whole stroke.
+			// MWR M16: j_bolt front x=6.18, top round 3.83..6.07 -> chamber 6.07..8.31.
+			const float forward=barrel.trans[0]>=rear.trans[0]?1.f:-1.f;
+			next->rest={{center[0]+forward*2*bounds.halfSize[axis],barrel.trans[1],barrel.trans[2]},direction};
 			next->source=source;next->surfaces=source->lodInfo[0].surfs;
 			auto slot=std::find_if(chamber_retained.begin(),chamber_retained.end(),[](const auto& value){return !value;});
 			if(slot==chamber_retained.end())return;
@@ -632,8 +643,17 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 			// Thread-local text: status lines are formatted on the caller's thread.
 			thread_local std::string text;
 			const auto* rounds_reason = round_reasons[index].load();
-			text = std::string(reason ? reason : "not prepared") + "; rounds: " + (rounds_reason ? rounds_reason : "not prepared");
+			text = std::string(reason ? reason : "not prepared") + "; rounds: " + (rounds_reason ? rounds_reason : "not prepared") +
+				"; chamber: " + (chamber_reasons[index].load() ? chamber_reasons[index].load() : "none");
 			return text.c_str();
+		}
+		if(index<reload_profiles.size())
+		{
+			// Chamber cartridge readiness (why the live chamber round is unavailable).
+			thread_local std::string chamber_text;
+			const auto* chamber_reason=chamber_reasons[index].load();
+			chamber_text=std::string(reason?reason:"not prepared")+"; chamber: "+(chamber_reason?chamber_reason:"none");
+			return chamber_text.c_str();
 		}
 		return reason ? reason : "not prepared";
 	}
