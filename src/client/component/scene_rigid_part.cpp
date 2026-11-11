@@ -280,22 +280,32 @@ namespace scene_models
 			{const float p=data_->meshes[s].vertices[v].xyz[a];part.low[a]=std::min(part.low[a],p);part.high[a]=std::max(part.high[a],p);}
 		}
 		if(islands.empty())return false;
-		unsigned axis{};float length{};
-		for(const auto& [_,part]:islands)for(unsigned a=0;a<3;++a)if(part.high[a]-part.low[a]>length){length=part.high[a]-part.low[a];axis=a;}
-		if(length<=.01f)return false;
+		// Viewmodel cartridges lie along the bore (+x). The longest extent of the
+		// whole source is not the round: a magazine body (Skorpion tag_clip) is
+		// tallest in z, and MWR AK47 tag_bullet holds two staggered rounds whose
+		// case and projectile are separate islands, so no island spans the round.
+		constexpr unsigned axis=0;
+		const auto transverse=[](const island& part){return std::max(part.high[1]-part.low[1],part.high[2]-part.low[2]);};
 		const island* seed{};
-		for(const auto& [_,part]:islands)if(part.high[axis]-part.low[axis]>=length*.75f &&
-			(!seed || part.low[2]+part.high[2]>seed->low[2]+seed->high[2]))seed=&part;
+		for(const auto& [_,part]:islands)
+		{
+			const float span=part.high[0]-part.low[0];
+			if(span<=.05f || span<transverse(part)*1.6f)continue;
+			// Top round of the stack; among coaxial pieces prefer the longer (case).
+			const float top=part.low[2]+part.high[2],seed_top=seed?seed->low[2]+seed->high[2]:-FLT_MAX;
+			if(!seed || top>seed_top+.02f || (top>seed_top-.02f && span>seed->high[0]-seed->low[0]))seed=&part;
+		}
 		if(!seed)return false;
-		float width{};for(unsigned a=0;a<3;++a)if(a!=axis)width=std::max(width,seed->high[a]-seed->low[a]);
+		const float length=seed->high[0]-seed->low[0],width=transverse(*seed);
 		if(width<=.001f)return false;
 		std::map<unsigned,bool> selected;
 		point low{FLT_MAX,FLT_MAX,FLT_MAX},high{-FLT_MAX,-FLT_MAX,-FLT_MAX};
 		for(const auto& [id,part]:islands)
 		{
-			float radius{};for(unsigned a=0;a<3;++a)if(a!=axis){const float delta=(part.low[a]+part.high[a]-seed->low[a]-seed->high[a])*.5f;radius+=delta*delta;}
-			const float gap=std::max({0.f,part.low[axis]-seed->high[axis],seed->low[axis]-part.high[axis]});
-			if(radius>width*width*.0625f || gap>length*.35f)continue;
+			float radius{};for(unsigned a=1;a<3;++a){const float delta=(part.low[a]+part.high[a]-seed->low[a]-seed->high[a])*.5f;radius+=delta*delta;}
+			const float gap=std::max({0.f,part.low[0]-seed->high[0],seed->low[0]-part.high[0]});
+			// Coaxial, no wider than the case (rim/primer/projectile), adjacent along the bore.
+			if(radius>width*width*.09f || transverse(part)>width*1.25f || gap>length*.5f)continue;
 			selected[id]=true;for(unsigned a=0;a<3;++a){low[a]=std::min(low[a],part.low[a]);high[a]=std::max(high[a],part.high[a]);}
 		}
 		float radial{};for(unsigned a=0;a<3;++a)if(a!=axis)radial=std::max(radial,high[a]-low[a]);

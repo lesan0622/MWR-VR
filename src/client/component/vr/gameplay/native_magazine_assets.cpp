@@ -539,7 +539,8 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 			if(bullet<0 && std::string_view(source->name)=="viewmodel_g36c")bullet=find_bone(*source,"j_bullet1");
 			bool created{};
 			if(bullet>=0)created=next->single.create_rigid_bone(source,unsigned(bullet));
-			else if(const auto* fill=definition.magazine_fill())
+			// MWR AK47 has a mesh-less tag_bullet_single; fall back to its round bones.
+			if(!created)if(const auto* fill=definition.magazine_fill())
 			{
 				// Population one minus the permanent body is exactly one native
 				// cartridge. A stack recipe already names that single cartridge.
@@ -562,15 +563,29 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 				created=bullet>=0 && next->single.create_rigid_bone(source,unsigned(bullet)) && next->single.isolate_cartridge();
 			}
 			if(created && definition.round_column)created=next->single.isolate_cartridge();
+			// One complete round: slender along the viewmodel bore (+x) with a round
+			// cross-section. Rejects a stack that survived isolation (G36C skinned
+			// j_bullet column, half 1.47x0.37x3.49 in) or two rounds left joined.
+			const auto one_round=[](const scene_models::rigid_part& part)
+			{
+				const auto& h=part.model()->bounds.halfSize;
+				return h[1]<=h[0]*.45f && h[2]<=h[0]*.45f && h[1]<=h[2]*1.6f && h[2]<=h[1]*1.6f;
+			};
+			if(created && !one_round(next->single))created=false;
+			// No usable own round bone (MWR Skorpion: rounds are part of tag_clip):
+			// the top round of the receiver magazine is still this weapon's cartridge.
+			if(!created && !definition.magazine_bone.empty())
+			{
+				next=std::make_unique<chamber_asset>();
+				const int clip=find_bone(*source,definition.magazine_bone);
+				created=clip>=0 && next->single.create_rigid_bone(source,unsigned(clip)) && next->single.isolate_cartridge() &&
+					one_round(next->single);
+			}
 			if(!created){chamber_reasons[index]="verified own single-cartridge geometry unavailable";return;}
 			const auto& bounds=next->single.model()->bounds;
 			const hands::vec center{bounds.midPoint[0],bounds.midPoint[1],bounds.midPoint[2]};
-			unsigned axis{};for(unsigned a=1;a<3;++a)if(bounds.halfSize[a]>bounds.halfSize[axis])axis=a;
-			// A magazine round is a slender body along the viewmodel bore (+x). A
-			// stack that survived isolation (MWR G36C skinned j_bullet column,
-			// half 1.47x0.37x3.49 in) is not one round; never draw it in the chamber.
-			bool slender=axis==0;for(unsigned a=1;a<3;++a)slender=slender && bounds.halfSize[a]<=bounds.halfSize[0]*.45f;
-			if(!slender){chamber_reasons[index]="own single-cartridge geometry is not one slender round";return;}
+			const float round_x=center[0];
+			unsigned axis{}; // bore (+x), enforced by one_round
 			float end_radius[2]{};
 			const auto* model=next->single.model();
 			for(unsigned s=0;s<model->numsurfs;++s)
@@ -599,8 +614,23 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 			// tag_brass (ejection port) it would sit inside the closed bolt and the
 			// bolt-parented travel would keep it hidden for the whole stroke.
 			// MWR M16: j_bolt front x=6.18, top round 3.83..6.07 -> chamber 6.07..8.31.
-			const float forward=barrel.trans[0]>=rear.trans[0]?1.f:-1.f;
-			next->rest={{center[0]+forward*2*bounds.halfSize[axis],barrel.trans[1],barrel.trans[2]},direction};
+			const float forward=barrel.trans[0]>=rear.trans[0]?1.f:-1.f,half=bounds.halfSize[axis];
+			float chamber_rear=round_x+forward*half;
+			// Where the bolt is its own compact rigid part on the bore line, its face
+			// is the exact chamber rear (MWR Dragunov j_bolt front 8.05 vs top round
+			// front 8.92; M14 8.05 vs 7.91; G36 j_bolt_1 8.93 vs 6.93). A carrier with
+			// piston, a whole pistol slide or an MP5 cocking handle is not a face.
+			for(const auto* name:{"j_bolt","j_bolt_1"})if(const int bolt=find_bone(*source,name);bolt>=0)
+			{
+				scene_models::rigid_part probe;
+				if(!probe.create_rigid_bone(source,unsigned(bolt)) || !probe.model())continue;
+				const auto& b=probe.model()->bounds;
+				const float face=b.midPoint[0]+forward*b.halfSize[0];
+				const bool on_bore=std::abs(barrel.trans[2]-b.midPoint[2])<=b.halfSize[2];
+				if(on_bore && 2*b.halfSize[0]<=2*half*2.5f && forward*(face-round_x)>0 && forward*(face-chamber_rear)<=4*half)
+				{chamber_rear=face;break;}
+			}
+			next->rest={{chamber_rear+forward*half,barrel.trans[1],barrel.trans[2]},direction};
 			next->source=source;next->surfaces=source->lodInfo[0].surfs;
 			auto slot=std::find_if(chamber_retained.begin(),chamber_retained.end(),[](const auto& value){return !value;});
 			if(slot==chamber_retained.end())return;
