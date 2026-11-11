@@ -397,6 +397,10 @@ namespace vr::engine_stereo_owner_pass
 	// production owner and native ring are both ready to consume.
 	[[nodiscard]] frontend_culling_admission admit_frontend_culling_pair(
 		std::uint64_t pair_id) noexcept;
+	// Frontend culling admissions: accepted / family already in production /
+	// pair not expected / last rejected pair. One VR frame per native frame
+	// shows production_busy near zero.
+	[[nodiscard]] std::array<std::uint64_t, 4> frontend_admission_counters() noexcept;
 	[[nodiscard]] bool begin(transaction& output,
 		engine_stereo_binding::backend_claim&& claim, void* natural_record,
 		const d3d11::device_snapshot& graphics) noexcept;

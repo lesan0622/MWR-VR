@@ -190,6 +190,9 @@ namespace vr::engine_stereo_owner_pass
 		std::array<std::atomic_uint32_t, auxiliary_scene::view_count> camera_model_final_inactive{};
 		std::array<std::atomic_uint32_t, auxiliary_scene::view_count> camera_model_final_other{};
 		std::atomic_bool production_active{};
+		// Pair the active production transaction is producing (0 = none).
+		std::atomic<std::uint64_t> production_pair{};
+		std::array<std::atomic<std::uint64_t>, 4> admission_counters{}; // frontend culling admission outcomes (status)
 		std::atomic_bool gpu_census_launch_attempted{};
 		// High 32 bits are a monotonic request sequence; low 32 bits are the exact
 		// requested delay. Publishing both in one release operation prevents a
@@ -741,12 +744,24 @@ namespace vr::engine_stereo_owner_pass
 	{
 		if (state.load(std::memory_order_acquire) != gate_state::complete)
 			return frontend_culling_admission::unarmed;
-		if (pair_id == 0 || production_active.load(std::memory_order_acquire) ||
+		// One producer per pose family: the frontend of the next native frame runs
+		// beside the backend's production transaction, so only the family that
+		// transaction is producing is closed (OpenXR queues the next family).
+		const bool producing = pair_id != 0 &&
+			production_pair.load(std::memory_order_acquire) == pair_id;
+		if (pair_id == 0 || producing ||
 			!native_render_session::active().accepts_pair(pair_id))
 		{
+			if (producing) admission_counters[1].fetch_add(1);
+			else {admission_counters[2].fetch_add(1);admission_counters[3].store(pair_id);}
 			return frontend_culling_admission::unavailable;
 		}
+		admission_counters[0].fetch_add(1);
 		return frontend_culling_admission::accepted;
+	}
+	std::array<std::uint64_t, 4> frontend_admission_counters() noexcept
+	{
+		return {admission_counters[0].load(),admission_counters[1].load(),admission_counters[2].load(),admission_counters[3].load()};
 	}
 
 	void note_backend_view_copy(void* const backend_state,
@@ -1092,6 +1107,7 @@ namespace vr::engine_stereo_owner_pass
 			auto expected = false;
 			if (!production_active.compare_exchange_strong(expected, true,
 				std::memory_order_acq_rel, std::memory_order_acquire)) return false;
+			production_pair.store(cloned_records.pair_id, std::memory_order_release);
 		}
 		else
 		{
@@ -2117,6 +2133,7 @@ namespace vr::engine_stereo_owner_pass
 			native_post_aa::finish_pair(active.records.pair_id, !active.failed);
 			engine_stereo_binding::release(active.claim);
 			if (active_transaction == &active) active_transaction = nullptr;
+			production_pair.store(0, std::memory_order_release);
 			production_active.store(false, std::memory_order_release);
 			retire_transaction_preserving_records(active);
 			return;
@@ -2320,6 +2337,7 @@ namespace vr::engine_stereo_owner_pass
 		if (resources.context.Get() != context || resources.generation != generation) return;
 		fail_global(failure::device);
 		resources = {};
+		production_pair.store(0, std::memory_order_release);
 		production_active.store(false, std::memory_order_release);
 	}
 

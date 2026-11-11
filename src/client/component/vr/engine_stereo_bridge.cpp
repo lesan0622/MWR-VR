@@ -202,6 +202,15 @@ namespace vr::engine_stereo_bridge
 		invalidate_views_locked();
 	}
 
+	void invalidate_views_for(const std::uint64_t frame_id) noexcept
+	{
+		const std::lock_guard lock(state_mutex);
+		if (published_frame_id == frame_id)
+		{
+			invalidate_views_locked();
+		}
+	}
+
 	void reset() noexcept
 	{
 		const std::lock_guard lock(state_mutex);
