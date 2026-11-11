@@ -633,13 +633,20 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 				if(std::abs(barrel.trans[2]-b.midPoint[2])<=b.halfSize[2] &&
 					std::abs(face-barrel.trans[0])<=.15f*std::abs(barrel.trans[0]-rear.trans[0])){slide=true;break;}
 			}
-			const float chamber_rear=slide?rear.trans[0]-forward*(rim+length)/2:rear.trans[0]+forward*(length/2-1.5f*rim);
-			// Height: tag_flash is the bore, but seen through the port a bore-height
-			// round reads sunk inside the receiver (AK47 tag_brass 0.91 in above the
-			// bore, Dragunov 0.43, M9/M1911/USP .23/.35/.44). Lift it toward the native
-			// case-exit height, at most one cartridge diameter (M4/M14: brass ~ bore).
-			const float lift=std::clamp(rear.trans[2]-barrel.trans[2],0.f,2*bounds.halfSize[2]);
-			next->rest={{chamber_rear+forward*half,barrel.trans[1],barrel.trans[2]+lift},direction};
+			// Seat on the barrel (user): the bore line runs back from tag_flash along
+			// its own x axis; the round lies on it, aligned with it. Only the station
+			// along the bore comes from the press-check rule, measured from tag_brass
+			// projected onto that line. No lift toward the case-exit height.
+			namespace sm=vr::spatial_math;
+			const sm::vec muzzle_at{barrel.trans[0],barrel.trans[1],barrel.trans[2]},exit_at{rear.trans[0],rear.trans[1],rear.trans[2]};
+			auto bore=sm::unit(sm::rotate({barrel.quat[0],barrel.quat[1],barrel.quat[2],barrel.quat[3]},{1,0,0}));
+			// A muzzle tag not pointing down the bore (>10 deg off viewmodel +x) is not an axis.
+			if(!std::isfinite(bore[0]) || std::abs(bore[0])<.985f)bore={1,0,0};
+			if(sm::dot(bore,sm::sub(muzzle_at,exit_at))<0)bore=sm::scale(bore,-1);
+			const float port_station=sm::dot(sm::sub(exit_at,muzzle_at),bore);
+			const float centre_station=port_station+(slide?-rim/2:length-1.5f*rim);
+			next->rest={sm::add(muzzle_at,sm::scale(bore,centre_station)),
+				sm::multiply(sm::from_to({forward,0,0},bore),direction)};
 			next->source=source;next->surfaces=source->lodInfo[0].surfs;
 			auto slot=std::find_if(chamber_retained.begin(),chamber_retained.end(),[](const auto& value){return !value;});
 			if(slot==chamber_retained.end())return;
