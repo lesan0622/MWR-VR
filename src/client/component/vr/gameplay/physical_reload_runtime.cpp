@@ -129,6 +129,16 @@ namespace vr::gameplay::weapons::physical_reload
 				 value.last_scene.units_per_meter,value.last_scene.attached_world,
 				 tx.feedback==mechanics::effect::magazine_out ? value.view.ammo.magazine_rounds : value.view.ammo.held_rounds,tx.item_released,impulse};
 			if (!tx.silent) emit_feedback(value, tx.feedback);
+			// A closed-bolt full stroke extracts a live round (rounds_spent): throw that
+			// chamber round out of the port like the bolt-action live ejection.
+			if ((tx.feedback==mechanics::effect::action_rear || tx.feedback==mechanics::effect::action_close) && tx.rounds_spent>0 &&
+				value.view.definition->ammunition.feed==mechanics::feed_type::closed_bolt && value.last_scene.chamber_world)
+			{
+				++value.view.effect_sequence;
+				auto& ejected=value.view.events[value.view.effect_sequence % value.view.events.size()];
+				ejected={value.view.effect_sequence,mechanics::effect::live_eject,value.view.effect_at,*value.last_scene.chamber_world,
+					value.last_scene.units_per_meter,value.last_scene.attached_world,0,false,std::nullopt,value.last_scene.ejection_world};
+			}
 			return true;
 		}
 		bool interrupt(instance& value)

@@ -285,7 +285,7 @@ namespace vr::gameplay::weapons::physical_reload
 						place->owner=state.owner.id();
 						if(event.kind==mechanics::effect::magazine_out)
 							place->motion=magazine_release_flight(*state.definition,event.world,event.units_per_meter,event.at,event.impulse);
-						else if(event.kind==mechanics::effect::live_eject)place->motion.velocity=cartridge_exit_velocity(event.world,event.units_per_meter);
+						else if(event.kind==mechanics::effect::live_eject)place->motion.velocity=cartridge_exit_velocity(event.exit?*event.exit:event.world,event.units_per_meter);
 					}
 					last_event = n;
 				}
@@ -839,6 +839,15 @@ namespace vr::gameplay::weapons::physical_reload
 			mag=caught;
 			next.held_world=mag;next.held_world.position=add(mag.position,view_offset);
 		}
+		next.chamber_world.reset();
+		if(state.active && !state.fault && (manual || measured_chamber))
+			if(const auto chamber=chamber_cartridge_pose(definition,state.ammo,visual_travel,bolt_target.travel,units,
+				measured_chamber?&*measured_chamber:nullptr))
+			{
+				auto world=compose(gun,*chamber);
+				if(parts.ejection>=0)world.position=compose(gun,parts.port.local).position;
+				world.position=add(world.position,view_offset);next.chamber_world=world;
+			}
 		publish_scene(next);
 		if (slap_diagnostic.definition)
 		{
