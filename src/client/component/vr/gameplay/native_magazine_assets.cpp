@@ -630,7 +630,12 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 				if(on_bore && 2*b.halfSize[0]<=2*half*2.5f && forward*(face-round_x)>0 && forward*(face-chamber_rear)<=4*half)
 				{chamber_rear=face;break;}
 			}
-			next->rest={{chamber_rear+forward*half,barrel.trans[1],barrel.trans[2]},direction};
+			// Height: tag_flash is the bore, but seen through the port a bore-height
+			// round reads sunk inside the receiver (AK47 tag_brass 0.91 in above the
+			// bore, Dragunov 0.43, M9/M1911/USP .23/.35/.44). Lift it toward the native
+			// case-exit height, at most one cartridge diameter (M4/M14: brass ~ bore).
+			const float lift=std::clamp(rear.trans[2]-barrel.trans[2],0.f,2*bounds.halfSize[2]);
+			next->rest={{chamber_rear+forward*half,barrel.trans[1],barrel.trans[2]+lift},direction};
 			next->source=source;next->surfaces=source->lodInfo[0].surfs;
 			auto slot=std::find_if(chamber_retained.begin(),chamber_retained.end(),[](const auto& value){return !value;});
 			if(slot==chamber_retained.end())return;
