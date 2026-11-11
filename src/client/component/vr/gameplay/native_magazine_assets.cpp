@@ -535,10 +535,33 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 			const int brass=find_bone(*source,"tag_brass"),muzzle=find_bone(*source,"tag_flash");
 			if(brass<0 || muzzle<0){chamber_reasons[index]="native chamber/barrel anchors unavailable";return;}
 			auto next=std::make_unique<chamber_asset>();
-			int bullet=find_bone(*source,"tag_bullet_single");
-			if(bullet<0 && std::string_view(source->name)=="viewmodel_g36c")bullet=find_bone(*source,"j_bullet1");
+			// One complete round: slender along the viewmodel bore (+x) with a round
+			// cross-section. Rejects a stack that survived isolation (G36C skinned
+			// j_bullet column, half 1.47x0.37x3.49 in) or two rounds left joined.
+			const auto one_round=[](const scene_models::rigid_part& part)
+			{
+				const auto& h=part.model()->bounds.halfSize;
+				return h[1]<=h[0]*.45f && h[2]<=h[0]*.45f && h[1]<=h[2]*1.6f && h[2]<=h[1]*1.6f;
+			};
+			const bool g36=std::string_view(source->name).starts_with("viewmodel_g36");
+			game::XModel* round_source=source;
 			bool created{};
-			if(bullet>=0)created=next->single.create_rigid_bone(source,unsigned(bullet));
+			// The G36 fires the M4's 5.56x45 mm round (user). Its own cartridge mesh is
+			// open-backed and reads see-through from one side; borrow the loaded M4
+			// (or M16) receiver's single round, else keep its own made two-sided.
+			if(g36)for(const auto& [name,bone]:{std::pair{"viewmodel_m4a1_sp","tag_bullet"},std::pair{"viewmodel_m16","tag_bullet1"}})
+			{
+				auto* donor=game::DB_FindXAssetHeader(game::ASSET_TYPE_XMODEL,name,0).model;
+				if(!donor || !donor->name || std::string_view(donor->name)!=name || !donor->boneNames)continue;
+				const int round=find_bone(*donor,bone);
+				next=std::make_unique<chamber_asset>();
+				if(round>=0 && next->single.create_rigid_bone(donor,unsigned(round)) && next->single.isolate_cartridge() &&
+					one_round(next->single)){created=true;round_source=donor;break;}
+			}
+			if(!created)next=std::make_unique<chamber_asset>();
+			int bullet=find_bone(*source,"tag_bullet_single");
+			if(bullet<0 && g36)bullet=find_bone(*source,"j_bullet1");
+			if(!created && bullet>=0)created=next->single.create_rigid_bone(source,unsigned(bullet));
 			// MWR AK47 has a mesh-less tag_bullet_single; fall back to its round bones.
 			if(!created)if(const auto* fill=definition.magazine_fill())
 			{
@@ -562,15 +585,7 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 				bullet=find_bone(*source,definition.bullets_bone);
 				created=bullet>=0 && next->single.create_rigid_bone(source,unsigned(bullet)) && next->single.isolate_cartridge();
 			}
-			if(created && definition.round_column)created=next->single.isolate_cartridge();
-			// One complete round: slender along the viewmodel bore (+x) with a round
-			// cross-section. Rejects a stack that survived isolation (G36C skinned
-			// j_bullet column, half 1.47x0.37x3.49 in) or two rounds left joined.
-			const auto one_round=[](const scene_models::rigid_part& part)
-			{
-				const auto& h=part.model()->bounds.halfSize;
-				return h[1]<=h[0]*.45f && h[2]<=h[0]*.45f && h[1]<=h[2]*1.6f && h[2]<=h[1]*1.6f;
-			};
+			if(created && round_source==source && definition.round_column)created=next->single.isolate_cartridge();
 			if(created && !one_round(next->single))created=false;
 			// No usable own round bone (MWR Skorpion: rounds are part of tag_clip):
 			// the top round of the receiver magazine is still this weapon's cartridge.
@@ -582,6 +597,8 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 					one_round(next->single);
 			}
 			if(!created){chamber_reasons[index]="verified own single-cartridge geometry unavailable";return;}
+			if(g36 && round_source==source && !next->single.make_two_sided())
+			{chamber_reasons[index]="own G36 cartridge could not be made two-sided";return;}
 			const auto& bounds=next->single.model()->bounds;
 			const hands::vec center{bounds.midPoint[0],bounds.midPoint[1],bounds.midPoint[2]};
 			unsigned axis{}; // bore (+x), enforced by one_round
@@ -644,15 +661,19 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 			if(!std::isfinite(bore[0]) || std::abs(bore[0])<.985f)bore={1,0,0};
 			if(sm::dot(bore,sm::sub(muzzle_at,exit_at))<0)bore=sm::scale(bore,-1);
 			const float port_station=sm::dot(sm::sub(exit_at,muzzle_at),bore);
-			const float centre_station=port_station+(slide?-rim/2:length-1.5f*rim);
+			// Mock captures at travel L-rim (killhouse, arms hidden): seen from above, a
+			// pistol round centred on tag_brass hides under the slide's closed rear top;
+			// +0.3L puts the whole rimless round in the port (M9/USP/M1911 +0.4 in).
+			// The G36 left-side port slot sits 1.5 in ahead of its tag_brass rule.
+			const float centre_station=port_station+(slide?.3f*length-rim/2:length-1.5f*rim)+(g36?1.5f:0.f);
 			next->rest={sm::add(muzzle_at,sm::scale(bore,centre_station)),
 				sm::multiply(sm::from_to({forward,0,0},bore),direction)};
 			next->source=source;next->surfaces=source->lodInfo[0].surfs;
 			auto slot=std::find_if(chamber_retained.begin(),chamber_retained.end(),[](const auto& value){return !value;});
 			if(slot==chamber_retained.end())return;
-			const std::array<scene_models::runtime_model,1> identities{{{next->single.model(),source}}};
+			const std::array<scene_models::runtime_model,1> identities{{{next->single.model(),round_source}}};
 			if(!scene_models::register_runtime_models(identities))return;
-			*slot=std::move(next);chamber_selected[index]=slot->get();chamber_reasons[index]="own single cartridge ready";
+			*slot=std::move(next);chamber_selected[index]=slot->get();chamber_reasons[index]=round_source==source?"own single cartridge ready":"M4/M16 5.56 cartridge ready";
 		}
 	}
 	std::optional<hands::anchor> chamber_rest(const reload_profile* definition) noexcept
