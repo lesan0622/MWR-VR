@@ -595,6 +595,7 @@ namespace vr::engine_stereo_owner_pass
 			active.dynamic_index_right_count = 0;
 			active.dynamic_index_calls = {};
 			active.dynamic_index_scope_active = false;
+			active.shared_shadow = {};
 			active.temporal_history_current_frame_diagnostic = false;
 			active.material_reuse_left_diagnostic = false;
 			active.material_reuse_left_snapshot_ready = false;
@@ -762,6 +763,55 @@ namespace vr::engine_stereo_owner_pass
 	std::array<std::uint64_t, 4> frontend_admission_counters() noexcept
 	{
 		return {admission_counters[0].load(),admission_counters[1].load(),admission_counters[2].load(),admission_counters[3].load()};
+	}
+
+
+	namespace
+	{
+		std::atomic_bool shared_shadows_enabled{true};
+		std::array<std::atomic_uint64_t, 3> shared_shadow_stats{}; // skipped, rendered right, refused
+	}
+	void set_shared_shadows(const bool enabled) noexcept { shared_shadows_enabled.store(enabled); }
+	std::array<std::uint64_t, 3> shared_shadow_counters() noexcept
+	{ return {shared_shadow_stats[0].load(), shared_shadow_stats[1].load(), shared_shadow_stats[2].load()}; }
+	bool begin_shared_shadow_pass(const std::size_t pass) noexcept
+	{
+		auto* const active = active_transaction;
+		if (pass >= 2 || active == nullptr || !*active || !active->production || active->failed ||
+			GetCurrentThreadId() != active->owner_thread_id) return false;
+		auto& range = active->shared_shadow[pass];
+		if (active->current_view == 0)
+		{
+			range = {active->dynamic_index_left_count, active->dynamic_index_left_count, true, false};
+			return false;
+		}
+		if (active->current_view != 1) return false;
+		// Spot-light atlas (pass 1) re-render differed by 1-92 bytes in ~1/3 of
+		// readback checks (per-eye LOD); only the byte-identical sun pass is shared.
+		if (pass != 0) return false;
+		// An auxiliary (scope) view renders between the eyes and may rewrite the
+		// light maps for its own culled lights: the right eye then renders its own.
+		if (!shared_shadows_enabled.load(std::memory_order_relaxed) || active->auxiliary.valid ||
+			!range.closed || active->dynamic_index_right_count != range.begin ||
+			range.end > active->dynamic_index_left_count)
+		{
+			++shared_shadow_stats[shared_shadows_enabled.load(std::memory_order_relaxed) ? 2 : 1];
+			return false;
+		}
+		// The left eye's light-view boundaries are consumed, not replayed: the right
+		// eye's later camera boundaries keep their left ordinals.
+		active->dynamic_index_right_count = range.end;
+		++shared_shadow_stats[0];
+		return true;
+	}
+	void end_shared_shadow_pass(const std::size_t pass) noexcept
+	{
+		auto* const active = active_transaction;
+		if (pass >= 2 || active == nullptr || !*active || active->current_view != 0 ||
+			GetCurrentThreadId() != active->owner_thread_id) return;
+		auto& range = active->shared_shadow[pass];
+		if (!range.open) return;
+		range.end = active->dynamic_index_left_count;range.open = false;range.closed = !active->failed;
 	}
 
 	void note_backend_view_copy(void* const backend_state,

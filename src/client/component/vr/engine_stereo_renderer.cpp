@@ -1901,6 +1901,18 @@ namespace vr::engine_stereo_renderer
 			}
 		}
 
+		// MWR light-view shadow passes (see owner pass). Only the sun pass is hooked:
+		// the spot atlas re-render differed by a few bytes per eye in readbacks.
+		constexpr std::array<std::uintptr_t, 2> shared_shadow_functions{0x1405C9160, 0x1405C4B70};
+		std::array<utils::hook::detour, 2> shared_shadow_hooks{};
+		template <std::size_t Pass>
+		void shared_shadow_stub(void* const data, void* const backend_state)
+		{
+			if (native_display_record == nullptr && engine_stereo_owner_pass::begin_shared_shadow_pass(Pass)) return;
+			shared_shadow_hooks[Pass].invoke<void>(data, backend_state);
+			if (native_display_record == nullptr) engine_stereo_owner_pass::end_shared_shadow_pass(Pass);
+		}
+
 		void backend_depth_hack_projection_stub(void* const backend_state)
 		{
 			backend_depth_hack_projection_hook.invoke<void>(backend_state);
@@ -2583,6 +2595,7 @@ namespace vr::engine_stereo_renderer
 
 		bool restore_backend_observation_hooks() noexcept
 		{
+			for (auto& hook : shared_shadow_hooks) (void)hook.clear();
 			const auto depth_hack_projection = backend_depth_hack_projection_hook.clear();
 			const auto target_select = backend_target_select_hook.clear();
 			const auto target_prepare = backend_target_prepare_hook.clear();
@@ -2829,11 +2842,13 @@ namespace vr::engine_stereo_renderer
 					reinterpret_cast<void*>(backend_target_prepare_probe_stub));
 				backend_target_select_hook.create(backend_target_select_function,
 					reinterpret_cast<void*>(backend_target_select_probe_stub));
+				shared_shadow_hooks[0].create(shared_shadow_functions[0], reinterpret_cast<void*>(shared_shadow_stub<0>));
 			}
 			catch (const std::exception& error)
 			{
 				console::error("[VR] backend target-prepare observer could not be installed: %s\n",
 					error.what());
+				for (auto& hook : shared_shadow_hooks) (void)hook.clear();
 				(void)backend_target_select_hook.clear();
 				(void)backend_target_prepare_hook.clear();
 				(void)backend_depth_hack_projection_hook.clear();

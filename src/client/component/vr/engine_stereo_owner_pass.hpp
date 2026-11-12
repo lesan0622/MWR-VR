@@ -370,6 +370,10 @@ namespace vr::engine_stereo_owner_pass
 		std::uint32_t dynamic_index_right_count{};
 		dynamic_index_trace dynamic_index_calls;
 		bool dynamic_index_scope_active{};
+		// MWR: light-view shadow passes the right eye reuses from the left eye.
+		// Left owned-geometry boundary ordinals [begin,end) of each pass call.
+		struct shared_shadow_range { std::uint32_t begin{}, end{}; bool open{}, closed{}; };
+		std::array<shared_shadow_range, 2> shared_shadow{};
 		bool temporal_history_current_frame_diagnostic{};
 		bool material_reuse_left_diagnostic{};
 		bool material_reuse_left_snapshot_ready{};
@@ -418,6 +422,17 @@ namespace vr::engine_stereo_owner_pass
 	// only the main view in the shared tessellation constant buffer.
 	[[nodiscard]] bool snapshot_tessellation_view(const void* frontend,
 		engine_stereo_tessellation::shared_view& output) noexcept;
+	// MWR shared sun shadow pass (0x1405C9160, 3072x9216 cascade atlas). Both eyes
+	// render the same native light views from the same frontend lists; a GPU
+	// readback of the right eye's re-render was byte-identical in 52/52 checks
+	// (killhouse, armada). The right eye skips it unless an auxiliary view ran
+	// between the eyes. The spot pass (0x1405C4B70) differed by 1-92 bytes in about
+	// a third of checks (per-eye LOD) and stays per eye. True = skip native call.
+	[[nodiscard]] bool begin_shared_shadow_pass(std::size_t pass) noexcept;
+	void end_shared_shadow_pass(std::size_t pass) noexcept;
+	void set_shared_shadows(bool enabled) noexcept;
+	[[nodiscard]] std::array<std::uint64_t, 3> shared_shadow_counters() noexcept; // skipped, rendered_right, refused
+
 	// Runtime wrapper for the proven B5D0 call boundary. Calls outside the active
 	// owner/eye transaction are observation-only no-ops.
 	void note_backend_view_copy(void* backend_state,
