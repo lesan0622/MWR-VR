@@ -83,6 +83,8 @@ namespace mwr_port
 		"vr::settings_menu", // vr_settings_menu_status: the Options > VR catalog.
 		"vr::gameplay::weapons::javelin_screen", // Javelin CLU display at the eye; lock gate via playerads.
 		"vr::gameplay::weapons::launcher::native_component", // Javelin lock projection from the launcher (Target_IsInRect).
+		"vr::gameplay::weapons::launcher", // RPG instance-owned manual feed; native ammo/fire boundaries.
+		"vr::gameplay::weapons::launcher::presenter_component", // MWR rocket in the hand/tube; hidden after consumption.
 		"vr::gameplay::fixed_sniper", // sniperescape Barrett: hand-drag/stick aim, flat native scope view.
 		"vr::gameplay::barrett_gun", // sniperescape Barrett held as a VR rifle (physical scope); replaces fixed_sniper there.
 		"vr::gameplay::turret_hands", // Mounted turrets (village_defend minigun): VR hands held on the rear grips.

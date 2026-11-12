@@ -15,7 +15,7 @@ namespace vr::gameplay::weapons::manual_feed
 	// One set of native detours, distinct feed authorities. Calls are sequential
 	// copied snapshots; no family lock is held while entering another family.
 	inline void set_boundary_ready(unsigned bit) noexcept
-	{ physical_reload::set_boundary_ready(bit); cylinder::set_boundary_ready(bit); tube::set_boundary_ready(bit); break_action::set_boundary_ready(bit); if(bit==1)launcher::set_boundary_ready(bit); }
+	{ physical_reload::set_boundary_ready(bit); cylinder::set_boundary_ready(bit); tube::set_boundary_ready(bit); break_action::set_boundary_ready(bit); launcher::set_boundary_ready(bit); }
 	inline bool blocks_reload(const void* ps,int side) noexcept
 	{ return underbarrel::blocks_native(ps) || physical_reload::blocks_reload(ps,side) || cylinder::blocks_reload(ps,side) || tube::blocks_reload(ps,side) || break_action::blocks_reload(ps,side) || launcher::blocks_reload(ps,side); }
 	inline bool allow_fire(const void* ps,int command,int side) noexcept

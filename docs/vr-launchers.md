@@ -15,6 +15,15 @@ and Stinger use their H2 idle poses. The RPG's separate two-bone rocket model is
 admitted only at the receiver's `tag_clip`; unknown attachments and wrong
 receiver cardinality are rejected. Pose headers record source animation hashes.
 
+On MWR, `viewmodel_rpg7` retains those measured receiver/socket coordinates,
+but `viewmodel_rpg7_rocket` has one unnamed rigid root instead of H2's two
+bones. The MWR presenter uses the native rocket asset directly. Its loaded
+and hand-held visibility follows the instance's native ammunition/escrow
+state; firing uses the existing native missile path and clears the loaded
+rocket. Guided launchers keep their existing MWR native reload/display path.
+`vr_launcher_status` also writes `minidumps/overlord-launcher.txt`, including
+the loaded/reserve count, held hand and measured tail/socket contact.
+
 ## Operation
 
 - RPG: release the support hand, pinch at the waist to draw one rocket, move it

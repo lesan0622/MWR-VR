@@ -16,6 +16,7 @@
 #include "game/game.hpp"
 #include <mutex>
 #include <utils/hook.hpp>
+#include <utils/io.hpp>
 #include "loader/component_loader.hpp"
 
 namespace vr::gameplay::weapons::launcher
@@ -24,7 +25,7 @@ namespace vr::gameplay::weapons::launcher
 	{
 		using namespace hands;using namespace hands::pose_math;
 		std::mutex mutex;
-		struct instance {presentation view{};scene_frame scene{};};
+		struct instance {presentation view{};scene_frame scene{};vec delta{};float alignment{},waist{};bool contact{};};
 		std::array<instance,15> instances{};
 		std::atomic_uint boundaries{};
 		native_shot_history shots;
@@ -152,6 +153,7 @@ namespace vr::gameplay::weapons::launcher
 			if(!i.scene.definition->manual_loading())continue;
 			const auto actor=hand(1-int(live->owner.rear));const auto e=input(actor,button::trigger);
 			vec delta{};float alignment{},waist{};const bool contact=sample(i,*f,delta,alignment,waist);
+			i.delta=delta;i.alignment=alignment;i.waist=waist;i.contact=contact;
 			if(valid_hand(i.view.rocket.actor))
 			{
 				if(!contact || e.release || !e.down){if(!settle_instance(i,false))reason="rocket refund pending";continue;}
@@ -234,7 +236,24 @@ namespace vr::gameplay::weapons::launcher
 	}
 	class component final:public component_interface
 	{
-		void post_unpack()override{command::add("vr_launcher_status",[]{const auto native=native_statistics();const std::lock_guard lock(mutex);console::info("[VR launcher] boundaries=%u reason=%s targets=%llu retained_selection=%llu retained_ownership=%llu\n",boundaries.load(),reason,native[0],native[1],native[2]);for(const auto& i:instances)if(i.view.active)console::info("%s token=%u loaded=%d spent=%d rocket_hand=%d\n",i.view.definition->id.data(),i.view.owner.weapon,i.view.loaded,i.view.spent,int(i.view.rocket.actor));});}
+		void post_unpack()override
+		{
+			command::add("vr_launcher_status",[]{scheduler::once([]{
+				std::string out=render_status();
+				{
+					const std::lock_guard lock(mutex);
+					out+=std::format("[VR launcher] boundaries={} reason={}\n",boundaries.load(),reason);
+					for(const auto& i:instances)if(i.scene.owner.id())
+					{
+						const auto ammo=native_ammunition::observe_carried(player,i.scene.owner.id());
+						out+=std::format("{} token={} active={} fault={} loaded={} reserve={} rocket_hand={} armed={} contact={} tail={:.4f},{:.4f},{:.4f} alignment={:.4f} waist={:.4f} approached={}\n",
+							i.scene.definition->id,i.scene.owner.weapon,i.view.active,i.view.fault,i.view.loaded,ammo.reserve,int(i.view.rocket.actor),i.view.fire_armed,i.contact,i.delta[0],i.delta[1],i.delta[2],i.alignment,i.waist,i.view.rocket.approached);
+					}
+				}
+				console::info("%s",out.c_str());
+				scheduler::once([out]{utils::io::write_file_atomic("minidumps/overlord-launcher.txt",out);},scheduler::pipeline::async);
+			},scheduler::pipeline::server);});
+		}
 	};
 }
 REGISTER_COMPONENT(vr::gameplay::weapons::launcher::component)

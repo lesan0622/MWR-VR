@@ -1,6 +1,7 @@
 #include <std_include.hpp>
 #include "native_magazine_assets.hpp"
 #include "weapon_reload_profiles.hpp"
+#include "pistol_chamber_geometry.hpp"
 #include "viewmodel_visibility.hpp"
 #include "component/scene_models.hpp"
 #include "component/scene_rigid_part.hpp"
@@ -54,6 +55,7 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 		{
 			scene_models::rigid_part single,liner;
 			asset view{},liner_view{};hands::anchor rest{};
+			std::string description;
 			game::XModel* source{};game::XSurface* surfaces{};
 		};
 		std::array<std::unique_ptr<chamber_asset>,reload_profiles.capacity()*2> chamber_retained;
@@ -625,18 +627,9 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 				!next->single.bake_vertices([&](unsigned,std::span<game::GfxPackedVertex> vertices){
 					for(auto& vertex:vertices)for(unsigned a=0;a<3;++a)vertex.xyz[a]-=center[a];return true;}))return;
 			next->view={next->single.model(),{{},{0,0,0,1}}};
-			// Seat by the press-check rule (user): pulling the action back one rimless
-			// round length must show the whole rimless round in the ejection port,
-			// still inside the gun. tag_brass is the native case-exit point = port
-			// centre. The chamber round travels with the bolt (chamber_cartridge_pose).
-			// Receiver port (fixed): after travel L-rim the rimless span
-			// [rear-L+2rim, rear+rim] centres on tag_brass. MWR AK47 bolt-face seat put
-			// it 1.65 in behind the port then, Dragunov 1.79; M4 0.28 (fine).
-			// Slide port (pistol: port and round travel together): the rimless span
-			// [rear+rim, rear+L] centres on tag_brass; the barrel hood covers it at
-			// rest. The magazine-forward seat put M9 1.30 in ahead of the port.
-			// Mesh rays cannot find the window: rigid-bone receiver/slide meshes leak
-			// (USP slide read open -2.34..3.75).
+			// Fixed receiver ports retain their existing case-exit station. Pistol
+			// slides use the actual barrel breech below: tag_brass is an ejection
+			// effect anchor and is behind the real chamber (USP by about one inch).
 			const float forward=barrel.trans[0]>=rear.trans[0]?1.f:-1.f,half=bounds.halfSize[axis];
 			const float length=2*half,rim=.05f*length;
 			bool slide{};
@@ -668,11 +661,26 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 			if(!std::isfinite(bore[0]) || std::abs(bore[0])<.985f)bore={1,0,0};
 			if(sm::dot(bore,sm::sub(muzzle_at,exit_at))<0)bore=sm::scale(bore,-1);
 			const float port_station=sm::dot(sm::sub(exit_at,muzzle_at),bore);
-			// Mock captures at travel L-rim (killhouse, arms hidden): seen from above, a
-			// pistol round centred on tag_brass hides under the slide's closed rear top;
-			// +0.3L puts the whole rimless round in the port (M9/USP/M1911 +0.4 in).
-			// The G36 left-side port slot sits 1.5 in ahead of its tag_brass rule.
-			const float centre_station=port_station+(slide?.3f*length-rim/2:length-1.5f*rim)+(g36?1.5f:0.f);
+			float centre_station=port_station+(slide?.3f*length-rim/2:length-1.5f*rim)+(g36?1.5f:0.f);
+			if(slide && std::string_view(source->name).starts_with("wpn_h1_pst_"))
+			{
+				scene_models::rigid_part barrel_mesh;std::optional<float> breech;
+				const int gun=find_bone(*source,"j_gun");
+				if(gun>=0 && barrel_mesh.create_rigid_bone(source,unsigned(gun)))
+				{
+					const auto* mesh=barrel_mesh.model();
+					for(unsigned s=0;s<mesh->numsurfs;++s){const auto& surface=mesh->lodInfo[0].surfs[s];
+						for(unsigned t=0;t<surface.triCount;++t){const auto& f=surface.triIndices[t];
+							std::array<hands::vec,3> triangle{};unsigned n{};
+							for(auto v:{f.v1,f.v2,f.v3}){const auto& p=surface.verts0.packedVerts0[v].xyz;triangle[n++]={p[0],p[1],p[2]};}
+							if(const auto x=barrel_back_edge(triangle,muzzle_at);x && (!breech || *x<*breech))breech=x;
+						}}
+				}
+				if(!breech || !std::isfinite(*breech) || *breech>=muzzle_at[0])
+				{chamber_reasons[index]="native barrel breech unavailable";return;}
+				const auto chamber_center=pistol_chamber_center(*breech,length,rim);
+				centre_station=sm::dot(sm::sub(hands::vec{chamber_center,muzzle_at[1],muzzle_at[2]},muzzle_at),bore);
+			}
 			next->rest={sm::add(muzzle_at,sm::scale(bore,centre_station)),
 				sm::multiply(sm::from_to({forward,0,0},bore),direction)};
 			// The stylised MWR MP5 window starts 0.29 in above the bore (z 4.92 vs
@@ -693,7 +701,9 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 			if(slot==chamber_retained.end())return;
 			const std::array<scene_models::runtime_model,2> identities{{{next->single.model(),round_source},{next->liner_view.model,source}}};
 			if(!scene_models::register_runtime_models(std::span(identities).first(next->liner_view.model?2:1)))return;
-			*slot=std::move(next);chamber_selected[index]=slot->get();chamber_reasons[index]=round_source==source?"own single cartridge ready":"M4/M16 5.56 cartridge ready";
+			next->description=std::format("{}; center={:.3f},{:.3f},{:.3f} length={:.4f} rim={:.4f} press_check_m={:.5f}",
+				round_source==source?"own single cartridge ready":"M4/M16 5.56 cartridge ready",next->rest.position[0],next->rest.position[1],next->rest.position[2],length,rim,(length-rim)*.0254f);
+			*slot=std::move(next);chamber_selected[index]=slot->get();chamber_reasons[index]=(*slot)->description.c_str();
 		}
 	}
 	asset receiver_liner(const reload_profile* definition) noexcept
