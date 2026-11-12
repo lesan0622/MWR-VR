@@ -41,6 +41,8 @@ namespace vr::diagnostics::detail
 			const auto shadows = engine_stereo_owner_pass::shared_shadow_counters();
 			output << "  shared_sun_shadow: right_skipped=" << shadows[0] << " right_rendered_disabled=" << shadows[1]
 				<< " right_rendered_refused=" << shadows[2] << '\n';
+			const auto families = engine_stereo_bridge::family_queue_counters();
+			output << "  view_family_queue: deferred=" << families[0] << " promoted=" << families[1] << '\n';
 		}
 		output << "  backend_owner_timing: transaction(samples/last/max/avg_us)="
 			<< owner_pass_status.production_transaction_timing_samples << '/'
