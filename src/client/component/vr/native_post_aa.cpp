@@ -73,16 +73,7 @@ namespace vr::native_post_aa
 		{
 			mode result{};
 			std::memcpy(&result, static_cast<const std::byte*>(record) + mode_offset, sizeof(result));
-			const auto selected = effective_mode(result, frame_reads_installed.load(std::memory_order_acquire));
-			if (selected != result)
-			{
-				static std::atomic_uint32_t reported{};
-				const auto bit = 1u << static_cast<unsigned>(result);
-				if (!(reported.fetch_or(bit, std::memory_order_relaxed) & bit))
-					console::info("[VR] post-AA mode %u uses SMAA 1x for VR; the AA history readers are not installed\n",
-						static_cast<unsigned>(result));
-			}
-			return selected;
+			return result;
 		}
 		template<std::size_t N> bool matches(std::uintptr_t address, const std::uint8_t (&bytes)[N])
 		{
@@ -320,7 +311,6 @@ namespace vr::native_post_aa
 			// to the VR display target. The HDR scene is never an AA destination.
 			const auto draw = [&]
 			{
-				const scoped_mode aa_mode(record);
 				auto* source_state = *reinterpret_cast<void* const*>(0x140801FB0);
 				utils::hook::invoke<void>(0x14059C0E0, source_state, static_cast<std::byte*>(record) + 0x170);
 				return utils::hook::invoke<bool>(dispatch_address, record,
@@ -394,11 +384,9 @@ namespace vr::native_post_aa
 			utils::hook::call(filmic_frame_read, filmic);
 			utils::hook::nop(filmic_frame_read + 5, 1);
 			frame_reads_installed.store(true, std::memory_order_release);
-			history_readers.store(true, std::memory_order_release);
 		}
 		void pre_destroy() override
 		{
-			history_readers.store(false, std::memory_order_release);
 			if (!frame_reads_installed.exchange(false)) return;
 			utils::hook::copy(temporal_frame_read, temporal_frame_bytes, sizeof(temporal_frame_bytes));
 			utils::hook::copy(filmic_frame_read, filmic_frame_bytes, sizeof(filmic_frame_bytes));

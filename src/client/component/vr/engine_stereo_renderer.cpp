@@ -1779,8 +1779,6 @@ namespace vr::engine_stereo_renderer
 			native_display_route = route;
 			if (!native_post_aa::select_display_target(record, route, native_display_route.destination, view))
 				return false;
-			// PostFX and the AA dispatcher must see the same history-free mode.
-			const native_post_aa::scoped_mode aa_mode(record);
 			native_display_record = record;
 			native_display_routes = 0;
 			const auto scope = gsl::finally([]() noexcept
