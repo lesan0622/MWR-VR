@@ -22,7 +22,8 @@
 // wrist's depth. Values are copied on the server thread; nothing is written.
 // By default a counter shows only while its gun's magazine is out, or while a
 // tube-fed gun's loading hand holds a shell (and briefly after either ends);
-// vr_ammoCounterAlways keeps the original always-on counter.
+// vr_ammoCounterAlways keeps the original always-on counter. While a detached
+// magazine is held, the counter moves to that hand and reads magazine/carried.
 namespace vr::gameplay::ammo_counter
 {
 	namespace
@@ -33,6 +34,8 @@ namespace vr::gameplay::ammo_counter
 			int hand{-1}, loaded{}, reserve{};
 			std::uint32_t weapon{};
 			bool reloading{}; // Magazine out, or a shell held for a tube.
+			bool magazine{};  // hand/loaded/reserve describe the magazine held in hand.
+			int capacity{};
 		};
 		std::mutex mutex;
 		std::array<sample, 2> samples{};
@@ -64,6 +67,19 @@ namespace vr::gameplay::ammo_counter
 					const bool reloading = (reload.active && reload.definition && !reload.ammo.magazine_inserted) ||
 					                       (tube.active && tube.ammo.held_rounds > 0);
 					batch[h] = {true, static_cast<int>(holder), ammo.loaded, ammo.reserve, v.id.weapon, reloading};
+					// A detached magazine in a hand: that hand shows its rounds over the
+					// rounds still carried (the held magazine is already out of reserve).
+					if (reload.active && reload.definition && !reload.ammo.magazine_inserted &&
+					    valid_hand(reload.ammo.magazine_hand) && reload.ammo.held_rounds >= 0 &&
+					    reload.ammo.reserve_rounds >= 0)
+					{
+						auto& m = batch[h];
+						m.hand = static_cast<int>(reload.ammo.magazine_hand);
+						m.loaded = reload.ammo.held_rounds;
+						m.reserve = reload.ammo.reserve_rounds;
+						m.magazine = true;
+						m.capacity = reload.definition->ammunition.magazine_capacity;
+					}
 				}
 			}
 			const std::lock_guard lock(mutex);
@@ -103,10 +119,12 @@ namespace vr::gameplay::ammo_counter
 				if (!hands::tracked_wrist(input, body, {}, s.hand, {}, wrist)) continue;
 
 				// Low means a quarter of the fullest magazine seen for this gun.
+				// A held magazine is judged against its capacity instead.
 				auto& fullest = most_loaded[i];
-				if (fullest.first != s.weapon) fullest = {s.weapon, s.loaded};
-				fullest.second = std::max(fullest.second, s.loaded);
-				const bool empty = s.loaded == 0, low = !empty && s.loaded * 4 <= fullest.second;
+				if (fullest.first != s.weapon) fullest = {s.weapon, s.magazine ? 0 : s.loaded};
+				if (!s.magazine) fullest.second = std::max(fullest.second, s.loaded);
+				const int full = s.magazine && s.capacity > 0 ? s.capacity : fullest.second;
+				const bool empty = s.loaded == 0, low = !empty && s.loaded * 4 <= full;
 
 				const auto loaded = std::to_string(s.loaded), reserve = " / " + std::to_string(s.reserve);
 				constexpr float loaded_scale = 1.f, reserve_scale = .62f;
