@@ -28,6 +28,12 @@ namespace vr::native_post_aa
 		constexpr std::uint8_t temporal_frame_bytes[]{0x8B,0x1D,0x89,0x9D,0x72,0x0F};
 		constexpr std::uint8_t filmic_frame_bytes[]{0x8B,0x05,0x1E,0x9B,0x72,0x0F};
 		std::atomic_bool frame_reads_installed{};
+		// vid_resize (0x1401B0430) only raises this flag; the main frame
+		// (0x1401ACD50) then resets the renderer and recreates its targets.
+		constexpr std::uintptr_t renderer_resize_request = 0x14D64D4FC;
+		utils::hook::detour dispatch_hook;
+		std::atomic_bool resize_requested{};
+		std::atomic_uint64_t guarded_dispatches{}, resize_requests{};
 		struct frame_override { bool active{}; std::uint32_t phase{}; };
 		thread_local frame_override current_frame{};
 		std::uint32_t read_frame() noexcept
@@ -132,6 +138,37 @@ namespace vr::native_post_aa
 			target_view(target)->GetDesc(&output);
 			image->texture.shaderView->GetDesc(&input);
 			return owner.Get() == device && !target_rejection(target, desc, output, input, expected.Width, expected.Height);
+		}
+
+		// A runtime r_postAA switch into T2x/Filmic leaves target 64 unallocated
+		// until a renderer reset, and the native dispatcher then binds a null
+		// code image (Com_Error "TEXTURE_SRC_CODE_TEXTURE_2 isn't valid").
+		// Draw SMAA 1x for those frames and request the reset once, as
+		// vid_resize does. Covers both the VR owner and the desktop path.
+		bool dispatch_stub(void* record, const std::uint32_t input, const std::uint32_t scratch,
+			const std::uint32_t output)
+		{
+			auto* const field = static_cast<std::byte*>(record) + mode_offset;
+			const auto selected = read_mode(record);
+			game::GfxImage* image{};
+			if (needs_temporal_input(selected))
+				std::memcpy(&image, reinterpret_cast<const void*>(native_render_contract::target_registry_base +
+					temporal_input_target * native_render_contract::target_registry_stride), sizeof(image));
+			if (!needs_temporal_input(selected) || image)
+			{
+				if (image) resize_requested.store(false, std::memory_order_relaxed);
+				return dispatch_hook.invoke<bool>(record, input, scratch, output);
+			}
+			if (!resize_requested.exchange(true, std::memory_order_relaxed))
+			{
+				*reinterpret_cast<volatile std::int32_t*>(renderer_resize_request) = 1;
+				resize_requests.fetch_add(1, std::memory_order_relaxed);
+			}
+			guarded_dispatches.fetch_add(1, std::memory_order_relaxed);
+			constexpr auto fallback = mode::smaa;
+			std::memcpy(field, &fallback, sizeof(fallback));
+			const auto restore = gsl::finally([&] { std::memcpy(field, &selected, sizeof(selected)); });
+			return dispatch_hook.invoke<bool>(record, input, scratch, output);
 		}
 
 		diagnostics::post_aa::target observe_target(const std::uint32_t id)
@@ -362,7 +399,8 @@ namespace vr::native_post_aa
 			<< " mode(left/right/aux)=" << last_mode[0] << '/' << last_mode[1] << '/' << last_mode[2]
 			<< " complete=" << completions[0] << '/' << completions[1] << '/' << completions[2]
 			<< " history_seeds=" << seeds << " pair_commits=" << commits << " failures=" << failures
-			<< " last_error=" << last_error.load() << '\n';
+			<< " last_error=" << last_error.load() << " runtime_switch(guarded/resize_requests)="
+			<< guarded_dispatches << '/' << resize_requests << '\n';
 		out << validation_failures.format(GetTickCount64());
 		return out.str();
 	}
@@ -372,6 +410,7 @@ namespace vr::native_post_aa
 		void post_unpack() override
 		{
 			if (!native_contract()) { reject("native_contract"); return; }
+			dispatch_hook.create(dispatch_address, dispatch_stub);
 			// Install before native rendering starts. Each relay preserves the
 			// original MOV's register contract and reads native time outside AA.
 			auto* temporal = utils::hook::create_preserving_near_jump(temporal_frame_read,
@@ -387,6 +426,7 @@ namespace vr::native_post_aa
 		}
 		void pre_destroy() override
 		{
+			(void)dispatch_hook.clear();
 			if (!frame_reads_installed.exchange(false)) return;
 			utils::hook::copy(temporal_frame_read, temporal_frame_bytes, sizeof(temporal_frame_bytes));
 			utils::hook::copy(filmic_frame_read, filmic_frame_bytes, sizeof(filmic_frame_bytes));

@@ -37,6 +37,14 @@ namespace vr::native_post_aa
 	{
 		return value == mode::filmic_smaa || value == mode::filmic_smaa_t2x;
 	}
+	// MWR binds target 64 as TEXTURE_SRC_CODE_TEXTURE_2 (code image 52) for
+	// T2x and both Filmic modes. The renderer flags (0x1405646F0) create it
+	// only when r_postAA was 3..5 at the last renderer reset.
+	inline constexpr std::uint32_t temporal_input_target = 64;
+	[[nodiscard]] constexpr bool needs_temporal_input(const mode value) noexcept
+	{
+		return value >= mode::smaa_t2x && value <= mode::filmic_smaa_t2x;
+	}
 	[[nodiscard]] constexpr bool needs_history(const mode value, const std::uint32_t target) noexcept
 	{
 		return (target >= 16 && target <= 19 && temporal(value)) ||
