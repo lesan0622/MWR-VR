@@ -276,6 +276,8 @@
   "oobe.done": "Finish",
   "settings.runtimeBackend": "VR backend",
   "settings.runtimeBackendHint": "OpenXR is recommended; OpenVR is a backup. Saved immediately and used when you enter the game; no launcher restart needed.",
+  "settings.halfRate": "Half-rate mode (performance)",
+  "settings.halfRateHint": "The game renders at half the headset refresh rate and the VR runtime fills the other frames (SteamVR Motion Smoothing / Meta ASW). Lowers CPU and GPU load on slower PCs; fast motion can show reprojection artefacts. OpenXR only. Off by default.",
   "choice.openxr": "OpenXR",
   "choice.openvr": "OpenVR",
   "settings.controllerCompatibility": "Controller compatibility",

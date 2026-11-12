@@ -272,6 +272,8 @@
   "oobe.done": "Fertig",
   "settings.runtimeBackend": "VR-Schnittstelle",
   "settings.runtimeBackendHint": "OpenXR wird empfohlen; OpenVR dient als Alternative. Die Auswahl wird sofort gespeichert und beim Spielstart verwendet. Der Launcher muss nicht neu gestartet werden.",
+  "settings.halfRate": "Halbe-Bildrate-Modus (Leistung)",
+  "settings.halfRateHint": "Das Spiel rendert mit der halben Bildwiederholrate des Headsets; die VR-Laufzeit ergänzt die übrigen Bilder (SteamVR Motion Smoothing / Meta ASW). Senkt die CPU- und GPU-Last auf langsameren PCs; schnelle Bewegungen können Reprojektionsartefakte zeigen. Nur OpenXR. Standardmäßig aus.",
   "choice.openxr": "OpenXR",
   "choice.openvr": "OpenVR",
   "settings.controllerCompatibility": "Controller-Kompatibilität",

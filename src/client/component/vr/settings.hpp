@@ -126,6 +126,8 @@ namespace vr::settings
 	inline constexpr boolean_setting exo_punch{"vr_exoPunch", false};
 	// MWR: world marker on the current objective (the native compass star in VR).
 	inline constexpr boolean_setting objective_markers{"vr_objectiveMarkers", true};
+	// MWR: game at half the headset refresh, runtime reprojection fills the rest (half_rate.cpp).
+	inline constexpr boolean_setting half_rate{"vr_halfRate", false};
 	inline constexpr auto toggles = []
 	{
 		constexpr std::array gameplay{recording_mode,
@@ -146,6 +148,7 @@ namespace vr::settings
 		                              ads_sprint,
 		                              exo_punch,
 		                              objective_markers,
+		                              half_rate,
 		                              boolean_setting{disable_lens_flare, true},
 		                              boolean_setting{camera_bob, false},
 		                              boolean_setting{recoil, true},

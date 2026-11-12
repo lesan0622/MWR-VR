@@ -276,6 +276,8 @@
   "oobe.done": "완료",
   "settings.runtimeBackend": "VR 인터페이스",
   "settings.runtimeBackendHint": "OpenXR을 권장하며 OpenVR은 대체 옵션입니다. 선택은 즉시 저장되고 게임 시작 시 적용됩니다. 런처를 다시 시작할 필요가 없습니다.",
+  "settings.halfRate": "하프 레이트 모드 (성능)",
+  "settings.halfRateHint": "게임을 헤드셋 주사율의 절반으로 렌더링하고 나머지 프레임은 VR 런타임이 채웁니다(SteamVR 모션 스무딩 / Meta ASW). 느린 PC에서 CPU·GPU 부담을 줄이지만 빠르게 움직일 때 화면이 약간 일그러질 수 있습니다. OpenXR 전용. 기본적으로 꺼져 있습니다.",
   "choice.openxr": "OpenXR",
   "choice.openvr": "OpenVR",
   "settings.controllerCompatibility": "컨트롤러 호환성",

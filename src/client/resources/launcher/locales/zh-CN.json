@@ -272,6 +272,8 @@
   "oobe.done": "完成",
   "settings.runtimeBackend": "VR 运行方式",
   "settings.runtimeBackendHint": "推荐使用 OpenXR，OpenVR 作为备选。选择会自动保存，进入游戏时生效，无需重启启动器。",
+  "settings.halfRate": "半帧率模式（性能）",
+  "settings.halfRateHint": "游戏以头显刷新率的一半渲染，其余帧由 VR 运行时补齐（SteamVR 运动平滑 / Meta ASW）。可降低较慢电脑的 CPU 和 GPU 负载；快速移动时可能出现重投影伪影。仅限 OpenXR。默认关闭。",
   "choice.openxr": "OpenXR",
   "choice.openvr": "OpenVR",
   "settings.controllerCompatibility": "控制器兼容性",

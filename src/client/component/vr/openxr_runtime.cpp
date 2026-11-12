@@ -5,6 +5,7 @@
 
 #include "engine_stereo_bridge.hpp"
 #include "frame_capture.hpp"
+#include "half_rate.hpp"
 #include "head_pose_bridge.hpp"
 #include "native_render_session.hpp"
 #include "openxr_layer_policy.hpp"
@@ -1455,7 +1456,9 @@ namespace vr::openxr
 			prediction_.state = {XR_TYPE_FRAME_STATE};
 			prediction_.pair = pair;
 			const XrFrameWaitInfo wait{XR_TYPE_FRAME_WAIT_INFO};
+				half_rate::before_wait();
 				auto result = dispatch_.wait_frame(session_, &wait, &prediction_.state);
+				half_rate::after_wait();
 				if (XR_FAILED(result))
 				{
 					inputs_.invalidate(controller_input::input_reason::wait_frame_failed,result);
@@ -1463,6 +1466,11 @@ namespace vr::openxr
 				engine_stereo_bridge::invalidate_views();
 				return fail(runtime_state::recoverable_error, "xrWaitFrame", result);
 			}
+			// vr_halfRate: a frame capped at half refresh reaches the display one
+			// period after the predicted slot; locate and submit for that slot.
+			half_rate::observe_period(prediction_.state.predictedDisplayPeriod);
+			if (half_rate::active() && prediction_.state.predictedDisplayPeriod > 0)
+				prediction_.state.predictedDisplayTime += prediction_.state.predictedDisplayPeriod;
 			if (queued)
 			{
 				// xrBeginFrame waits for the current frame's xrEndFrame (promote_queued).

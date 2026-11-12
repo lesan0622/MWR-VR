@@ -8,6 +8,14 @@
     "description": "settings.runtimeBackendHint"
   },
   {
+    "name": "vr_halfRate",
+    "category": "basics",
+    "group": "settings.runtimeBackend",
+    "label": "settings.halfRate",
+    "type": "toggle",
+    "description": "settings.halfRateHint"
+  },
+  {
     "name": "vr_pistolHolsterSide",
     "category": "basics",
     "group": "settings.handedness",

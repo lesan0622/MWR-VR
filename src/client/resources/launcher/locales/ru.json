@@ -272,6 +272,8 @@
   "oobe.done": "Готово",
   "settings.runtimeBackend": "VR-интерфейс",
   "settings.runtimeBackendHint": "Рекомендуется OpenXR; OpenVR — резервный вариант. Выбор сохраняется сразу и применяется при запуске игры. Перезапуск лаунчера не нужен.",
+  "settings.halfRate": "Режим половинной частоты (производительность)",
+  "settings.halfRateHint": "Игра рендерится с половинной частотой обновления шлема, остальные кадры достраивает VR-среда (SteamVR Motion Smoothing / Meta ASW). Снижает нагрузку на CPU и GPU на медленных ПК; при быстрых движениях возможны артефакты репроекции. Только OpenXR. По умолчанию выключено.",
   "choice.openxr": "OpenXR",
   "choice.openvr": "OpenVR",
   "settings.controllerCompatibility": "Совместимость контроллеров",

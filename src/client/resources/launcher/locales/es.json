@@ -272,6 +272,8 @@
   "oobe.done": "Finalizar",
   "settings.runtimeBackend": "Interfaz de RV",
   "settings.runtimeBackendHint": "Se recomienda OpenXR; OpenVR es la alternativa. La selección se guarda al instante y se aplica al iniciar el juego, sin reiniciar el lanzador.",
+  "settings.halfRate": "Modo de media tasa (rendimiento)",
+  "settings.halfRateHint": "El juego se renderiza a la mitad de la frecuencia del visor y el runtime de RV completa los demás fotogramas (SteamVR Motion Smoothing / Meta ASW). Reduce la carga de CPU y GPU en PC más lentos; los movimientos rápidos pueden mostrar artefactos de reproyección. Solo OpenXR. Desactivado por defecto.",
   "choice.openxr": "OpenXR",
   "choice.openvr": "OpenVR",
   "settings.controllerCompatibility": "Compatibilidad de mandos",
