@@ -67,8 +67,9 @@ namespace vr::gameplay::weapons::physical_reload
 			anchor chamber_model{};bool live_chamber{};
 			anchor liner_model{};bool receiver_liner{}; // MWR G36 receiver interior (back faces)
 			anchor attached_model{};
-			// MWR: a pistol magazine in hand, relative to the tracked visual wrist.
-			int hand{-1};anchor in_tracked{};bool tracked{};
+			// MWR: a pistol magazine in hand, held like a grenade: tracked visual wrist
+			// x magazine wrist basis x the grip's fixed magazine offset (in_wrist).
+			int hand{-1};quat tracked_basis{0,0,0,1};anchor in_tracked{};bool tracked{};
 		};
 		std::array<held_frame,15> held_frames{};
 		std::array<vec,15> submitted_view{}; // MWR: view origin each slot's parts were submitted with
@@ -292,7 +293,7 @@ namespace vr::gameplay::weapons::physical_reload
 			}
 
 			auto held_world=hand_frame.world;
-			if (hand_frame.tracked) {anchor wrist;if (held_item::visual_wrist(hand_frame.hand,wrist)) held_world=compose(wrist,hand_frame.in_tracked);}
+			if (hand_frame.tracked) {anchor wrist;if (held_item::visual_wrist(hand_frame.hand,wrist)) held_world=compose({wrist.position,normalize(multiply(wrist.rotation,hand_frame.tracked_basis))},hand_frame.in_tracked);}
 			if (eligible(attachment_kind::held_magazine))
 				draw(held_world,hand_frame.slot,hand_frame.definition,hand_frame.units,frozen.ammo.held_rounds);
 			if(hand_frame.counted_inserted && eligible(attachment_kind::inserted_magazine))
@@ -865,13 +866,16 @@ namespace vr::gameplay::weapons::physical_reload
 		held.epoch = epoch; held.model = mag;
 		held.attached_model=attached;
 		held.units = units;
-		// MWR: a pistol's held magazine follows the latest tracked wrist at submit
-		// time (no render-time hand record); rifle magazines keep the solve pose.
-		if (state.active && state.ammo.magazine_hand!=hand::none && !state.magazine_seated && pistol_magazine(owner.weapon))
+		// MWR: a pistol's held magazine is held like a grenade (grenade_runtime): at
+		// submit time it is placed from the latest tracked visual wrist with the
+		// magazine wrist basis and the grip's fixed in_wrist offset. It no longer
+		// carries the solve-time offset from the IK wrist, which changed every solve
+		// and made the magazine drift in the hand. Rifle magazines keep the solve pose.
+		if (state.active && state.ammo.magazine_hand!=hand::none && !state.magazine_seated && !state.magazine_grabbed &&
+			!state.ammo.magazine_inserted && !rock.hooked && pistol_magazine(owner.weapon))
 		{
-			anchor tracked_wrist;
-			if (held_item::visual_wrist(input,off,tracked_wrist))
-			{held.hand=off;held.in_tracked=compose(inverse(tracked_wrist),next.held_world);held.tracked=true;}
+			held.hand=off;held.in_tracked=in_wrist;held.tracked=true;
+			held.tracked_basis=magazine_wrist_basis(definition,magazine_pose,ordinary_basis,knife_grasp);
 		}
 		held.definition = profile;held.view.owner=owner;
 		held.inserted_origin=view_offset;

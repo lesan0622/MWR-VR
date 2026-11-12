@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -22,18 +23,21 @@ namespace vr::native_post_aa
 	inline constexpr std::uint32_t smaa_edge_target = 14, smaa_blend_target = 15;
 	inline constexpr std::array<std::uint32_t, 6> history_targets{16, 17, 18, 19, 20, 21};
 
-	// MWR: only the history-free paths are rebound (none, FXAA, SMAA 1x).
-	// Temporal SMAA needs the H1 history ring readers (0x14F79CBB4) first.
+	// All five menu modes are supported. Temporal/Filmic SMAA use the MWR
+	// history ring readers (frame 0x14F79CBB4), redirected per eye while the
+	// VR owner draws AA; the internal FXAA path stays rejected.
 	[[nodiscard]] constexpr bool supported(const mode value) noexcept
 	{
-		return value <= mode::smaa;
+		return value <= mode::filmic_smaa_t2x;
 	}
-	// MWR has no per-eye temporal/filmic history readers yet. Keep these
-	// user-selectable modes from rejecting the entire stereo pair.
-	[[nodiscard]] constexpr mode effective_mode(const mode value) noexcept
+	// Set once the per-eye history readers are hooked (native_post_aa component).
+	inline std::atomic_bool history_readers{};
+	// Without the readers, keep temporal/filmic modes from rejecting the whole
+	// stereo pair: they fall back to SMAA 1x.
+	[[nodiscard]] constexpr mode effective_mode(const mode value, const bool readers) noexcept
 	{
-		return value == mode::smaa_t2x || value == mode::filmic_smaa ||
-			value == mode::filmic_smaa_t2x ? mode::smaa : value;
+		return !readers && (value == mode::smaa_t2x || value == mode::filmic_smaa ||
+			value == mode::filmic_smaa_t2x) ? mode::smaa : value;
 	}
 	// The native dispatcher reads the record itself. Override only for its
 	// call, restoring the arena-owned record even if rendering unwinds.
@@ -46,7 +50,7 @@ namespace vr::native_post_aa
 			: field_(static_cast<std::byte*>(record) + mode_offset)
 		{
 			std::memcpy(&saved_, field_, sizeof(saved_));
-			const auto selected = effective_mode(saved_);
+			const auto selected = effective_mode(saved_, history_readers.load(std::memory_order_acquire));
 			std::memcpy(field_, &selected, sizeof(selected));
 		}
 		~scoped_mode() { std::memcpy(field_, &saved_, sizeof(saved_)); }

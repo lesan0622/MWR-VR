@@ -31,6 +31,7 @@ namespace mwr_port
 		"camera",
 		"vr",
 		"vr::engine_stereo_renderer",
+		"vr::native_post_aa", // Per-eye SMAA T2x/Filmic history readers (MWR 0x140072E25/0x140073090).
 		// Phase 3: VR menu panels and native HUD capture
 		"input",
 		"vr::native_menu",

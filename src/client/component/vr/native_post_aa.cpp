@@ -21,9 +21,12 @@ namespace vr::native_post_aa
 		constexpr std::uintptr_t dispatch_address = 0x140072BF0;
 		constexpr std::uintptr_t frame_address = 0x14F79CBB4; // MWR AA history frame
 		constexpr std::uintptr_t progress_address = 0x14F79CBB8;
-		constexpr std::uintptr_t temporal_frame_read = 0x1402970DF, filmic_frame_read = 0x14029737B;
-		constexpr std::uint8_t temporal_frame_bytes[]{0x8B,0x0D,0xB7,0x9B,0xC4,0x0E};
-		constexpr std::uint8_t filmic_frame_bytes[]{0x8B,0x05,0x1B,0x99,0xC4,0x0E};
+		// MWR AA ring readers inside 0x140072C40 (H2 0x1402970DF / 0x14029737B):
+		// temporal `mov ebx,[frame]` -> history target 16 + frame%4,
+		// filmic `mov eax,[frame]` -> history target 20 + frame&1.
+		constexpr std::uintptr_t temporal_frame_read = 0x140072E25, filmic_frame_read = 0x140073090;
+		constexpr std::uint8_t temporal_frame_bytes[]{0x8B,0x1D,0x89,0x9D,0x72,0x0F};
+		constexpr std::uint8_t filmic_frame_bytes[]{0x8B,0x05,0x1E,0x9B,0x72,0x0F};
 		std::atomic_bool frame_reads_installed{};
 		struct frame_override { bool active{}; std::uint32_t phase{}; };
 		thread_local frame_override current_frame{};
@@ -70,13 +73,13 @@ namespace vr::native_post_aa
 		{
 			mode result{};
 			std::memcpy(&result, static_cast<const std::byte*>(record) + mode_offset, sizeof(result));
-			const auto selected = effective_mode(result);
+			const auto selected = effective_mode(result, frame_reads_installed.load(std::memory_order_acquire));
 			if (selected != result)
 			{
 				static std::atomic_uint32_t reported{};
 				const auto bit = 1u << static_cast<unsigned>(result);
 				if (!(reported.fetch_or(bit, std::memory_order_relaxed) & bit))
-					console::info("[VR] post-AA mode %u uses SMAA 1x for VR; temporal/filmic AA is not supported\n",
+					console::info("[VR] post-AA mode %u uses SMAA 1x for VR; the AA history readers are not installed\n",
 						static_cast<unsigned>(result));
 			}
 			return selected;
@@ -92,11 +95,11 @@ namespace vr::native_post_aa
 		{
 			static const bool valid = []
 			{
-				// Exact supported H2 AA dispatcher, history ring readers/writers,
-				// and the final Filmic filter branch. No unverified renderer entry.
-				// MWR: dispatcher only; the temporal ring readers are not rebound.
+				// Exact MWR AA dispatcher and both history ring readers (rebound
+				// from H2). No unverified renderer entry.
 				constexpr std::uint8_t dispatch[]{0x48,0x83,0xEC,0x38,0x0F,0xB7,0x81,0x14,0x1E,0,0};
-				return matches(dispatch_address, dispatch);
+				return matches(dispatch_address, dispatch) && matches(temporal_frame_read, temporal_frame_bytes) &&
+					matches(filmic_frame_read, filmic_frame_bytes);
 			}();
 			return valid;
 		}
@@ -301,8 +304,8 @@ namespace vr::native_post_aa
 				}
 				seeds.fetch_add(1, std::memory_order_relaxed);
 			}
-			// MWR: only temporal modes own the native history ring; the
-			// history-free paths never touch it (temporal is not rebound yet).
+			// Only temporal modes own the native history ring; the history-free
+			// paths never touch it.
 			native_progress unused_progress{};
 			auto* progress = temporal(selected) ?
 				reinterpret_cast<native_progress*>(progress_address) : &unused_progress;
@@ -382,7 +385,7 @@ namespace vr::native_post_aa
 			// Install before native rendering starts. Each relay preserves the
 			// original MOV's register contract and reads native time outside AA.
 			auto* temporal = utils::hook::create_preserving_near_jump(temporal_frame_read,
-				make_frame_read_thunk(reinterpret_cast<void*>(read_frame), frame_register::ecx));
+				make_frame_read_thunk(reinterpret_cast<void*>(read_frame), frame_register::ebx));
 			auto* filmic = utils::hook::create_preserving_near_jump(filmic_frame_read,
 				make_frame_read_thunk(reinterpret_cast<void*>(read_frame), frame_register::eax));
 			if (!temporal || !filmic) { reject("frame_reader_allocation"); return; }
@@ -391,9 +394,11 @@ namespace vr::native_post_aa
 			utils::hook::call(filmic_frame_read, filmic);
 			utils::hook::nop(filmic_frame_read + 5, 1);
 			frame_reads_installed.store(true, std::memory_order_release);
+			history_readers.store(true, std::memory_order_release);
 		}
 		void pre_destroy() override
 		{
+			history_readers.store(false, std::memory_order_release);
 			if (!frame_reads_installed.exchange(false)) return;
 			utils::hook::copy(temporal_frame_read, temporal_frame_bytes, sizeof(temporal_frame_bytes));
 			utils::hook::copy(filmic_frame_read, filmic_frame_bytes, sizeof(filmic_frame_bytes));
