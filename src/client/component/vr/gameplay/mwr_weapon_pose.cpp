@@ -1,6 +1,7 @@
 #include <std_include.hpp>
 #include "mwr_weapon_pose.hpp"
 #include "../controller_input.hpp"
+#include "../handedness.hpp"
 #include "../head_pose_bridge.hpp"
 #include "component/command.hpp"
 #include "component/console.hpp"
@@ -53,7 +54,7 @@ namespace vr::gameplay::mwr_weapon_pose
 
 		using vec = head_pose_bridge::vector3;
 
-		// Right controller in game world: grip position, aim orientation.
+		// Default control hand in game world: grip position, aim orientation.
 		bool right_hand(head_pose_bridge::world_pose& output) noexcept
 		{
 			if (!enabled || !enabled->current.enabled) return false;
@@ -62,8 +63,9 @@ namespace vr::gameplay::mwr_weapon_pose
 			if (!input.focused || input.sequence == 0 || now < input.sampled_at ||
 				now - input.sampled_at > std::chrono::milliseconds(150))
 				return false;
-			const auto& grip = input.grip[1];
-			const auto& aim = input.aim[1];
+			const auto selected=static_cast<unsigned>(handedness::dominant());
+			const auto& grip = input.grip[selected];
+			const auto& aim = input.aim[selected];
 			if (!grip.valid || !aim.valid) return false;
 			head_pose_bridge::spatial_frame frame{};
 			if (!head_pose_bridge::get_spatial_frame(frame) || frame.generation != input.reference_generation)

@@ -22,37 +22,13 @@ namespace vr::native_post_aa
 	inline constexpr std::uint32_t smaa_edge_target = 14, smaa_blend_target = 15;
 	inline constexpr std::array<std::uint32_t, 6> history_targets{16, 17, 18, 19, 20, 21};
 
-	// MWR: only the history-free paths are rebound (none, FXAA, SMAA 1x).
-	// Temporal SMAA needs the H1 history ring readers (0x14F79CBB4) first.
+	// All five menu modes are supported. Temporal/Filmic SMAA use the MWR
+	// history ring readers (frame 0x14F79CBB4), redirected per eye while the
+	// VR owner draws AA; the internal FXAA path stays rejected.
 	[[nodiscard]] constexpr bool supported(const mode value) noexcept
 	{
-		return value <= mode::smaa;
+		return value <= mode::filmic_smaa_t2x;
 	}
-	// MWR has no per-eye temporal/filmic history readers yet. Keep these
-	// user-selectable modes from rejecting the entire stereo pair.
-	[[nodiscard]] constexpr mode effective_mode(const mode value) noexcept
-	{
-		return value == mode::smaa_t2x || value == mode::filmic_smaa ||
-			value == mode::filmic_smaa_t2x ? mode::smaa : value;
-	}
-	// The native dispatcher reads the record itself. Override only for its
-	// call, restoring the arena-owned record even if rendering unwinds.
-	class scoped_mode final
-	{
-		std::byte* field_;
-		mode saved_{};
-	public:
-		explicit scoped_mode(void* record) noexcept
-			: field_(static_cast<std::byte*>(record) + mode_offset)
-		{
-			std::memcpy(&saved_, field_, sizeof(saved_));
-			const auto selected = effective_mode(saved_);
-			std::memcpy(field_, &selected, sizeof(selected));
-		}
-		~scoped_mode() { std::memcpy(field_, &saved_, sizeof(saved_)); }
-		scoped_mode(const scoped_mode&) = delete;
-		scoped_mode& operator=(const scoped_mode&) = delete;
-	};
 	[[nodiscard]] constexpr bool temporal(const mode value) noexcept
 	{
 		return value == mode::smaa_t2x || value == mode::filmic_smaa_t2x;
@@ -60,6 +36,14 @@ namespace vr::native_post_aa
 	[[nodiscard]] constexpr bool filmic(const mode value) noexcept
 	{
 		return value == mode::filmic_smaa || value == mode::filmic_smaa_t2x;
+	}
+	// MWR binds target 64 as TEXTURE_SRC_CODE_TEXTURE_2 (code image 52) for
+	// T2x and both Filmic modes. The renderer flags (0x1405646F0) create it
+	// only when r_postAA was 3..5 at the last renderer reset.
+	inline constexpr std::uint32_t temporal_input_target = 64;
+	[[nodiscard]] constexpr bool needs_temporal_input(const mode value) noexcept
+	{
+		return value >= mode::smaa_t2x && value <= mode::filmic_smaa_t2x;
 	}
 	[[nodiscard]] constexpr bool needs_history(const mode value, const std::uint32_t target) noexcept
 	{

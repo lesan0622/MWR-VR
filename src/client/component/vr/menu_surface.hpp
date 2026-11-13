@@ -1,6 +1,7 @@
 #pragma once
 
 #include "controller_input.hpp"
+#include "handedness.hpp"
 #include "component/vr/digital_button_gate.hpp"
 #include <algorithm>
 #include <array>
@@ -122,6 +123,7 @@ namespace vr::menu_surface
 	class pointer_owner
 	{
 		unsigned hand_{1};
+		bool has_owner_{};
 		std::array<controller_input::digital_press_gate,2> gates_{};
 		std::uint64_t sequence_{},reference_{},continuity_{};
 	public:
@@ -130,6 +132,7 @@ namespace vr::menu_surface
 		void reset() noexcept {*this={};}
 		void update(const controller_input::frame& input,bool allowed,controller_input::clock::time_point now) noexcept
 		{
+			if(!has_owner_){hand_=static_cast<unsigned>(handedness::dominant());has_owner_=true;}
 			if(!allowed||!input.focused||!input.sequence||now<input.sampled_at||
 				now-input.sampled_at>std::chrono::milliseconds(150)){cancel_input();return;}
 			if(sequence_>input.sequence||reference_!=input.reference_generation||continuity_!=input.continuity_generation)cancel_input();

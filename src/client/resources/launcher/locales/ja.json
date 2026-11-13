@@ -272,6 +272,10 @@
   "oobe.done": "完了",
   "settings.runtimeBackend": "VR インターフェース",
   "settings.runtimeBackendHint": "OpenXR を推奨し、OpenVR は代替として利用できます。選択はすぐに保存され、ゲーム開始時に適用されます。ランチャーの再起動は不要です。",
+  "settings.halfRate": "ハーフレートモード（パフォーマンス）",
+  "settings.halfRateHint": "ゲームをヘッドセットのリフレッシュレートの半分で描画し、残りのフレームはVRランタイムが補完します（SteamVR モーションスムージング / Meta ASW）。低速なPCでCPU・GPU負荷を下げますが、素早い動きでリプロジェクションの乱れが出ることがあります。OpenXRのみ。既定ではオフ。",
+  "settings.dxvk": "Vulkan レンダラー (DXVK)",
+  "settings.dxvkHint": "DXVK(Vulkan 上の Direct3D 11)でゲームを描画します。AMD GPU でグラフィックの不具合が出る場合に有効にしてください。ゲーム起動時にランチャーが DXVK の d3d11.dll/dxgi.dll をゲームフォルダーに配置し、オフにすると削除します。OpenXR 専用で、VR ランタイムと同じ GPU が必要です。既定はオフです。",
   "choice.openxr": "OpenXR",
   "choice.openvr": "OpenVR",
   "settings.controllerCompatibility": "コントローラーの互換性",
@@ -302,5 +306,14 @@
   "settings.campaignUnlockHint": "このウィンドウからゲームを起動するときに一度だけ適用します。ミッションと機密情報の報酬を解放し、クリアや収集の記録は変更しません。ウィンドウを閉じると未適用の選択は破棄されます。",
   "settings.exoPunch": "外骨格パンチ",
   "settings.exoPunchHint": "物理的な近接攻撃のダメージを強化し、致死攻撃で敵を吹き飛ばします。弾丸と爆発には影響しません。詳細グラフィック設定でラグドールを有効にする必要があります。",
-  "settings.funFeatures": "お楽しみ機能"
+  "settings.funFeatures": "お楽しみ機能",
+  "settings.handedness": "Handedness",
+  "settings.controlHand": "Control hand",
+  "settings.controlHandHint": "Right: move/sprint on left, turn/jump on right, X for menu. Left swaps sticks and clicks, with A for menu and X for the primary action. Restart required.",
+  "settings.pistolHolsterSide": "Default pistol holster side",
+  "settings.pistolHolsterSideHint": "Preferred hip for newly assigned pistols. Independent of the control hand; explicit stows keep their chosen side. Restart required.",
+  "choice.rightHand": "Right-handed",
+  "choice.leftHand": "Left-handed",
+  "choice.rightSide": "Right hip",
+  "choice.leftSide": "Left hip"
 }

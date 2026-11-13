@@ -21,10 +21,19 @@ namespace vr::native_post_aa
 		constexpr std::uintptr_t dispatch_address = 0x140072BF0;
 		constexpr std::uintptr_t frame_address = 0x14F79CBB4; // MWR AA history frame
 		constexpr std::uintptr_t progress_address = 0x14F79CBB8;
-		constexpr std::uintptr_t temporal_frame_read = 0x1402970DF, filmic_frame_read = 0x14029737B;
-		constexpr std::uint8_t temporal_frame_bytes[]{0x8B,0x0D,0xB7,0x9B,0xC4,0x0E};
-		constexpr std::uint8_t filmic_frame_bytes[]{0x8B,0x05,0x1B,0x99,0xC4,0x0E};
+		// MWR AA ring readers inside 0x140072C40 (H2 0x1402970DF / 0x14029737B):
+		// temporal `mov ebx,[frame]` -> history target 16 + frame%4,
+		// filmic `mov eax,[frame]` -> history target 20 + frame&1.
+		constexpr std::uintptr_t temporal_frame_read = 0x140072E25, filmic_frame_read = 0x140073090;
+		constexpr std::uint8_t temporal_frame_bytes[]{0x8B,0x1D,0x89,0x9D,0x72,0x0F};
+		constexpr std::uint8_t filmic_frame_bytes[]{0x8B,0x05,0x1E,0x9B,0x72,0x0F};
 		std::atomic_bool frame_reads_installed{};
+		// vid_resize (0x1401B0430) only raises this flag; the main frame
+		// (0x1401ACD50) then resets the renderer and recreates its targets.
+		constexpr std::uintptr_t renderer_resize_request = 0x14D64D4FC;
+		utils::hook::detour dispatch_hook;
+		std::atomic_bool resize_requested{};
+		std::atomic_uint64_t guarded_dispatches{}, resize_requests{};
 		struct frame_override { bool active{}; std::uint32_t phase{}; };
 		thread_local frame_override current_frame{};
 		std::uint32_t read_frame() noexcept
@@ -70,16 +79,7 @@ namespace vr::native_post_aa
 		{
 			mode result{};
 			std::memcpy(&result, static_cast<const std::byte*>(record) + mode_offset, sizeof(result));
-			const auto selected = effective_mode(result);
-			if (selected != result)
-			{
-				static std::atomic_uint32_t reported{};
-				const auto bit = 1u << static_cast<unsigned>(result);
-				if (!(reported.fetch_or(bit, std::memory_order_relaxed) & bit))
-					console::info("[VR] post-AA mode %u uses SMAA 1x for VR; temporal/filmic AA is not supported\n",
-						static_cast<unsigned>(result));
-			}
-			return selected;
+			return result;
 		}
 		template<std::size_t N> bool matches(std::uintptr_t address, const std::uint8_t (&bytes)[N])
 		{
@@ -92,11 +92,11 @@ namespace vr::native_post_aa
 		{
 			static const bool valid = []
 			{
-				// Exact supported H2 AA dispatcher, history ring readers/writers,
-				// and the final Filmic filter branch. No unverified renderer entry.
-				// MWR: dispatcher only; the temporal ring readers are not rebound.
+				// Exact MWR AA dispatcher and both history ring readers (rebound
+				// from H2). No unverified renderer entry.
 				constexpr std::uint8_t dispatch[]{0x48,0x83,0xEC,0x38,0x0F,0xB7,0x81,0x14,0x1E,0,0};
-				return matches(dispatch_address, dispatch);
+				return matches(dispatch_address, dispatch) && matches(temporal_frame_read, temporal_frame_bytes) &&
+					matches(filmic_frame_read, filmic_frame_bytes);
 			}();
 			return valid;
 		}
@@ -138,6 +138,37 @@ namespace vr::native_post_aa
 			target_view(target)->GetDesc(&output);
 			image->texture.shaderView->GetDesc(&input);
 			return owner.Get() == device && !target_rejection(target, desc, output, input, expected.Width, expected.Height);
+		}
+
+		// A runtime r_postAA switch into T2x/Filmic leaves target 64 unallocated
+		// until a renderer reset, and the native dispatcher then binds a null
+		// code image (Com_Error "TEXTURE_SRC_CODE_TEXTURE_2 isn't valid").
+		// Draw SMAA 1x for those frames and request the reset once, as
+		// vid_resize does. Covers both the VR owner and the desktop path.
+		bool dispatch_stub(void* record, const std::uint32_t input, const std::uint32_t scratch,
+			const std::uint32_t output)
+		{
+			auto* const field = static_cast<std::byte*>(record) + mode_offset;
+			const auto selected = read_mode(record);
+			game::GfxImage* image{};
+			if (needs_temporal_input(selected))
+				std::memcpy(&image, reinterpret_cast<const void*>(native_render_contract::target_registry_base +
+					temporal_input_target * native_render_contract::target_registry_stride), sizeof(image));
+			if (!needs_temporal_input(selected) || image)
+			{
+				if (image) resize_requested.store(false, std::memory_order_relaxed);
+				return dispatch_hook.invoke<bool>(record, input, scratch, output);
+			}
+			if (!resize_requested.exchange(true, std::memory_order_relaxed))
+			{
+				*reinterpret_cast<volatile std::int32_t*>(renderer_resize_request) = 1;
+				resize_requests.fetch_add(1, std::memory_order_relaxed);
+			}
+			guarded_dispatches.fetch_add(1, std::memory_order_relaxed);
+			constexpr auto fallback = mode::smaa;
+			std::memcpy(field, &fallback, sizeof(fallback));
+			const auto restore = gsl::finally([&] { std::memcpy(field, &selected, sizeof(selected)); });
+			return dispatch_hook.invoke<bool>(record, input, scratch, output);
 		}
 
 		diagnostics::post_aa::target observe_target(const std::uint32_t id)
@@ -301,8 +332,8 @@ namespace vr::native_post_aa
 				}
 				seeds.fetch_add(1, std::memory_order_relaxed);
 			}
-			// MWR: only temporal modes own the native history ring; the
-			// history-free paths never touch it (temporal is not rebound yet).
+			// Only temporal modes own the native history ring; the history-free
+			// paths never touch it.
 			native_progress unused_progress{};
 			auto* progress = temporal(selected) ?
 				reinterpret_cast<native_progress*>(progress_address) : &unused_progress;
@@ -317,7 +348,6 @@ namespace vr::native_post_aa
 			// to the VR display target. The HDR scene is never an AA destination.
 			const auto draw = [&]
 			{
-				const scoped_mode aa_mode(record);
 				auto* source_state = *reinterpret_cast<void* const*>(0x140801FB0);
 				utils::hook::invoke<void>(0x14059C0E0, source_state, static_cast<std::byte*>(record) + 0x170);
 				return utils::hook::invoke<bool>(dispatch_address, record,
@@ -369,7 +399,8 @@ namespace vr::native_post_aa
 			<< " mode(left/right/aux)=" << last_mode[0] << '/' << last_mode[1] << '/' << last_mode[2]
 			<< " complete=" << completions[0] << '/' << completions[1] << '/' << completions[2]
 			<< " history_seeds=" << seeds << " pair_commits=" << commits << " failures=" << failures
-			<< " last_error=" << last_error.load() << '\n';
+			<< " last_error=" << last_error.load() << " runtime_switch(guarded/resize_requests)="
+			<< guarded_dispatches << '/' << resize_requests << '\n';
 		out << validation_failures.format(GetTickCount64());
 		return out.str();
 	}
@@ -379,10 +410,11 @@ namespace vr::native_post_aa
 		void post_unpack() override
 		{
 			if (!native_contract()) { reject("native_contract"); return; }
+			dispatch_hook.create(dispatch_address, dispatch_stub);
 			// Install before native rendering starts. Each relay preserves the
 			// original MOV's register contract and reads native time outside AA.
 			auto* temporal = utils::hook::create_preserving_near_jump(temporal_frame_read,
-				make_frame_read_thunk(reinterpret_cast<void*>(read_frame), frame_register::ecx));
+				make_frame_read_thunk(reinterpret_cast<void*>(read_frame), frame_register::ebx));
 			auto* filmic = utils::hook::create_preserving_near_jump(filmic_frame_read,
 				make_frame_read_thunk(reinterpret_cast<void*>(read_frame), frame_register::eax));
 			if (!temporal || !filmic) { reject("frame_reader_allocation"); return; }
@@ -394,6 +426,7 @@ namespace vr::native_post_aa
 		}
 		void pre_destroy() override
 		{
+			(void)dispatch_hook.clear();
 			if (!frame_reads_installed.exchange(false)) return;
 			utils::hook::copy(temporal_frame_read, temporal_frame_bytes, sizeof(temporal_frame_bytes));
 			utils::hook::copy(filmic_frame_read, filmic_frame_bytes, sizeof(filmic_frame_bytes));

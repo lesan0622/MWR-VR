@@ -20,6 +20,8 @@ namespace vr::openxr
 		std::uint32_t height{};
 		std::uint32_t sample_count{1};
 		std::vector<XrSwapchainImageD3D11KHR> images;
+		// DXVK/Vulkan binding: owners of the wrapped runtime VkImages (images[i].texture).
+		std::vector<Microsoft::WRL::ComPtr<ID3D11Texture2D>> wrapped;
 		std::vector<Microsoft::WRL::ComPtr<ID3D11RenderTargetView>> render_targets;
 		bool acquired{};
 		bool waited{};

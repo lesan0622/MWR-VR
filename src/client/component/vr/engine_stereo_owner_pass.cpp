@@ -190,6 +190,9 @@ namespace vr::engine_stereo_owner_pass
 		std::array<std::atomic_uint32_t, auxiliary_scene::view_count> camera_model_final_inactive{};
 		std::array<std::atomic_uint32_t, auxiliary_scene::view_count> camera_model_final_other{};
 		std::atomic_bool production_active{};
+		// Pair the active production transaction is producing (0 = none).
+		std::atomic<std::uint64_t> production_pair{};
+		std::array<std::atomic<std::uint64_t>, 4> admission_counters{}; // frontend culling admission outcomes (status)
 		std::atomic_bool gpu_census_launch_attempted{};
 		// High 32 bits are a monotonic request sequence; low 32 bits are the exact
 		// requested delay. Publishing both in one release operation prevents a
@@ -592,6 +595,7 @@ namespace vr::engine_stereo_owner_pass
 			active.dynamic_index_right_count = 0;
 			active.dynamic_index_calls = {};
 			active.dynamic_index_scope_active = false;
+			active.shared_shadow = {};
 			active.temporal_history_current_frame_diagnostic = false;
 			active.material_reuse_left_diagnostic = false;
 			active.material_reuse_left_snapshot_ready = false;
@@ -741,12 +745,73 @@ namespace vr::engine_stereo_owner_pass
 	{
 		if (state.load(std::memory_order_acquire) != gate_state::complete)
 			return frontend_culling_admission::unarmed;
-		if (pair_id == 0 || production_active.load(std::memory_order_acquire) ||
+		// One producer per pose family: the frontend of the next native frame runs
+		// beside the backend's production transaction, so only the family that
+		// transaction is producing is closed (OpenXR queues the next family).
+		const bool producing = pair_id != 0 &&
+			production_pair.load(std::memory_order_acquire) == pair_id;
+		if (pair_id == 0 || producing ||
 			!native_render_session::active().accepts_pair(pair_id))
 		{
+			if (producing) admission_counters[1].fetch_add(1);
+			else {admission_counters[2].fetch_add(1);admission_counters[3].store(pair_id);}
 			return frontend_culling_admission::unavailable;
 		}
+		admission_counters[0].fetch_add(1);
 		return frontend_culling_admission::accepted;
+	}
+	std::array<std::uint64_t, 4> frontend_admission_counters() noexcept
+	{
+		return {admission_counters[0].load(),admission_counters[1].load(),admission_counters[2].load(),admission_counters[3].load()};
+	}
+
+
+	namespace
+	{
+		std::atomic_bool shared_shadows_enabled{true};
+		std::array<std::atomic_uint64_t, 3> shared_shadow_stats{}; // skipped, rendered right, refused
+	}
+	void set_shared_shadows(const bool enabled) noexcept { shared_shadows_enabled.store(enabled); }
+	std::array<std::uint64_t, 3> shared_shadow_counters() noexcept
+	{ return {shared_shadow_stats[0].load(), shared_shadow_stats[1].load(), shared_shadow_stats[2].load()}; }
+	bool begin_shared_shadow_pass(const std::size_t pass) noexcept
+	{
+		auto* const active = active_transaction;
+		if (pass >= 2 || active == nullptr || !*active || !active->production || active->failed ||
+			GetCurrentThreadId() != active->owner_thread_id) return false;
+		auto& range = active->shared_shadow[pass];
+		if (active->current_view == 0)
+		{
+			range = {active->dynamic_index_left_count, active->dynamic_index_left_count, true, false};
+			return false;
+		}
+		if (active->current_view != 1) return false;
+		// Spot-light atlas (pass 1) re-render differed by 1-92 bytes in ~1/3 of
+		// readback checks (per-eye LOD); only the byte-identical sun pass is shared.
+		if (pass != 0) return false;
+		// An auxiliary (scope) view renders between the eyes and may rewrite the
+		// light maps for its own culled lights: the right eye then renders its own.
+		if (!shared_shadows_enabled.load(std::memory_order_relaxed) || active->auxiliary.valid ||
+			!range.closed || active->dynamic_index_right_count != range.begin ||
+			range.end > active->dynamic_index_left_count)
+		{
+			++shared_shadow_stats[shared_shadows_enabled.load(std::memory_order_relaxed) ? 2 : 1];
+			return false;
+		}
+		// The left eye's light-view boundaries are consumed, not replayed: the right
+		// eye's later camera boundaries keep their left ordinals.
+		active->dynamic_index_right_count = range.end;
+		++shared_shadow_stats[0];
+		return true;
+	}
+	void end_shared_shadow_pass(const std::size_t pass) noexcept
+	{
+		auto* const active = active_transaction;
+		if (pass >= 2 || active == nullptr || !*active || active->current_view != 0 ||
+			GetCurrentThreadId() != active->owner_thread_id) return;
+		auto& range = active->shared_shadow[pass];
+		if (!range.open) return;
+		range.end = active->dynamic_index_left_count;range.open = false;range.closed = !active->failed;
 	}
 
 	void note_backend_view_copy(void* const backend_state,
@@ -1055,11 +1120,13 @@ namespace vr::engine_stereo_owner_pass
 		region_capture::phase_scope region_admission(region_capture::phase::admission, natural_record, claim.frontend);
 		if (output || active_transaction != nullptr || !claim || natural_record == nullptr ||
 			!graphics || claim.record != reinterpret_cast<std::uintptr_t>(natural_record) ||
-			claim.record_type != native_render_contract::expected_world_record_type ||
-			!engine_stereo_view::validate_finalized(claim.views))
+			claim.record_type != native_render_contract::expected_world_record_type)
 		{
 			return false;
 		}
+		// The claimed publication was validated by the binding ring. The clone
+		// boundary below also checks its inputs; do not scan the same pair twice.
+		// (Overlord Beta 7 798fc7b)
 		engine_stereo_view::scene_record_pair cloned_records{};
 		// No active eye transaction, private snapshot or MOD GPU lock exists yet.
 		// A frontend view publication is not proof its async surface payload is
@@ -1092,6 +1159,7 @@ namespace vr::engine_stereo_owner_pass
 			auto expected = false;
 			if (!production_active.compare_exchange_strong(expected, true,
 				std::memory_order_acq_rel, std::memory_order_acquire)) return false;
+			production_pair.store(cloned_records.pair_id, std::memory_order_release);
 		}
 		else
 		{
@@ -1357,6 +1425,24 @@ namespace vr::engine_stereo_owner_pass
 				return nullptr;
 			}
 		}
+		// The native input-completion gate has joined the descriptor producers.
+		// All three native views consume this shared arena serially on this owner.
+		// Its camera-facing light lists need both the eye record and the separate
+		// instancing origin; cloning GfxViewInfo alone cannot update either field.
+		auto* const frontend = reinterpret_cast<std::uint8_t*>(active.claim.frontend);
+		std::uint32_t light_count{};
+		std::array<float, 3> light_eye_origin{};
+		std::memcpy(&light_count, frontend +
+			native_render_contract::dynamic_light_descriptor_count_offset, sizeof(light_count));
+		std::memcpy(light_eye_origin.data(), eye_record + engine_stereo_view::h2_view_origin_offset,
+			sizeof(light_eye_origin));
+		if (!active.light_views.install(frontend + native_render_contract::dynamic_light_descriptors_offset,
+			light_count, reinterpret_cast<const void*>(active.natural_record), active.source_primary_origin,
+			eye_record, light_eye_origin))
+		{
+			fail_transaction(active, failure::model_state);
+			return nullptr;
+		}
 		if (eye<2 && active.gpu_census_pair_active)
 		{
 			active.gpu_census_eye_active = engine_stereo_gpu_census::begin_eye(
@@ -1550,6 +1636,9 @@ namespace vr::engine_stereo_owner_pass
 		bool (*const display_transform)(void*, native_display_contract::route,
 			const native_post_aa::view_identity&)) noexcept
 	{
+		// H2 has finished this view's geometry before end_view is called. Return
+		// shared light metadata before the next eye/auxiliary view or natural tail.
+		if (GetCurrentThreadId() == active.owner_thread_id) active.light_views.restore();
 		const auto restore_thermal=gsl::finally([&]() noexcept
 		{if(eye==0 && GetCurrentThreadId()==active.owner_thread_id)active.thermal_world_lease.restore();});
 		if (active.scene_batch_probe_eye_active)
@@ -1964,6 +2053,7 @@ namespace vr::engine_stereo_owner_pass
 	void end(transaction& active) noexcept
 	{
 		if (!active) return;
+		if (GetCurrentThreadId() == active.owner_thread_id) active.light_views.restore();
 		if(GetCurrentThreadId()==active.owner_thread_id)active.thermal_world_lease.restore();
 		if(active.failed) active.auxiliary_history.valid=false;
 		finish_dynamic_upload(active);
@@ -2117,6 +2207,7 @@ namespace vr::engine_stereo_owner_pass
 			native_post_aa::finish_pair(active.records.pair_id, !active.failed);
 			engine_stereo_binding::release(active.claim);
 			if (active_transaction == &active) active_transaction = nullptr;
+			production_pair.store(0, std::memory_order_release);
 			production_active.store(false, std::memory_order_release);
 			retire_transaction_preserving_records(active);
 			return;
@@ -2320,6 +2411,7 @@ namespace vr::engine_stereo_owner_pass
 		if (resources.context.Get() != context || resources.generation != generation) return;
 		fail_global(failure::device);
 		resources = {};
+		production_pair.store(0, std::memory_order_release);
 		production_active.store(false, std::memory_order_release);
 	}
 

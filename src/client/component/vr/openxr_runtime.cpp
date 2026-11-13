@@ -5,10 +5,13 @@
 
 #include "engine_stereo_bridge.hpp"
 #include "frame_capture.hpp"
+#include "half_rate.hpp"
 #include "head_pose_bridge.hpp"
 #include "native_render_session.hpp"
 #include "openxr_layer_policy.hpp"
 #include "openxr_d3d11.hpp"
+#include "openxr_vulkan.hpp"
+#include "component/console.hpp"
 #include "runtime_backend.hpp"
 #include "scene_compositor.hpp"
 #include "openxr_input.hpp"
@@ -163,13 +166,23 @@ namespace vr::openxr
 		};
 		struct prediction
 		{
-			bool sdk_frame_open{}, views_valid{}, native_pair_admitted{}, ui_only{}, menu_layers_ready{};
+			// waited: xrWaitFrame returned, xrBeginFrame not yet called (queued_ only).
+			bool sdk_frame_open{}, views_valid{}, native_pair_admitted{}, ui_only{}, menu_layers_ready{}, waited{};
 			unsigned pending_presents{};
 			std::uint64_t pair{};
 			XrFrameState state{};
 			std::array<XrView, 2> views{};
 			head_pose_bridge::tracking_pose head;
 		} prediction_;
+		// H2's frontend runs one native frame ahead of the Present owner: a family
+		// published at Present-post(k) is read by frontend k+2 and submitted at
+		// Present(k+2). With one prediction in flight, frontend k+1 only saw the
+		// family backend k was producing and was rejected, so every VR frame cost
+		// two full native frames (i5-12400F: 871 Presents vs 436 xrEndFrame in 5 s).
+		// queued_ is the next frame, waited and published while prediction_ is still
+		// begun; it is begun right after prediction_ ends (xrWaitFrame for N+1 may
+		// precede xrEndFrame for N; xrBeginFrame for N+1 may not).
+		prediction queued_;
 		present_transaction::key present_;
 		std::uint64_t owner_generation_{};
 		std::uint32_t owner_thread_{};
@@ -322,6 +335,9 @@ namespace vr::openxr
 				else
 					(void)complete_native(event.swap_chain);
 			}
+			if (!prediction_.sdk_frame_open && queued_.waited && session_running_ &&
+			    status_.state != runtime_state::fatal_for_vr)
+				(void)promote_queued();
 			publish_status_locked();
 		}
 		void on_present_post(const d3d11::present_event& event, HRESULT result)
@@ -345,10 +361,15 @@ namespace vr::openxr
 			}
 			status_.direct_present_owner_contract_valid = true;
 			status_.present_owner_last_completed_frame = event.frame_index;
-			if (status_.desired_enabled && status_.applied_enabled && !prediction_.sdk_frame_open &&
+			if (status_.desired_enabled && status_.applied_enabled &&
 			    status_.state != runtime_state::fatal_for_vr && poll_events() && session_running_)
 			{
-				(void)begin_prediction(event.frame_index);
+				if (!prediction_.sdk_frame_open && queued_.waited)
+					(void)promote_queued();
+				if (!prediction_.sdk_frame_open)
+					(void)begin_prediction(event.frame_index);
+				else if (!queued_.waited && status_.requested_scene_mode == scene_mode::engine_stereo)
+					(void)queue_prediction(event.frame_index);
 			}
 			publish_status_locked();
 		}
@@ -639,14 +660,19 @@ namespace vr::openxr
 				(void)teardown_preserving_error();
 				return false;
 			}
-			const auto supports_d3d11 = std::ranges::any_of(
+			// A DXVK game device cannot share textures with the runtime's D3D11
+			// device; bind its Vulkan device instead (XR_KHR_vulkan_enable).
+			vulkan_ = vulkan::detect(graphics.device.Get());
+			const char* const graphics_extension =
+			    vulkan_ ? XR_KHR_VULKAN_ENABLE_EXTENSION_NAME : XR_KHR_D3D11_ENABLE_EXTENSION_NAME;
+			const auto supports_graphics = std::ranges::any_of(
 			    extensions,
-			    [](const auto& item)
-			    { return std::strcmp(item.extensionName, XR_KHR_D3D11_ENABLE_EXTENSION_NAME) == 0; });
-			if (!supports_d3d11)
+			    [&](const auto& item)
+			    { return std::strcmp(item.extensionName, graphics_extension) == 0; });
+			if (!supports_graphics)
 			{
 				fail(runtime_state::runtime_unavailable,
-				     "XR_KHR_D3D11_enable",
+				     vulkan_ ? "XR_KHR_vulkan_enable (DXVK)" : "XR_KHR_D3D11_enable",
 				     XR_ERROR_EXTENSION_NOT_PRESENT);
 				(void)teardown_preserving_error();
 				return false;
@@ -660,7 +686,7 @@ namespace vr::openxr
 				    return std::strcmp(e.extensionName, XR_KHR_COMPOSITION_LAYER_CYLINDER_EXTENSION_NAME) ==
 				           0;
 			    });
-			const char* enabled_extensions[]{XR_KHR_D3D11_ENABLE_EXTENSION_NAME,
+			const char* enabled_extensions[]{graphics_extension,
 			                                 XR_KHR_COMPOSITION_LAYER_CYLINDER_EXTENSION_NAME};
 			XrInstanceCreateInfo instance_info{XR_TYPE_INSTANCE_CREATE_INFO};
 			// Runtimes key per-app settings and quirks on this name: keep the
@@ -680,7 +706,7 @@ namespace vr::openxr
 			}
 			status_.instance_created = true;
 			publish_progress_locked("instance", "load instance OpenXR dispatch");
-			if (!dispatch_.load_instance(instance_, error, result))
+			if (!dispatch_.load_instance(instance_, bool(vulkan_), error, result))
 			{
 				status_.state = runtime_state::runtime_unavailable;
 				status_.last_error = error;
@@ -783,15 +809,36 @@ namespace vr::openxr
 			blend_mode_ = blend_modes.front();
 			status_.blend_mode = blend_mode_ == XR_ENVIRONMENT_BLEND_MODE_OPAQUE ? "opaque" : "other";
 
-			publish_progress_locked("graphics_requirements", "xrGetD3D11GraphicsRequirementsKHR");
-			XrGraphicsRequirementsD3D11KHR requirements{XR_TYPE_GRAPHICS_REQUIREMENTS_D3D11_KHR};
-			result = dispatch_.get_d3d11_graphics_requirements(instance_, system_id_, &requirements);
-			if (!call_ok(result, "xrGetD3D11GraphicsRequirementsKHR", runtime_state::runtime_unavailable))
+			if (vulkan_)
 			{
-				(void)teardown_preserving_error();
-				return false;
+				publish_progress_locked("graphics_requirements", "xrGetVulkanGraphicsDeviceKHR (DXVK)");
+				std::string runtime_extensions;
+				if (!vulkan::check_device(dispatch_, instance_, system_id_, vulkan_, runtime_extensions, error, result))
+				{
+					status_.state = result == XR_ERROR_GRAPHICS_DEVICE_INVALID ? runtime_state::graphics_mismatch
+					                                                            : runtime_state::runtime_unavailable;
+					status_.last_error = error;
+					set_result(result);
+					(void)teardown_preserving_error();
+					return false;
+				}
+				console::info("[VR] DXVK detected: OpenXR uses the DXVK Vulkan device (queue family %u index %u); "
+				              "runtime device extensions: %s\n",
+				    vulkan_.queue_family, vulkan_.queue_index, runtime_extensions.c_str());
+				vulkan::activate(vulkan_, dispatch_);
 			}
-			if (!graphics_requirements_match(requirements, graphics, error))
+			XrGraphicsRequirementsD3D11KHR requirements{XR_TYPE_GRAPHICS_REQUIREMENTS_D3D11_KHR};
+			if (!vulkan_)
+			{
+				publish_progress_locked("graphics_requirements", "xrGetD3D11GraphicsRequirementsKHR");
+				result = dispatch_.get_d3d11_graphics_requirements(instance_, system_id_, &requirements);
+				if (!call_ok(result, "xrGetD3D11GraphicsRequirementsKHR", runtime_state::runtime_unavailable))
+				{
+					(void)teardown_preserving_error();
+					return false;
+				}
+			}
+			if (!vulkan_ && !graphics_requirements_match(requirements, graphics, error))
 			{
 				status_.state = runtime_state::graphics_mismatch;
 				status_.last_error = error;
@@ -804,7 +851,10 @@ namespace vr::openxr
 			publish_progress_locked("session", "xrCreateSession");
 			const XrGraphicsBindingD3D11KHR binding{
 			    XR_TYPE_GRAPHICS_BINDING_D3D11_KHR, nullptr, graphics.device.Get()};
-			const XrSessionCreateInfo session_info{XR_TYPE_SESSION_CREATE_INFO, &binding, 0, system_id_};
+			const XrGraphicsBindingVulkanKHR vulkan_binding{XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR, nullptr,
+			    vulkan_.instance, vulkan_.physical, vulkan_.device, vulkan_.queue_family, vulkan_.queue_index};
+			const XrSessionCreateInfo session_info{XR_TYPE_SESSION_CREATE_INFO,
+			    vulkan_ ? static_cast<const void*>(&vulkan_binding) : static_cast<const void*>(&binding), 0, system_id_};
 			result = dispatch_.create_session(instance_, &session_info, &session_);
 			if (!call_ok(result, "xrCreateSession", runtime_state::runtime_unavailable))
 			{
@@ -854,6 +904,10 @@ namespace vr::openxr
 				(void)teardown_preserving_error();
 				return false;
 			}
+			// Vulkan runtimes list VkFormat values; the renderer keeps DXGI formats.
+			if (vulkan_)
+				for (auto& format : formats)
+					format = vulkan::to_dxgi_format(format);
 			constexpr std::array preferred{std::int64_t(DXGI_FORMAT_R16G16B16A16_FLOAT),
 			                               std::int64_t(DXGI_FORMAT_R8G8B8A8_UNORM_SRGB),
 			                               std::int64_t(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB),
@@ -949,7 +1003,7 @@ namespace vr::openxr
 			status_.controller_input_ready = true;
 			native_menu::set_requested(true);
 			status_.submission_on_game_device = true;
-			status_.graphics_transport = "h2_device_openxr";
+			status_.graphics_transport = vulkan_ ? "dxvk_vulkan_openxr" : "h2_device_openxr";
 			status_.native_renderer_ready = false;
 			status_.applied_enabled = true;
 			status_.reinitialize_pending = false;
@@ -1031,6 +1085,7 @@ namespace vr::openxr
 				prediction_.menu_layers_ready = false;
 				(void)finish_prediction(world_submission::omit);
 			}
+			discard_queued();
 			if (!has_objects())
 			{
 				session_running_ = false;
@@ -1133,6 +1188,8 @@ namespace vr::openxr
 				status_.instance_created = false;
 			}
 			dispatch_.reset();
+			vulkan::deactivate();
+			vulkan_ = {};
 			if (loader_ != nullptr)
 			{
 				FreeLibrary(loader_);
@@ -1216,6 +1273,7 @@ namespace vr::openxr
 						prediction_.menu_layers_ready = false;
 						(void)finish_prediction(world_submission::omit);
 					}
+					discard_queued();
 						inputs_.invalidate(controller_input::input_reason::session_inactive);
 						head_pose_bridge::invalidate_pose();
 						if (session_running_)
@@ -1264,6 +1322,45 @@ namespace vr::openxr
 			prediction_.native_pair_admitted = false;
 			return retired;
 		}
+		// Wait for and publish the next frame while prediction_ is still begun.
+		bool queue_prediction(const std::uint64_t pair)
+		{
+			std::swap(prediction_, queued_);
+			const bool prepared = begin_prediction(pair, true);
+			std::swap(prediction_, queued_);
+			return prepared;
+		}
+		// Begin the queued frame once the previous xrEndFrame returned.
+		bool promote_queued()
+		{
+			const XrFrameBeginInfo begin{XR_TYPE_FRAME_BEGIN_INFO};
+			const auto result = dispatch_.begin_frame(session_, &begin);
+			if (XR_FAILED(result))
+			{
+				discard_queued();
+				inputs_.invalidate(controller_input::input_reason::begin_frame_failed, result);
+				head_pose_bridge::invalidate_pose();
+				engine_stereo_bridge::invalidate_views();
+				status_.reinitialize_pending = true;
+				return fail(runtime_state::recoverable_error, "xrBeginFrame", result);
+			}
+			prediction_ = queued_;
+			queued_ = {};
+			prediction_.waited = false;
+			prediction_.sdk_frame_open = true;
+			return true;
+		}
+		// Teardown/session stop only: the waited frame is never begun.
+		void discard_queued()
+		{
+			if (queued_.native_pair_admitted)
+			{
+				std::swap(prediction_, queued_);
+				(void)retire_native_prediction();
+				std::swap(prediction_, queued_);
+			}
+			queued_ = {};
+		}
 		bool finish_prediction(world_submission world,
 		                       publication_policy publication = publication_policy::invalidate)
 		{
@@ -1296,9 +1393,16 @@ namespace vr::openxr
 			const auto result = dispatch_.end_frame(session_, &end);
 			prediction_.sdk_frame_open = false;
 			const bool retired = retire_native_prediction();
+			const auto ended_pair = prediction_.pair;
 			prediction_ = {};
 			if (publication == publication_policy::invalidate)
-				engine_stereo_bridge::invalidate_views();
+			{
+				// A queued family already replaced this one for the next frontend.
+				if (queued_.waited)
+					engine_stereo_bridge::invalidate_views_for(ended_pair);
+				else
+					engine_stereo_bridge::invalidate_views();
+			}
 			if (XR_FAILED(result))
 			{
 				status_.reinitialize_pending = true;
@@ -1379,9 +1483,9 @@ namespace vr::openxr
 			status_.native_renderer_error.clear();
 			return true;
 		}
-		bool begin_prediction(std::uint64_t pair)
+		bool begin_prediction(std::uint64_t pair, const bool queued = false)
 		{
-			if (prediction_.sdk_frame_open || !session_running_)
+			if (prediction_.sdk_frame_open || prediction_.waited || !session_running_)
 				return false;
 			if (!try_arm_native())
 				return false;
@@ -1389,7 +1493,9 @@ namespace vr::openxr
 			prediction_.state = {XR_TYPE_FRAME_STATE};
 			prediction_.pair = pair;
 			const XrFrameWaitInfo wait{XR_TYPE_FRAME_WAIT_INFO};
+				half_rate::before_wait();
 				auto result = dispatch_.wait_frame(session_, &wait, &prediction_.state);
+				half_rate::after_wait();
 				if (XR_FAILED(result))
 				{
 					inputs_.invalidate(controller_input::input_reason::wait_frame_failed,result);
@@ -1397,6 +1503,20 @@ namespace vr::openxr
 				engine_stereo_bridge::invalidate_views();
 				return fail(runtime_state::recoverable_error, "xrWaitFrame", result);
 			}
+			// vr_halfRate: a frame capped at half refresh reaches the display one
+			// period after the predicted slot; locate and submit for that slot.
+			half_rate::observe_period(prediction_.state.predictedDisplayPeriod);
+			if (half_rate::active() && prediction_.state.predictedDisplayPeriod > 0)
+				prediction_.state.predictedDisplayTime += prediction_.state.predictedDisplayPeriod;
+			if (queued)
+			{
+				// xrBeginFrame waits for the current frame's xrEndFrame (promote_queued).
+				// A queued frame that is not prepared below still gets begun and ended
+				// without a world layer, keeping every xrWaitFrame paired.
+				prediction_.waited = true;
+			}
+			else
+			{
 			const XrFrameBeginInfo begin{XR_TYPE_FRAME_BEGIN_INFO};
 				result = dispatch_.begin_frame(session_, &begin);
 				if (XR_FAILED(result))
@@ -1408,6 +1528,7 @@ namespace vr::openxr
 				return fail(runtime_state::recoverable_error, "xrBeginFrame", result);
 			}
 			prediction_.sdk_frame_open = true;
+			}
 				if (!prediction_.state.shouldRender)
 				{
 					inputs_.invalidate(controller_input::input_reason::frame_not_rendered);
@@ -1567,8 +1688,12 @@ namespace vr::openxr
 			{
 				if (status_.native_renderer_ready)
 				{
-					if (!native_render_session::active().admit_pair(pair))
+					if (!native_render_session::active().admit_pair(pair, queued))
 					{
+						// No ring slot for a second family yet: this queued frame is
+						// submitted without a world layer.
+						if (queued)
+							return false;
 						(void)finish_prediction(world_submission::omit);
 						return fail(runtime_state::fatal_for_vr,
 						            "native OpenXR prediction admission",
@@ -1586,6 +1711,10 @@ namespace vr::openxr
 				if (!engine_stereo_bridge::publish_view_family(
 				        pair, eye_offsets[0], eye_offsets[1], projections_))
 				{
+					// The current family is mid-production; its admitted queued pair is
+					// discarded unpublished when this frame ends.
+					if (queued)
+						return false;
 					(void)finish_prediction(world_submission::omit);
 					return fail(
 					    runtime_state::fatal_for_vr, "OpenXR predicted view family", XR_ERROR_POSE_INVALID);
@@ -1879,6 +2008,7 @@ namespace vr::openxr
 		XrViewConfigurationType view_type_{XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO};
 		XrEnvironmentBlendMode blend_mode_{XR_ENVIRONMENT_BLEND_MODE_OPAQUE};
 		std::int64_t color_format_{};
+		vulkan::binding vulkan_{};
 		bool session_running_{};
 		bool auto_initialize_allowed_{true};
 		std::uint64_t initialization_generation_{};

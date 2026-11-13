@@ -906,6 +906,7 @@ namespace vr::engine_stereo_renderer
 			reason = view_rejection::eye_derivation;
 			if (natural_slot == nullptr || !token) return false;
 			reason = view_rejection::views_unavailable;
+			engine_stereo_bridge::take_view_family_for_frontend();
 			if (!engine_stereo_bridge::get_render_configs(configs)) return false;
 			reason = view_rejection::eye_derivation;
 			if (!engine_stereo_view::derive(natural_slot, configs, output)) return false;
@@ -1778,8 +1779,6 @@ namespace vr::engine_stereo_renderer
 			native_display_route = route;
 			if (!native_post_aa::select_display_target(record, route, native_display_route.destination, view))
 				return false;
-			// PostFX and the AA dispatcher must see the same history-free mode.
-			const native_post_aa::scoped_mode aa_mode(record);
 			native_display_record = record;
 			native_display_routes = 0;
 			const auto scope = gsl::finally([]() noexcept
@@ -1899,6 +1898,18 @@ namespace vr::engine_stereo_renderer
 					active_backend_view_copy.substitutions,
 					active_backend_view_copy.selected_eye);
 			}
+		}
+
+		// MWR light-view shadow passes (see owner pass). Only the sun pass is hooked:
+		// the spot atlas re-render differed by a few bytes per eye in readbacks.
+		constexpr std::array<std::uintptr_t, 2> shared_shadow_functions{0x1405C9160, 0x1405C4B70};
+		std::array<utils::hook::detour, 2> shared_shadow_hooks{};
+		template <std::size_t Pass>
+		void shared_shadow_stub(void* const data, void* const backend_state)
+		{
+			if (native_display_record == nullptr && engine_stereo_owner_pass::begin_shared_shadow_pass(Pass)) return;
+			shared_shadow_hooks[Pass].invoke<void>(data, backend_state);
+			if (native_display_record == nullptr) engine_stereo_owner_pass::end_shared_shadow_pass(Pass);
 		}
 
 		void backend_depth_hack_projection_stub(void* const backend_state)
@@ -2583,6 +2594,7 @@ namespace vr::engine_stereo_renderer
 
 		bool restore_backend_observation_hooks() noexcept
 		{
+			for (auto& hook : shared_shadow_hooks) (void)hook.clear();
 			const auto depth_hack_projection = backend_depth_hack_projection_hook.clear();
 			const auto target_select = backend_target_select_hook.clear();
 			const auto target_prepare = backend_target_prepare_hook.clear();
@@ -2829,11 +2841,13 @@ namespace vr::engine_stereo_renderer
 					reinterpret_cast<void*>(backend_target_prepare_probe_stub));
 				backend_target_select_hook.create(backend_target_select_function,
 					reinterpret_cast<void*>(backend_target_select_probe_stub));
+				shared_shadow_hooks[0].create(shared_shadow_functions[0], reinterpret_cast<void*>(shared_shadow_stub<0>));
 			}
 			catch (const std::exception& error)
 			{
 				console::error("[VR] backend target-prepare observer could not be installed: %s\n",
 					error.what());
+				for (auto& hook : shared_shadow_hooks) (void)hook.clear();
 				(void)backend_target_select_hook.clear();
 				(void)backend_target_prepare_hook.clear();
 				(void)backend_depth_hack_projection_hook.clear();

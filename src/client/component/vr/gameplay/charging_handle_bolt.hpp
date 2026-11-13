@@ -16,6 +16,7 @@ namespace vr::gameplay::weapons
 		std::span<const bolt_travel_sample> travel;
 		float locked_m;
 		float shot_stroke_m{}; // Optional direct fire travel; manual take-up is not a firing curve.
+		bool manual_only{}; // Follow the handle without synthesizing an automatic firing cycle.
 	};
 	inline bool valid_bolt(const charging_handle_bolt& p,float handle_stroke) noexcept
 	{

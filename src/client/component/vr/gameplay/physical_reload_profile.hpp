@@ -286,7 +286,7 @@ namespace vr::gameplay::weapons
 			       p.interaction.motion == physical_reload::action_motion::charging_handle &&
 			       (b.motion.bone == "j_gun" || b.motion.bone == p.slide_bone) && valid_partition(b.mesh) &&
 			       p.rigid_magazine_source && std::string_view(b.mesh.source) == p.rigid_magazine_source &&
-			       valid_bolt(b.motion, p.interaction.slide_stroke) && b.motion.shot_stroke_m > 0;
+			       valid_bolt(b.motion, p.interaction.slide_stroke) && (b.motion.shot_stroke_m > 0 || b.motion.manual_only);
 		}
 		return !p.handle_fold || valid_fold(*p.handle_fold);
 	}
@@ -298,6 +298,8 @@ namespace vr::gameplay::weapons
 		const auto* bolt = p.bolt_partition ? &p.bolt_partition->motion : p.bolt;
 		if (!bolt)
 			return 0;
+		if (bolt->manual_only)
+			return bolt_travel(*bolt,handle_m,retained);
 		if (p.ammunition.feed == mechanics::feed_type::open_bolt)
 			return fired_bolt_travel(*bolt, handle_m, retained, shot_age);
 		if (bolt->shot_stroke_m > 0)

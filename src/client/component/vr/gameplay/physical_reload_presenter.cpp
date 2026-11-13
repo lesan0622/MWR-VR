@@ -65,9 +65,11 @@ namespace vr::gameplay::weapons::physical_reload
 			std::array<anchor,2> partition_model{};vec partition_origin{};bool partitioned_mesh{};
 			anchor inserted_model{};vec inserted_origin{};bool counted_inserted{};
 			anchor chamber_model{};bool live_chamber{};
+			anchor liner_model{};bool receiver_liner{}; // MWR G36 receiver interior (back faces)
 			anchor attached_model{};
-			// MWR: a pistol magazine in hand, relative to the tracked visual wrist.
-			int hand{-1};anchor in_tracked{};bool tracked{};
+			// MWR: a pistol magazine in hand, held like a grenade: tracked visual wrist
+			// x magazine wrist basis x the grip's fixed magazine offset (in_wrist).
+			int hand{-1};quat tracked_basis{0,0,0,1};anchor in_tracked{};bool tracked{};
 		};
 		std::array<held_frame,15> held_frames{};
 		std::array<vec,15> submitted_view{}; // MWR: view origin each slot's parts were submitted with
@@ -90,8 +92,8 @@ namespace vr::gameplay::weapons::physical_reload
 		std::array<dropped,8> drops{};
 		// R_FilterXModelIntoScene copies placement but RETAINS this pointer in
 		// sceneModel+0x68. Lighting handles must outlive all queued render work.
-		constexpr size_t round_lighting_base = 15+8+30+15+15;
-		// Held, drops, partition, inserted, live chamber; then MWR counted rounds per index.
+		constexpr size_t round_lighting_base = 15+8+30+15+15+15;
+		// Held, drops, partition, inserted, live chamber, receiver liner; then MWR counted rounds per index.
 		std::array<unsigned short,round_lighting_base*2> lighting_handles{};
 		std::atomic<std::uint64_t> chamber_draws{}; // MWR port diagnostic: live chamber cartridge submits.
 		std::mutex debug_mutex;hands::anchor debug_mag{},debug_wrist{},debug_final{};bool debug_valid{};
@@ -118,8 +120,8 @@ namespace vr::gameplay::weapons::physical_reload
 				const auto part=index>=round_lighting_base?index-round_lighting_base:index;
 				if(part>=15 && part<23)return result::unchanged;
 				if(part<15){const std::lock_guard lock(mutex);if(held_frames[part].tracked)return result::unchanged;} // Submitted at the tracked wrist.
-				const bool chamber_part=part>=68,inserted_part=part>=53 && !chamber_part,partition_part=part>=23 && part<53;
-				const auto part_slot=chamber_part?part-68:inserted_part?part-53:partition_part?(part-23)/2:part;
+				const bool liner_part=part>=83,chamber_part=part>=68 && !liner_part,inserted_part=part>=53 && part<68,partition_part=part>=23 && part<53;
+				const auto part_slot=liner_part?part-83:chamber_part?part-68:inserted_part?part-53:partition_part?(part-23)/2:part;
 				if(part_slot>=submitted_view.size())return result::unchanged;
 				vec origin{},solved{};
 				{const std::lock_guard lock(mutex);solved=submitted_view[part_slot];}
@@ -130,7 +132,7 @@ namespace vr::gameplay::weapons::physical_reload
 				return result::replace;
 			}
 			if(index>=round_lighting_base)return result::unchanged;
-			if(index>=15 && index<23)return result::unchanged;
+			if((index>=15 && index<23) || index>=83)return result::unchanged;
 			const bool chamber=index>=68;
 			const bool inserted=index>=53 && !chamber;
 			const bool partitioning=index>=23 && index<53;const auto piece=partitioning?(index-23)%2:0;
@@ -284,14 +286,14 @@ namespace vr::gameplay::weapons::physical_reload
 						place->owner=state.owner.id();
 						if(event.kind==mechanics::effect::magazine_out)
 							place->motion=magazine_release_flight(*state.definition,event.world,event.units_per_meter,event.at,event.impulse);
-						else if(event.kind==mechanics::effect::live_eject)place->motion.velocity=cartridge_exit_velocity(event.world,event.units_per_meter);
+						else if(event.kind==mechanics::effect::live_eject)place->motion.velocity=cartridge_exit_velocity(event.exit?*event.exit:event.world,event.units_per_meter);
 					}
 					last_event = n;
 				}
 			}
 
 			auto held_world=hand_frame.world;
-			if (hand_frame.tracked) {anchor wrist;if (held_item::visual_wrist(hand_frame.hand,wrist)) held_world=compose(wrist,hand_frame.in_tracked);}
+			if (hand_frame.tracked) {anchor wrist;if (held_item::visual_wrist(hand_frame.hand,wrist)) held_world=compose({wrist.position,normalize(multiply(wrist.rotation,hand_frame.tracked_basis))},hand_frame.in_tracked);}
 			if (eligible(attachment_kind::held_magazine))
 				draw(held_world,hand_frame.slot,hand_frame.definition,hand_frame.units,frozen.ammo.held_rounds);
 			if(hand_frame.counted_inserted && eligible(attachment_kind::inserted_magazine))
@@ -305,6 +307,14 @@ namespace vr::gameplay::weapons::physical_reload
 				draw(world,68+hand_frame.slot,hand_frame.definition,hand_frame.units,0,true);
 				++chamber_draws;
 			}
+			if(hand_frame.receiver_liner && eligible(attachment_kind::action_partition))
+				if(const auto liner=magazine_assets::receiver_liner(hand_frame.definition);liner.model)
+				{
+					auto world=hand_frame.liner_model;world.position=add(world.position,hand_frame.inserted_origin);
+					world=compose(world,liner.in_magazine);game::GfxScaledPlacement placement{};
+					std::copy(world.position.begin(),world.position.end(),placement.base.origin);std::copy(world.rotation.begin(),world.rotation.end(),placement.base.quat);placement.scale=1;
+					float color[4]{1,1,1,1};scene_models::submit(liner.model,&placement,0,&lighting_handles[83+hand_frame.slot],color,color,color,.25f*hand_frame.units);
+				}
 			if(hand_frame.partitioned_mesh && eligible(attachment_kind::action_partition))
 			{
 				const auto asset=partition_assets::get(hand_frame.definition);
@@ -413,6 +423,7 @@ namespace vr::gameplay::weapons::physical_reload
 		auto& handle_fold_return=motion->fold;
 		auto& handle_catch_return=motion->catch_motion;
 		const auto& definition = *profile;
+		const auto measured_chamber=magazine_assets::chamber_rest(profile);
 		const auto rear=static_cast<int>(owner.holding_hand()),off=1-rear;
 		const auto plan=hand_interaction::pose(hand(off));
 		if(plan.driver && (plan.driver.provider!=hand_interaction::domain::magazine || plan.driver.object!=owner.id()))manipulation=false;
@@ -555,7 +566,7 @@ namespace vr::gameplay::weapons::physical_reload
 			auto& contact=next.contact.catch_input;
 			const auto centre=action_slap_centre(definition,state.ammo.action,units);
 			contact.rotation=wrist_in_gun.rotation;
-			contact.hand_world=scale(add(wrist.position,view_offset),1/units);
+			contact.hand_world=swing_position(input.grip[off],scale(add(wrist.position,view_offset),1/units));
 			std::array<vec,hands::hand_contact_count> points;
 			contact.valid=hands::contact_points(slap_hand,solved,wrist_in_gun,points);
 			if (contact.valid) for (size_t i=0;i<points.size();++i)
@@ -714,7 +725,7 @@ namespace vr::gameplay::weapons::physical_reload
 			}
 			if (definition.receiver_parented_bullets)
 				move_part(r,parts.bullets,compose(presented_magazine,parts.bullets_in_magazine),solved);
-			if (definition.chamber_round)
+			if (definition.chamber_round && !measured_chamber)
 			{
 				const auto chamber=chamber_cartridge_pose(definition,state.ammo,visual_travel,0,units);
 				if(chamber)move_part(r,parts.bullets,compose(gun,*chamber),solved);
@@ -829,6 +840,15 @@ namespace vr::gameplay::weapons::physical_reload
 			mag=caught;
 			next.held_world=mag;next.held_world.position=add(mag.position,view_offset);
 		}
+		next.chamber_world.reset();
+		if(state.active && !state.fault && (manual || measured_chamber))
+			if(const auto chamber=chamber_cartridge_pose(definition,state.ammo,visual_travel,bolt_target.travel,units,
+				measured_chamber?&*measured_chamber:nullptr))
+			{
+				auto world=compose(gun,*chamber);
+				if(parts.ejection>=0)world.position=compose(gun,parts.port.local).position;
+				world.position=add(world.position,view_offset);next.chamber_world=world;
+			}
 		publish_scene(next);
 		if (slap_diagnostic.definition)
 		{
@@ -846,22 +866,30 @@ namespace vr::gameplay::weapons::physical_reload
 		held.epoch = epoch; held.model = mag;
 		held.attached_model=attached;
 		held.units = units;
-		// MWR: a pistol's held magazine follows the latest tracked wrist at submit
-		// time (no render-time hand record); rifle magazines keep the solve pose.
-		if (state.active && state.ammo.magazine_hand!=hand::none && !state.magazine_seated && pistol_magazine(owner.weapon))
+		// MWR: a pistol's held magazine is held like a grenade (grenade_runtime): at
+		// submit time it is placed from the latest tracked visual wrist with the
+		// magazine wrist basis and the grip's fixed in_wrist offset. It no longer
+		// carries the solve-time offset from the IK wrist, which changed every solve
+		// and made the magazine drift in the hand. Rifle magazines keep the solve pose.
+		if (state.active && state.ammo.magazine_hand!=hand::none && !state.magazine_seated && !state.magazine_grabbed &&
+			!state.ammo.magazine_inserted && !rock.hooked && pistol_magazine(owner.weapon))
 		{
-			anchor tracked_wrist;
-			if (held_item::visual_wrist(input,off,tracked_wrist))
-			{held.hand=off;held.in_tracked=compose(inverse(tracked_wrist),next.held_world);held.tracked=true;}
+			held.hand=off;held.in_tracked=in_wrist;held.tracked=true;
+			held.tracked_basis=magazine_wrist_basis(definition,magazine_pose,ordinary_basis,knife_grasp);
 		}
 		held.definition = profile;held.view.owner=owner;
 		held.inserted_origin=view_offset;
 		{const std::lock_guard debug_lock(debug_mutex);debug_valid=state.ammo.magazine_hand==hand(off);if(debug_valid){debug_mag=mag;debug_wrist=as_anchor(solved[r.arms[off].wrist]);}}
-		if(state.active && !state.fault && manual && magazine_assets::cartridge(profile).model)
+		if(state.active && !state.fault && (manual || measured_chamber) && magazine_assets::cartridge(profile).model &&
+			(manual || state.slide_held || action_shot_fraction(shot_age)==0))
 		{
-			if(const auto chamber=chamber_cartridge_pose(definition,state.ammo,visual_travel,bolt_target.travel,units))
+			if(const auto chamber=chamber_cartridge_pose(definition,state.ammo,visual_travel,bolt_target.travel,units,
+				measured_chamber?&*measured_chamber:nullptr))
 			{held.live_chamber=true;held.chamber_model=compose(gun,*chamber);}
 		}
+		if(state.active && magazine_assets::receiver_liner(profile).model){held.receiver_liner=true;held.liner_model=gun;}
+		if(measured_chamber && definition.chamber_round)
+			for(size_t i=0;i<hidden.size();++i)hidden[i]|=parts.bullet_mask[i];
 		if(state.active && !state.fault && definition.magazine_fill() && state.ammo.magazine_inserted)
 		{
 			held.counted_inserted=true;held.inserted_model=as_anchor(solved[parts.magazine]);held.inserted_origin=view_offset;

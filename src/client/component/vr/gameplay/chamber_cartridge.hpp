@@ -7,7 +7,7 @@ namespace vr::gameplay::weapons
 	// clears chamber_loaded; spent cases and uncommitted speculative feeding do
 	// not borrow this geometry. Bolt rotation never rotates the cartridge.
 	inline std::optional<hands::anchor> chamber_cartridge_pose(const reload_profile& p,const mechanics::state& ammo,
-		float manual_travel_m,float manual_fraction,float units) noexcept
+		float manual_travel_m,float manual_fraction,float units,const hands::anchor* measured=nullptr) noexcept
 	{
 		if(!ammo.chamber_loaded || !std::isfinite(units) || units<=0 || !std::isfinite(manual_travel_m) ||
 			!std::isfinite(manual_fraction))return {};
@@ -19,9 +19,9 @@ namespace vr::gameplay::weapons
 			pose=(*p.feeding_path)[2];
 			travel=std::clamp(manual_fraction,0.f,.85f)*p.interaction.manual_bolt->stroke;
 		}
-		else if(p.chamber_round)
+		else if(measured || p.chamber_round)
 		{
-			pose=*p.chamber_round;
+			pose=measured?*measured:*p.chamber_round;
 			travel=std::clamp(manual_travel_m,0.f,p.interaction.full_stroke);
 		}
 		else return {};

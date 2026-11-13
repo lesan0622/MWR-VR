@@ -292,7 +292,12 @@ namespace vr::gameplay::weapons::mwr_shared
 	inline constexpr std::array<std::string_view, 2> rpd_drop_parts{{"j_rail", "j_rail_release"}};
 	// winchester1200: MWR viewmodel_winchester1200 (winchester1200); original mechanics kept.
 	// m1014: MWR viewmodel_benelli_m4 (m1014); original mechanics kept.
-	// rpg: MWR viewmodel_rpg7 (rpg); original mechanics kept.
+	// RPG receiver/tail binds match the source; MWR carries the rocket as its own attachment.
+	inline const launcher_profile rpg_feed=[] {auto p=rpg::feed;p.rocket_model="viewmodel_rpg7_rocket";return p;}();
+	inline const profile rpg_hand=[] {
+		auto p=mwr_rebase::adopt(rpg::base,"rpg","viewmodel_rpg7",nullptr,true);
+		p.launcher=&rpg_feed;p.viewmodel.visibility=part_visibility::rigid_groups;return p;
+	}();
 	// javelin: MWR viewmodel_javelin (javelin); original mechanics kept.
 	// stinger: MWR viewmodel_stinger (stinger); original mechanics kept.
 	// p90: MWR viewmodel_p90 (p90), viewmodel_p90_sp (p90_silencer, scoutsniper: same 37 bones, binds and idle); slide j_bolt, bullets tag_bullet_single.
@@ -324,7 +329,7 @@ namespace vr::gameplay::weapons::mwr_shared
 		// viewmodel_benelli_m4 has no MW2 j_ring and its j_bolt sits ~1 in off the MW2 rest: keeping the
 		// MW2 rest parts invalidated the pose library (arms and gun not drawn). Parts stay at the MWR idle.
 		mwr_rebase::adopt(m1014::assemblies[0], "m1014", "viewmodel_benelli_m4", m1014::assemblies[0].reload, false),
-		mwr_rebase::adopt(rpg::base, "rpg", "viewmodel_rpg7", rpg::base.reload, true),
+		rpg_hand,
 		mwr_rebase::adopt(javelin::base, "javelin", "viewmodel_javelin", javelin::base.reload, true),
 		mwr_rebase::adopt(stinger::base, "stinger", "viewmodel_stinger", stinger::base.reload, true),
 		mwr_rebase::adopt(p90::assemblies[0], "mwr_p90", "viewmodel_p90", &p90_reload, true),

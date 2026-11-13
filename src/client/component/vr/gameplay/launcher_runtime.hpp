@@ -46,4 +46,5 @@ namespace vr::gameplay::weapons::launcher
 	bool allows_trigger(const hold&,std::uint64_t,controller_input::clock::time_point)noexcept;
 	bool retain_empty(const void*,std::uint32_t)noexcept;
 	std::array<std::uint64_t,3> native_statistics()noexcept; // reticle, retained selection, retained ownership
+	std::string render_status();
 }

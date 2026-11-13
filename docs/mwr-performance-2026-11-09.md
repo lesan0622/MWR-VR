@@ -56,3 +56,23 @@ No live game, saved game or installed mod was modified. The previously requested
 local uninstall remains respected. Same-mission before/after CPU/GPU timing and
 headset visual validation are still required; the old report had weapon capture
 disabled, so it cannot establish the gain from the weapon-selector change.
+
+## One VR frame per native frame (2026-11-11)
+
+Report `overlord-diagnostics-20261110-154231` (i5-12400F, SteamVR/Virtual
+Desktop, 120 Hz): 871 Presents but 436 `xrEndFrame` in 5 s. The mock showed
+the same 2:1 ratio. H2's frontend runs one native frame ahead of the Present
+owner: a family published at Present-post(k) is read by frontend k+2. With one
+prediction in flight, frontend k+1 saw only the family that backend k was
+producing, and the owner pass rejected it (`production_busy` ~= `accepted`).
+Every VR frame therefore cost two full native frames.
+
+OpenXR now queues one prediction (`xrWaitFrame`, views, pair admission) at
+every Present-post while the current frame is still begun. It calls
+`xrBeginFrame` right after the current `xrEndFrame`. The render session admits
+the queued pair beside the older one (OpenVR keeps one family at a time). A
+frontend is rejected only for the family that is being produced, and an ended
+frame invalidates only its own family. Mock killhouse, same script: 1308
+Presents / 655 world frames before, 906 / 902 after; 0 runtime failures; owner
+camera identity 0 differences; pause/resume OK. `frontend_admission` in
+vr_status shows the counters. Headset frame timing still needs checking.

@@ -18,7 +18,7 @@ namespace scene_models
 		std::unique_ptr<storage> data_;
 		const char* status_{"not constructed"};
 		bool upload_vertices();
-		enum class membership {rigid,static_skin,rigid_bone};
+		enum class membership {rigid,static_skin,rigid_bone,rigid_surfaces};
 		bool create_impl(game::XModel*,unsigned,std::span<const unsigned>,membership,
 			std::span<const surface_face_range> face_ranges={},bool include=true);
 	public:
@@ -57,9 +57,18 @@ namespace scene_models
 		// Main owner, before registration. Bake into private immutable buffers;
 		// queued models and source vertices must never be edited through this API.
 		bool bake_vertices(const std::function<bool(unsigned,std::span<game::GfxPackedVertex>)>& transform);
+		// Private opaque receiver interior: retain both windings without changing native materials.
+		// keep_front=false keeps only the reversed winding: a back-face liner drawn
+		// over the unchanged native model (MWR G36 receiver interior).
+		bool make_two_sided(bool keep_front=true);
+		// A bullet bone can contain a complete stack. Keep one parallel cartridge,
+		// including its separate case/projectile/primer material islands.
+		bool isolate_cartridge();
 		// Multi-material version, preserving each source surface/material. Ranges
 		// must be sorted and non-overlapping within their surface.
 		bool create_face_partition(game::XModel*,unsigned bone,std::span<const surface_face_range>,bool include);
+		// Caller must retain native skin surfaces using rigid_groups visibility.
+		bool create_rigid_face_partition(game::XModel*,unsigned bone,std::span<const surface_face_range>,bool include);
 		// Exact face subset across several rigid groups (e.g. magazine + rounds).
 		bool create_face_partition(game::XModel*,unsigned anchor,std::span<const unsigned> bones,
 			std::span<const surface_face_range>);

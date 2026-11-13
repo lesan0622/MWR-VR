@@ -31,6 +31,7 @@ namespace mwr_port
 		"camera",
 		"vr",
 		"vr::engine_stereo_renderer",
+		"vr::native_post_aa", // Per-eye SMAA T2x/Filmic history readers (MWR 0x140072E25/0x140073090).
 		// Phase 3: VR menu panels and native HUD capture
 		"input",
 		"vr::native_menu",
@@ -76,12 +77,15 @@ namespace mwr_port
 		"vr::gameplay::ladders", // Physical ladder grips (vr_physicalLadders 0 keeps the native ladder).
 		"vr::gameplay::ammo_counter", // Held gun's loaded/reserve count above its wrist.
 		"vr::stereo_postfx", // Camera motion blur off in stereo (per-eye reprojection smears a rectangle).
+		"vr::half_rate", // Optional game cap at half headset refresh; runtime reprojection fills the rest.
 		"vr::player_height", // vr_playerHeight: body slots / physical stance scale; 3 s menu hold measures it.
 		"ui_scripting", // LUI script loading (h1-mod SP addresses); only common.lua, json and vr_options.lua.
 		"lui", // lui_open / lui_open_popup / lui_restart console commands.
 		"vr::settings_menu", // vr_settings_menu_status: the Options > VR catalog.
 		"vr::gameplay::weapons::javelin_screen", // Javelin CLU display at the eye; lock gate via playerads.
 		"vr::gameplay::weapons::launcher::native_component", // Javelin lock projection from the launcher (Target_IsInRect).
+		"vr::gameplay::weapons::launcher", // RPG instance-owned manual feed; native ammo/fire boundaries.
+		"vr::gameplay::weapons::launcher::presenter_component", // MWR rocket in the hand/tube; hidden after consumption.
 		"vr::gameplay::fixed_sniper", // sniperescape Barrett: hand-drag/stick aim, flat native scope view.
 		"vr::gameplay::barrett_gun", // sniperescape Barrett held as a VR rifle (physical scope); replaces fixed_sniper there.
 		"vr::gameplay::turret_hands", // Mounted turrets (village_defend minigun): VR hands held on the rear grips.

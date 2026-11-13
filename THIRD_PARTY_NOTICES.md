@@ -81,6 +81,18 @@ the conditions in that license. The software is provided "AS IS", without
 warranty, and Valve and its contributors disclaim liability as described in the
 full license text.
 
+## DXVK (optional Vulkan renderer)
+
+The package includes the unmodified 64-bit `d3d11.dll` and `dxgi.dll` from the
+official DXVK `v3.1.1` release (`dxvk-3.1.1.tar.gz`, SHA-256 of the DLLs:
+d3d11 `0a203b6255c893430f0a8461c618962df04e62aa41538d5a875b21868317cf9f`,
+dxgi `e3c1178eb7f0dd59f91bcfcc257549e5b9cfdb5e8508719293de7f8704f53160`) under
+`overlord-mwr/dxvk/`. Source: [DXVK](https://github.com/doitsujin/dxvk).
+DXVK is licensed under the zlib/libpng license; the full text is in
+`licenses/DXVK.txt`. The launcher copies these files into the game folder only
+while the "Vulkan renderer (DXVK)" option is on and removes only byte-identical
+copies when it is turned off.
+
 ## Khronos OpenXR loader
 
 The client build and overlay include application-local `openxr_loader.dll`

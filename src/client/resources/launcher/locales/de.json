@@ -272,6 +272,10 @@
   "oobe.done": "Fertig",
   "settings.runtimeBackend": "VR-Schnittstelle",
   "settings.runtimeBackendHint": "OpenXR wird empfohlen; OpenVR dient als Alternative. Die Auswahl wird sofort gespeichert und beim Spielstart verwendet. Der Launcher muss nicht neu gestartet werden.",
+  "settings.halfRate": "Halbe-Bildrate-Modus (Leistung)",
+  "settings.halfRateHint": "Das Spiel rendert mit der halben Bildwiederholrate des Headsets; die VR-Laufzeit ergänzt die übrigen Bilder (SteamVR Motion Smoothing / Meta ASW). Senkt die CPU- und GPU-Last auf langsameren PCs; schnelle Bewegungen können Reprojektionsartefakte zeigen. Nur OpenXR. Standardmäßig aus.",
+  "settings.dxvk": "Vulkan-Renderer (DXVK)",
+  "settings.dxvkHint": "Rendert das Spiel über DXVK (Direct3D 11 auf Vulkan). Aktivieren, wenn auf AMD-Grafikkarten Grafikfehler auftreten. Der Launcher installiert beim Spielstart die DXVK-Dateien d3d11.dll/dxgi.dll im Spielordner und entfernt sie, wenn die Option aus ist. Nur OpenXR; die VR-Laufzeit muss dieselbe GPU verwenden. Standardmäßig aus.",
   "choice.openxr": "OpenXR",
   "choice.openvr": "OpenVR",
   "settings.controllerCompatibility": "Controller-Kompatibilität",
@@ -302,5 +306,14 @@
   "settings.campaignUnlockHint": "Wird einmal beim Spielstart aus diesem Fenster angewendet. Schaltet Missionen und Belohnungen frei, ohne Fortschritt oder Sammelobjekte als abgeschlossen zu markieren. Beim Schließen wird die Auswahl verworfen.",
   "settings.exoPunch": "Exoskelett-Schlag",
   "settings.exoPunchHint": "Erhöht den Schaden deiner physischen Nahkampfangriffe und schleudert Gegner bei tödlichen Treffern weg. Kugeln und Explosionen bleiben unverändert. Erfordert Ragdolls in den erweiterten Grafikeinstellungen.",
-  "settings.funFeatures": "Spielspaß"
+  "settings.funFeatures": "Spielspaß",
+  "settings.handedness": "Handedness",
+  "settings.controlHand": "Control hand",
+  "settings.controlHandHint": "Right: move/sprint on left, turn/jump on right, X for menu. Left swaps sticks and clicks, with A for menu and X for the primary action. Restart required.",
+  "settings.pistolHolsterSide": "Default pistol holster side",
+  "settings.pistolHolsterSideHint": "Preferred hip for newly assigned pistols. Independent of the control hand; explicit stows keep their chosen side. Restart required.",
+  "choice.rightHand": "Right-handed",
+  "choice.leftHand": "Left-handed",
+  "choice.rightSide": "Right hip",
+  "choice.leftSide": "Left hip"
 }

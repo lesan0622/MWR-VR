@@ -141,10 +141,17 @@ namespace vr::gameplay::weapons::physical_reload
 			    !finite_part_quat(definition.chamber_round->rotation))
 				return (bind_reject_line=__LINE__, part_rig{});
 		}
-		if (definition.interaction.manual_bolt)
+		// Native case exit (tag_brass under j_gun) for every action: a closed-bolt
+		// extraction throws the live chamber round from here along the shell FX
+		// frame. Bound only for manual bolts before, so M4/pistol rounds left
+		// from the chamber along world +X.
+		if (const auto port = bind_ejection_port(r, bones); port.valid)
 		{
 			out.ejection = find("tag_brass");
-			out.port = bind_ejection_port(r, bones);
+			out.port = port;
+		}
+		if (definition.interaction.manual_bolt)
+		{
 			if (!physical_reload::valid(definition.interaction) ||
 			    definition.ammunition.feed != mechanics::feed_type::manual_bolt || out.ejection < 0 ||
 			    !out.port.valid || definition.bolt || definition.handle_catch || definition.handle_fold ||

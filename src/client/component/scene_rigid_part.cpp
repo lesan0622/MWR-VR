@@ -8,6 +8,7 @@
 #include <wrl/client.h>
 #include <cfloat>
 #include <cmath>
+#include <map>
 
 namespace scene_models
 {
@@ -227,6 +228,117 @@ namespace scene_models
 		}
 		return true;
 	}
+	bool rigid_part::make_two_sided(bool keep_front)
+	{
+		if(!data_ || !scheduler::is_executing(scheduler::pipeline::main))return false;
+		for(unsigned i=0;i<data_->count;++i)if(keep_front && data_->meshes[i].indices.size()>32767)return false;
+		for(unsigned i=0;i<data_->count;++i)
+		{
+			auto& mesh=data_->meshes[i];auto& surface=data_->surfaces[i];
+			const auto count=mesh.indices.size();mesh.indices.reserve(count*2);
+			for(size_t f=0;f<count;++f){const auto face=mesh.indices[f];mesh.indices.push_back({face.v1,face.v3,face.v2});}
+			if(!keep_front)mesh.indices.erase(mesh.indices.begin(),mesh.indices.begin()+count);
+			ComPtr<ID3D11Device> device;surface.vb0->GetDevice(&device);
+			if(!device || !create_surface_indices(device.Get(),surface.indexBufferView,std::as_bytes(std::span(mesh.indices)),mesh.index_buffer,mesh.index_view))return false;
+			surface.indexBuffer=mesh.index_buffer.Get();surface.indexBufferView=mesh.index_view.Get();
+			surface.triCount=static_cast<unsigned short>(mesh.indices.size());surface.triIndices=surface.triIndices2=mesh.indices.data();
+			mesh.group.triCount=surface.triCount;
+		}
+		return true;
+	}
+	bool rigid_part::isolate_cartridge()
+	{
+		if(!data_ || !scheduler::is_executing(scheduler::pipeline::main))return false;
+		using point=std::array<float,3>;
+		std::map<std::array<int,3>,unsigned> vertices;
+		std::vector<unsigned> parent;
+		std::vector<std::vector<unsigned>> roots(data_->count);
+		const auto find=[&](unsigned p){while(parent[p]!=p){parent[p]=parent[parent[p]];p=parent[p];}return p;};
+		for(unsigned s=0;s<data_->count;++s)
+		{
+			const auto& mesh=data_->meshes[s];
+			for(const auto& face:mesh.indices)
+			{
+				std::array<unsigned,3> ids{};unsigned corner{};
+				for(auto v:{face.v1,face.v2,face.v3})
+				{
+					const auto& p=mesh.vertices[v].xyz;std::array<int,3> key{};
+					for(unsigned a=0;a<3;++a)key[a]=int(std::lround(p[a]*10000.f));
+					const auto [it,inserted]=vertices.try_emplace(key,unsigned(parent.size()));
+					if(inserted)parent.push_back(it->second);ids[corner++]=it->second;
+				}
+				for(unsigned a=1;a<3;++a)parent[find(ids[a])]=find(ids[0]);
+				roots[s].push_back(ids[0]);
+			}
+		}
+		struct island {point low{FLT_MAX,FLT_MAX,FLT_MAX},high{-FLT_MAX,-FLT_MAX,-FLT_MAX};unsigned count{};};
+		std::map<unsigned,island> islands;
+		for(unsigned s=0;s<data_->count;++s)for(size_t f=0;f<roots[s].size();++f)
+		{
+			auto& part=islands[find(roots[s][f])];++part.count;
+			const auto& face=data_->meshes[s].indices[f];
+			for(auto v:{face.v1,face.v2,face.v3})for(unsigned a=0;a<3;++a)
+			{const float p=data_->meshes[s].vertices[v].xyz[a];part.low[a]=std::min(part.low[a],p);part.high[a]=std::max(part.high[a],p);}
+		}
+		if(islands.empty())return false;
+		// Viewmodel cartridges lie along the bore (+x). The longest extent of the
+		// whole source is not the round: a magazine body (Skorpion tag_clip) is
+		// tallest in z, and MWR AK47 tag_bullet holds two staggered rounds whose
+		// case and projectile are separate islands, so no island spans the round.
+		constexpr unsigned axis=0;
+		const auto transverse=[](const island& part){return std::max(part.high[1]-part.low[1],part.high[2]-part.low[2]);};
+		const island* seed{};
+		for(const auto& [_,part]:islands)
+		{
+			const float span=part.high[0]-part.low[0];
+			if(span<=.05f || span<transverse(part)*1.6f)continue;
+			// Top round of the stack; among coaxial pieces prefer the longer (case).
+			const float top=part.low[2]+part.high[2],seed_top=seed?seed->low[2]+seed->high[2]:-FLT_MAX;
+			if(!seed || top>seed_top+.02f || (top>seed_top-.02f && span>seed->high[0]-seed->low[0]))seed=&part;
+		}
+		if(!seed)return false;
+		const float length=seed->high[0]-seed->low[0],width=transverse(*seed);
+		if(width<=.001f)return false;
+		std::map<unsigned,bool> selected;
+		point low{FLT_MAX,FLT_MAX,FLT_MAX},high{-FLT_MAX,-FLT_MAX,-FLT_MAX};
+		for(const auto& [id,part]:islands)
+		{
+			float radius{};for(unsigned a=1;a<3;++a){const float delta=(part.low[a]+part.high[a]-seed->low[a]-seed->high[a])*.5f;radius+=delta*delta;}
+			const float gap=std::max({0.f,part.low[0]-seed->high[0],seed->low[0]-part.high[0]});
+			// Coaxial, no wider than the case (rim/primer/projectile), adjacent along the bore.
+			if(radius>width*width*.09f || transverse(part)>width*1.25f || gap>length*.5f)continue;
+			selected[id]=true;for(unsigned a=0;a<3;++a){low[a]=std::min(low[a],part.low[a]);high[a]=std::max(high[a],part.high[a]);}
+		}
+		float radial{};for(unsigned a=0;a<3;++a)if(a!=axis)radial=std::max(radial,high[a]-low[a]);
+		// Reject an inseparable column or a non-cartridge part; never substitute
+		// a magazine, sight or cartridge from another weapon/caliber.
+		if(high[axis]-low[axis]<radial*1.4f)return false;
+		unsigned count{};
+		for(unsigned s=0;s<data_->count;++s)
+		{
+			auto& mesh=data_->meshes[s];size_t kept{};
+			for(size_t f=0;f<mesh.indices.size();++f)if(selected.contains(find(roots[s][f])))mesh.indices[kept++]=mesh.indices[f];
+			mesh.indices.resize(kept);if(!kept)continue;
+			if(count!=s){data_->surfaces[count]=data_->surfaces[s];data_->materials[count]=data_->materials[s];data_->meshes[count]=std::move(mesh);}
+			auto& output=data_->meshes[count];auto& surface=data_->surfaces[count];
+			ComPtr<ID3D11Device> device;surface.vb0->GetDevice(&device);
+			if(!device || !create_surface_indices(device.Get(),surface.indexBufferView,std::as_bytes(std::span(output.indices)),output.index_buffer,output.index_view))return false;
+			surface.indexBuffer=output.index_buffer.Get();surface.indexBufferView=output.index_view.Get();
+			surface.triCount=static_cast<unsigned short>(kept);surface.triIndices=surface.triIndices2=output.indices.data();
+			output.group.triCount=surface.triCount;surface.rigidVertLists=&output.group;surface.verts0.packedVerts0=output.vertices.data();++count;
+		}
+		if(!count)return false;
+		data_->count=count;data_->model.numsurfs=static_cast<unsigned char>(count);
+		data_->lod.numsurfs=data_->model.lodInfo[0].numsurfs=static_cast<unsigned short>(count);
+		float radius{};
+		for(unsigned a=0;a<3;++a)
+		{
+			data_->model.bounds.midPoint[a]=(low[a]+high[a])*.5f;data_->model.bounds.halfSize[a]=(high[a]-low[a])*.5f;
+			radius+=std::max(low[a]*low[a],high[a]*high[a]);
+		}
+		data_->model.radius=std::sqrt(radius);data_->bone_info.bounds=data_->model.bounds;data_->bone_info.radiusSquared=radius;
+		return true;
+	}
 	namespace
 	{
 		template<class T> bool read(const T* source,T& value) noexcept
@@ -251,6 +363,8 @@ namespace scene_models
 	}
 	bool rigid_part::create_face_partition(game::XModel* source,unsigned bone,std::span<const surface_face_range> ranges,bool include)
 	{return !ranges.empty() && create_impl(source,bone,{&bone,1},membership::rigid,ranges,include);}
+	bool rigid_part::create_rigid_face_partition(game::XModel* source,unsigned bone,std::span<const surface_face_range> ranges,bool include)
+	{return !ranges.empty() && create_impl(source,bone,{&bone,1},membership::rigid_surfaces,ranges,include);}
 	bool rigid_part::create_face_partition(game::XModel* source,unsigned anchor,std::span<const unsigned> bones,std::span<const surface_face_range> ranges)
 	{return !ranges.empty() && create_impl(source,anchor,bones,membership::rigid,ranges,true);}
 	bool rigid_part::create_static_face_partition(game::XModel* source, unsigned anchor,
@@ -299,6 +413,7 @@ namespace scene_models
 		{
 			game::XSurface surface;
 			if (!read(model.lodInfo[0].surfs+n,surface)) return false;
+			if(mode==membership::rigid_surfaces && (surface.flags&4u))continue;
 			if(skin_partition || (mode==membership::rigid_bone && (surface.flags&4u)))
 			{
 				status_="skin partition requires complete bind-space triangles";

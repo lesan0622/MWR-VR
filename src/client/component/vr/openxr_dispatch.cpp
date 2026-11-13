@@ -57,7 +57,8 @@ namespace vr::openxr
 		       load_function(entry, XR_NULL_HANDLE, "xrCreateInstance", create_instance, error, result);
 	}
 
-	bool dispatch_table::load_instance(const XrInstance instance, std::string& error, XrResult& result)
+	bool dispatch_table::load_instance(const XrInstance instance, const bool vulkan, std::string& error,
+	                                   XrResult& result)
 	{
 #define H2V_LOAD_XR(member, name)                                                                            \
 	if (!load_function(get_instance_proc_addr, instance, name, member, error, result))                       \
@@ -70,7 +71,16 @@ namespace vr::openxr
 		H2V_LOAD_XR(enumerate_view_configurations, "xrEnumerateViewConfigurations");
 		H2V_LOAD_XR(enumerate_view_configuration_views, "xrEnumerateViewConfigurationViews");
 		H2V_LOAD_XR(enumerate_environment_blend_modes, "xrEnumerateEnvironmentBlendModes");
-		H2V_LOAD_XR(get_d3d11_graphics_requirements, "xrGetD3D11GraphicsRequirementsKHR");
+		if (vulkan)
+		{
+			H2V_LOAD_XR(get_vulkan_graphics_requirements, "xrGetVulkanGraphicsRequirementsKHR");
+			H2V_LOAD_XR(get_vulkan_graphics_device, "xrGetVulkanGraphicsDeviceKHR");
+			H2V_LOAD_XR(get_vulkan_device_extensions, "xrGetVulkanDeviceExtensionsKHR");
+		}
+		else
+		{
+			H2V_LOAD_XR(get_d3d11_graphics_requirements, "xrGetD3D11GraphicsRequirementsKHR");
+		}
 		H2V_LOAD_XR(create_session, "xrCreateSession");
 		H2V_LOAD_XR(destroy_session, "xrDestroySession");
 		H2V_LOAD_XR(create_reference_space, "xrCreateReferenceSpace");

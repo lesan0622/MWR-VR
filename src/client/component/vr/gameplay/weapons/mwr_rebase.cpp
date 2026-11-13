@@ -5,6 +5,7 @@
 #include "../hands/pose_solver.hpp"
 #include "../belt_profile.hpp"
 #include "../magazine_grasp_profile.hpp"
+#include "mwr_actions.hpp"
 
 namespace vr::gameplay::weapons::mwr_rebase
 {
@@ -234,6 +235,14 @@ namespace vr::gameplay::weapons::mwr_rebase
 			p.close_sound = t.close;
 		if (t.controller_magazine)
 			p = with_controller_magazine(p);
+		if(p.handle_catch && t.keep_handle_catch && !t.keep_mechanism)
+		{
+			auto* handle=keep<charging_handle_catch>(*p.handle_catch);
+			const auto delta=hands::multiply(p.slide_rest.rotation,hands::conjugate(source.slide_rest.rotation));
+			handle->raised=hands::normalize(hands::multiply(delta,handle->raised));
+			p.handle_catch=handle;
+		}
+		mwr_actions::configure(p,t.receiver);
 		return p;
 	}
 
@@ -258,7 +267,7 @@ namespace vr::gameplay::weapons::mwr_rebase
 		p.variant = "mwr_rebased";
 		p.reload = reload;
 		p.suppress_equip = [](std::string_view) noexcept { return false; };
-		p.viewmodel = {.visibility = part_visibility::surface};
+		p.viewmodel = {.visibility = receiver=="viewmodel_m4a1_sp" ? part_visibility::rigid_groups : part_visibility::surface};
 		return p;
 	}
 

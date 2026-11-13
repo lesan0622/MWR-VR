@@ -52,7 +52,10 @@ namespace vr::settings
 		.values = {"standard", "legacy"},
 		.default_index = 0,
 		.label_keys = {"choice.standardControllerPose", "choice.legacyControllerPose"}};
+	inline constexpr choice_setting control_hand{.name="vr_controlHand",.values={"right","left"},.label_keys={"choice.rightHand","choice.leftHand"}};
+	inline constexpr choice_setting pistol_holster_side{.name="vr_pistolHolsterSide",.values={"right","left"},.label_keys={"choice.rightSide","choice.leftSide"}};
 	inline constexpr std::array choices{
+	    control_hand,pistol_holster_side,
 		runtime_backend, controller_pose_mode, killfeed_style,
 	    choice_setting{
 	        .name = turn_mode, .values = {"smooth", "snap"}, .label_keys = {"choice.smooth", "choice.snap"}},
@@ -123,6 +126,10 @@ namespace vr::settings
 	inline constexpr boolean_setting exo_punch{"vr_exoPunch", false};
 	// MWR: world marker on the current objective (the native compass star in VR).
 	inline constexpr boolean_setting objective_markers{"vr_objectiveMarkers", true};
+	// MWR: game at half the headset refresh, runtime reprojection fills the rest (half_rate.cpp).
+	inline constexpr boolean_setting half_rate{"vr_halfRate", false};
+	// MWR: Vulkan renderer through DXVK (launcher/dxvk_install.cpp, openxr_vulkan.cpp); AMD driver workaround.
+	inline constexpr boolean_setting dxvk{"vr_dxvk", false};
 	inline constexpr auto toggles = []
 	{
 		constexpr std::array gameplay{recording_mode,
@@ -143,6 +150,8 @@ namespace vr::settings
 		                              ads_sprint,
 		                              exo_punch,
 		                              objective_markers,
+		                              half_rate,
+		                              dxvk,
 		                              boolean_setting{disable_lens_flare, true},
 		                              boolean_setting{camera_bob, false},
 		                              boolean_setting{recoil, true},

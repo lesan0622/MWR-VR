@@ -20,9 +20,9 @@ namespace vr::gameplay::weapon_hud
 				reset_input();
 				return false;
 			}
-			// A is one global ammunition-HUD preference, even with a left-only
-			// weapon. X remains available to the left hand's gameplay actions.
-			constexpr auto hand = static_cast<int>(vr::hand::right);
+			// One global HUD preference on the selected control hand, independent
+			// of whichever hand currently holds a weapon.
+			const auto hand = static_cast<int>(handedness::dominant());
 			const auto& button = input.primary[hand];
 			if (owner.id() != owner_.id() || owner.rear != owner_.rear ||
 				owner.rear_revision != owner_.rear_revision || input.reference_generation != reference_ ||

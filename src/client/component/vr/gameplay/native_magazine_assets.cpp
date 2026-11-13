@@ -1,6 +1,7 @@
 #include <std_include.hpp>
 #include "native_magazine_assets.hpp"
 #include "weapon_reload_profiles.hpp"
+#include "pistol_chamber_geometry.hpp"
 #include "viewmodel_visibility.hpp"
 #include "component/scene_models.hpp"
 #include "component/scene_rigid_part.hpp"
@@ -50,6 +51,17 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 		std::array<std::atomic<const round_stack*>, reload_profiles.capacity()> round_selected{};
 		std::array<std::atomic<const char*>, reload_profiles.capacity()> round_reasons{};
 		std::array<clock::time_point, reload_profiles.capacity()> round_attempt{};
+		struct chamber_asset
+		{
+			scene_models::rigid_part single,liner;
+			asset view{},liner_view{};hands::anchor rest{};
+			std::string description;
+			game::XModel* source{};game::XSurface* surfaces{};
+		};
+		std::array<std::unique_ptr<chamber_asset>,reload_profiles.capacity()*2> chamber_retained;
+		std::array<std::atomic<const chamber_asset*>,reload_profiles.capacity()> chamber_selected{};
+		std::array<std::atomic<const char*>,reload_profiles.capacity()> chamber_reasons{};
+		std::array<clock::time_point,reload_profiles.capacity()> chamber_attempt{};
 
 		const char* ready_status(const reload_profile& definition)
 		{
@@ -508,6 +520,202 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 		}
 	}
 
+	namespace
+	{
+		void refresh_chamber(size_t index,const reload_profile& definition)
+		{
+			if(definition.ammunition.feed!=mechanics::feed_type::closed_bolt)return;
+			const auto* magazine=selected[index].load();const auto* stack=round_selected[index].load();
+			auto* source=magazine?magazine->source:stack?stack->source:nullptr;
+			if(!source){chamber_selected[index]=nullptr;return;}
+			const auto* current=chamber_selected[index].load();
+			if(current && current->source==source && current->surfaces==source->lodInfo[0].surfs)return;
+			for(const auto& cached:chamber_retained)if(cached && cached->source==source && cached->surfaces==source->lodInfo[0].surfs)
+			{chamber_selected[index]=cached.get();return;}
+			const auto now=clock::now();if(now>=chamber_attempt[index] && now-chamber_attempt[index]<std::chrono::seconds(1))return;
+			chamber_attempt[index]=now;
+			const int brass=find_bone(*source,"tag_brass"),muzzle=find_bone(*source,"tag_flash");
+			if(brass<0 || muzzle<0){chamber_reasons[index]="native chamber/barrel anchors unavailable";return;}
+			auto next=std::make_unique<chamber_asset>();
+			// One complete round: slender along the viewmodel bore (+x) with a round
+			// cross-section. Rejects a stack that survived isolation (G36C skinned
+			// j_bullet column, half 1.47x0.37x3.49 in) or two rounds left joined.
+			const auto one_round=[](const scene_models::rigid_part& part)
+			{
+				const auto& h=part.model()->bounds.halfSize;
+				return h[1]<=h[0]*.45f && h[2]<=h[0]*.45f && h[1]<=h[2]*1.6f && h[2]<=h[1]*1.6f;
+			};
+			const bool g36=std::string_view(source->name).starts_with("viewmodel_g36");
+			game::XModel* round_source=source;
+			bool created{};
+			// The G36 fires the M4's 5.56x45 mm round (user). Its own cartridge mesh is
+			// open-backed and reads see-through from one side; borrow the loaded M4
+			// (or M16) receiver's single round, else keep its own made two-sided.
+			if(g36)for(const auto& [name,bone]:{std::pair{"viewmodel_m4a1_sp","tag_bullet"},std::pair{"viewmodel_m16","tag_bullet1"}})
+			{
+				auto* donor=game::DB_FindXAssetHeader(game::ASSET_TYPE_XMODEL,name,0).model;
+				if(!donor || !donor->name || std::string_view(donor->name)!=name || !donor->boneNames)continue;
+				const int round=find_bone(*donor,bone);
+				next=std::make_unique<chamber_asset>();
+				if(round>=0 && next->single.create_rigid_bone(donor,unsigned(round)) && next->single.isolate_cartridge() &&
+					one_round(next->single)){created=true;round_source=donor;break;}
+			}
+			if(!created)next=std::make_unique<chamber_asset>();
+			int bullet=find_bone(*source,"tag_bullet_single");
+			if(bullet<0 && g36)bullet=find_bone(*source,"j_bullet1");
+			if(!created && bullet>=0)created=next->single.create_rigid_bone(source,unsigned(bullet));
+			// MWR AK47 has a mesh-less tag_bullet_single; fall back to its round bones.
+			if(!created)if(const auto* fill=definition.magazine_fill())
+			{
+				// Population one minus the permanent body is exactly one native
+				// cartridge. A stack recipe already names that single cartridge.
+				std::vector<scene_models::surface_face_range> faces;
+				if(fill->stack)faces.assign(fill->stack->rounds[0].faces.begin(),fill->stack->rounds[0].faces.end());
+				else for(const auto& range:fill->faces[1])for(unsigned face=range.first;face<=range.last;++face)
+					if(!scene_models::face_in_partition(fill->faces[0],range.surface,face))
+					{
+						if(!faces.empty() && faces.back().surface==range.surface && faces.back().last+1==face)faces.back().last=face;
+						else faces.push_back({range.surface,face,face});
+					}
+				const auto recipe=definition.magazine_mesh();bone_selection bones;
+				if(!faces.empty() && recipe.body_count<recipe.count && bind_mesh_bones(*source,recipe,bones))
+					created=next->single.create_static_face_partition(source,bones[recipe.body_count],
+						std::span(bones).subspan(recipe.body_count,recipe.count-recipe.body_count),faces);
+			}
+			else if(definition.bullets_bone.find("bullet")!=std::string_view::npos)
+			{
+				bullet=find_bone(*source,definition.bullets_bone);
+				created=bullet>=0 && next->single.create_rigid_bone(source,unsigned(bullet)) && next->single.isolate_cartridge();
+			}
+			if(created && round_source==source && definition.round_column)created=next->single.isolate_cartridge();
+			if(created && !one_round(next->single))created=false;
+			// No usable own round bone (MWR Skorpion: rounds are part of tag_clip):
+			// the top round of the receiver magazine is still this weapon's cartridge.
+			if(!created && !definition.magazine_bone.empty())
+			{
+				next=std::make_unique<chamber_asset>();
+				const int clip=find_bone(*source,definition.magazine_bone);
+				created=clip>=0 && next->single.create_rigid_bone(source,unsigned(clip)) && next->single.isolate_cartridge() &&
+					one_round(next->single);
+			}
+			if(!created){chamber_reasons[index]="verified own single-cartridge geometry unavailable";return;}
+			if(g36 && round_source==source && !next->single.make_two_sided())
+			{chamber_reasons[index]="own G36 cartridge could not be made two-sided";return;}
+			const auto& bounds=next->single.model()->bounds;
+			const hands::vec center{bounds.midPoint[0],bounds.midPoint[1],bounds.midPoint[2]};
+			unsigned axis{}; // bore (+x), enforced by one_round
+			float end_radius[2]{};
+			const auto* model=next->single.model();
+			for(unsigned s=0;s<model->numsurfs;++s)
+			{
+				const auto& surface=model->lodInfo[0].surfs[s];
+				for(unsigned t=0;t<surface.triCount;++t)for(auto v:{surface.triIndices[t].v1,surface.triIndices[t].v2,surface.triIndices[t].v3})
+				{
+					const auto& xyz=surface.verts0.packedVerts0[v].xyz;
+					if(std::abs(xyz[axis]-center[axis])<bounds.halfSize[axis]*.8f)continue;
+					float radius{};for(unsigned a=0;a<3;++a)if(a!=axis)radius+=(xyz[a]-center[a])*(xyz[a]-center[a]);
+					const auto end=xyz[axis]>center[axis]?1u:0u;end_radius[end]=std::max(end_radius[end],radius);
+				}
+			}
+			const bool reverse=end_radius[0]<end_radius[1]*.95f;
+			constexpr float q=.70710678118f;
+			const hands::quat direction=axis==0 ? (reverse?hands::quat{0,0,1,0}:hands::quat{0,0,0,1}) :
+				axis==1?hands::quat{0,0,reverse?q:-q,q}:hands::quat{0,reverse?-q:q,0,q};
+			game::DObjAnimMat rear{},barrel{};
+			if(!utils::native_memory::read_bytes(&rear,source->baseMat+brass,sizeof(rear)) ||
+				!utils::native_memory::read_bytes(&barrel,source->baseMat+muzzle,sizeof(barrel)) ||
+				!next->single.bake_vertices([&](unsigned,std::span<game::GfxPackedVertex> vertices){
+					for(auto& vertex:vertices)for(unsigned a=0;a<3;++a)vertex.xyz[a]-=center[a];return true;}))return;
+			next->view={next->single.model(),{{},{0,0,0,1}}};
+			// Fixed receiver ports retain their existing case-exit station. Pistol
+			// slides use the actual barrel breech below: tag_brass is an ejection
+			// effect anchor and is behind the real chamber (USP by about one inch).
+			const float forward=barrel.trans[0]>=rear.trans[0]?1.f:-1.f,half=bounds.halfSize[axis];
+			const float length=2*half,rim=.05f*length;
+			bool slide{};
+			for(const auto* name:{"j_bolt","j_bolt_1"})if(const int bolt=find_bone(*source,name);bolt>=0)
+			{
+				scene_models::rigid_part probe;
+				if(!probe.create_rigid_bone(source,unsigned(bolt)) || !probe.model())continue;
+				const auto& b=probe.model()->bounds;
+				const float face=b.midPoint[0]+forward*b.halfSize[0];
+				// A pistol slide is on the bore and reaches the muzzle (M9 7.31 vs 7.58).
+				if(std::abs(barrel.trans[2]-b.midPoint[2])<=b.halfSize[2] &&
+					std::abs(face-barrel.trans[0])<=.15f*std::abs(barrel.trans[0]-rear.trans[0])){slide=true;break;}
+			}
+			// Seat on the barrel (user): the bore line runs back from tag_flash along
+			// its own x axis; the round lies on it, aligned with it. Only the station
+			// along the bore comes from the press-check rule, measured from tag_brass
+			// projected onto that line. No lift toward the case-exit height.
+			namespace sm=vr::spatial_math;
+			sm::vec muzzle_at{barrel.trans[0],barrel.trans[1],barrel.trans[2]},exit_at{rear.trans[0],rear.trans[1],rear.trans[2]};
+			// MWR MP5: tag_brass (x 6.53) is ahead of the real port window (x 4.10..6.13),
+			// so a press check showed the round outside it. The partitioned bolt piece is
+			// exactly the plate filling that window and retreats from its front edge:
+			// centre the station on the part a one-round press check opens.
+			const auto* window=std::string_view(source->name).starts_with("viewmodel_mp5") && definition.bolt_partition ?
+				&definition.bolt_partition->mesh : nullptr;
+			if(window)exit_at[0]=window->moving_high[0]-forward*.5f*(length-rim);
+			auto bore=sm::unit(sm::rotate({barrel.quat[0],barrel.quat[1],barrel.quat[2],barrel.quat[3]},{1,0,0}));
+			// A muzzle tag not pointing down the bore (>10 deg off viewmodel +x) is not an axis.
+			if(!std::isfinite(bore[0]) || std::abs(bore[0])<.985f)bore={1,0,0};
+			if(sm::dot(bore,sm::sub(muzzle_at,exit_at))<0)bore=sm::scale(bore,-1);
+			const float port_station=sm::dot(sm::sub(exit_at,muzzle_at),bore);
+			float centre_station=port_station+(slide?.3f*length-rim/2:length-1.5f*rim)+(g36?1.5f:0.f);
+			if(slide && std::string_view(source->name).starts_with("wpn_h1_pst_"))
+			{
+				scene_models::rigid_part barrel_mesh;std::optional<float> breech;
+				const int gun=find_bone(*source,"j_gun");
+				if(gun>=0 && barrel_mesh.create_rigid_bone(source,unsigned(gun)))
+				{
+					const auto* mesh=barrel_mesh.model();
+					for(unsigned s=0;s<mesh->numsurfs;++s){const auto& surface=mesh->lodInfo[0].surfs[s];
+						for(unsigned t=0;t<surface.triCount;++t){const auto& f=surface.triIndices[t];
+							std::array<hands::vec,3> triangle{};unsigned n{};
+							for(auto v:{f.v1,f.v2,f.v3}){const auto& p=surface.verts0.packedVerts0[v].xyz;triangle[n++]={p[0],p[1],p[2]};}
+							if(const auto x=barrel_back_edge(triangle,muzzle_at);x && (!breech || *x<*breech))breech=x;
+						}}
+				}
+				if(!breech || !std::isfinite(*breech) || *breech>=muzzle_at[0])
+				{chamber_reasons[index]="native barrel breech unavailable";return;}
+				const auto chamber_center=pistol_chamber_center(*breech,length,rim);
+				centre_station=sm::dot(sm::sub(hands::vec{chamber_center,muzzle_at[1],muzzle_at[2]},muzzle_at),bore);
+			}
+			next->rest={sm::add(muzzle_at,sm::scale(bore,centre_station)),
+				sm::multiply(sm::from_to({forward,0,0},bore),direction)};
+			// The stylised MWR MP5 window starts 0.29 in above the bore (z 4.92 vs
+			// tag_flash 4.63): a bore-line round sat wholly under its lower edge
+			// (mock shift test: +0.5 in shows the whole round). Lift just into it.
+			if(window)next->rest.position[2]=std::max(next->rest.position[2],window->moving_low[2]+bounds.halfSize[2]);
+			// MWR G36 receiver is open-shelled: with the bolt back the inner walls were
+			// culled and the port showed the world (user). Draw j_gun's back faces only,
+			// over the unchanged native receiver, while the gun is held.
+			if(g36)if(const int gun=find_bone(*source,"j_gun");gun>=0 && next->liner.create_rigid_bone(source,unsigned(gun)) &&
+				next->liner.make_two_sided(false))
+			{
+				const auto bind=next->liner.bind();
+				next->liner_view={next->liner.model(),inverse_reload({{bind[0],bind[1],bind[2]},{bind[3],bind[4],bind[5],bind[6]}})};
+			}
+			next->source=source;next->surfaces=source->lodInfo[0].surfs;
+			auto slot=std::find_if(chamber_retained.begin(),chamber_retained.end(),[](const auto& value){return !value;});
+			if(slot==chamber_retained.end())return;
+			const std::array<scene_models::runtime_model,2> identities{{{next->single.model(),round_source},{next->liner_view.model,source}}};
+			if(!scene_models::register_runtime_models(std::span(identities).first(next->liner_view.model?2:1)))return;
+			next->description=std::format("{}; center={:.3f},{:.3f},{:.3f} length={:.4f} rim={:.4f} press_check_m={:.5f}",
+				round_source==source?"own single cartridge ready":"M4/M16 5.56 cartridge ready",next->rest.position[0],next->rest.position[1],next->rest.position[2],length,rim,(length-rim)*.0254f);
+			*slot=std::move(next);chamber_selected[index]=slot->get();chamber_reasons[index]=(*slot)->description.c_str();
+		}
+	}
+	asset receiver_liner(const reload_profile* definition) noexcept
+	{
+		const auto index=reload_profile_index(definition);const auto* chamber=index<reload_profiles.size()?chamber_selected[index].load():nullptr;
+		return chamber?chamber->liner_view:asset{};
+	}
+	std::optional<hands::anchor> chamber_rest(const reload_profile* definition) noexcept
+	{
+		const auto index=reload_profile_index(definition);const auto* chamber=index<reload_profiles.size()?chamber_selected[index].load():nullptr;
+		return chamber?std::optional(chamber->rest):std::nullopt;
+	}
 	asset rounds(const reload_profile* definition, int count) noexcept
 	{
 		const auto index = reload_profile_index(definition);
@@ -537,8 +745,17 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 			// Thread-local text: status lines are formatted on the caller's thread.
 			thread_local std::string text;
 			const auto* rounds_reason = round_reasons[index].load();
-			text = std::string(reason ? reason : "not prepared") + "; rounds: " + (rounds_reason ? rounds_reason : "not prepared");
+			text = std::string(reason ? reason : "not prepared") + "; rounds: " + (rounds_reason ? rounds_reason : "not prepared") +
+				"; chamber: " + (chamber_reasons[index].load() ? chamber_reasons[index].load() : "none");
 			return text.c_str();
+		}
+		if(index<reload_profiles.size())
+		{
+			// Chamber cartridge readiness (why the live chamber round is unavailable).
+			thread_local std::string chamber_text;
+			const auto* chamber_reason=chamber_reasons[index].load();
+			chamber_text=std::string(reason?reason:"not prepared")+"; chamber: "+(chamber_reason?chamber_reason:"none");
+			return chamber_text.c_str();
 		}
 		return reason ? reason : "not prepared";
 	}
@@ -549,9 +766,8 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 		const auto* prepared = index < reload_profiles.size() ? selected[index].load() : nullptr;
 		if (prepared && prepared->cartridge_view.model)
 			return prepared->cartridge_view;
-		// MWR: the receiver's own round (also used for counted magazine rounds).
-		const auto* stack = index < reload_profiles.size() ? round_selected[index].load() : nullptr;
-		return stack ? stack->cartridge : asset{};
+		const auto* chamber=index<reload_profiles.size()?chamber_selected[index].load():nullptr;
+		return chamber?chamber->view:asset{};
 	}
 
 	void clear() noexcept
@@ -562,6 +778,7 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 			entry = nullptr;
 		for (auto& entry : round_selected)
 			entry = nullptr;
+		for(auto& entry:chamber_selected)entry=nullptr;
 	}
 
 	void retire_after_drain() noexcept
@@ -571,6 +788,8 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 			entry.reset();
 		for (auto& entry : round_retained)
 			entry.reset();
+		for(auto& entry:chamber_retained)entry.reset();
+		chamber_attempt={};for(auto& reason:chamber_reasons)reason=nullptr;
 		round_attempt = {};
 		for (auto& reason : reasons)
 			reason = "waiting for loaded assets after retirement";
@@ -591,6 +810,7 @@ namespace vr::gameplay::weapons::physical_reload::magazine_assets
 		{
 			refresh_profile(index);
 			refresh_rounds(index, *reload_profiles[index]);
+			refresh_chamber(index,*reload_profiles[index]);
 		}
 	}
 }

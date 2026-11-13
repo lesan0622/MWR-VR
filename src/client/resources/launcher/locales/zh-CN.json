@@ -272,6 +272,10 @@
   "oobe.done": "完成",
   "settings.runtimeBackend": "VR 运行方式",
   "settings.runtimeBackendHint": "推荐使用 OpenXR，OpenVR 作为备选。选择会自动保存，进入游戏时生效，无需重启启动器。",
+  "settings.halfRate": "半帧率模式（性能）",
+  "settings.halfRateHint": "游戏以头显刷新率的一半渲染，其余帧由 VR 运行时补齐（SteamVR 运动平滑 / Meta ASW）。可降低较慢电脑的 CPU 和 GPU 负载；快速移动时可能出现重投影伪影。仅限 OpenXR。默认关闭。",
+  "settings.dxvk": "Vulkan 渲染器 (DXVK)",
+  "settings.dxvkHint": "通过 DXVK(基于 Vulkan 的 Direct3D 11)渲染游戏。如果在 AMD 显卡上出现图形错误,请开启此项。启动游戏时,启动器会将 DXVK 的 d3d11.dll/dxgi.dll 放入游戏目录,关闭此项时会将其移除。仅限 OpenXR;VR 运行时必须使用同一块显卡。默认关闭。",
   "choice.openxr": "OpenXR",
   "choice.openvr": "OpenVR",
   "settings.controllerCompatibility": "控制器兼容性",
@@ -302,5 +306,14 @@
   "settings.campaignUnlockHint": "从此窗口启动游戏时应用一次，开放关卡和情报奖励，不补齐通关或收集记录。关闭此窗口会丢弃尚未执行的选择。",
   "settings.exoPunch": "外骨骼拳击",
   "settings.exoPunchHint": "提高物理近战伤害，致死命中时击飞敌人。不影响子弹和爆炸伤害。需要在高级图形设置中启用布娃娃。",
-  "settings.funFeatures": "趣味功能"
+  "settings.funFeatures": "趣味功能",
+  "settings.handedness": "Handedness",
+  "settings.controlHand": "Control hand",
+  "settings.controlHandHint": "Right: move/sprint on left, turn/jump on right, X for menu. Left swaps sticks and clicks, with A for menu and X for the primary action. Restart required.",
+  "settings.pistolHolsterSide": "Default pistol holster side",
+  "settings.pistolHolsterSideHint": "Preferred hip for newly assigned pistols. Independent of the control hand; explicit stows keep their chosen side. Restart required.",
+  "choice.rightHand": "Right-handed",
+  "choice.leftHand": "Left-handed",
+  "choice.rightSide": "Right hip",
+  "choice.leftSide": "Left hip"
 }

@@ -276,6 +276,10 @@
   "oobe.done": "완료",
   "settings.runtimeBackend": "VR 인터페이스",
   "settings.runtimeBackendHint": "OpenXR을 권장하며 OpenVR은 대체 옵션입니다. 선택은 즉시 저장되고 게임 시작 시 적용됩니다. 런처를 다시 시작할 필요가 없습니다.",
+  "settings.halfRate": "하프 레이트 모드 (성능)",
+  "settings.halfRateHint": "게임을 헤드셋 주사율의 절반으로 렌더링하고 나머지 프레임은 VR 런타임이 채웁니다(SteamVR 모션 스무딩 / Meta ASW). 느린 PC에서 CPU·GPU 부담을 줄이지만 빠르게 움직일 때 화면이 약간 일그러질 수 있습니다. OpenXR 전용. 기본적으로 꺼져 있습니다.",
+  "settings.dxvk": "Vulkan 렌더러 (DXVK)",
+  "settings.dxvkHint": "DXVK(Vulkan 기반 Direct3D 11)로 게임을 렌더링합니다. AMD 그래픽카드에서 그래픽 오류가 보이면 켜세요. 게임을 시작할 때 런처가 DXVK의 d3d11.dll/dxgi.dll을 게임 폴더에 설치하고, 끄면 다시 제거합니다. OpenXR 전용이며 VR 런타임과 같은 GPU를 써야 합니다. 기본적으로 꺼져 있습니다.",
   "choice.openxr": "OpenXR",
   "choice.openvr": "OpenVR",
   "settings.controllerCompatibility": "컨트롤러 호환성",
@@ -306,5 +310,14 @@
   "settings.campaignUnlockHint": "이 창에서 게임을 시작할 때 한 번 적용됩니다. 임무와 정보 보상을 해제하며 클리어 및 수집 기록은 변경하지 않습니다. 창을 닫으면 아직 적용하지 않은 선택이 취소됩니다.",
   "settings.exoPunch": "외골격 펀치",
   "settings.exoPunchHint": "물리 근접 공격의 피해를 높이고 치명적인 공격으로 적을 날려 보냅니다. 총탄과 폭발에는 영향을 주지 않습니다. 고급 그래픽 설정에서 래그돌을 활성화해야 합니다.",
-  "settings.funFeatures": "재미 기능"
+  "settings.funFeatures": "재미 기능",
+  "settings.handedness": "주로 쓰는 손과 홀스터",
+  "settings.controlHand": "조작 손",
+  "settings.controlHandHint": "왼손잡이를 선택하면 오른쪽 스틱으로 이동하고 왼쪽 스틱으로 회전합니다. 스틱 클릭과 A/X 버튼 역할도 바뀌며, 새로 장비하는 무기는 왼손에 듭니다. 게임을 다시 실행하면 적용됩니다.",
+  "settings.pistolHolsterSide": "권총 기본 홀스터 위치",
+  "settings.pistolHolsterSideHint": "권총을 처음 배치할 허리 쪽을 선택합니다. 조작 손과 별도로 설정하며, 직접 수납한 위치는 유지됩니다. 게임을 다시 실행하면 적용됩니다.",
+  "choice.rightHand": "오른손잡이",
+  "choice.leftHand": "왼손잡이",
+  "choice.rightSide": "오른쪽 허리",
+  "choice.leftSide": "왼쪽 허리"
 }

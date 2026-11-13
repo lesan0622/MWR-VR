@@ -129,6 +129,16 @@ namespace vr::gameplay::weapons::physical_reload
 				 value.last_scene.units_per_meter,value.last_scene.attached_world,
 				 tx.feedback==mechanics::effect::magazine_out ? value.view.ammo.magazine_rounds : value.view.ammo.held_rounds,tx.item_released,impulse};
 			if (!tx.silent) emit_feedback(value, tx.feedback);
+			// A closed-bolt full stroke extracts a live round (rounds_spent): throw that
+			// chamber round out of the port like the bolt-action live ejection.
+			if ((tx.feedback==mechanics::effect::action_rear || tx.feedback==mechanics::effect::action_close) && tx.rounds_spent>0 &&
+				value.view.definition->ammunition.feed==mechanics::feed_type::closed_bolt && value.last_scene.chamber_world)
+			{
+				++value.view.effect_sequence;
+				auto& ejected=value.view.events[value.view.effect_sequence % value.view.events.size()];
+				ejected={value.view.effect_sequence,mechanics::effect::live_eject,value.view.effect_at,*value.last_scene.chamber_world,
+					value.last_scene.units_per_meter,value.last_scene.attached_world,0,false,std::nullopt,value.last_scene.ejection_world};
+			}
 			return true;
 		}
 		bool interrupt(instance& value)
@@ -781,6 +791,27 @@ namespace vr::gameplay::weapons::physical_reload
 							<< " knife_magazine_grasp=" << (i.view.magazine_leased() && i.view.knife_magazine_grasp)
 							<< " knife_slide_capable=" << !i.view.definition->knife_slide_grips.empty()
 							<< " knife_slide_grasp=" << (i.view.slide_held && i.view.knife_slide_grasp) << '\n';
+						{
+							// Live-round exit in the magazine-rest (gun-oriented) frame, metres:
+							// chamber round centre, tag_brass and its +X exit direction.
+							const auto& scene = i.last_scene;
+							const auto frame = hands::pose_math::inverse(scene.attached_world);
+							const auto local = [&](const hands::vec& p) {
+								return hands::scale(hands::pose_math::compose(frame, {p, {0, 0, 0, 1}}).position,
+									scene.units_per_meter > 0 ? 1 / scene.units_per_meter : 0.f);
+							};
+							const auto port = local(scene.ejection_world.position);
+							const auto exit = hands::rotate(hands::conjugate(scene.attached_world.rotation),
+								hands::rotate(scene.ejection_world.rotation, {1, 0, 0}));
+							out << "live_exit chamber=" << bool(scene.chamber_world) << " port_m=" << port[0] << ',' << port[1]
+								<< ',' << port[2] << " exit_dir=" << exit[0] << ',' << exit[1] << ',' << exit[2];
+							if (scene.chamber_world)
+							{
+								const auto c = local(scene.chamber_world->position);
+								out << " chamber_m=" << c[0] << ',' << c[1] << ',' << c[2];
+							}
+							out << '\n';
+						}
 						if (i.view.definition->interaction.manual_bolt)
 						out << "manual_bolt actor=either lift=" << s.bolt.lift << " travel=" << s.bolt.travel
 								<< " case=" << s.bolt.spent_case << " feeding=" << s.bolt.feeding << " cocked=" << s.bolt.cocked

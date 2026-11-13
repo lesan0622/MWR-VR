@@ -1,6 +1,7 @@
 #include <std_include.hpp>
 #include "vr_settings.hpp"
 #include "vr_settings_config.hpp"
+#include "component/vr/handedness.hpp"
 #include "risk_settings_config.hpp"
 #include "build_config.hpp"
 #include "component/game_data.hpp"
@@ -85,6 +86,7 @@ namespace launcher_vr_settings
 			values.at(vr::settings::controller_pose_mode.name) == "legacy"
 				? vr::controller_pose_pipeline::mode::legacy : vr::controller_pose_pipeline::mode::standard);
 		vr::debug_options::initialize(debug_selection(values));
+		vr::handedness::initialize(values.at(vr::settings::control_hand.name)=="left",values.at(vr::settings::pistol_holster_side.name)=="left");
 	}
 
 	std::string save(const std::string& payload)

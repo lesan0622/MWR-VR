@@ -34,6 +34,16 @@ namespace vr::diagnostics::detail
 			? owner_pass_status.production_transaction_timing_total_us /
 				owner_pass_status.production_transaction_timing_samples
 			: 0;
+		{
+			const auto admission = engine_stereo_owner_pass::frontend_admission_counters();
+			output << "  frontend_admission: accepted=" << admission[0] << " production_busy=" << admission[1]
+				<< " pair_rejected=" << admission[2] << " last_rejected_pair=" << admission[3] << '\n';
+			const auto shadows = engine_stereo_owner_pass::shared_shadow_counters();
+			output << "  shared_sun_shadow: right_skipped=" << shadows[0] << " right_rendered_disabled=" << shadows[1]
+				<< " right_rendered_refused=" << shadows[2] << '\n';
+			const auto families = engine_stereo_bridge::family_queue_counters();
+			output << "  view_family_queue: deferred=" << families[0] << " promoted=" << families[1] << '\n';
+		}
 		output << "  backend_owner_timing: transaction(samples/last/max/avg_us)="
 			<< owner_pass_status.production_transaction_timing_samples << '/'
 			<< owner_pass_status.production_transaction_timing_last_us << '/'

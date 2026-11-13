@@ -74,8 +74,18 @@ namespace vr::gameplay::weapons::physical_reload::partition_assets
 			auto next=std::make_unique<prepared_parts>();
 			for(unsigned part=0;part<2;++part)
 			{
-				if(!next->parts[part].create_face_partition(source,bone,recipe.moving_faces,part==1))
+				const bool created=recipe.rigid_only ?
+					next->parts[part].create_rigid_face_partition(source,bone,recipe.moving_faces,part==1) :
+					next->parts[part].create_face_partition(source,bone,recipe.moving_faces,part==1);
+				if(!created)
 				{valid=false;reasons[i]=next->parts[part].status();break;}
+				// MWR's M4 opposite receiver wall was only visible from outside.
+				// Opening the bolt exposes its back faces; keep the actual receiver
+				// wall opaque rather than drawing the world through the ejection port.
+				// MWR MP5 receiver is a hollow shell too: through the opened port the far
+				// wall was culled (user: no gun interior visible on a press check).
+				if(!part && (p->id=="mwr_m4" || p->id=="mwr_mp5" || p->id=="mwr_mp5_wet") && !next->parts[part].make_two_sided())
+				{valid=false;reasons[i]="receiver interior index preparation rejected";break;}
 				next->value.models[part]=next->parts[part].model();
 				const auto bind=next->parts[part].bind();hands::anchor parent{{bind[0],bind[1],bind[2]},{bind[3],bind[4],bind[5],bind[6]}};
 				if(part && fold)parent=compose_reload(parent,fold->pivot);

@@ -276,6 +276,10 @@
   "oobe.done": "Finish",
   "settings.runtimeBackend": "VR backend",
   "settings.runtimeBackendHint": "OpenXR is recommended; OpenVR is a backup. Saved immediately and used when you enter the game; no launcher restart needed.",
+  "settings.halfRate": "Half-rate mode (performance)",
+  "settings.halfRateHint": "The game renders at half the headset refresh rate and the VR runtime fills the other frames (SteamVR Motion Smoothing / Meta ASW). Lowers CPU and GPU load on slower PCs; fast motion can show reprojection artefacts. OpenXR only. Off by default.",
+  "settings.dxvk": "Vulkan renderer (DXVK)",
+  "settings.dxvkHint": "Renders the game through DXVK (Direct3D 11 on Vulkan). Turn on if you see graphics glitches on AMD GPUs. The launcher installs DXVK's d3d11.dll/dxgi.dll in the game folder when you start the game and removes them when this is off. OpenXR only; the VR runtime must use the same GPU. Off by default.",
   "choice.openxr": "OpenXR",
   "choice.openvr": "OpenVR",
   "settings.controllerCompatibility": "Controller compatibility",
@@ -306,5 +310,14 @@
   "settings.campaignUnlockHint": "Applies once when you launch the game from this window. Unlocks missions and intel rewards without completing campaign or collectible records. Closing this window discards the selection.",
   "settings.exoPunch": "EXO Punch",
   "settings.exoPunchHint": "Boost your physical melee damage and launch enemies on lethal hits. Bullets and explosions are unaffected. Requires ragdolls in Advanced Graphics.",
-  "settings.funFeatures": "Fun features"
+  "settings.funFeatures": "Fun features",
+  "settings.handedness": "Handedness",
+  "settings.controlHand": "Control hand",
+  "settings.controlHandHint": "Right: move/sprint on left, turn/jump on right, X for menu. Left swaps sticks and clicks, with A for menu and X for the primary action. Restart required.",
+  "settings.pistolHolsterSide": "Default pistol holster side",
+  "settings.pistolHolsterSideHint": "Preferred hip for newly assigned pistols. Independent of the control hand; explicit stows keep their chosen side. Restart required.",
+  "choice.rightHand": "Right-handed",
+  "choice.leftHand": "Left-handed",
+  "choice.rightSide": "Right hip",
+  "choice.leftSide": "Left hip"
 }

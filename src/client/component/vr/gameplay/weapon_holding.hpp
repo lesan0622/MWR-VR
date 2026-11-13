@@ -3,6 +3,7 @@
 #include <cstdint>
 #include "weapon_identity.hpp"
 #include "../hand.hpp"
+#include "../handedness.hpp"
 
 namespace vr::gameplay::weapons
 {
@@ -55,7 +56,7 @@ struct hold
 		hold equipped(std::uint32_t weapon) noexcept
 		{
 			if (weapon != value_.weapon)
-				value_ = {weapon,	  value_.revision + 1,		   weapon ? hand::right : hand::none,
+				value_ = {weapon,	  value_.revision + 1,		   weapon ? handedness::dominant() : hand::none,
 						  hand::none, hold_source::engine_default, value_.rear_revision + 1};
 			return value_;
 		}

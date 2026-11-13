@@ -17,6 +17,10 @@
 #ifndef XR_USE_GRAPHICS_API_D3D11
 #define XR_USE_GRAPHICS_API_D3D11
 #endif
+#ifndef XR_USE_GRAPHICS_API_VULKAN
+#define XR_USE_GRAPHICS_API_VULKAN
+#endif
+#include <vulkan/vulkan.h>
 
 #include <openxr/openxr.h>
 #include <openxr/openxr_platform.h>
@@ -49,6 +53,10 @@ namespace vr::openxr
 		PFN_xrEnumerateViewConfigurationViews enumerate_view_configuration_views{};
 		PFN_xrEnumerateEnvironmentBlendModes enumerate_environment_blend_modes{};
 		PFN_xrGetD3D11GraphicsRequirementsKHR get_d3d11_graphics_requirements{};
+		// XR_KHR_vulkan_enable (DXVK game device); loaded only when that extension is enabled.
+		PFN_xrGetVulkanGraphicsRequirementsKHR get_vulkan_graphics_requirements{};
+		PFN_xrGetVulkanGraphicsDeviceKHR get_vulkan_graphics_device{};
+		PFN_xrGetVulkanDeviceExtensionsKHR get_vulkan_device_extensions{};
 		PFN_xrCreateSession create_session{};
 		PFN_xrDestroySession destroy_session{};
 		PFN_xrCreateReferenceSpace create_reference_space{};
@@ -84,7 +92,7 @@ namespace vr::openxr
 		PFN_xrApplyHapticFeedback apply_haptic_feedback{};
 
 		[[nodiscard]] bool load_global(PFN_xrGetInstanceProcAddr entry, std::string& error, XrResult& result);
-		[[nodiscard]] bool load_instance(XrInstance instance, std::string& error, XrResult& result);
+		[[nodiscard]] bool load_instance(XrInstance instance, bool vulkan, std::string& error, XrResult& result);
 		void reset() noexcept;
 	};
 }
