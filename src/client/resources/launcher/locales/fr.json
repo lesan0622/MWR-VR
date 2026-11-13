@@ -274,6 +274,8 @@
   "settings.runtimeBackendHint": "OpenXR est recommandé ; OpenVR est une solution de secours. Le choix est enregistré immédiatement et appliqué au lancement du jeu, sans redémarrer le lanceur.",
   "settings.halfRate": "Mode demi-fréquence (performances)",
   "settings.halfRateHint": "Le jeu est rendu à la moitié de la fréquence du casque et le runtime VR complète les autres images (SteamVR Motion Smoothing / Meta ASW). Réduit la charge CPU et GPU sur les PC plus lents ; les mouvements rapides peuvent présenter des artefacts de reprojection. OpenXR uniquement. Désactivé par défaut.",
+  "settings.dxvk": "Moteur de rendu Vulkan (DXVK)",
+  "settings.dxvkHint": "Affiche le jeu via DXVK (Direct3D 11 sur Vulkan). À activer en cas de bugs graphiques sur GPU AMD. Au lancement du jeu, le lanceur installe les fichiers d3d11.dll/dxgi.dll de DXVK dans le dossier du jeu et les retire quand l'option est désactivée. OpenXR uniquement ; le runtime VR doit utiliser le même GPU. Désactivé par défaut.",
   "choice.openxr": "OpenXR",
   "choice.openvr": "OpenVR",
   "settings.controllerCompatibility": "Compatibilité des contrôleurs",

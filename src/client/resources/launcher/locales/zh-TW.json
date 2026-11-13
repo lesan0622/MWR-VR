@@ -274,6 +274,8 @@
   "settings.runtimeBackendHint": "建議使用 OpenXR，OpenVR 作為備用。選擇會自動儲存，進入遊戲時生效，無需重新啟動啟動器。",
   "settings.halfRate": "半幀率模式（效能）",
   "settings.halfRateHint": "遊戲以頭顯更新率的一半渲染，其餘畫格由 VR 執行環境補齊（SteamVR 動態平滑 / Meta ASW）。可降低較慢電腦的 CPU 與 GPU 負載；快速移動時可能出現重投影瑕疵。僅限 OpenXR。預設關閉。",
+  "settings.dxvk": "Vulkan 算繪器 (DXVK)",
+  "settings.dxvkHint": "透過 DXVK(以 Vulkan 實作的 Direct3D 11)算繪遊戲。若在 AMD 顯示卡上出現圖形錯誤,請開啟此項。啟動遊戲時,啟動器會將 DXVK 的 d3d11.dll/dxgi.dll 放入遊戲資料夾,關閉此項時會將其移除。僅限 OpenXR;VR 執行環境必須使用同一張顯示卡。預設關閉。",
   "choice.openxr": "OpenXR",
   "choice.openvr": "OpenVR",
   "settings.controllerCompatibility": "控制器相容性",

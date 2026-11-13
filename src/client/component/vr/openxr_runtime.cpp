@@ -10,6 +10,8 @@
 #include "native_render_session.hpp"
 #include "openxr_layer_policy.hpp"
 #include "openxr_d3d11.hpp"
+#include "openxr_vulkan.hpp"
+#include "component/console.hpp"
 #include "runtime_backend.hpp"
 #include "scene_compositor.hpp"
 #include "openxr_input.hpp"
@@ -658,14 +660,19 @@ namespace vr::openxr
 				(void)teardown_preserving_error();
 				return false;
 			}
-			const auto supports_d3d11 = std::ranges::any_of(
+			// A DXVK game device cannot share textures with the runtime's D3D11
+			// device; bind its Vulkan device instead (XR_KHR_vulkan_enable).
+			vulkan_ = vulkan::detect(graphics.device.Get());
+			const char* const graphics_extension =
+			    vulkan_ ? XR_KHR_VULKAN_ENABLE_EXTENSION_NAME : XR_KHR_D3D11_ENABLE_EXTENSION_NAME;
+			const auto supports_graphics = std::ranges::any_of(
 			    extensions,
-			    [](const auto& item)
-			    { return std::strcmp(item.extensionName, XR_KHR_D3D11_ENABLE_EXTENSION_NAME) == 0; });
-			if (!supports_d3d11)
+			    [&](const auto& item)
+			    { return std::strcmp(item.extensionName, graphics_extension) == 0; });
+			if (!supports_graphics)
 			{
 				fail(runtime_state::runtime_unavailable,
-				     "XR_KHR_D3D11_enable",
+				     vulkan_ ? "XR_KHR_vulkan_enable (DXVK)" : "XR_KHR_D3D11_enable",
 				     XR_ERROR_EXTENSION_NOT_PRESENT);
 				(void)teardown_preserving_error();
 				return false;
@@ -679,7 +686,7 @@ namespace vr::openxr
 				    return std::strcmp(e.extensionName, XR_KHR_COMPOSITION_LAYER_CYLINDER_EXTENSION_NAME) ==
 				           0;
 			    });
-			const char* enabled_extensions[]{XR_KHR_D3D11_ENABLE_EXTENSION_NAME,
+			const char* enabled_extensions[]{graphics_extension,
 			                                 XR_KHR_COMPOSITION_LAYER_CYLINDER_EXTENSION_NAME};
 			XrInstanceCreateInfo instance_info{XR_TYPE_INSTANCE_CREATE_INFO};
 			// Runtimes key per-app settings and quirks on this name: keep the
@@ -699,7 +706,7 @@ namespace vr::openxr
 			}
 			status_.instance_created = true;
 			publish_progress_locked("instance", "load instance OpenXR dispatch");
-			if (!dispatch_.load_instance(instance_, error, result))
+			if (!dispatch_.load_instance(instance_, bool(vulkan_), error, result))
 			{
 				status_.state = runtime_state::runtime_unavailable;
 				status_.last_error = error;
@@ -802,15 +809,36 @@ namespace vr::openxr
 			blend_mode_ = blend_modes.front();
 			status_.blend_mode = blend_mode_ == XR_ENVIRONMENT_BLEND_MODE_OPAQUE ? "opaque" : "other";
 
-			publish_progress_locked("graphics_requirements", "xrGetD3D11GraphicsRequirementsKHR");
-			XrGraphicsRequirementsD3D11KHR requirements{XR_TYPE_GRAPHICS_REQUIREMENTS_D3D11_KHR};
-			result = dispatch_.get_d3d11_graphics_requirements(instance_, system_id_, &requirements);
-			if (!call_ok(result, "xrGetD3D11GraphicsRequirementsKHR", runtime_state::runtime_unavailable))
+			if (vulkan_)
 			{
-				(void)teardown_preserving_error();
-				return false;
+				publish_progress_locked("graphics_requirements", "xrGetVulkanGraphicsDeviceKHR (DXVK)");
+				std::string runtime_extensions;
+				if (!vulkan::check_device(dispatch_, instance_, system_id_, vulkan_, runtime_extensions, error, result))
+				{
+					status_.state = result == XR_ERROR_GRAPHICS_DEVICE_INVALID ? runtime_state::graphics_mismatch
+					                                                            : runtime_state::runtime_unavailable;
+					status_.last_error = error;
+					set_result(result);
+					(void)teardown_preserving_error();
+					return false;
+				}
+				console::info("[VR] DXVK detected: OpenXR uses the DXVK Vulkan device (queue family %u index %u); "
+				              "runtime device extensions: %s\n",
+				    vulkan_.queue_family, vulkan_.queue_index, runtime_extensions.c_str());
+				vulkan::activate(vulkan_, dispatch_);
 			}
-			if (!graphics_requirements_match(requirements, graphics, error))
+			XrGraphicsRequirementsD3D11KHR requirements{XR_TYPE_GRAPHICS_REQUIREMENTS_D3D11_KHR};
+			if (!vulkan_)
+			{
+				publish_progress_locked("graphics_requirements", "xrGetD3D11GraphicsRequirementsKHR");
+				result = dispatch_.get_d3d11_graphics_requirements(instance_, system_id_, &requirements);
+				if (!call_ok(result, "xrGetD3D11GraphicsRequirementsKHR", runtime_state::runtime_unavailable))
+				{
+					(void)teardown_preserving_error();
+					return false;
+				}
+			}
+			if (!vulkan_ && !graphics_requirements_match(requirements, graphics, error))
 			{
 				status_.state = runtime_state::graphics_mismatch;
 				status_.last_error = error;
@@ -823,7 +851,10 @@ namespace vr::openxr
 			publish_progress_locked("session", "xrCreateSession");
 			const XrGraphicsBindingD3D11KHR binding{
 			    XR_TYPE_GRAPHICS_BINDING_D3D11_KHR, nullptr, graphics.device.Get()};
-			const XrSessionCreateInfo session_info{XR_TYPE_SESSION_CREATE_INFO, &binding, 0, system_id_};
+			const XrGraphicsBindingVulkanKHR vulkan_binding{XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR, nullptr,
+			    vulkan_.instance, vulkan_.physical, vulkan_.device, vulkan_.queue_family, vulkan_.queue_index};
+			const XrSessionCreateInfo session_info{XR_TYPE_SESSION_CREATE_INFO,
+			    vulkan_ ? static_cast<const void*>(&vulkan_binding) : static_cast<const void*>(&binding), 0, system_id_};
 			result = dispatch_.create_session(instance_, &session_info, &session_);
 			if (!call_ok(result, "xrCreateSession", runtime_state::runtime_unavailable))
 			{
@@ -873,6 +904,10 @@ namespace vr::openxr
 				(void)teardown_preserving_error();
 				return false;
 			}
+			// Vulkan runtimes list VkFormat values; the renderer keeps DXGI formats.
+			if (vulkan_)
+				for (auto& format : formats)
+					format = vulkan::to_dxgi_format(format);
 			constexpr std::array preferred{std::int64_t(DXGI_FORMAT_R16G16B16A16_FLOAT),
 			                               std::int64_t(DXGI_FORMAT_R8G8B8A8_UNORM_SRGB),
 			                               std::int64_t(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB),
@@ -968,7 +1003,7 @@ namespace vr::openxr
 			status_.controller_input_ready = true;
 			native_menu::set_requested(true);
 			status_.submission_on_game_device = true;
-			status_.graphics_transport = "h2_device_openxr";
+			status_.graphics_transport = vulkan_ ? "dxvk_vulkan_openxr" : "h2_device_openxr";
 			status_.native_renderer_ready = false;
 			status_.applied_enabled = true;
 			status_.reinitialize_pending = false;
@@ -1153,6 +1188,8 @@ namespace vr::openxr
 				status_.instance_created = false;
 			}
 			dispatch_.reset();
+			vulkan::deactivate();
+			vulkan_ = {};
 			if (loader_ != nullptr)
 			{
 				FreeLibrary(loader_);
@@ -1971,6 +2008,7 @@ namespace vr::openxr
 		XrViewConfigurationType view_type_{XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO};
 		XrEnvironmentBlendMode blend_mode_{XR_ENVIRONMENT_BLEND_MODE_OPAQUE};
 		std::int64_t color_format_{};
+		vulkan::binding vulkan_{};
 		bool session_running_{};
 		bool auto_initialize_allowed_{true};
 		std::uint64_t initialization_generation_{};

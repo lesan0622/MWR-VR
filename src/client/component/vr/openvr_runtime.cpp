@@ -13,6 +13,7 @@
 #include "controller_input.hpp"
 #include "menu_overlay.hpp"
 #include "movie_presentation.hpp"
+#include "dxvk_interop.hpp"
 
 #include <openvr.h>
 
@@ -1461,6 +1462,15 @@ namespace vr::openvr
 			{
 				status_.state = runtime_state::waiting_for_graphics;
 				status_.last_error = "D3D11 graphics device is unavailable";
+				return false;
+			}
+			// DXVK cannot share D3D11 textures with SteamVR's compositor; only the
+			// OpenXR backend binds DXVK's Vulkan device (openxr_vulkan.cpp).
+			if (Microsoft::WRL::ComPtr<IUnknown> dxvk;
+			    SUCCEEDED(graphics.device->QueryInterface(__uuidof(IDXGIVkInteropDevice1), &dxvk)))
+			{
+				status_.state = runtime_state::fatal_for_vr;
+				status_.last_error = "The Vulkan renderer (DXVK) needs the OpenXR backend; select OpenXR in the launcher";
 				return false;
 			}
 

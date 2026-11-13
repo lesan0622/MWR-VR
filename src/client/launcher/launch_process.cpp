@@ -1,6 +1,9 @@
 #include <std_include.hpp>
 #include "launch_process.hpp"
 #include "bridge_protocol.hpp"
+#include "dxvk_install.hpp"
+#include "vr_settings.hpp"
+#include "vr_settings_config.hpp"
 #include <TlHelp32.h>
 #include <utils/io.hpp>
 
@@ -104,6 +107,10 @@ namespace launcher_process
 		command += L" -singleplayer -launcher-start";
 		command += unlock_campaign ? L" -campaign-unlock 1" : L" -campaign-unlock 0";
 		if (command.size() >= 32767) throw std::runtime_error("The startup command is too long.");
+		// d3d11/dxgi resolve from the game folder at process start, so the
+		// Vulkan renderer choice is applied here, before the game exists.
+		const auto values = launcher_vr_settings::read_values(launcher_vr_settings::read_profile());
+		launcher_dxvk::sync(std::filesystem::current_path(), values.at(vr::settings::dxvk.name).get<bool>());
 		STARTUPINFOW startup{};
 		startup.cb = sizeof(startup);
 		PROCESS_INFORMATION process{};

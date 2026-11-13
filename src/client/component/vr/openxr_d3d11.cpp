@@ -1,6 +1,7 @@
 #include <std_include.hpp>
 
 #include "openxr_d3d11.hpp"
+#include "openxr_vulkan.hpp"
 
 #include <chrono>
 #include <format>
@@ -214,11 +215,22 @@ namespace vr::openxr
 			error = "OpenXR returned invalid recommended eye dimensions";
 			return false;
 		}
+		// Vulkan (DXVK) images also need transfer usage: DXVK initializes and
+		// copies through transfer commands on every texture it owns.
+		const bool vulkan_images = vulkan::active() != nullptr;
+		const auto runtime_format = vulkan_images ? vulkan::to_vk_format(format) : format;
+		if (runtime_format == 0)
+		{
+			error = "OpenXR Vulkan swapchain format has no DXVK equivalent";
+			return false;
+		}
 		const XrSwapchainCreateInfo create_info{XR_TYPE_SWAPCHAIN_CREATE_INFO,
 		                                        nullptr,
 		                                        0,
-		                                        XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT,
-		                                        format,
+		                                        vulkan_images ? XrSwapchainUsageFlags(XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT |
+		                                            XR_SWAPCHAIN_USAGE_TRANSFER_SRC_BIT | XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT)
+		                                                      : XrSwapchainUsageFlags(XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT),
+		                                        runtime_format,
 		                                        output.sample_count,
 		                                        output.width,
 		                                        output.height,
@@ -242,11 +254,33 @@ namespace vr::openxr
 			return false;
 		}
 		output.images.resize(image_count, {XR_TYPE_SWAPCHAIN_IMAGE_D3D11_KHR});
-		last_result = dispatch.enumerate_swapchain_images(
-		    output.handle,
-		    image_count,
-		    &image_count,
-		    reinterpret_cast<XrSwapchainImageBaseHeader*>(output.images.data()));
+		if (vulkan_images)
+		{
+			std::vector<XrSwapchainImageVulkanKHR> images(image_count, {XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR});
+			last_result = dispatch.enumerate_swapchain_images(output.handle, image_count, &image_count,
+			    reinterpret_cast<XrSwapchainImageBaseHeader*>(images.data()));
+			if (XR_SUCCEEDED(last_result))
+				for (std::uint32_t i = 0; i < image_count; ++i)
+				{
+					Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
+					if (!vulkan::wrap_image(images[i].image, output.width, output.height,
+					        static_cast<DXGI_FORMAT>(format), texture, error))
+					{
+						XrResult cleanup{XR_SUCCESS};
+						(void)destroy_eye_swapchain(dispatch, output, cleanup);
+						last_result = XR_ERROR_RUNTIME_FAILURE;
+						return false;
+					}
+					output.images[i].texture = texture.Get();
+					output.wrapped.emplace_back(std::move(texture));
+				}
+		}
+		else
+			last_result = dispatch.enumerate_swapchain_images(
+			    output.handle,
+			    image_count,
+			    &image_count,
+			    reinterpret_cast<XrSwapchainImageBaseHeader*>(output.images.data()));
 		if (XR_FAILED(last_result))
 		{
 			error = "xrEnumerateSwapchainImages failed";
@@ -304,6 +338,7 @@ namespace vr::openxr
 			}
 			eye.render_targets.clear();
 			eye.images.clear();
+			eye.wrapped.clear();
 			last_result = dispatch.destroy_swapchain(eye.handle);
 			if (XR_FAILED(last_result))
 				return false;

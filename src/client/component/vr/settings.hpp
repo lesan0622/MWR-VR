@@ -128,6 +128,8 @@ namespace vr::settings
 	inline constexpr boolean_setting objective_markers{"vr_objectiveMarkers", true};
 	// MWR: game at half the headset refresh, runtime reprojection fills the rest (half_rate.cpp).
 	inline constexpr boolean_setting half_rate{"vr_halfRate", false};
+	// MWR: Vulkan renderer through DXVK (launcher/dxvk_install.cpp, openxr_vulkan.cpp); AMD driver workaround.
+	inline constexpr boolean_setting dxvk{"vr_dxvk", false};
 	inline constexpr auto toggles = []
 	{
 		constexpr std::array gameplay{recording_mode,
@@ -149,6 +151,7 @@ namespace vr::settings
 		                              exo_punch,
 		                              objective_markers,
 		                              half_rate,
+		                              dxvk,
 		                              boolean_setting{disable_lens_flare, true},
 		                              boolean_setting{camera_bob, false},
 		                              boolean_setting{recoil, true},

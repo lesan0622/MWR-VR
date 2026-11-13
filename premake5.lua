@@ -210,6 +210,8 @@ local function copy_client_resources(destination)
 		-- h1_sp64_ship.exe; only the LUI gameplay scripts are staged.
 		'{COPYDIR} "%{wks.location}/../data/ui_scripts/vr_gameplay" "' .. path.join(destination, "overlord-mwr/ui_scripts/vr_gameplay") .. '"',
 		'{COPYDIR} "%{wks.location}/../data/ac130_cabin" "' .. path.join(destination, "overlord-mwr/ac130_cabin") .. '"',
+		-- Optional Vulkan renderer: the launcher installs these into the game folder (launcher/dxvk_install.cpp).
+		'{COPYDIR} "%{wks.location}/../data/dxvk" "' .. path.join(destination, "overlord-mwr/dxvk") .. '"',
 		'{MKDIR} "' .. path.join(destination, "steamvr") .. '"',
 		'{COPYFILE} "%{wks.location}/../assets/steamvr/cover.png" "' .. path.join(destination, "steamvr/cover.png") .. '"',
 		'{COPYFILE} "%{wks.location}/../assets/steamvr/cover-small.png" "' .. path.join(destination, "steamvr/cover-small.png") .. '"',

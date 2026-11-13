@@ -274,6 +274,8 @@
   "settings.runtimeBackendHint": "OpenXR を推奨し、OpenVR は代替として利用できます。選択はすぐに保存され、ゲーム開始時に適用されます。ランチャーの再起動は不要です。",
   "settings.halfRate": "ハーフレートモード（パフォーマンス）",
   "settings.halfRateHint": "ゲームをヘッドセットのリフレッシュレートの半分で描画し、残りのフレームはVRランタイムが補完します（SteamVR モーションスムージング / Meta ASW）。低速なPCでCPU・GPU負荷を下げますが、素早い動きでリプロジェクションの乱れが出ることがあります。OpenXRのみ。既定ではオフ。",
+  "settings.dxvk": "Vulkan レンダラー (DXVK)",
+  "settings.dxvkHint": "DXVK(Vulkan 上の Direct3D 11)でゲームを描画します。AMD GPU でグラフィックの不具合が出る場合に有効にしてください。ゲーム起動時にランチャーが DXVK の d3d11.dll/dxgi.dll をゲームフォルダーに配置し、オフにすると削除します。OpenXR 専用で、VR ランタイムと同じ GPU が必要です。既定はオフです。",
   "choice.openxr": "OpenXR",
   "choice.openvr": "OpenVR",
   "settings.controllerCompatibility": "コントローラーの互換性",

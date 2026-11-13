@@ -16,6 +16,14 @@
     "description": "settings.halfRateHint"
   },
   {
+    "name": "vr_dxvk",
+    "category": "basics",
+    "group": "settings.runtimeBackend",
+    "label": "settings.dxvk",
+    "type": "toggle",
+    "description": "settings.dxvkHint"
+  },
+  {
     "name": "vr_pistolHolsterSide",
     "category": "basics",
     "group": "settings.handedness",
